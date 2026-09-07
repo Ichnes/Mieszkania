@@ -983,7 +983,32 @@ async function getListingsPageByScope(
       pagedValues,
     );
 
-    const listingIds = listingsResult.rows.map((row) => row.id);
+    // Score all candidates before pagination, but enrich only the visible page.
+    // RCN and photos do not influence the matching score; fetching them for every
+    // candidate can exhaust the database pool on a larger local collection.
+    let pageRows = listingsResult.rows;
+    const dreamScores = new Map<string, number>();
+    if (isDreamSort) {
+      const settings = await getFamilySettings();
+      for (const row of pageRows) {
+        dreamScores.set(
+          row.id,
+          computeDreamScore(
+            mapListingSummary(row, undefined, null, 0),
+            settings.dreamProfile,
+            settings.workplaces,
+          ),
+        );
+      }
+      pageRows = [...pageRows]
+        .sort(
+          (left, right) =>
+            dreamScores.get(right.id)! - dreamScores.get(left.id)! ||
+            left.id.localeCompare(right.id),
+        )
+        .slice(offset, offset + pageSize);
+    }
+    const listingIds = pageRows.map((row) => row.id);
     const [priceEventsResult, relatedCounts, imagesByListingId, rcnBenchmarks] = await Promise.all([
       db.query<PriceEventRow>(
         `
@@ -1001,11 +1026,11 @@ async function getListingsPageByScope(
       ),
       getRelatedCounts(listingIds),
       getListingImagesForListings(listingIds),
-      Promise.all(listingsResult.rows.map((row) => getRcnBenchmark(db, row))),
+      Promise.all(pageRows.map((row) => getRcnBenchmark(db, row))),
     ]);
 
     const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
-    let items = listingsResult.rows.map((row, index) => {
+    const items = pageRows.map((row, index) => {
       const images = imagesByListingId.get(row.id) ?? [];
       const resolvedImages = images
         .map((image) => ({
@@ -1020,7 +1045,7 @@ async function getListingsPageByScope(
       const thumbnailUrl = primaryImage?.resolvedUrl;
       const imageUrls = resolvedImages.map((image) => image.resolvedUrl);
 
-      return mapListingSummary(
+      const item = mapListingSummary(
         row,
         latestPriceEvents.get(row.id),
         rcnBenchmarks[index],
@@ -1031,25 +1056,8 @@ async function getListingsPageByScope(
         relatedCounts.get(row.id) ?? 0,
         0,
       );
+      return isDreamSort ? { ...item, dreamScore: dreamScores.get(row.id) } : item;
     });
-
-    if (isDreamSort) {
-      const settings = await getFamilySettings();
-      items = items
-        .map((item) => ({
-          ...item,
-          dreamScore: computeDreamScore(item, settings.dreamProfile, settings.workplaces),
-        }))
-        .sort((left, right) => {
-          const dreamDelta = (right.dreamScore ?? 0) - (left.dreamScore ?? 0);
-          if (dreamDelta !== 0) {
-            return dreamDelta;
-          }
-
-          return left.id.localeCompare(right.id);
-        })
-        .slice(offset, offset + pageSize);
-    }
 
     return {
       total,

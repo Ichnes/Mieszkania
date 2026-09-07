@@ -61,3 +61,12 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Playwright: preferencje 1440/1280/390 px, zapis wkładu i miasto w ośmiu żądaniach (mock API, bez zmiany osobistych ustawień); parametry kalkulatora po odświeżeniu. Kontrola ciemnego motywu i braku przepełnienia.
 - [x] Testy szybkiego otwierania/zamykania i anulowania żądań na 1440/390 px; rzeczywista oferta przez LAN pokazuje Parter / 3, Wstecz/Dalej działa.
 - Pozostała praca w tym zakresie: brak.
+
+## HTTP 500 podczas ładowania mieszkań
+
+- [x] Odtworzono błąd `dream_desc` na 2978 ofertach: timeout puli PostgreSQL w `getRcnBenchmark` przy tysiącach równoległych zapytań.
+- [x] Dopasowanie liczone dla wszystkich kandydatów, a RCN, zdjęcia i pozostałe dane pobierane dopiero dla wybranej strony.
+- [x] Wszystkie siedem sortowań zwraca HTTP 200; `dream_desc` na lokalnych 2978 ofertach około 4,6 s zamiast HTTP 500 po około 24 s.
+- [x] Playwright przez LAN: start z zapisanym `dream_desc`, dwie strony po 30 ofert, stabilna kolejność i brak powtórzeń. Zero żądań importu/aktualizacji; RCN jest wyłącznie odczytywane z lokalnej bazy.
+- [x] 103 testy API i build API poprawne; regresja na 3000 ofertach potwierdza odczyt zdjęć i RCN wyłącznie dla wybranej strony.
+- Pozostała praca w tym zakresie: brak.
