@@ -205,8 +205,15 @@ export function isKnownWarsawStreetCandidate(value?: string | null) {
   return Boolean(normalized && knownWarsawStreetNames.has(normalized));
 }
 
+export function isNonAddressPhrase(value: string) {
+  return /\b(?:(?:bez|brak|zero|0)\s*(?:pcc|prowizj\w*)|(?:pcc|vat)\s*\d*|opcja\s+wykonczenia)\b/.test(
+    normalizePolish(value),
+  );
+}
+
 function isGarbageStreetCandidate(normalized: string) {
   return (
+    isNonAddressPhrase(normalized) ||
     normalized.includes("mieszkania na sprzedaz") ||
     normalized.includes("nieruchomosci") ||
     normalized.includes("wyjatkowe") ||

@@ -273,3 +273,8 @@ test("noise field names, moderately quiet ratings and speakers are not loudness 
     getDescriptionHighlightParts("Mieszkanie jest głośne.").some((p) => p.tone === "negative"),
   );
 });
+
+test("recognizes abbreviated north-east exposure regardless of letter case", () => {
+  assert.deepEqual(getSunExposure("Ekspozycja NE").directions, ["NE"]);
+  assert.deepEqual(getSunExposure("Okna: ne").directions, ["NE"]);
+});

@@ -4,6 +4,7 @@ import {
   buildAmenityBadges,
   extractFeatures,
   inferBuildingDetails,
+  inferFinishQuality,
   inferCommercialInfo,
   resolveListingAmenities,
 } from "./listing-repository";
@@ -463,4 +464,18 @@ test("unified floor parser preserves fractions and floor-of-building notation", 
     assert.equal(result.floor, floor);
     assert.equal(result.totalFloors, total);
   }
+});
+
+test("optional turnkey finishing means developer standard, not an already finished home", () => {
+  for (const description of ["Opcja wykończenia pod klucz", "Możliwość wykończenia pod klucz"]) {
+    assert.equal(inferFinishQuality(description), "to_finish");
+    assert.ok(
+      extractFeatures({ description }).some((feature) => feature.key === "developer_standard"),
+    );
+  }
+  assert.ok(
+    !extractFeatures({
+      description: "Mieszkanie wykończone pod klucz, gotowe do zamieszkania",
+    }).some((feature) => feature.key === "developer_standard"),
+  );
 });

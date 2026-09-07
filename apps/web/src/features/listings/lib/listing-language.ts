@@ -16,6 +16,13 @@ export function normalizeListingText(value: string) {
 export function getSunExposure(description?: string) {
   const text = normalizeListingText(description ?? "");
   const exposureText = text
+    .replace(/\b(?:ne|nw|se|sw)\b/g, (bearing, offset: number) =>
+      /\b(?:ekspozycj\w*|orientacj\w*|okn\w*|balkon\w*|taras\w*)\b/.test(
+        text.slice(Math.max(0, offset - 70), offset + 70),
+      )
+        ? bearing.toUpperCase()
+        : bearing,
+    )
     // Treat adjectival compound bearings as one diagonal direction. Without
     // this normalization "południowo-zachodnia" can be split into S + W.
     .replace(/\bpoludniow\w*\s*[-â€“â€”]?\s*zachod\w*\b/g, " SW ")

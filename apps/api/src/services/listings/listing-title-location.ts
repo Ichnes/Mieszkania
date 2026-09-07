@@ -1,4 +1,4 @@
-import { normalizePolish } from "../geography/address-normalization";
+import { normalizePolish, isNonAddressPhrase } from "../geography/address-normalization";
 
 const warsawDistrictAliases: Array<[string, string]> = [
   ["praga polnoc", "Praga-Północ"],
@@ -57,6 +57,7 @@ export function extractStreetFromLocationTitle(title: string, district?: string,
     .trim();
   if (
     !candidate ||
+    isNonAddressPhrase(candidate) ||
     candidate.length < 2 ||
     candidate.length > 70 ||
     candidate.split(/\s+/).length > 7

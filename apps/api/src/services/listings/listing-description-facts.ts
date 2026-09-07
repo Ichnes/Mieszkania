@@ -1,3 +1,5 @@
+import { decodeListingText } from "./listing-text";
+import { isNonAddressPhrase } from "../geography/address-normalization";
 import type { ParsedListing } from "../../collectors/types";
 
 export function enrichListingFromDescription(listing: ParsedListing): ParsedListing {
@@ -11,6 +13,7 @@ export function enrichListingFromDescription(listing: ParsedListing): ParsedList
 
   return {
     ...listing,
+    title: decodeListingText(listing.title),
     description,
     street,
     // Portal address blocks occasionally contain a sentence mentioning a road.
@@ -109,6 +112,7 @@ function isPlausibleStreet(value?: string) {
     words.length > 0 &&
     words.length <= 7 &&
     value.length <= 70 &&
+    !isNonAddressPhrase(value) &&
     !/\b(?:tramwaj|komunikacja|centrum|pozwala|dojazd|minut)\b/i.test(value)
   );
 }
@@ -125,7 +129,7 @@ export function cleanListingDescription(value?: string) {
   if (!value) return value;
 
   return (
-    value
+    decodeListingText(value)
       .replace(/\s*Zgłoś\s+błąd\s+lub\s+naruszenie\s+Drukuj\s+Udostępnij(?:\s|$)/gi, " ")
       .replace(/\s+/g, " ")
       .trim() || undefined

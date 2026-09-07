@@ -1,3 +1,4 @@
+import { decodeListingText } from "./listing-text";
 import type {
   DashboardStat,
   FamilySettings,
@@ -17,6 +18,7 @@ import { activeRegion } from "../../domain/region";
 import { getRelatedCounts, getRelatedListings } from "../duplicates/listing-duplicates";
 import {
   normalizePolish,
+  isNonAddressPhrase,
   normalizeStreetName,
   normalizeWarsawStreetAddress,
   normalizeWarsawStreetCandidate,
@@ -528,7 +530,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       [listingId],
     );
 
-    const row = result.rows[0];
+    const row = result.rows[0] ? decodeListingRow(result.rows[0]) : undefined;
     if (!row) {
       return null;
     }
@@ -986,19 +988,12 @@ async function getListingsPageByScope(
     // Score all candidates before pagination, but enrich only the visible page.
     // RCN and photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
-    let pageRows = listingsResult.rows;
+    let pageRows = listingsResult.rows.map(decodeListingRow);
     const dreamScores = new Map<string, number>();
     if (isDreamSort) {
       const settings = await getFamilySettings();
       for (const row of pageRows) {
-        dreamScores.set(
-          row.id,
-          computeDreamScore(
-            mapListingSummary(row, undefined, null, 0),
-            settings.dreamProfile,
-            settings.workplaces,
-          ),
-        );
+        dreamScores.set(row.id, getCachedDreamScore(row, settings));
       }
       pageRows = [...pageRows]
         .sort(
@@ -1349,6 +1344,18 @@ function extractSourceContactPhoneFromPayload(snapshotPayload?: Record<string, u
   );
 }
 
+function decodeListingRow(row: ListingRow): ListingRow {
+  return {
+    ...row,
+    title: decodeListingText(row.title),
+    description: row.description ? decodeListingText(row.description) : row.description,
+    city: decodeListingText(row.city),
+    district: row.district ? decodeListingText(row.district) : row.district,
+    neighborhood: row.neighborhood ? decodeListingText(row.neighborhood) : row.neighborhood,
+    address_text: row.address_text ? decodeListingText(row.address_text) : row.address_text,
+  };
+}
+
 function mapListingSummary(
   row: ListingRow,
   latestEvent: PriceEventRow | undefined,
@@ -1519,10 +1526,10 @@ function mapListingSummary(
   };
 }
 
-function inferFinishQuality(description?: string | null): "ready" | "to_finish" | "unknown" {
+export function inferFinishQuality(description?: string | null): "ready" | "to_finish" | "unknown" {
   const normalized = normalizePolish(description ?? "");
   if (
-    /(do remontu|do wykonczenia|stan deweloperski|niemal gotow\w* do odbioru|gotow\w* do odbioru)/.test(
+    /((?:opcj\w*|mozliwosc)\s+wykonczenia\s+pod\s+klucz|do remontu|do wykonczenia|stan deweloperski|niemal gotow\w* do odbioru|gotow\w* do odbioru)/.test(
       normalized,
     )
   ) {
@@ -1889,7 +1896,7 @@ function cleanLocationText(value?: string | null) {
   }
 
   const trimmed = value.trim();
-  if (!trimmed || isGenericLocationLabel(trimmed)) {
+  if (!trimmed || isGenericLocationLabel(trimmed) || isNonAddressPhrase(trimmed)) {
     return undefined;
   }
 
@@ -2140,7 +2147,7 @@ export function extractFeatures(input: {
   const amenities = inferAmenities(input.description);
   const developerStandardMatches = [
     ...descriptionNormalized.matchAll(
-      /\b(?:stan(?:ie|u|em)?\s+dewelopersk\w*|dewelopersk\w*\s+stan\w*|surowy\s+dewelop\w*|bezposrednio\s+od\s+deweloper\w*|(?:lokal|mieszkanie|apartament)\s+(?:jest\s+)?gotow\w*\s+do\s+wykonczenia)\b/g,
+      /\b(?:(?:opcj\w*|mozliwosc)\s+wykonczenia\s+pod\s+klucz|stan(?:ie|u|em)?\s+dewelopersk\w*|dewelopersk\w*\s+stan\w*|surowy\s+dewelop\w*|bezposrednio\s+od\s+deweloper\w*|(?:lokal|mieszkanie|apartament)\s+(?:jest\s+)?gotow\w*\s+do\s+wykonczenia)\b/g,
     ),
   ];
   const hasDeveloperStandard = developerStandardMatches.some((match) => {
@@ -3075,6 +3082,29 @@ function buildListingOrderBy(sort?: ListingFilters["sort"]) {
   }
 
   return `${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc`;
+}
+
+// Cache only the expensive text/feature interpretation, never database results.
+// Row content, preferences and calendar year are part of the key, so changes
+// are reflected on the next request without waiting for a TTL.
+const dreamScoreCache = new Map<string, { signature: string; score: number }>();
+function getCachedDreamScore(row: ListingRow, settings: FamilySettings) {
+  const signature = JSON.stringify([
+    row,
+    settings.dreamProfile,
+    settings.workplaces,
+    new Date().getFullYear(),
+  ]);
+  const cached = dreamScoreCache.get(row.id);
+  if (cached?.signature === signature) return cached.score;
+  const score = computeDreamScore(
+    mapListingSummary(row, undefined, null, 0),
+    settings.dreamProfile,
+    settings.workplaces,
+  );
+  if (dreamScoreCache.size >= 5000) dreamScoreCache.delete(dreamScoreCache.keys().next().value!);
+  dreamScoreCache.set(row.id, { signature, score });
+  return score;
 }
 
 function computeDreamScore(

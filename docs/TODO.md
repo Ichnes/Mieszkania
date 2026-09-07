@@ -70,3 +70,21 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Playwright przez LAN: start z zapisanym `dream_desc`, dwie strony po 30 ofert, stabilna kolejność i brak powtórzeń. Zero żądań importu/aktualizacji; RCN jest wyłącznie odczytywane z lokalnej bazy.
 - [x] 103 testy API i build API poprawne; regresja na 3000 ofertach potwierdza odczyt zdjęć i RCN wyłącznie dla wybranej strony.
 - Pozostała praca w tym zakresie: brak.
+
+## Filtry statystyk, gesty i dopasowanie — 2026-09-08
+
+- [x] Wpisane i zastosowane filtry statystyk oraz okres zapisane w localStorage; przywracane po odświeżeniu i ponownym otwarciu.
+- [x] Scroll oraz pinch na mapie szczegółów; pełny ekran mobilny przez stabilny portal, bez utraty gestów i instancji mapy. Poprawione warstwy przycisków.
+- [x] Zdjęcia: pinch 1–5×, przesuwanie powiększonego zdjęcia, dwuklik reset/zoom, przewijanie zdjęć przy skali 1; dopasowanie po obrocie ekranu. Kompas w szczegółach mobilnych mniejszy o 30%.
+- [x] Skróty ekspozycji NE/NW/SE/SW rozpoznawane z kontekstu niezależnie od wielkości liter; NE oznacza północny wschód. Opcja wykończenia pod klucz oznacza stan do wykończenia/deweloperski, także przy obliczaniu dopasowania.
+- [x] Pamięć wyników analizy dopasowania z ograniczeniem do 5000 ofert. Zmiana treści oferty, preferencji lub roku unieważnia dany wynik. Baza, zdjęcia i RCN nadal odczytywane na bieżąco.
+- [x] Ponowny odczyt `dream_desc` na 2978 ofertach około 0,51 s zamiast 5,44 s pierwszego przeliczenia.
+- [x] Playwright: zapis filtrów zastosowanych i roboczych po odświeżeniu; gesty CDP powiększania/pomniejszania zdjęć, obrót 390×844 → 844×390, zamykanie; pinch mapy i scroll desktop; pomiar rozmiaru kompasu. Kontrola zrzutów ekranu.
+- [x] Testy: 106 API i 51 frontendu, build monorepo. Regresja pamięci dopasowania potwierdza reakcję na zmianę opisu.
+- Pozostała praca w tym zakresie: brak. Fizyczny telefon nie był dostępny; gesty i obrót sprawdzone w emulacji Chromium.
+
+### Znaki HTML i błędna ulica
+
+- [x] Dekodowanie popularnych encji HTML, polskich liter, odwołań liczbowych i podwójnego kodowania w tekście ofert. Import i odczyt istniejących ofert; tekst pozostaje tekstem w React.
+- [x] Frazy o PCC, VAT i prowizji odrzucane jako kandydaci ulic. Oferta `ec1c9812-60a0-466a-b79f-c89650c3741f` pokazuje `Błonia Wilanowskie, Warszawa`, bez ulicy `bez Pcc`; opis zawiera poprawne `osób` i `Wilanów`.
+- [x] Potwierdzono rzeczywistą odpowiedź lokalnego API. Korekta przy odczycie, bez masowego przepisywania bazy ani uruchamiania importów.

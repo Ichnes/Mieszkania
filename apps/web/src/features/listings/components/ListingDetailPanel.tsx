@@ -1,3 +1,4 @@
+import { ZoomablePhoto } from "./ZoomablePhoto";
 import { copyText } from "../../../shared/lib/clipboard";
 import type {
   CollectorRunResponse,
@@ -122,7 +123,6 @@ export function ListingDetailPanel(input: {
   const detailPanelRef = useRef<HTMLElement | null>(null);
   const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didSwipeImageRef = useRef(false);
-  const lightboxSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   useEffect(() => {
     setScheduledAt(toDatetimeInputValue(input.listing.viewing?.scheduledAt));
     setViewingNotes(input.listing.viewing?.notes ?? "");
@@ -203,38 +203,6 @@ export function ListingDetailPanel(input: {
     if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
       didSwipeImageRef.current = true;
       changeDetailImage(deltaX < 0 ? 1 : -1);
-    }
-  }
-
-  function handleLightboxImagePointerDown(event: ReactPointerEvent<HTMLImageElement>) {
-    if (event.pointerType === "mouse" || input.listing.imageUrls.length < 2) {
-      return;
-    }
-
-    lightboxSwipeStartRef.current = {
-      x: event.clientX,
-      y: event.clientY,
-      pointerId: event.pointerId,
-    };
-    event.currentTarget.setPointerCapture(event.pointerId);
-  }
-
-  function handleLightboxImagePointerUp(event: ReactPointerEvent<HTMLImageElement>) {
-    const start = lightboxSwipeStartRef.current;
-    lightboxSwipeStartRef.current = null;
-    if (!start || start.pointerId !== event.pointerId) {
-      return;
-    }
-
-    const deltaX = event.clientX - start.x;
-    const deltaY = event.clientY - start.y;
-    if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
-      event.stopPropagation();
-      if (deltaX < 0) {
-        showNextLightboxImage();
-      } else {
-        showPreviousLightboxImage();
-      }
     }
   }
 
@@ -1485,19 +1453,13 @@ export function ListingDetailPanel(input: {
                   ‹
                 </button>
               ) : null}
-              <img
-                className={
-                  photoRotation % 180 ? "image-lightbox-image is-rotated" : "image-lightbox-image"
-                }
-                style={{ transform: `rotate(${photoRotation}deg)` }}
+              <ZoomablePhoto
+                key={input.listing.imageUrls[lightboxImageIndex]}
                 src={input.listing.imageUrls[lightboxImageIndex]}
                 alt={`${input.listing.title} zdjęcie ${lightboxImageIndex + 1}`}
-                onPointerDown={handleLightboxImagePointerDown}
-                onPointerUp={handleLightboxImagePointerUp}
-                onPointerCancel={() => {
-                  lightboxSwipeStartRef.current = null;
-                }}
-                onClick={(event) => event.stopPropagation()}
+                rotation={photoRotation}
+                onPrevious={showPreviousLightboxImage}
+                onNext={showNextLightboxImage}
               />
               {input.listing.imageUrls.length > 1 ? (
                 <button

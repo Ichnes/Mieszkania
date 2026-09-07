@@ -1,5 +1,6 @@
+import { createPortal } from "react-dom";
 import { Maximize2, Minimize2 } from "lucide-react";
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 export function FullscreenFrame({
   children,
@@ -16,6 +17,20 @@ export function FullscreenFrame({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [expanded, setExpanded] = useState(false);
   const nativeEntered = useRef(false);
+  const [viewportOnly, setViewportOnly] = useState(false);
+  const anchor = useRef<HTMLDivElement>(null);
+  const [host] = useState(() => {
+    const element = document.createElement("div");
+    element.style.display = "contents";
+    return element;
+  });
+  // A stable portal retains both React event delegation and the Leaflet instance
+  // when the mobile fullscreen fallback escapes the listing dialog.
+  useLayoutEffect(() => {
+    const parent = modal || (expanded && viewportOnly) ? document.body : anchor.current;
+    parent?.appendChild(host);
+    return () => host.remove();
+  }, [host, modal, expanded && viewportOnly]);
   useEffect(() => {
     const sync = () => {
       if (document.fullscreenElement === ref.current) nativeEntered.current = true;
@@ -34,7 +49,7 @@ export function FullscreenFrame({
     document.body.style.overflow = "hidden";
     buttonRef.current?.focus();
     const keydown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
+      if (event.key === "Escape" && expanded) {
         event.stopPropagation();
         void close();
       }
@@ -73,35 +88,45 @@ export function FullscreenFrame({
   async function toggle() {
     if (expanded) return close();
     setExpanded(true);
+    if (window.matchMedia("(pointer: coarse)").matches || !ref.current?.requestFullscreen) {
+      setViewportOnly(true);
+      return;
+    }
     try {
-      await ref.current?.requestFullscreen?.();
+      await ref.current.requestFullscreen();
     } catch {
-      /* Full viewport remains available on mobile browsers. */
+      setViewportOnly(true);
     }
   }
   return (
-    <div
-      ref={ref}
-      className={`fullscreen-frame ${className}${expanded ? " is-expanded" : ""}`}
-      role={expanded ? "dialog" : undefined}
-      aria-modal={expanded || undefined}
-      aria-label={label}
-    >
-      {children}
-      <button
-        ref={buttonRef}
-        className="fullscreen-toggle"
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          void toggle();
-        }}
-        aria-label={expanded ? `Zamknij pełny ekran: ${label}` : `Pełny ekran: ${label}`}
-        title={expanded ? "Zamknij pełny ekran" : "Pełny ekran"}
-      >
-        {expanded ? <Minimize2 size={19} /> : <Maximize2 size={19} />}
-      </button>
-    </div>
+    <>
+      <div ref={anchor} style={{ display: "contents" }} />
+      {createPortal(
+        <div
+          ref={ref}
+          className={`fullscreen-frame ${className}${expanded ? " is-expanded" : ""}`}
+          role={expanded ? "dialog" : undefined}
+          aria-modal={expanded || undefined}
+          aria-label={label}
+        >
+          {children}
+          <button
+            ref={buttonRef}
+            className="fullscreen-toggle"
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              void toggle();
+            }}
+            aria-label={expanded ? `Zamknij pełny ekran: ${label}` : `Pełny ekran: ${label}`}
+            title={expanded ? "Zamknij pełny ekran" : "Pełny ekran"}
+          >
+            {expanded ? <Minimize2 size={19} /> : <Maximize2 size={19} />}
+          </button>
+        </div>,
+        host,
+      )}
+    </>
   );
 }
 

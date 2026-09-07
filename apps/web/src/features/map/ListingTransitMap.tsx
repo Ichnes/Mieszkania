@@ -33,7 +33,8 @@ export function ListingTransitMap(input: {
         if (cancelled || !mapContainerRef.current || !window.L || mapRef.current) return;
         mapRef.current = window.L.map(mapContainerRef.current, {
           zoomControl: true,
-          scrollWheelZoom: false,
+          scrollWheelZoom: true,
+          touchZoom: true,
           preferCanvas: true,
           zoomAnimation: false,
           fadeAnimation: false,

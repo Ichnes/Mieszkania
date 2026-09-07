@@ -51,4 +51,13 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     `Expected only page RCN lookups, got ${rcnQueries}`,
   );
   assert.ok(result.items.every((item) => typeof item.dreamScore === "number"));
+  const changed = rows.find((row) => row.id === expectedIds[0])!;
+  changed.description = "Winda, garaż podziemny. Gotowe do wprowadzenia.";
+  const updated = await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });
+  assert.equal(
+    updated.items[0].id,
+    changed.id,
+    "Changed description must invalidate the cached match score",
+  );
+  assert.ok(updated.items[0].dreamScore! > result.items[0].dreamScore!);
 });

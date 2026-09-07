@@ -1,3 +1,4 @@
+import { useStatisticsPreferences } from "../features/statistics/useStatisticsPreferences";
 import type {
   AlertsResponse,
   CollectorRunResponse,
@@ -74,22 +75,15 @@ export function useWorkspaceController() {
   const [selectedListing, setSelectedListing] = useState<ListingDetail | null>(null);
   const [marketStats, setMarketStats] = useState<MarketStatsResponse | null>(null);
   const [marketStatsLoading, setMarketStatsLoading] = useState(false);
-  const [marketStatsFilters, setMarketStatsFilters] = useState<MarketStatsFilters>({
-    minYear: "",
-    minArea: "",
-    maxArea: "",
-    elevator: false,
-    garage: false,
-  });
-  const [marketStatsDraftFilters, setMarketStatsDraftFilters] = useState<MarketStatsFilters>({
-    minYear: "",
-    minArea: "",
-    maxArea: "",
-    elevator: false,
-    garage: false,
-  });
+  const {
+    marketStatsFilters,
+    setMarketStatsFilters,
+    marketStatsDraftFilters,
+    setMarketStatsDraftFilters,
+    marketStatsPeriod,
+    setMarketStatsPeriod,
+  } = useStatisticsPreferences();
   const [marketStatsBaseline, setMarketStatsBaseline] = useState<MarketStatsResponse | null>(null);
-  const [marketStatsPeriod, setMarketStatsPeriod] = useState<30 | 90 | 180>(30);
   const [selectedListingDuplicateCandidates, setSelectedListingDuplicateCandidates] = useState<
     DuplicateCandidate[]
   >([]);

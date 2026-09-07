@@ -58,3 +58,16 @@ np. do sprawdzenia własności, najmu, dodatkowych kosztów albo remontu. Pytani
 cytat i uzasadnienie; brak przesłanek oznacza brak sekcji.
 Okno oferty można zamknąć również podczas ładowania, przyciskiem, Escape lub kliknięciem tła.
 Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.
+
+## Zapamiętywanie statystyk i gesty
+
+Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
+Po odświeżeniu wracają zarówno zastosowane kryteria, jak i rozpoczęte zmiany w polach.
+**Pokaż wyniki** zatwierdza zmiany, a **Wyczyść** usuwa kryteria.
+
+Mapa w szczegółach oferty obsługuje kółko myszy oraz powiększanie dwoma palcami.
+W pełnoekranowym podglądzie zdjęć rozsuń palce, aby powiększyć, i zsuń, aby pomniejszyć.
+Powiększone zdjęcie można przesuwać; przy podstawowym powiększeniu przesunięcie w bok
+zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje zdjęcie do
+nowego ekranu i resetuje powiększenie. Na telefonie pełny ekran zajmuje obszar aplikacji;
+paski systemowe przeglądarki mogą pozostać widoczne.

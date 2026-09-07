@@ -100,7 +100,7 @@ export function analyzeDescription(description: string, floor?: number) {
     {
       key: "finish",
       label: "Co obejmuje standard deweloperski",
-      match: /stan.{0,15}dewelopersk/,
+      match: /stan.{0,15}dewelopersk|(?:opcj\w*|mozliwosc)\s+wykonczenia\s+pod\s+klucz/,
       reason: "Zakres wyposażenia decyduje o pracach potrzebnych przed przeprowadzką.",
       question:
         "Poproś o specyfikację odbioru: instalacje, ogrzewanie, tynki, wylewki i drzwi. Które z pokazanych zdjęć są wizualizacjami, a które przedstawiają sprzedawany lokal?",

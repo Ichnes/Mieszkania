@@ -30,3 +30,15 @@ test("does not treat a city or district suffix as a street", () => {
     undefined,
   );
 });
+
+test("tax and commission marketing in a title is not a street", () => {
+  for (const suffix of ["bez Pcc", "bez prowizji", "VAT 8%"])
+    assert.equal(
+      extractStreetFromLocationTitle(
+        `4 pokoje, Miasteczko Wilanów, ${suffix}`,
+        "Wilanów",
+        "Warszawa",
+      ),
+      undefined,
+    );
+});
