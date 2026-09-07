@@ -1,0 +1,282 @@
+/* Listing detail and decision workflow */
+.detail-overlay {
+  padding: 18px;
+  background: rgba(7, 17, 14, 0.62);
+  backdrop-filter: blur(8px);
+}
+.detail-panel {
+  width: min(1440px, 100%);
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: 26px;
+  color: var(--ink);
+  background: var(--page);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.32);
+}
+.detail-header {
+  padding-right: 46px;
+}
+.detail-header h2 {
+  max-width: 28ch;
+  margin-bottom: 10px;
+  font-size: clamp(1.45rem, 2.2vw, 2.35rem);
+}
+.detail-actions {
+  max-width: 650px;
+}
+.detail-actions .action-button {
+  min-height: 40px;
+}
+.detail-grid {
+  grid-template-columns: minmax(0, 2.3fr) minmax(320px, 0.85fr);
+  gap: 18px;
+}
+.detail-gallery {
+  overflow: hidden;
+  border-radius: 20px;
+  background: #0e1714;
+}
+.detail-section-tabs {
+  gap: 5px;
+  margin-top: 14px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.detail-section-tabs .tab-button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 11px;
+  color: var(--ink-soft);
+  background: transparent;
+}
+.detail-section-tabs .tab-button.active {
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+}
+.listing-facts-table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.listing-facts-table th {
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+}
+.listing-facts-table td {
+  color: var(--ink);
+}
+.quick-contact-card {
+  display: grid;
+  grid-template-columns: minmax(210px, 1fr) minmax(220px, 0.8fr) auto;
+  gap: 12px;
+  align-items: end;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, var(--line));
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.quick-contact-card > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  align-self: center;
+}
+.quick-contact-card > div > svg {
+  flex: 0 0 auto;
+  color: var(--brand-strong);
+}
+.quick-contact-card > div > span {
+  display: grid;
+  gap: 3px;
+}
+.quick-contact-card small {
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.viewing-form {
+  grid-template-columns: 1fr !important;
+  gap: 10px !important;
+}
+.viewing-form > * {
+  grid-column: 1 !important;
+  min-width: 0;
+  width: 100%;
+}
+.detail-sidebar-box {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.duplicate-candidate-card {
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface-muted);
+}
+.duplicate-candidate-card .panel-inline-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.evaluation-table {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.evaluation-table-head,
+.evaluation-row {
+  display: grid;
+  grid-template-columns: minmax(190px, 1fr) 110px 110px;
+  gap: 12px;
+  align-items: center;
+}
+.evaluation-table-head {
+  min-height: 42px;
+  padding: 8px 14px;
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.evaluation-table-head span:not(:first-child) {
+  text-align: center;
+}
+.evaluation-row {
+  min-height: 68px;
+  padding: 9px 14px;
+  border-top: 1px solid var(--line);
+}
+.evaluation-row:first-of-type {
+  border-top: 0;
+}
+.evaluation-criterion {
+  display: grid;
+  gap: 2px;
+}
+.evaluation-criterion small,
+.evaluation-row label > span {
+  color: var(--ink-soft);
+  font-size: 0.67rem;
+}
+.evaluation-row label {
+  display: grid;
+  gap: 3px;
+  text-align: center;
+}
+.evaluation-row label > span {
+  display: none;
+}
+.evaluation-score-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px;
+  text-align: center;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Mortgage: inputs first, explanation second. */
+.mortgage-page {
+  gap: 14px;
+}
+.mortgage-header {
+  padding: 28px;
+  background: linear-gradient(135deg, var(--surface), var(--brand-soft));
+}
+.mortgage-header h2 {
+  margin-bottom: 8px;
+  font-size: clamp(1.8rem, 3vw, 2.8rem);
+}
+.mortgage-explainer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+}
+.mortgage-explainer article {
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  gap: 10px;
+  align-items: start;
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.mortgage-explainer article > span {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  font-weight: 900;
+}
+.mortgage-explainer article > div {
+  display: grid;
+  gap: 4px;
+}
+.mortgage-explainer small {
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.mortgage-layout {
+  grid-template-columns: minmax(300px, 390px) minmax(0, 1fr);
+  gap: 14px;
+}
+.mortgage-form {
+  position: sticky;
+  top: 82px;
+  padding: 20px;
+}
+.mortgage-form h3 {
+  margin: 0 0 4px;
+}
+.mortgage-stat {
+  background: var(--brand-soft);
+  border-color: var(--line);
+}
+.mortgage-stat span,
+.mortgage-compare span,
+.mortgage-compare small {
+  color: var(--ink-soft);
+}
+.mortgage-compare p,
+.mortgage-savings article,
+.cost-donut li {
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}
+.mortgage-visuals .panel,
+.premium-mortgage-visuals .panel {
+  border-color: var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.mortgage-table-wrap {
+  border-color: var(--line);
+  background: var(--surface);
+}
+.mortgage-table-wrap thead {
+  background: var(--brand-soft);
+}
+.mortgage-table-wrap tbody tr:nth-child(even) {
+  background: var(--surface-muted);
+}
+.mortgage-table-wrap tbody tr:hover {
+  background: var(--brand-soft);
+}
+.mortgage-table-wrap th,
+.mortgage-table-wrap td {
+  border-color: var(--line);
+  color: var(--ink);
+}

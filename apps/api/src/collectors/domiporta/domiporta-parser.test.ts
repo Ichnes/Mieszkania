@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { extractDomiportaConstructionYear } from "../nieruchomosci-online/index";
+import { extractDomiportaConstructionYear } from "../nieruchomosci-online";
 
 test("reads the construction year from the labelled Domiporta feature", () => {
   const html = `

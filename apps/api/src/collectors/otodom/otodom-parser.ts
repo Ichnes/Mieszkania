@@ -1,6 +1,6 @@
-import { extractOtodomExternalId } from "./otodom-url";
+import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
-import { sanitizeStreetCandidate } from "../../services/address-normalization";
+import { extractOtodomExternalId } from "./otodom-url";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -20,15 +20,15 @@ export class OtodomParser implements ListingParser {
         readString(findWebPageNode(jsonLd), "headline"),
         extractMetaTag(document.html, "property", "og:title"),
         extractTitle(document.html),
-        `Otodom listing ${fallbackId}`
-      ) ?? `Otodom listing ${fallbackId}`
+        `Otodom listing ${fallbackId}`,
+      ) ?? `Otodom listing ${fallbackId}`,
     );
 
     const description = firstString(
       stripHtml(readString(adNode, "description")),
       stripHtml(readString(productNode, "description")),
       extractMetaTag(document.html, "property", "og:description"),
-      extractMetaDescription(document.html)
+      extractMetaDescription(document.html),
     );
 
     const addressNode = getRecordAtPath(productNode, ["address"]);
@@ -38,75 +38,80 @@ export class OtodomParser implements ListingParser {
     const locationLabel = firstString(
       readString(adNode, "location", "pathName"),
       readString(addressNode, "streetAddress"),
-      readString(addressNode, "addressLocality")
+      readString(addressNode, "addressLocality"),
     );
     const city = firstString(
       readString(addressNode, "addressLocality"),
       inferCityFromUrl(document.finalUrl ?? document.url),
-      "Unknown"
+      "Unknown",
     )!;
     const district = firstString(
       readString(adNode, "location", "district", "name"),
       breadcrumbDistrict,
-      inferDistrictFromText(document.finalUrl ?? document.url)
+      inferDistrictFromText(document.finalUrl ?? document.url),
     );
     const neighborhood = firstString(
       readString(adNode, "location", "pathName"),
       breadcrumbNeighborhood,
-      inferDistrictFromText(title)
+      inferDistrictFromText(title),
     );
     const street = firstString(
       readString(addressNode, "streetAddress"),
       extractStreetFromText(description),
-      extractStreetFromText(locationLabel)
+      extractStreetFromText(locationLabel),
     );
     const priceAmount = firstNumber(
       readNumber(adNode, "target", "Price"),
       readNumber(getRecordAtPath(productNode, ["offers"]), "price"),
       readNumber(adNode, "price", "value"),
-      readNumber(adNode, "totalPrice", "value")
+      readNumber(adNode, "totalPrice", "value"),
     );
     const areaSqm = firstNumber(
       readNumber(adNode, "attributes", "m"),
       readNumber(productNode, "floorSize", "value"),
-      readNumber(productNode, "floorSize")
+      readNumber(productNode, "floorSize"),
     );
     const rooms = firstNumber(
       readNumber(adNode, "attributes", "rooms_num"),
-      readNumber(productNode, "numberOfRooms")
+      readNumber(productNode, "numberOfRooms"),
     );
     const floorInfo = parseFloorInfo(findAdditionalPropertyValue(productNode, "Piętro"));
     const floor = firstNumber(
       parseFloorNumber(readString(adNode, "attributes", "floor_no")),
       readNumber(adNode, "attributes", "floor"),
-      floorInfo.floor
+      floorInfo.floor,
     );
     const totalFloors = firstNumber(
       readNumber(adNode, "attributes", "building_floors_num"),
-      floorInfo.totalFloors
+      floorInfo.totalFloors,
     );
     const yearBuilt = firstNumber(
       readNumber(adNode, "attributes", "build_year"),
       readNumber(adNode, "attributes", "construction_year"),
-      readNumberFromString(findAdditionalPropertyValue(productNode, "Rok budowy"))
+      readNumberFromString(findAdditionalPropertyValue(productNode, "Rok budowy")),
     );
     const marketType = inferMarketType(
       readString(adNode, "attributes", "market"),
       readString(productNode, "offers", "availability"),
-      document.url
+      document.url,
     );
     const latitude = firstNumber(
       readNumber(geoNode, "latitude"),
-      readNumber(adNode, "location", "coordinates", "latitude")
+      readNumber(adNode, "location", "coordinates", "latitude"),
     );
     const longitude = firstNumber(
       readNumber(geoNode, "longitude"),
-      readNumber(adNode, "location", "coordinates", "longitude")
+      readNumber(adNode, "location", "coordinates", "longitude"),
     );
     const sourceContactPhone = extractSourceContactPhone(adNode, productNode);
     const addressText = compactAddress(street, district, city);
     const imageUrls = collectListingImages(adNode, productNode, document.html);
-    const publishedAt = extractPublishedAt(adNode, productNode, findWebPageNode(jsonLd), document.html);
+    const publishedAt = extractPublishedAt(
+      adNode,
+      productNode,
+      findWebPageNode(jsonLd),
+      document.html,
+    );
     const portalFeatures = extractOtodomPortalFeatures(document.html, productNode);
 
     return {
@@ -131,40 +136,47 @@ export class OtodomParser implements ListingParser {
       publishedAt: publishedAt ?? undefined,
       marketType,
       offerType: "sale",
-      status: isUnavailableOfferPage(`${document.html} ${title} ${description ?? ""}`) ? "removed" : "active",
+      status: isUnavailableOfferPage(`${document.html} ${title} ${description ?? ""}`)
+        ? "removed"
+        : "active",
       images: imageUrls.map((sourceUrl, index) => ({
         sourceUrl,
         position: index,
-        isPrimary: index === 0
+        isPrimary: index === 0,
       })),
       rawPayload: {
         nextData,
         jsonLd,
         portalFeatures,
         url: document.url,
-        statusCode: document.statusCode
-      }
+        statusCode: document.statusCode,
+      },
     };
   }
 }
 
 function extractOtodomPortalFeatures(html: string, productNode: JsonRecord | null) {
   const liftFromDetails = html.match(
-    /<div[^>]*>\s*Winda\s*(?:<!--[\s\S]*?-->)?\s*:?\s*<\/div>\s*<div[^>]*>\s*(tak|nie)\s*<\/div>/i
+    /<div[^>]*>\s*Winda\s*(?:<!--[\s\S]*?-->)?\s*:?\s*<\/div>\s*<div[^>]*>\s*(tak|nie)\s*<\/div>/i,
   )?.[1];
   const lift = firstString(liftFromDetails, findAdditionalPropertyValue(productNode, "Winda"));
   return lift ? { lift } : undefined;
 }
 
 function isUnavailableOfferPage(value: string) {
-  return /oferta (?:nie jest|jest juz) dostepna|to ogloszenie nie jest juz dostepne|pod tym adresem nic nie ma|nieruchomosc ma juz nowego wlasciciela/i.test(value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[łŁ]/g, "l"));
+  return /oferta (?:nie jest|jest juz) dostepna|to ogloszenie nie jest juz dostepne|pod tym adresem nic nie ma|nieruchomosc ma juz nowego wlasciciela/i.test(
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[łŁ]/g, "l"),
+  );
 }
 
 function extractPublishedAt(
   adNode: JsonRecord | null,
   productNode: JsonRecord | null,
   webPageNode: JsonRecord | null,
-  html: string
+  html: string,
 ) {
   return firstValidIsoDate(
     readString(adNode, "createdAt"),
@@ -180,14 +192,14 @@ function extractPublishedAt(
     readString(webPageNode, "dateCreated"),
     extractMetaContent(html, "article:published_time"),
     extractMetaContent(html, "og:published_time"),
-    extractMetaContent(html, "datePublished")
+    extractMetaContent(html, "datePublished"),
   );
 }
 
 function extractJsonScript(html: string, scriptId: string) {
   const pattern = new RegExp(
     `<script[^>]+id=["']${escapeRegExp(scriptId)}["'][^>]*>([\\s\\S]*?)<\\/script>`,
-    "i"
+    "i",
   );
   const match = html.match(pattern);
 
@@ -205,7 +217,7 @@ function extractJsonScript(html: string, scriptId: string) {
 function extractJsonLd(html: string) {
   const matches = Array.from(
     html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi),
-    (match) => match[1]?.trim()
+    (match) => match[1]?.trim(),
   ).filter(Boolean);
 
   for (const value of matches) {
@@ -230,7 +242,9 @@ function findProductNode(value: unknown) {
 
       const type = (item as JsonRecord)["@type"];
       const types = Array.isArray(type) ? type : [type];
-      if (types.some((entry) => typeof entry === "string" && ["Product", "Apartment"].includes(entry))) {
+      if (
+        types.some((entry) => typeof entry === "string" && ["Product", "Apartment"].includes(entry))
+      ) {
         return item as JsonRecord;
       }
     }
@@ -258,11 +272,15 @@ function findWebPageNode(value: unknown) {
   return null;
 }
 
-function collectListingImages(adNode: JsonRecord | null, productNode: JsonRecord | null, html: string) {
+function collectListingImages(
+  adNode: JsonRecord | null,
+  productNode: JsonRecord | null,
+  html: string,
+) {
   const imageUrls = [
     ...collectImagesFromAd(adNode),
     ...collectImagesFromProduct(productNode),
-    ...extractOpenGraphImages(html)
+    ...extractOpenGraphImages(html),
   ];
 
   return dedupe(imageUrls);
@@ -284,7 +302,7 @@ function collectImagesFromAd(adNode: JsonRecord | null) {
       readString(record, "medium"),
       readString(record, "small"),
       readString(record, "thumbnail"),
-      readString(record, "url")
+      readString(record, "url"),
     );
 
     if (candidate && isImageUrl(candidate)) {
@@ -317,7 +335,7 @@ function collectImagesFromProduct(productNode: JsonRecord | null) {
 function extractOpenGraphImages(html: string) {
   return Array.from(
     html.matchAll(/<meta\s+property=["']og:image["']\s+content=["']([\s\S]*?)["']\s*\/?>/gi),
-    (match) => sanitizeMetaContent(match[1])
+    (match) => sanitizeMetaContent(match[1]),
   ).filter((value): value is string => typeof value === "string" && isImageUrl(value));
 }
 
@@ -334,7 +352,7 @@ function extractMetaDescription(html: string) {
 function extractMetaTag(html: string, attribute: "property" | "name", value: string) {
   const pattern = new RegExp(
     `<meta\\s+${attribute}=["']${escapeRegExp(value)}["']\\s+content=["']([\\s\\S]*?)["']\\s*\\/?>`,
-    "i"
+    "i",
   );
   const match = html.match(pattern);
   return sanitizeMetaContent(match?.[1] ?? null);
@@ -366,7 +384,7 @@ function extractSourceContactPhone(adNode: JsonRecord | null, productNode: JsonR
     normalizePhone(readFirstPhoneNumber(adNode, ["contact", "phones"])),
     normalizePhone(readString(getRecordAtPath(productNode, ["seller"]), "telephone")),
     normalizePhone(readString(getRecordAtPath(productNode, ["offers", "seller"]), "telephone")),
-    normalizePhone(readString(productNode, "telephone"))
+    normalizePhone(readString(productNode, "telephone")),
   );
 }
 
@@ -428,7 +446,7 @@ function inferDistrictFromText(text: string | null | undefined) {
     "ursus",
     "targowek",
     "wlochy",
-    "wawer"
+    "wawer",
   ];
 
   const found = knownDistricts.find((district) => normalized.includes(district));
@@ -480,7 +498,7 @@ function parseFloorInfo(value: string | null) {
   const match = value.match(/(\d+)\s*\/\s*(\d+)/);
   return {
     floor: match ? Number(match[1]) : null,
-    totalFloors: match ? Number(match[2]) : null
+    totalFloors: match ? Number(match[2]) : null,
   };
 }
 
@@ -536,7 +554,7 @@ function readFirstPhoneNumber(value: unknown, path: string[]) {
     const candidate = firstString(
       readString(record, "number"),
       readString(record, "phone"),
-      readString(record, "telephone")
+      readString(record, "telephone"),
     );
     if (candidate) {
       return candidate;
@@ -574,7 +592,10 @@ function readNumberFromString(value: string | null | undefined) {
     return null;
   }
 
-  const cleaned = value.replace(/\s+/g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+  const cleaned = value
+    .replace(/\s+/g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "");
   const numeric = Number(cleaned);
   return Number.isFinite(numeric) ? numeric : null;
 }
@@ -582,7 +603,7 @@ function readNumberFromString(value: string | null | undefined) {
 function extractMetaContent(html: string, property: string) {
   const pattern = new RegExp(
     `<meta[^>]+(?:property|name)=["']${escapeRegExp(property)}["'][^>]+content=["']([^"']+)["'][^>]*>`,
-    "i"
+    "i",
   );
   return pattern.exec(html)?.[1]?.trim() ?? null;
 }
@@ -719,7 +740,10 @@ function extractExternalId(url: string) {
 }
 
 function toSlug(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function escapeRegExp(value: string) {

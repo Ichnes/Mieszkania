@@ -1,0 +1,669 @@
+/* Analysis, review and immersive media share the application palette. */
+.insight-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin: 18px 0;
+}
+.insight-category {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 18px;
+  background: var(--surface-muted);
+}
+.insight-category h4 {
+  margin: 0 0 10px;
+}
+.insight-category p {
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.insight-number {
+  display: block;
+  font-size: clamp(1.2rem, 2vw, 1.8rem);
+  margin: 12px 0;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.description-review {
+  margin: 24px 0;
+  padding: 20px 0;
+  border-block: 1px solid var(--line);
+}
+.description-review .insight-card-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.description-review blockquote {
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-left: 3px solid var(--brand);
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+.description-review summary,
+.surroundings-category-details summary {
+  cursor: pointer;
+  min-height: 44px;
+  padding: 10px 0;
+}
+.surroundings-categories {
+  display: grid;
+  gap: 12px;
+}
+.surroundings-category-details {
+  border-top: 1px solid var(--line);
+}
+.surroundings-category-details summary span {
+  display: block;
+  margin: 6px 0 0 18px;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+.surroundings-source-links {
+  display: grid;
+  max-height: 220px;
+  overflow: auto;
+}
+.surroundings-source-links a {
+  padding: 10px;
+  color: var(--brand);
+  overflow-wrap: anywhere;
+}
+.market-pulse {
+  margin-bottom: 18px;
+}
+.duplicate-groups-page,
+.mortgage-page,
+.market-pulse,
+.sync-center {
+  scroll-margin-top: 100px;
+}
+.sync-connection {
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+  padding: 0 8px;
+  overflow-wrap: anywhere;
+}
+.sync-center .portal-status-row {
+  grid-template-columns: minmax(140px, 1fr) repeat(4, minmax(65px, 0.5fr));
+  min-width: 470px;
+}
+.sync-recent-failures {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0;
+}
+.sync-recent-failures summary {
+  padding: 12px 0;
+  cursor: pointer;
+}
+.sync-recent-failures article {
+  padding: 12px 16px;
+  margin-bottom: 8px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow-wrap: anywhere;
+}
+.sync-recent-failures code {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.duplicate-metrics article {
+  padding: 18px;
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.duplicate-metrics strong {
+  display: block;
+  font-size: 2rem;
+  color: var(--brand);
+  font-variant-numeric: tabular-nums;
+}
+.duplicate-metrics span {
+  display: block;
+  color: var(--ink-soft);
+  margin-top: 4px;
+}
+.duplicate-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+.duplicate-toolbar label {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.duplicate-review-v2 .section-topline {
+  align-items: start;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.duplicate-review-v2 .section-topline h3 {
+  margin: 0;
+  flex: 1;
+  min-width: 180px;
+}
+.duplicate-member-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 18px;
+  margin-top: 20px;
+}
+.duplicate-review-member {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 260px;
+  max-width: 380px;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  overflow: hidden;
+  background: var(--surface);
+}
+.duplicate-review-member.is-primary {
+  border-color: var(--brand);
+}
+.duplicate-photo-button img,
+.duplicate-preview-empty {
+  display: block;
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  background: var(--surface-muted);
+}
+.duplicate-preview-empty {
+  display: grid;
+  place-items: center;
+  color: var(--ink-soft);
+}
+.duplicate-member-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 18px;
+}
+.duplicate-member-content h4 {
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.duplicate-member-content p {
+  color: var(--ink-soft);
+}
+.duplicate-member-actions,
+.duplicate-review-footer,
+.duplicate-pagination {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.duplicate-review-footer {
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.duplicate-review-footer small {
+  color: var(--ink-soft);
+}
+.duplicate-pagination {
+  justify-content: center;
+  margin: 20px 0;
+}
+.duplicate-review-v2 {
+  width: 100%;
+  max-width: 1220px;
+  justify-self: center;
+  background: var(--surface-muted);
+}
+.duplicate-group-heading {
+  flex: 1;
+  min-width: 0;
+}
+.duplicate-group-heading .eyebrow {
+  margin: 0 0 6px;
+}
+.duplicate-photo-frame {
+  position: relative;
+  padding-top: 40px;
+  background: var(--surface-muted);
+}
+.duplicate-source-tag {
+  position: absolute;
+  top: 10px;
+  left: 14px;
+  color: var(--ink);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.duplicate-photo-button {
+  display: block;
+  width: 100%;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+}
+.duplicate-photo-button:focus-visible {
+  outline-offset: -4px;
+}
+.duplicate-role {
+  align-self: flex-start;
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+}
+.is-primary .duplicate-role {
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+}
+.duplicate-member-content h4 {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.duplicate-price-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.duplicate-price-row strong {
+  color: var(--ink);
+  font-size: 1.13rem;
+}
+.duplicate-price-row span {
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.duplicate-member-actions {
+  margin-top: auto;
+  padding-top: 12px;
+  gap: 8px;
+}
+.duplicate-member-actions .action-button {
+  padding: 8px 11px;
+  min-height: 38px;
+  font-size: 0.75rem;
+}
+.duplicate-member-actions .text-link-button {
+  margin-right: auto;
+  color: var(--brand-strong);
+  font-size: 0.78rem;
+}
+.market-scope {
+  color: var(--ink-soft);
+  line-height: 1.6;
+}
+.market-signal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.market-signal-grid .insight-category {
+  padding: 22px;
+  background: var(--surface-muted);
+}
+.market-signal-grid .insight-number {
+  display: block;
+  margin: 12px 0;
+  color: var(--ink);
+}
+.market-signal-grid .insight-number small {
+  font-size: 0.85rem;
+  color: var(--ink-soft);
+}
+.market-signal-grid small {
+  color: var(--ink-soft);
+  line-height: 1.5;
+}
+.market-pressure-row {
+  margin-top: 16px;
+}
+.market-pressure-row > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.market-pressure-row progress {
+  display: block;
+  width: 100%;
+  height: 6px;
+  margin: 8px 0;
+  accent-color: var(--brand);
+}
+.market-signal-note {
+  margin-bottom: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.map-legend {
+  display: block;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
+  padding: 12px 14px;
+}
+.map-legend summary {
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.map-legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding-top: 12px;
+}
+.map-legend-items > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.72rem;
+  color: var(--ink);
+}
+.map-legend .metro-legend-badge {
+  width: 29px;
+  height: 25px;
+  border-radius: 6px;
+  border: 0;
+  box-shadow: none;
+  font-style: normal;
+  font-size: 0.7rem;
+}
+.map-legend-planned-line {
+  width: 24px;
+  border-top: 3px dashed var(--ink-soft);
+}
+.map-legend .rail-legend-line {
+  border-color: var(--ink);
+}
+.map-legend .tram-legend-line {
+  border-color: #279bc7;
+}
+.map-legend .map-flat {
+  background: #81919f;
+}
+:root[data-theme="dark"] .duplicate-role {
+  color: #d2dfd8;
+}
+:root[data-theme="dark"] .is-primary .duplicate-role {
+  color: #ffccaa;
+  background: #3b291d;
+}
+:root[data-theme="dark"] .duplicate-member-actions .text-link-button {
+  color: #ffc59c;
+}
+:root[data-theme="dark"] .active-filter-chip {
+  color: #e2eee7;
+  background: #2b3e35;
+  border: 1px solid #486452;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel {
+  --line: #44534e;
+  --brand-strong: #f3b68f;
+  --brand-soft: #37271f;
+  color: #eef5f1;
+  background: #17211e;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .section-switches .tab-button {
+  color: #c9d6cf;
+  background: transparent;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .section-switches .tab-button.active {
+  color: #ffe5cf;
+  border-color: #a86d48;
+  background: #533724;
+  box-shadow: none;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .text-input {
+  color: #f0f6f2;
+  background: #101815;
+  border-color: #4c5e55;
+  color-scheme: dark;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .text-input::placeholder {
+  color: #a8b8b0;
+  opacity: 1;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .filter-field > span {
+  color: #c2d0c8;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .check-row.is-active {
+  color: #ffddc3;
+  border-color: #a86d48;
+  background: #433022;
+}
+:root[data-theme="dark"] .listings-workspace .filters-panel .check-row input {
+  accent-color: #e9a579;
+}
+@media (max-width: 700px) {
+  .market-signal-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .market-signal-grid .insight-category {
+    padding: 16px;
+  }
+  .map-legend {
+    gap: 10px;
+    padding: 10px;
+  }
+  .duplicate-review-v2 {
+    padding: 16px;
+  }
+  .duplicate-review-v2 .section-topline h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+}
+.mortgage-custom-fields {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 20px 0;
+}
+.rate-scenario-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 12px;
+}
+.mortgage-table-wrap tr.is-selected {
+  background: var(--brand-soft);
+}
+.mortgage-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.mortgage-table-wrap td,
+.mortgage-table-wrap th {
+  text-align: left;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+.fullscreen-frame {
+  position: relative;
+  min-width: 0;
+}
+.map-load-error {
+  position: absolute;
+  inset: 60px 16px auto;
+  z-index: 1100;
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+}
+.fullscreen-toggle,
+.photo-rotate {
+  display: grid;
+  place-items: center;
+  position: absolute;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  z-index: 1100;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+}
+.fullscreen-frame.is-expanded,
+.fullscreen-frame:fullscreen {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  max-height: none;
+  min-height: 0;
+  z-index: 1500;
+  border: 0;
+  border-radius: 0;
+  background: var(--surface);
+  overflow: hidden;
+}
+.fullscreen-frame.is-expanded .map-canvas,
+.fullscreen-frame:fullscreen .map-canvas,
+.fullscreen-frame.is-expanded .listing-map,
+.fullscreen-frame:fullscreen .listing-map {
+  height: 100%;
+  width: 100%;
+  min-height: 0;
+  border-radius: 0;
+}
+.fullscreen-frame.is-expanded .map-caption,
+.fullscreen-frame.is-expanded .map-legend {
+  display: none;
+}
+.stats-map-fullscreen.is-expanded .district-svg {
+  width: 100%;
+  height: 100dvh;
+  max-height: none;
+}
+.image-lightbox {
+  padding: 0;
+  z-index: 2000;
+  height: 100dvh;
+  overscroll-behavior: contain;
+}
+.photo-fullscreen,
+.photo-fullscreen.is-expanded,
+.photo-fullscreen:fullscreen {
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  width: 100vw;
+  height: 100dvh;
+  background: #101512;
+  overflow: hidden;
+}
+.photo-fullscreen .fullscreen-toggle {
+  right: calc(max(12px, env(safe-area-inset-right)) + 56px);
+}
+.photo-fullscreen .photo-rotate {
+  right: calc(max(12px, env(safe-area-inset-right)) + 112px);
+}
+.photo-fullscreen .image-lightbox-close {
+  position: absolute;
+  z-index: 1100;
+  top: max(12px, env(safe-area-inset-top));
+  right: max(12px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+}
+.photo-fullscreen .image-lightbox-image {
+  max-width: calc(100vw - 112px);
+  max-height: calc(100dvh - 128px);
+  border-radius: 8px;
+}
+.photo-fullscreen .image-lightbox-image.is-rotated {
+  max-width: calc(100dvh - 128px);
+  max-height: calc(100vw - 112px);
+}
+.photo-fullscreen .image-lightbox-nav {
+  z-index: 1000;
+}
+.photo-fullscreen .image-lightbox-counter {
+  bottom: max(12px, env(safe-area-inset-bottom));
+}
+@media (max-width: 1100px) {
+  .rate-scenario-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .mortgage-custom-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .insight-card-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .insight-card-grid,
+  .description-review .insight-card-grid,
+  .duplicate-toolbar,
+  .mortgage-custom-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .duplicate-metrics {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .duplicate-metrics article {
+    padding: 12px 8px;
+  }
+  .duplicate-metrics strong {
+    font-size: 1.6rem;
+  }
+  .duplicate-metrics span {
+    font-size: 0.75rem;
+    overflow-wrap: anywhere;
+  }
+  .duplicate-review-footer {
+    align-items: stretch;
+  }
+  .duplicate-review-footer > button {
+    width: 100%;
+  }
+  .rate-scenario-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .photo-fullscreen .image-lightbox-image {
+    max-width: calc(100vw - 20px);
+  }
+  .photo-fullscreen .image-lightbox-image.is-rotated {
+    max-height: calc(100vw - 20px);
+  }
+  .photo-fullscreen .image-lightbox-nav {
+    top: auto;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    transform: none;
+    height: 44px;
+    width: 44px;
+    font-size: 2rem;
+  }
+}
+@media (orientation: landscape) and (max-height: 550px) {
+  .photo-fullscreen .image-lightbox-image {
+    max-width: calc(100vw - 130px);
+    max-height: calc(100dvh - 76px);
+  }
+  .photo-fullscreen .image-lightbox-image.is-rotated {
+    max-width: calc(100dvh - 76px);
+    max-height: calc(100vw - 130px);
+  }
+  .photo-fullscreen .image-lightbox-counter {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+  }
+}

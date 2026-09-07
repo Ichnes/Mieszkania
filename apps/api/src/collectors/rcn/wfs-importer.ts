@@ -1,10 +1,13 @@
 import type { RcnImportResponse } from "@mieszkania/shared";
 import proj4 from "proj4";
+import { withDb } from "../../db";
+import { ensureSource } from "../../services/collecting/source-registry";
+import {
+  normalizePolish,
+  normalizeStreetName,
+} from "../../services/geography/address-normalization";
 import type { RcnPowiatConfig } from "./types";
 import { warsawAreaRcnPowiatConfigs } from "./warsaw-region-config";
-import { withDb } from "../../db";
-import { normalizePolish, normalizeStreetName } from "../../services/address-normalization";
-import { ensureSource } from "../../services/source-registry";
 
 type ParsedFeature = {
   raw: Record<string, string>;
@@ -16,7 +19,10 @@ const LOCAL_FEATURE_TYPE = "ms:lokale";
 const PAGE_SIZE = 250;
 const MAX_FEATURES_PER_SCOPE = 20_000;
 
-proj4.defs("EPSG:2180", "+proj=tmerc +lat_0=0 +lon_0=19 +k=0.9993 +x_0=500000 +y_0=-5300000 +ellps=GRS80 +units=m +no_defs");
+proj4.defs(
+  "EPSG:2180",
+  "+proj=tmerc +lat_0=0 +lon_0=19 +k=0.9993 +x_0=500000 +y_0=-5300000 +ellps=GRS80 +units=m +no_defs",
+);
 
 export async function importRcnTransactions(scope?: string): Promise<RcnImportResponse> {
   const configs = selectConfigs(scope);
@@ -26,7 +32,9 @@ export async function importRcnTransactions(scope?: string): Promise<RcnImportRe
     configs.map(async (powiat) => {
       try {
         const capabilitiesXml = await fetchText(powiat.wfsCapabilitiesUrl);
-        const featureTypes = parseFeatureTypes(capabilitiesXml).filter((name) => name === LOCAL_FEATURE_TYPE);
+        const featureTypes = parseFeatureTypes(capabilitiesXml).filter(
+          (name) => name === LOCAL_FEATURE_TYPE,
+        );
         if (featureTypes.length === 0) {
           throw new Error(`WFS RCN nie udostępnia warstwy ${LOCAL_FEATURE_TYPE}.`);
         }
@@ -34,7 +42,12 @@ export async function importRcnTransactions(scope?: string): Promise<RcnImportRe
         let powiatImportedCount = 0;
 
         for (let startIndex = 0; startIndex < MAX_FEATURES_PER_SCOPE; startIndex += PAGE_SIZE) {
-          const featureUrl = buildGetFeatureUrl(powiat.wfsCapabilitiesUrl, LOCAL_FEATURE_TYPE, powiat, startIndex);
+          const featureUrl = buildGetFeatureUrl(
+            powiat.wfsCapabilitiesUrl,
+            LOCAL_FEATURE_TYPE,
+            powiat,
+            startIndex,
+          );
           const features = parseFeatureMembers(await fetchText(featureUrl));
           for (const feature of features) {
             const record = mapFeatureToTransaction(feature, powiat);
@@ -53,7 +66,7 @@ export async function importRcnTransactions(scope?: string): Promise<RcnImportRe
           wfsCapabilitiesUrl: powiat.wfsCapabilitiesUrl,
           status: powiatImportedCount > 0 ? ("imported" as const) : ("checked" as const),
           featureTypes,
-          importedCount: powiatImportedCount
+          importedCount: powiatImportedCount,
         };
       } catch (error) {
         return {
@@ -61,17 +74,17 @@ export async function importRcnTransactions(scope?: string): Promise<RcnImportRe
           label: powiat.label,
           wfsCapabilitiesUrl: powiat.wfsCapabilitiesUrl,
           status: "failed" as const,
-          error: error instanceof Error ? error.message : "unknown error"
+          error: error instanceof Error ? error.message : "unknown error",
         };
       }
-    })
+    }),
   );
 
   return {
     scope: scope ?? "warsaw-metropolitan",
     checkedPowiatCount: configs.length,
     importedTransactions,
-    powiats
+    powiats,
   };
 }
 
@@ -86,8 +99,8 @@ function selectConfigs(scope?: string) {
 async function fetchText(url: string) {
   const response = await fetch(url, {
     headers: {
-      accept: "application/xml,text/xml"
-    }
+      accept: "application/xml,text/xml",
+    },
   });
 
   if (!response.ok) {
@@ -104,7 +117,12 @@ function parseFeatureTypes(xml: string) {
     .filter((value): value is string => Boolean(value));
 }
 
-function buildGetFeatureUrl(capabilitiesUrl: string, typeName: string, powiat: RcnPowiatConfig, startIndex: number) {
+function buildGetFeatureUrl(
+  capabilitiesUrl: string,
+  typeName: string,
+  powiat: RcnPowiatConfig,
+  startIndex: number,
+) {
   const url = new URL(capabilitiesUrl);
   url.searchParams.set("service", "WFS");
   url.searchParams.set("request", "GetFeature");
@@ -119,12 +137,13 @@ function buildGetFeatureUrl(capabilitiesUrl: string, typeName: string, powiat: R
 
 function parseFeatureMembers(xml: string): ParsedFeature[] {
   const memberBlocks =
-    xml.match(/<(?:wfs:member|gml:featureMember)>[\s\S]*?<\/(?:wfs:member|gml:featureMember)>/g) ?? [];
+    xml.match(/<(?:wfs:member|gml:featureMember)>[\s\S]*?<\/(?:wfs:member|gml:featureMember)>/g) ??
+    [];
 
   return memberBlocks.map((block) => {
     const tags = Array.from(
       block.matchAll(/<[\w.-]+:([\w.-]+)>([^<]*)<\/[\w.-]+:[\w.-]+>/g),
-      (match) => [match[1], decodeXml(match[2].trim())] as const
+      (match) => [match[1], decodeXml(match[2].trim())] as const,
     );
 
     return { raw: Object.fromEntries(tags), ...parseRcnCoordinates(block) };
@@ -134,15 +153,37 @@ function parseFeatureMembers(xml: string): ParsedFeature[] {
 function mapFeatureToTransaction(feature: ParsedFeature, powiat: RcnPowiatConfig) {
   const raw = feature.raw;
   if (!firstValue(raw, ["teryt"])?.startsWith(powiat.terytPrefix)) return null;
-  const transactionDate = firstExactValue(raw, ["dok_data", "transactionDate", "dataTransakcji", "date", "data"]);
-  const priceAmount = parseNumber(firstExactValue(raw, ["lok_cena_brutto", "tran_cena_brutto", "price", "cena", "wartosc"]));
-  const areaSqm = parseNumber(firstExactValue(raw, ["lok_pow_uzyt", "powierzchniaUzytkowa", "powierzchnia", "area"]));
+  const transactionDate = firstExactValue(raw, [
+    "dok_data",
+    "transactionDate",
+    "dataTransakcji",
+    "date",
+    "data",
+  ]);
+  const priceAmount = parseNumber(
+    firstExactValue(raw, ["lok_cena_brutto", "tran_cena_brutto", "price", "cena", "wartosc"]),
+  );
+  const areaSqm = parseNumber(
+    firstExactValue(raw, ["lok_pow_uzyt", "powierzchniaUzytkowa", "powierzchnia", "area"]),
+  );
   const address = parseRcnAddress(firstExactValue(raw, ["lok_adres"]));
   const district = firstValue(raw, ["district", "dzielnica", "obreb"]) ?? null;
   const city = address.city ?? firstValue(raw, ["city", "miasto", "gmina"]) ?? powiat.cityFocus;
-  const street = address.street ?? firstExactValue(raw, ["street", "ulica", "adres", "adresNieruchomosci", "nazwaUlicy", "streetName"]);
-  const marketType = inferMarketType(firstExactValue(raw, ["tran_rodzaj_rynku", "marketType", "rynek", "typRynku"]));
-  const propertyType = firstExactValue(raw, ["lok_funkcja", "propertyType", "rodzaj", "typNieruchomosci"]) ?? "flat";
+  const street =
+    address.street ??
+    firstExactValue(raw, [
+      "street",
+      "ulica",
+      "adres",
+      "adresNieruchomosci",
+      "nazwaUlicy",
+      "streetName",
+    ]);
+  const marketType = inferMarketType(
+    firstExactValue(raw, ["tran_rodzaj_rynku", "marketType", "rynek", "typRynku"]),
+  );
+  const propertyType =
+    firstExactValue(raw, ["lok_funkcja", "propertyType", "rodzaj", "typNieruchomosci"]) ?? "flat";
   if (!transactionDate || !priceAmount || !areaSqm) {
     return null;
   }
@@ -168,15 +209,22 @@ function mapFeatureToTransaction(feature: ParsedFeature, powiat: RcnPowiatConfig
     areaSqm,
     priceAmount,
     pricePerSqm,
-    payloadRaw: raw
+    payloadRaw: raw,
   };
 }
 
 function parseRcnCoordinates(block: string) {
-  const position = block.match(/<gml:pos>([^<]+)<\/gml:pos>/)?.[1]?.trim().split(/\s+/).map(Number);
-  if (!position || position.length < 2 || !position.every(Number.isFinite)) return { latitude: null, longitude: null };
+  const position = block
+    .match(/<gml:pos>([^<]+)<\/gml:pos>/)?.[1]
+    ?.trim()
+    .split(/\s+/)
+    .map(Number);
+  if (!position || position.length < 2 || !position.every(Number.isFinite))
+    return { latitude: null, longitude: null };
   const [longitude, latitude] = proj4("EPSG:2180", "WGS84", [position[1], position[0]]);
-  return latitude >= 49 && latitude <= 55 && longitude >= 14 && longitude <= 25 ? { latitude, longitude } : { latitude: null, longitude: null };
+  return latitude >= 49 && latitude <= 55 && longitude >= 14 && longitude <= 25
+    ? { latitude, longitude }
+    : { latitude: null, longitude: null };
 }
 
 function parseRcnAddress(value: string | null) {
@@ -186,15 +234,21 @@ function parseRcnAddress(value: string | null) {
   return { city, street };
 }
 
-function isComparableFlat(raw: Record<string, string>, areaSqm: number, pricePerSqm: number | null) {
+function isComparableFlat(
+  raw: Record<string, string>,
+  areaSqm: number,
+  pricePerSqm: number | null,
+) {
   const functionName = normalizePolish(firstValue(raw, ["lok_funkcja"]) ?? "");
-  return !functionName.includes("garaz")
-    && !functionName.includes("parking")
-    && areaSqm >= 20
-    && areaSqm <= 250
-    && pricePerSqm !== null
-    && pricePerSqm >= 3_000
-    && pricePerSqm <= 50_000;
+  return (
+    !functionName.includes("garaz") &&
+    !functionName.includes("parking") &&
+    areaSqm >= 20 &&
+    areaSqm <= 250 &&
+    pricePerSqm !== null &&
+    pricePerSqm >= 3_000 &&
+    pricePerSqm <= 50_000
+  );
 }
 
 async function upsertTransaction(record: {
@@ -237,7 +291,15 @@ async function upsertTransaction(record: {
           )
         limit 1
       `,
-        [sourceId, externalTransactionId, record.transactionDate, record.city, record.district, record.priceAmount, record.areaSqm]
+        [
+          sourceId,
+          externalTransactionId,
+          record.transactionDate,
+          record.city,
+          record.district,
+          record.priceAmount,
+          record.areaSqm,
+        ],
       );
 
       if (exists.rows[0]?.id) {
@@ -254,15 +316,15 @@ async function upsertTransaction(record: {
           where id = $1
           `,
           [
-          exists.rows[0].id,
-          record.cityNormalized,
-          record.districtNormalized,
-          record.street,
-          record.streetNormalized,
-          record.latitude,
-          record.longitude,
-          JSON.stringify(record.payloadRaw)
-          ]
+            exists.rows[0].id,
+            record.cityNormalized,
+            record.districtNormalized,
+            record.street,
+            record.streetNormalized,
+            record.latitude,
+            record.longitude,
+            JSON.stringify(record.payloadRaw),
+          ],
         );
         return false;
       }
@@ -290,28 +352,30 @@ async function upsertTransaction(record: {
         values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
         `,
         [
-        sourceId,
-        record.transactionDate,
-        record.city,
-        record.cityNormalized,
-        record.district,
-        record.districtNormalized,
-        record.street,
-        record.streetNormalized,
-        record.latitude,
-        record.longitude,
-        record.propertyType,
-        record.marketType,
-        record.areaSqm,
-        record.priceAmount,
-        record.pricePerSqm,
-        JSON.stringify(record.payloadRaw)
-        ]
+          sourceId,
+          record.transactionDate,
+          record.city,
+          record.cityNormalized,
+          record.district,
+          record.districtNormalized,
+          record.street,
+          record.streetNormalized,
+          record.latitude,
+          record.longitude,
+          record.propertyType,
+          record.marketType,
+          record.areaSqm,
+          record.priceAmount,
+          record.pricePerSqm,
+          JSON.stringify(record.payloadRaw),
+        ],
       );
       return true;
     } catch (error) {
       const reason = error instanceof Error ? error.message : "unknown database error";
-      throw new Error(`${reason}; RCN values: ${JSON.stringify({ transactionDate: record.transactionDate, areaSqm: record.areaSqm, priceAmount: record.priceAmount, pricePerSqm: record.pricePerSqm, sourceKey: record.sourceKey })}`);
+      throw new Error(
+        `${reason}; RCN values: ${JSON.stringify({ transactionDate: record.transactionDate, areaSqm: record.areaSqm, priceAmount: record.priceAmount, pricePerSqm: record.pricePerSqm, sourceKey: record.sourceKey })}`,
+      );
     }
   });
 }
@@ -369,7 +433,7 @@ function inferMarketType(value: string | null): "primary" | "secondary" {
 function decodeXml(value: string) {
   return value
     .replaceAll("&amp;", "&")
-    .replaceAll("&quot;", "\"")
+    .replaceAll("&quot;", '"')
     .replaceAll("&apos;", "'")
     .replaceAll("&lt;", "<")
     .replaceAll("&gt;", ">");

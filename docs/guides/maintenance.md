@@ -1,0 +1,30 @@
+# Utrzymanie lokalnych danych
+
+Zacznij od `storage/logs/import-failures.ndjson`, gdy import się nie udał. Log zawiera
+źródło, ID, link, błąd, liczbę prób i kontekst. Zdjęcia i surowe odpowiedzi są w `storage/`.
+
+| Polecenie                    | Działanie                                                   |
+| ---------------------------- | ----------------------------------------------------------- |
+| `npm run storage:report`     | Raport archiwum i zdjęć                                     |
+| `npm run storage:db-report`  | Rozmiary tabel i payloadów                                  |
+| `npm run storage:migrate`    | Plan migracji archiwum do gzip                              |
+| `npm run media:deduplicate`  | Plan deduplikacji identycznych plików zdjęć                 |
+| `npm run storage:db-compact` | Plan usunięcia redundantnego HTML po potwierdzeniu archiwum |
+| `npm run storage:db-reclaim` | Plan odzyskania miejsca w PostgreSQL                        |
+| `npm run ids:repair-otodom`  | Audyt ID ofert i kolejki Otodom                             |
+
+Narzędzia opisane jako plan domyślnie nie zmieniają danych. Dodanie `-- --apply` uruchamia
+zapis. `VACUUM FULL` wymaga przerwy w pracy bazy. Nie czyść `storage/` bez kopii danych.
+
+## ID Otodom
+
+Przy konfliktach uruchom najpierw `npm run ids:repair-otodom -- --merge-same-offer` i
+przejrzyj plan. Wykonanie wymaga również `--apply`. Skrypt tworzy lokalny backup, działa
+w transakcji i zachowuje historię oraz obrazy. Konflikt danych użytkownika przerywa zapis.
+Wstrzymaj automatyzację przed naprawą i przywróć jej poprzedni stan po zakończeniu.
+
+## Narzędzia historyczne
+
+Pozostałe skrypty są w `apps/api/src/scripts/maintenance`, `database` i `storage`.
+Służą do konkretnych napraw; nie uruchamiają się automatycznie podczas `npm run dev`.
+Przed użyciem przeczytaj kod i zapisz lokalną kopię bazy.

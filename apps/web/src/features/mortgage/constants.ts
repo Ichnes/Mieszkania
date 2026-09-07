@@ -1,0 +1,1 @@
+export const DEFAULT_DOWN_PAYMENT = 430_000;

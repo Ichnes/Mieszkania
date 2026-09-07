@@ -1,7 +1,7 @@
-import { extractOtodomExternalId } from "./otodom-url";
-import { OtodomFetcher } from "./otodom-fetcher";
-import type { SourceDiscovery, SourceListingReference } from "../types";
 import type { SearchContract } from "@mieszkania/shared";
+import type { SourceDiscovery, SourceListingReference } from "../types";
+import { OtodomFetcher } from "./otodom-fetcher";
+import { extractOtodomExternalId } from "./otodom-url";
 
 export class OtodomDiscovery implements SourceDiscovery {
   private readonly fetcher = new OtodomFetcher();
@@ -18,7 +18,9 @@ export class OtodomDiscovery implements SourceDiscovery {
     const citySlug = input.city.toLowerCase().replace(/\s+/g, "-");
     const deduped = new Map<string, SourceListingReference>();
     const pageResults = await Promise.all(
-      Array.from({ length: pages }, (_value, offset) => this.discoverSinglePage(citySlug, startPage + offset, input.contract))
+      Array.from({ length: pages }, (_value, offset) =>
+        this.discoverSinglePage(citySlug, startPage + offset, input.contract),
+      ),
     );
 
     for (const links of pageResults) {
@@ -30,7 +32,11 @@ export class OtodomDiscovery implements SourceDiscovery {
     return Array.from(deduped.values());
   }
 
-  async discoverSinglePage(citySlug: string, page: number, contract?: SearchContract): Promise<SourceListingReference[]> {
+  async discoverSinglePage(
+    citySlug: string,
+    page: number,
+    contract?: SearchContract,
+  ): Promise<SourceListingReference[]> {
     const urls = buildSearchUrls(citySlug, page, contract);
     let lastError: unknown;
 
@@ -60,7 +66,7 @@ function buildSearchUrls(citySlug: string, page: number, contract?: SearchContra
     limit: "36",
     ownerTypeSingleSelect: "ALL",
     by: "LATEST",
-    direction: "DESC"
+    direction: "DESC",
   });
 
   if (contract?.minArea) {
@@ -85,7 +91,7 @@ function buildSearchUrls(citySlug: string, page: number, contract?: SearchContra
   return [
     `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}/${citySlug}?${queryString}`,
     `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}?${queryString}`,
-    `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/${citySlug}?${queryString}`
+    `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/${citySlug}?${queryString}`,
   ];
 }
 
@@ -116,7 +122,9 @@ function toOtodomRooms(roomsMin?: number) {
 export function extractOfferLinks(html: string): SourceListingReference[] {
   const candidates = new Set<string>();
 
-  for (const match of html.matchAll(/https:\/\/www\.otodom\.pl\/pl\/oferta\/[^"' ]+ID[a-zA-Z0-9]+[^"' ]*/g)) {
+  for (const match of html.matchAll(
+    /https:\/\/www\.otodom\.pl\/pl\/oferta\/[^"' ]+ID[a-zA-Z0-9]+[^"' ]*/g,
+  )) {
     candidates.add(normalizeOfferUrl(match[0]));
   }
 
@@ -124,12 +132,16 @@ export function extractOfferLinks(html: string): SourceListingReference[] {
     candidates.add(normalizeOfferUrl(`https://www.otodom.pl${decodeHtml(match[1])}`));
   }
 
-  for (const match of html.matchAll(/"url"\s*:\s*"(https:\\\/\\\/www\.otodom\.pl\\\/pl\\\/oferta\\\/[^"]+ID[a-zA-Z0-9]+[^"]*)"/g)) {
+  for (const match of html.matchAll(
+    /"url"\s*:\s*"(https:\\\/\\\/www\.otodom\.pl\\\/pl\\\/oferta\\\/[^"]+ID[a-zA-Z0-9]+[^"]*)"/g,
+  )) {
     candidates.add(normalizeOfferUrl(match[1].replaceAll("\\/", "/")));
   }
 
   for (const match of html.matchAll(/"(\/pl\/oferta\/[^"]+ID[a-zA-Z0-9]+[^"]*)"/g)) {
-    candidates.add(normalizeOfferUrl(`https://www.otodom.pl${decodeHtml(match[1]).replaceAll("\\/", "/")}`));
+    candidates.add(
+      normalizeOfferUrl(`https://www.otodom.pl${decodeHtml(match[1]).replaceAll("\\/", "/")}`),
+    );
   }
 
   const deduped = new Map<string, SourceListingReference>();
@@ -152,7 +164,5 @@ function normalizeOfferUrl(url: string) {
 }
 
 function decodeHtml(value: string) {
-  return value
-    .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, "\"");
+  return value.replace(/&amp;/gi, "&").replace(/&quot;/gi, '"');
 }

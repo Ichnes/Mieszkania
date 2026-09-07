@@ -1,0 +1,1303 @@
+/* Dashboard polish overrides. Kept last so responsive rules remain predictable. */
+@media (min-width: 901px) {
+  .app-shell {
+    padding-top: 24px;
+  }
+  .top-dashboard-frame {
+    margin-bottom: 20px;
+    padding: 8px 0 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+  .hero {
+    gap: 32px;
+    margin-bottom: 16px;
+  }
+  .hero > div:first-child {
+    text-align: left;
+    justify-self: stretch;
+  }
+  .hero h1 {
+    max-width: 21ch;
+    margin-left: 0;
+    margin-right: 0;
+    font-size: clamp(2rem, 3.4vw, 3.25rem);
+    letter-spacing: -0.035em;
+  }
+  .hero .lead {
+    max-width: 62ch;
+    margin-left: 0;
+    margin-right: 0;
+    line-height: 1.6;
+  }
+}
+
+.hero-card,
+.panel,
+.stat-card,
+.listing-card {
+  border-color: rgba(23, 32, 42, 0.07);
+  box-shadow: 0 6px 24px rgba(33, 42, 54, 0.055);
+}
+.hero-card,
+.panel {
+  border-radius: 18px;
+}
+.hero-card {
+  padding: 20px;
+  background: rgba(255, 255, 255, 0.68);
+}
+.hero-stats {
+  border-radius: 14px;
+  background: rgba(23, 32, 42, 0.08);
+}
+.hero-stat {
+  padding: 11px 14px;
+}
+.workspace-navigation {
+  margin-bottom: 18px;
+}
+.listing-grid {
+  gap: 14px;
+}
+
+.mortgage-page {
+  display: grid;
+  gap: 16px;
+}
+.duplicate-groups-page {
+  display: grid;
+  gap: 16px;
+}
+.duplicate-group {
+  display: grid;
+  gap: 14px;
+}
+.duplicate-group-primary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(23, 32, 42, 0.1);
+}
+.duplicate-group-primary span,
+.duplicate-member span {
+  color: #267561;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.duplicate-group-primary strong {
+  flex: 1 1 260px;
+}
+.duplicate-group-members {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.duplicate-member {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border: 1px solid rgba(23, 32, 42, 0.12);
+  border-radius: 13px;
+  background: #fbfdfc;
+}
+.duplicate-member.primary {
+  border-color: rgba(31, 111, 95, 0.42);
+  background: #edf7f2;
+}
+.duplicate-member small {
+  color: #52606a;
+}
+.text-link-button {
+  width: fit-content;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #1f6f5f;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  text-decoration: underline;
+}
+.duplicate-page-header {
+  display: grid;
+  gap: 8px;
+}
+.duplicate-page-header h2 {
+  margin: 0;
+}
+.duplicate-page-header p {
+  margin: 0;
+}
+.duplicate-group-count {
+  width: fit-content;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #eaf5f0;
+  color: #1f6f5f;
+  font-weight: 800;
+}
+.duplicate-review-group {
+  overflow: hidden;
+}
+.duplicate-group-rail {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.85fr) 32px minmax(0, 1.4fr);
+  gap: 14px;
+  align-items: stretch;
+}
+.duplicate-primary-card {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border-radius: 16px;
+  color: #fff;
+  background: linear-gradient(145deg, #1f6f5f, #174a41);
+}
+.duplicate-primary-card span {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+.duplicate-primary-card h3 {
+  margin: 0;
+}
+.duplicate-primary-card .action-button {
+  width: fit-content;
+  background: #fff;
+  color: #155748;
+}
+.duplicate-arrow {
+  display: grid;
+  place-items: center;
+  color: #1f6f5f;
+  font-size: 1.7rem;
+  font-weight: 900;
+}
+.duplicate-copy-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 12px;
+}
+.duplicate-copy-card {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  padding: 15px;
+  border: 1px solid rgba(23, 32, 42, 0.14);
+  border-radius: 14px;
+  background: #fffdf9;
+}
+.duplicate-copy-card > span {
+  color: #637eeb;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+.duplicate-copy-card small {
+  color: #62716e;
+}
+.duplicate-copy-card > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+.duplicate-unmerge-button {
+  padding: 5px 8px;
+  border: 1px solid #d86b61;
+  border-radius: 8px;
+  color: #a43c35;
+  background: #fff7f6;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.duplicate-thumb {
+  width: 102px;
+  height: 78px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  background: #d8e6e0;
+}
+.duplicate-copy-card .duplicate-thumb {
+  border-color: rgba(23, 32, 42, 0.12);
+}
+.duplicate-thumb-empty {
+  display: grid;
+  place-items: center;
+  color: #60726d;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+.duplicate-primary-meta {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+.duplicate-primary-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.duplicate-confirm-button {
+  padding: 9px 11px;
+  border: 1px solid #fff;
+  border-radius: 9px;
+  color: #fff;
+  background: transparent;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+.duplicate-confirm-button:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+@media (max-width: 800px) {
+  .duplicate-group-rail {
+    grid-template-columns: 1fr;
+  }
+  .duplicate-arrow {
+    transform: rotate(90deg);
+    min-height: 28px;
+  }
+}
+.premium-mortgage-visuals {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+.premium-cost-chart {
+  grid-column: 1 / -1;
+}
+.premium-mortgage-visuals .panel {
+  padding: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(31, 111, 95, 0.14);
+  box-shadow: 0 14px 34px rgba(19, 53, 45, 0.09);
+}
+.chart-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.chart-heading h3 {
+  margin: 3px 0 0;
+}
+.chart-heading > span {
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #eaf5f0;
+  color: #1f6f5f;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+.premium-donuts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+}
+.cost-donut {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.8fr) minmax(230px, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+.cost-donut h4 {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.cost-donut-chart {
+  min-width: 0;
+}
+.cost-donut ul {
+  display: grid;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+.cost-donut li {
+  display: grid;
+  grid-template-columns: 12px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  padding: 9px 10px;
+  border-radius: 10px;
+  background: #f7faf8;
+}
+.cost-donut li i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+.cost-donut li span {
+  color: #556760;
+  font-size: 0.85rem;
+}
+.cost-donut li strong {
+  font-size: 0.85rem;
+}
+.mortgage-page > * {
+  animation: mortgage-rise 380ms ease both;
+}
+.mortgage-page > *:nth-child(2) {
+  animation-delay: 60ms;
+}
+.mortgage-page > *:nth-child(3) {
+  animation-delay: 120ms;
+}
+.mortgage-savings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+.mortgage-savings article {
+  padding: 18px;
+  border-radius: 16px;
+  color: #17322c;
+  background: linear-gradient(135deg, #edf7f2, #fffaf3);
+  border: 1px solid rgba(31, 111, 95, 0.16);
+  box-shadow: 0 7px 20px rgba(31, 111, 95, 0.07);
+}
+.mortgage-savings span,
+.mortgage-savings strong,
+.mortgage-savings small {
+  display: block;
+}
+.mortgage-savings span {
+  font-size: 0.8rem;
+  color: #52606a;
+}
+.mortgage-savings strong {
+  margin: 7px 0 4px;
+  font-size: 1.35rem;
+}
+.mortgage-savings small {
+  color: #52606a;
+}
+.rate-change-box {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(31, 111, 95, 0.22);
+  border-radius: 12px;
+  background: #f4faf7;
+}
+.rate-change-box legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+.rate-change-box legend label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+@keyframes mortgage-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.mortgage-visuals {
+  display: grid;
+  grid-template-columns: minmax(340px, 0.9fr) minmax(420px, 1.1fr);
+  gap: 16px;
+}
+.mortgage-visuals .panel {
+  overflow: hidden;
+  border-color: rgba(31, 111, 95, 0.15);
+  box-shadow: 0 12px 30px rgba(23, 48, 42, 0.08);
+}
+.mortgage-visuals h3 {
+  margin-bottom: 14px;
+  font-size: 1.08rem;
+}
+.mortgage-visuals .recharts-default-tooltip {
+  border: 0 !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 28px rgba(23, 32, 42, 0.2) !important;
+  padding: 10px 12px !important;
+}
+.mortgage-visuals .recharts-legend-wrapper {
+  padding-top: 4px;
+}
+.mortgage-visuals .recharts-legend-item-text {
+  color: #40514d !important;
+  font-weight: 700;
+}
+/* The dedicated Recharts line graph above replaces the old first-pass SVG. */
+.mortgage-results > .panel:last-child {
+  display: none;
+}
+.mortgage-cost-structure {
+  display: none;
+}
+.mortgage-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.mortgage-chart-grid h4 {
+  margin: 0;
+  text-align: center;
+  font-size: 0.88rem;
+}
+.mortgage-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.4fr);
+  gap: 16px;
+  align-items: start;
+}
+.mortgage-form,
+.mortgage-results {
+  display: grid;
+  gap: 12px;
+}
+.mortgage-form hr {
+  width: 100%;
+  border: 0;
+  border-top: 1px solid rgba(23, 32, 42, 0.12);
+}
+.mortgage-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.mortgage-stat {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f0f6f3;
+  border: 1px solid rgba(31, 111, 95, 0.16);
+}
+.mortgage-stat span,
+.mortgage-stat strong,
+.mortgage-compare span,
+.mortgage-compare small {
+  display: block;
+}
+.mortgage-stat span,
+.mortgage-compare span {
+  color: #52606a;
+  font-size: 0.8rem;
+}
+.mortgage-stat strong {
+  margin-top: 5px;
+  font-size: 1.1rem;
+}
+.mortgage-compare {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.mortgage-compare p {
+  margin: 0;
+  padding: 10px;
+  border-radius: 10px;
+  background: rgba(23, 32, 42, 0.04);
+}
+.mortgage-compare strong {
+  display: block;
+  margin: 5px 0;
+}
+.mortgage-chart {
+  width: 100%;
+  height: 160px;
+  background: linear-gradient(180deg, rgba(31, 111, 95, 0.08), transparent);
+  border-radius: 10px;
+}
+.mortgage-table-wrap {
+  overflow-x: auto;
+}
+.mortgage-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 620px;
+}
+.mortgage-table-wrap {
+  border: 1px solid rgba(23, 32, 42, 0.1);
+  border-radius: 14px;
+  background: #fff;
+}
+.mortgage-table-wrap thead {
+  background: #eaf4ef;
+}
+.mortgage-table-wrap th,
+.mortgage-table-wrap td {
+  padding: 12px 14px;
+  text-align: right;
+  border-bottom: 1px solid rgba(23, 32, 42, 0.08);
+}
+.mortgage-table-wrap th {
+  color: #31534a;
+  font-size: 0.76rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+.mortgage-table-wrap tbody tr:nth-child(even) {
+  background: #fbfdfc;
+}
+.mortgage-table-wrap tbody tr:hover {
+  background: #eef8f3;
+}
+.mortgage-table-wrap th:first-child,
+.mortgage-table-wrap td:first-child {
+  text-align: left;
+}
+.mortgage-schedule-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+}
+.mortgage-schedule-toggle p {
+  margin: 0;
+}
+.mortgage-quick-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: #edf6f1;
+  color: #1f6f5f;
+}
+.mortgage-quick-preview small {
+  flex-basis: 100%;
+  color: #52606a;
+}
+.mortgage-source {
+  margin: 8px 0 0;
+  font-weight: 600;
+}
+.mortgage-back-button {
+  width: fit-content;
+}
+.mortgage-donuts {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+.mortgage-donut-card {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  min-width: 190px;
+}
+.mortgage-donut {
+  width: 150px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  position: relative;
+}
+.mortgage-donut::before {
+  content: "";
+  position: absolute;
+  width: 92px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #fffdf9;
+}
+.mortgage-donut span {
+  z-index: 1;
+  font-weight: 800;
+  font-size: 0.82rem;
+}
+.mortgage-donut-card small {
+  font-size: 0.78rem;
+}
+.mortgage-donut-card i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 4px;
+}
+.legend-capital {
+  background: #1f6f5f;
+}
+.legend-interest {
+  background: #d8954c;
+}
+.listing-mortgage-chip {
+  position: absolute;
+  right: 10px;
+  top: 43px;
+  z-index: 3;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #155748;
+  font-size: 0.84rem;
+  line-height: 1.15;
+  font-weight: 900;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+@media (max-width: 900px) {
+  .mortgage-visuals,
+  .mortgage-layout,
+  .premium-mortgage-visuals {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 780px) {
+  .mortgage-compare,
+  .mortgage-chart-grid,
+  .mortgage-savings,
+  .premium-donuts {
+    grid-template-columns: 1fr;
+  }
+  .cost-donut {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 560px) {
+  .mortgage-schedule-toggle {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mortgage-page > * {
+    animation: none;
+  }
+}
+
+.listing-grid.is-loading {
+  position: relative;
+  pointer-events: none;
+}
+
+.listing-grid.is-loading .listing-card {
+  opacity: 0.42;
+}
+
+.listing-loading-overlay {
+  position: absolute;
+  z-index: 3;
+  inset: 0;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: #1f6f5f;
+  font-weight: 800;
+}
+
+.pill .icon-spin {
+  margin-right: 5px;
+  vertical-align: -2px;
+}
+.listing-card {
+  padding: 14px;
+  gap: 8px;
+  border-radius: 18px;
+  background: #fffdf9;
+  box-shadow: 0 4px 18px rgba(33, 42, 54, 0.045);
+  transition:
+    transform 180ms ease,
+    box-shadow 180ms ease,
+    border-color 180ms ease;
+}
+.clickable-card:hover {
+  border-color: rgba(126, 67, 26, 0.25);
+  box-shadow: 0 12px 28px rgba(33, 42, 54, 0.1);
+  transform: translateY(-2px);
+}
+.listing-thumb-wrap {
+  margin-bottom: 4px;
+  border-radius: 14px;
+  box-shadow: none;
+}
+.listing-card h3 {
+  padding-right: 44px;
+  font-size: 1.05rem;
+  line-height: 1.35;
+}
+.listing-detail-link {
+  color: inherit;
+  text-decoration: none;
+}
+.listing-detail-link:hover {
+  color: #a94f18;
+  text-decoration: underline;
+}
+
+.listing-parcel-card {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface-muted);
+}
+.listing-parcel-card.is-muted {
+  color: var(--ink-soft);
+}
+.parcel-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.parcel-card-heading div {
+  display: grid;
+  gap: 2px;
+}
+.parcel-card-heading span {
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.parcel-card-grid {
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+}
+.parcel-shape {
+  width: 100%;
+  max-height: 180px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.parcel-shape polygon {
+  fill: color-mix(in srgb, var(--accent) 24%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.parcel-shape circle {
+  fill: #d4552d;
+  stroke: #fff;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+.parcel-shape-empty {
+  display: grid;
+  min-height: 120px;
+  place-items: center;
+  color: var(--ink-soft);
+}
+.parcel-card-data dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+.parcel-card-data dl > div {
+  display: grid;
+  grid-template-columns: 110px minmax(0, 1fr);
+  gap: 10px;
+}
+.parcel-card-data dt {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.parcel-card-data dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-weight: 650;
+}
+.parcel-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+.parcel-card-note {
+  margin: 14px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.amenity-analysis-list {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.amenity-analysis-row {
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  background: var(--surface-muted);
+}
+.amenity-analysis-row > div:first-child {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.amenity-analysis-row > div:first-child span {
+  min-width: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+.amenity-analysis-row > div:first-child strong {
+  color: var(--accent);
+  font-size: 1rem;
+}
+.amenity-distance-bands {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 5px;
+}
+.amenity-distance-bands small {
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+}
+.amenity-analysis-row p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+.planned-facilities {
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, #d8954c 45%, var(--line));
+  border-radius: 11px;
+  background: color-mix(in srgb, #d8954c 9%, var(--surface));
+}
+.planned-facilities > strong {
+  font-size: 0.82rem;
+}
+.planned-facilities p {
+  margin: 7px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.planned-facilities span {
+  color: #9b5b20;
+  font-weight: 750;
+}
+.amenity-source-link {
+  display: inline-block;
+  margin-top: 12px;
+}
+.amenity-attribution {
+  margin: 7px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+}
+.amenity-partial-note {
+  margin: 8px 0 0;
+  padding: 7px 8px;
+  border-radius: 8px;
+  color: #8a551d;
+  background: color-mix(in srgb, #d8954c 13%, var(--surface));
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+.amenity-unavailable {
+  display: grid;
+  gap: 10px;
+  margin-top: 9px;
+}
+.amenity-unavailable p {
+  margin: 0;
+  line-height: 1.45;
+}
+.amenity-unavailable .action-button {
+  width: fit-content;
+}
+.planning-analysis {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.planning-analysis-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.planning-analysis-heading > div {
+  display: grid;
+  gap: 3px;
+}
+.planning-analysis-heading span {
+  color: var(--ink-soft);
+  font-size: 0.76rem;
+}
+.planning-act-list {
+  display: grid;
+  gap: 10px;
+}
+.planning-act {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.planning-act > strong {
+  line-height: 1.35;
+}
+.planning-act > p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+}
+.planning-act-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--ink-soft);
+  font-size: 0.74rem;
+}
+.planning-status {
+  display: inline-flex;
+  max-width: 220px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  color: #176b58;
+  background: color-mix(in srgb, #2f8f73 13%, var(--surface));
+  font-size: 0.67rem;
+  font-weight: 750;
+  text-align: right;
+}
+.planning-status.is-warning {
+  color: #8a551d;
+  background: color-mix(in srgb, #d8954c 16%, var(--surface));
+}
+.planning-feedback {
+  display: grid;
+  justify-items: start;
+  gap: 9px;
+  padding: 11px;
+  border-radius: 11px;
+  background: var(--surface);
+}
+.planning-feedback p {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.surroundings-findings {
+  display: grid;
+  gap: 8px;
+}
+.surroundings-assessment {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+.surroundings-assessment.is-attention {
+  border-color: color-mix(in srgb, #c15b3c 38%, var(--line));
+  color: #9b452f;
+  background: color-mix(in srgb, #d96b4b 9%, var(--surface));
+}
+.surroundings-assessment.is-clear {
+  border-color: color-mix(in srgb, #2f8f73 32%, var(--line));
+  color: #176b58;
+  background: color-mix(in srgb, #2f8f73 8%, var(--surface));
+}
+.surroundings-finding {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 3px 12px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-left: 3px solid #d5903e;
+  border-radius: 10px;
+  color: inherit;
+  background: var(--surface);
+  text-decoration: none;
+}
+.surroundings-finding.is-attention {
+  border-left-color: #c15b3c;
+}
+.surroundings-finding > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.surroundings-finding > div span {
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surroundings-finding > b {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+.surroundings-finding > small {
+  grid-column: 1 / -1;
+  color: var(--ink-soft);
+  font-size: 0.66rem;
+}
+.urban-registry-analysis {
+  display: grid;
+  gap: 12px;
+  margin-top: 3px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+@media (max-width: 700px) {
+  .listing-parcel-card {
+    padding: 13px;
+  }
+  .parcel-card-grid {
+    grid-template-columns: 1fr;
+  }
+  .parcel-shape {
+    max-height: 150px;
+  }
+  .parcel-card-data dl > div {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+  .parcel-card-actions .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .amenity-analysis-row {
+    padding: 8px;
+  }
+  .amenity-unavailable .action-button {
+    width: 100%;
+    justify-content: center;
+  }
+  .planning-analysis-heading,
+  .planning-act-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .planning-status {
+    max-width: 100%;
+    text-align: left;
+  }
+}
+.listing-topline {
+  margin-top: 2px;
+}
+.listing-location-line {
+  color: #52606a;
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.listing-card dl {
+  margin-top: 4px;
+}
+
+@media (min-width: 601px) {
+  .favorite-star {
+    top: 24px;
+    right: 24px;
+    width: 38px;
+    height: 38px;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(23, 32, 42, 0.12);
+  }
+}
+
+.sun-compass {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  z-index: 5;
+  width: 92px;
+  height: 92px;
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  background: rgba(18, 30, 39, 0.76);
+  box-shadow: 0 10px 24px rgba(10, 18, 24, 0.28);
+  backdrop-filter: blur(10px);
+  color: #f8fbfd;
+  transform: translateX(-50%);
+}
+
+.sun-compass::before,
+.sun-compass::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 1px;
+  height: 72%;
+  background: rgba(255, 255, 255, 0.22);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+.sun-compass::after {
+  transform: translate(-50%, -50%) rotate(90deg);
+}
+.sun-compass-label {
+  position: absolute;
+  font-size: 0.58rem;
+  font-weight: 900;
+  line-height: 1;
+  transform: translate(-50%, -50%);
+}
+.sun-compass-n {
+  left: 50%;
+  top: 12%;
+  color: #ffd36c;
+}
+.sun-compass-e {
+  left: 88%;
+  top: 50%;
+}
+.sun-compass-s {
+  left: 50%;
+  top: 88%;
+}
+.sun-compass-w {
+  left: 12%;
+  top: 50%;
+}
+.sun-compass-marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #ffbd3d;
+  box-shadow: 0 0 0 3px rgba(255, 189, 61, 0.24);
+  transform: translate(-50%, -50%);
+}
+.sun-compass-sides {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border-radius: 50%;
+  background: #eaf5ff;
+  color: #17425b;
+  font-size: 1.05rem;
+  font-weight: 900;
+  transform: translate(-50%, -50%);
+}
+
+.sun-compass-compact {
+  top: 10px;
+  width: 87px;
+  height: 87px;
+  opacity: 0.96;
+}
+.sun-compass-compact::before {
+  height: 64%;
+}
+.sun-compass-compact .sun-compass-label {
+  font-size: 0.56rem;
+}
+.sun-compass-compact .sun-compass-marker {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
+  box-shadow: 0 0 0 2px rgba(255, 189, 61, 0.24);
+}
+.sun-compass-compact .sun-compass-sides {
+  width: 29px;
+  height: 29px;
+  font-size: 1rem;
+}
+
+@media (max-width: 1400px) {
+  .listing-card {
+    padding: 12px;
+  }
+  .listing-card h3 {
+    font-size: 0.98rem;
+  }
+  .listing-location-line {
+    font-size: 0.84rem;
+  }
+  .listing-dream-chip {
+    min-width: 46px;
+    height: 46px;
+  }
+  .listing-dream-chip strong {
+    font-size: 0.82rem;
+  }
+  .sun-compass-compact {
+    width: 66px;
+    height: 66px;
+    top: 12px;
+  }
+  .listing-bottom-left-stack,
+  .listing-status-group {
+    bottom: 30px;
+  }
+  .listing-image-dots {
+    bottom: 30px;
+  }
+  .detail-actions .action-button {
+    min-height: 34px;
+    padding: 7px 9px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 680px) {
+  .listing-card {
+    padding: 11px;
+  }
+  .listing-card h3 {
+    font-size: 0.94rem;
+  }
+  .listing-location-line {
+    font-size: 0.8rem;
+  }
+  .listing-dream-chip {
+    min-width: 42px;
+    height: 42px;
+  }
+  .sun-compass-compact {
+    width: 58px;
+    height: 58px;
+    top: 14px;
+  }
+  .listing-bottom-left-stack,
+  .listing-status-group {
+    bottom: 28px;
+  }
+  .listing-image-dots {
+    bottom: 28px;
+  }
+}

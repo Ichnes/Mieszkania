@@ -1,18 +1,21 @@
-import { downloadListingMedia } from "../../services/media-downloader";
-import { archiveOfferArtifacts } from "../../services/offer-archive";
-import { getFamilySettings } from "../../services/family-settings";
-import { geocodeListing, reverseGeocodeListing } from "../../services/geocoding";
-import { isUnavailableListingDocument, markListingArchived } from "../../services/listing-archive";
+import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
   completeListingImport,
   enqueueListingImports,
   failListingImport,
-  getListingExternalIdsWithFewImages,
   getKnownListingExternalIds,
+  getListingExternalIdsWithFewImages,
   getListingImportQueueStatus,
-  retryFailedListingImportsNow
-} from "../../services/listing-import-queue";
+  retryFailedListingImportsNow,
+} from "../../services/collecting/listing-import-queue";
+import { geocodeListing, reverseGeocodeListing } from "../../services/geography/geocoding";
+import {
+  isUnavailableListingDocument,
+  markListingArchived,
+} from "../../services/listings/listing-archive";
+import { downloadListingMedia } from "../../services/media/media-downloader";
+import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomFetcher } from "../otodom/otodom-fetcher";
 import { OtodomStorage } from "../otodom/otodom-storage";
 import { GratkaDiscovery } from "./gratka-discovery";
@@ -25,18 +28,21 @@ export class GratkaCollector {
   private readonly parser = new GratkaParser();
   private readonly storage = new OtodomStorage();
 
-  async collectOne(url: string, options?: { downloadMedia?: boolean; externalId?: string; refreshMode?: "full" | "price_only" }) {
+  async collectOne(
+    url: string,
+    options?: { downloadMedia?: boolean; externalId?: string; refreshMode?: "full" | "price_only" },
+  ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
     let document = await this.fetcher.fetchListing(url, {
       includeGallery: !isPriceOnlyRefresh,
-      preferStaticHtml: isPriceOnlyRefresh
+      preferStaticHtml: isPriceOnlyRefresh,
     });
     if (isUnavailableListingDocument(document)) {
       return archiveGratkaListing({
         sourceKey: "gratka",
         externalId: options?.externalId,
         canonicalUrl: url,
-        reason: `Link niedostępny: HTTP ${document.statusCode}`
+        reason: `Link niedostępny: HTTP ${document.statusCode}`,
       });
     }
 
@@ -47,7 +53,7 @@ export class GratkaCollector {
         sourceKey: "gratka",
         externalId: parsed.externalId,
         canonicalUrl: parsed.canonicalUrl,
-        reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną"
+        reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną",
       });
     }
     // Gratka's static page exposes only three gallery previews. A browser
@@ -62,7 +68,7 @@ export class GratkaCollector {
           sourceKey: "gratka",
           externalId: retryParsed.externalId,
           canonicalUrl: retryParsed.canonicalUrl,
-          reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną"
+          reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną",
         });
       }
       if (retryParsed.images.length > parsed.images.length) {
@@ -79,7 +85,7 @@ export class GratkaCollector {
         url,
         isPriceOnlyRefresh
           ? { includeGallery: false }
-          : { includeGallery: false, preferStaticHtml: true }
+          : { includeGallery: false, preferStaticHtml: true },
       );
       let priceParsed = await this.parser.parse(priceDocument);
       if (options?.externalId) priceParsed = { ...priceParsed, externalId: options.externalId };
@@ -88,7 +94,7 @@ export class GratkaCollector {
           sourceKey: "gratka",
           externalId: priceParsed.externalId,
           canonicalUrl: priceParsed.canonicalUrl,
-          reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną"
+          reason: "Portal przekierował lub oznaczył ofertę jako nieaktualną",
         });
       }
       if (isPriceOnlyRefresh) {
@@ -98,7 +104,11 @@ export class GratkaCollector {
         parsed = { ...parsed, priceAmount: priceParsed.priceAmount };
       }
     }
-    if (typeof parsed.priceAmount !== "number" || !Number.isFinite(parsed.priceAmount) || parsed.priceAmount <= 0) {
+    if (
+      typeof parsed.priceAmount !== "number" ||
+      !Number.isFinite(parsed.priceAmount) ||
+      parsed.priceAmount <= 0
+    ) {
       throw new Error(`MISSING_PRICE: ${parsed.externalId} (${parsed.canonicalUrl})`);
     }
 
@@ -110,29 +120,32 @@ export class GratkaCollector {
             district: parsed.district,
             neighborhood: parsed.neighborhood,
             street: parsed.street,
-            addressText: parsed.addressText
+            addressText: parsed.addressText,
           });
     const normalizedParsed = geocoded
       ? {
           ...parsed,
           latitude: geocoded.latitude,
-          longitude: geocoded.longitude
+          longitude: geocoded.longitude,
         }
       : parsed;
     const reverseGeocoded =
       !isPriceOnlyRefresh && normalizedParsed.latitude && normalizedParsed.longitude
         ? await reverseGeocodeListing({
             latitude: normalizedParsed.latitude,
-            longitude: normalizedParsed.longitude
+            longitude: normalizedParsed.longitude,
           })
         : null;
     const enrichedParsed = {
       ...normalizedParsed,
-      city: normalizedParsed.city === "Unknown" ? reverseGeocoded?.city ?? normalizedParsed.city : normalizedParsed.city,
+      city:
+        normalizedParsed.city === "Unknown"
+          ? (reverseGeocoded?.city ?? normalizedParsed.city)
+          : normalizedParsed.city,
       district: normalizedParsed.district ?? reverseGeocoded?.district ?? undefined,
       neighborhood: normalizedParsed.neighborhood ?? reverseGeocoded?.neighborhood ?? undefined,
       street: normalizedParsed.street ?? reverseGeocoded?.street ?? undefined,
-      addressText: normalizedParsed.addressText ?? reverseGeocoded?.addressText ?? undefined
+      addressText: normalizedParsed.addressText ?? reverseGeocoded?.addressText ?? undefined,
     };
     const archivedArtifacts = isPriceOnlyRefresh
       ? { basePath: "", rawHtmlPath: "", parsedJsonPath: "" }
@@ -141,7 +154,7 @@ export class GratkaCollector {
           externalId: enrichedParsed.externalId,
           timestamp: new Date().toISOString(),
           html: document.html,
-          parsed: enrichedParsed
+          parsed: enrichedParsed,
         });
     const stored = await this.storage.upsertListingSnapshot({
       sourceKey: "gratka",
@@ -149,21 +162,27 @@ export class GratkaCollector {
       refreshMode: options?.refreshMode,
       rawArtifact: {
         type: isPriceOnlyRefresh ? "json" : "html",
-        storageKey: "rawStorageKey" in archivedArtifacts
-          ? archivedArtifacts.rawStorageKey
-          : `sources/gratka/${enrichedParsed.externalId}/price/${Date.now()}.json`,
+        storageKey:
+          "rawStorageKey" in archivedArtifacts
+            ? archivedArtifacts.rawStorageKey
+            : `sources/gratka/${enrichedParsed.externalId}/price/${Date.now()}.json`,
         payload: isPriceOnlyRefresh
           ? { url: document.url, priceAmount: enrichedParsed.priceAmount }
           : {
               url: document.url,
-              checksum: "rawChecksum" in archivedArtifacts ? archivedArtifacts.rawChecksum : undefined,
-              parsedStorageKey: "parsedStorageKey" in archivedArtifacts ? archivedArtifacts.parsedStorageKey : undefined,
-              encoding: "encoding" in archivedArtifacts ? archivedArtifacts.encoding : undefined
-            }
-      }
+              checksum:
+                "rawChecksum" in archivedArtifacts ? archivedArtifacts.rawChecksum : undefined,
+              parsedStorageKey:
+                "parsedStorageKey" in archivedArtifacts
+                  ? archivedArtifacts.parsedStorageKey
+                  : undefined,
+              encoding: "encoding" in archivedArtifacts ? archivedArtifacts.encoding : undefined,
+            },
+      },
     });
 
-    const mediaResults = options?.downloadMedia === false ? [] : await downloadListingMedia(stored.mediaAssets);
+    const mediaResults =
+      options?.downloadMedia === false ? [] : await downloadListingMedia(stored.mediaAssets);
     return {
       ...stored,
       galleryVerified: !isPriceOnlyRefresh && document.html.includes("data-gratka-gallery-state"),
@@ -173,10 +192,10 @@ export class GratkaCollector {
         city: enrichedParsed.city,
         district: enrichedParsed.district,
         neighborhood: enrichedParsed.neighborhood,
-        imageCount: enrichedParsed.images.length
+        imageCount: enrichedParsed.images.length,
       },
       mediaResults,
-      archivedArtifacts
+      archivedArtifacts,
     };
   }
 
@@ -185,7 +204,7 @@ export class GratkaCollector {
     return this.discovery.discoverListingUrls({
       ...input,
       city: input.city || settings.searchContract.city,
-      contract: settings.searchContract
+      contract: settings.searchContract,
     });
   }
 
@@ -216,7 +235,7 @@ export class GratkaCollector {
           city,
           startPage: currentPage,
           pages: pagesInBatch,
-          contract: settings.searchContract
+          contract: settings.searchContract,
         });
       } catch (cause) {
         error = cause instanceof Error ? cause.message : "Gratka discovery failed";
@@ -226,14 +245,14 @@ export class GratkaCollector {
       const imageRefreshExternalIds = await getListingExternalIdsWithFewImages({
         sourceKey: "gratka",
         externalIds: links.map((item) => item.externalId),
-        maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT
+        maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT,
       });
       const batchResult = await enqueueListingImports({
         sourceKey: "gratka",
         city,
         priority: input.priority ?? 110,
         items: links,
-        forceRefreshExternalIds: imageRefreshExternalIds
+        forceRefreshExternalIds: imageRefreshExternalIds,
       });
 
       queued += batchResult.queued;
@@ -252,28 +271,32 @@ export class GratkaCollector {
       scannedPages,
       discovered,
       queued,
-      stoppedBecause: error
-        ? "error"
-        : scannedPages >= maxPages
-          ? "max_pages"
-          : "empty_batches",
-      error
+      stoppedBecause: error ? "error" : scannedPages >= maxPages ? "max_pages" : "empty_batches",
+      error,
     };
   }
 
-  async processQueue(input?: { limit?: number; concurrency?: number; downloadMedia?: boolean; queueKind?: "all" | "price_updates" }) {
+  async processQueue(input?: {
+    limit?: number;
+    concurrency?: number;
+    downloadMedia?: boolean;
+    queueKind?: "all" | "price_updates";
+  }) {
     const limit = Math.max(1, Math.min(500, input?.limit ?? 100));
     const concurrency = Math.max(1, Math.min(6, input?.concurrency ?? 4));
     const claimed = await claimListingImportBatch({
       sourceKey: "gratka",
       limit,
-      queueKind: input?.queueKind
+      queueKind: input?.queueKind,
     });
-    const knownExternalIds = await getKnownListingExternalIds({ sourceKey: "gratka", externalIds: claimed.map((item) => item.external_id) });
+    const knownExternalIds = await getKnownListingExternalIds({
+      sourceKey: "gratka",
+      externalIds: claimed.map((item) => item.external_id),
+    });
     const listingsNeedingImageRefresh = await getListingExternalIdsWithFewImages({
       sourceKey: "gratka",
       externalIds: claimed.map((item) => item.external_id),
-      maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT
+      maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT,
     });
 
     let completed = 0;
@@ -284,16 +307,25 @@ export class GratkaCollector {
       const batch = claimed.slice(index, index + concurrency);
       const results = await Promise.allSettled(
         batch.map(async (item) => {
-          const priceOnly = knownExternalIds.has(item.external_id) && !listingsNeedingImageRefresh.has(item.external_id);
-          const collected = await this.collectOne(item.canonical_url, { downloadMedia: priceOnly ? false : input?.downloadMedia !== false, externalId: item.external_id, refreshMode: priceOnly ? "price_only" : "full" });
-          await completeListingImport(item.id, "galleryVerified" in collected && collected.galleryVerified
-            ? {
-                galleryVerifiedAt: new Date().toISOString(),
-                galleryImageCount: collected.parsed.imageCount
-              }
-            : undefined);
+          const priceOnly =
+            knownExternalIds.has(item.external_id) &&
+            !listingsNeedingImageRefresh.has(item.external_id);
+          const collected = await this.collectOne(item.canonical_url, {
+            downloadMedia: priceOnly ? false : input?.downloadMedia !== false,
+            externalId: item.external_id,
+            refreshMode: priceOnly ? "price_only" : "full",
+          });
+          await completeListingImport(
+            item.id,
+            "galleryVerified" in collected && collected.galleryVerified
+              ? {
+                  galleryVerifiedAt: new Date().toISOString(),
+                  galleryImageCount: collected.parsed.imageCount,
+                }
+              : undefined,
+          );
           return item;
-        })
+        }),
       );
 
       for (let offset = 0; offset < results.length; offset += 1) {
@@ -310,7 +342,7 @@ export class GratkaCollector {
         failures.push({
           externalId: item.external_id,
           url: item.canonical_url,
-          error: message
+          error: message,
         });
         await failListingImport({
           id: item.id,
@@ -321,9 +353,9 @@ export class GratkaCollector {
                 failureCode: "missing_price",
                 missingPrice: true,
                 externalId: item.external_id,
-                canonicalUrl: item.canonical_url
+                canonicalUrl: item.canonical_url,
               }
-            : undefined
+            : undefined,
         });
       }
     }
@@ -332,7 +364,7 @@ export class GratkaCollector {
       claimed: claimed.length,
       completed,
       failed,
-      failures
+      failures,
     };
   }
 
@@ -343,7 +375,7 @@ export class GratkaCollector {
   async retryFailed(limit?: number) {
     return retryFailedListingImportsNow({
       sourceKey: "gratka",
-      limit
+      limit,
     });
   }
 
@@ -363,7 +395,7 @@ export class GratkaCollector {
       startPage: input?.startPage,
       maxPages: input?.maxPages,
       batchPages: input?.batchPages,
-      priority: input?.priority
+      priority: input?.priority,
     });
 
     const maxRounds = Math.max(1, Math.min(200, input?.maxRounds ?? 50));
@@ -377,7 +409,7 @@ export class GratkaCollector {
       const batch = await this.processQueue({
         limit: input?.processLimit ?? 200,
         concurrency: input?.concurrency ?? 8,
-        downloadMedia: true
+        downloadMedia: true,
       });
 
       processedRounds += 1;
@@ -405,7 +437,7 @@ export class GratkaCollector {
       totalCompleted,
       totalFailed,
       finalQueueStatus,
-      stoppedBecause
+      stoppedBecause,
     };
   }
 }
@@ -426,14 +458,14 @@ function buildArchivedCollectorResult(listingId: string, externalId: string, url
       externalId,
       title: "Oferta archiwalna",
       city: "Unknown",
-      imageCount: 0
+      imageCount: 0,
     },
     mediaResults: [],
     archivedArtifacts: {
       basePath: "",
       rawHtmlPath: "",
-      parsedJsonPath: url
-    }
+      parsedJsonPath: url,
+    },
   };
 }
 
@@ -447,6 +479,6 @@ async function archiveGratkaListing(input: {
   return buildArchivedCollectorResult(
     archived?.listingId ?? "",
     input.externalId ?? input.canonicalUrl,
-    input.canonicalUrl
+    input.canonicalUrl,
   );
 }

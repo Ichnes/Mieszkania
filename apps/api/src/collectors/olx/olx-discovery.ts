@@ -31,7 +31,11 @@ export class OlxDiscovery {
   }
 }
 
-function buildSearchUrl(city: string, page: number, contract?: { minPrice?: number; maxPrice?: number; minArea?: number; rooms?: number[] }) {
+function buildSearchUrl(
+  city: string,
+  page: number,
+  contract?: { minPrice?: number; maxPrice?: number; minArea?: number; rooms?: number[] },
+) {
   const normalizedCity = normalizeCitySlug(city);
   const url = new URL(`https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/${normalizedCity}/`);
 
@@ -78,7 +82,7 @@ function extractListingReferences(html: string) {
 
     refs.push({
       externalId: extractExternalId(url),
-      url
+      url,
     });
   }
 
@@ -88,7 +92,11 @@ function extractListingReferences(html: string) {
 function isDirectOlxListingUrl(value: string) {
   try {
     const url = new URL(value);
-    return url.hostname.endsWith("olx.pl") && url.pathname.includes("/d/oferta/") && !value.includes("otodom");
+    return (
+      url.hostname.endsWith("olx.pl") &&
+      url.pathname.includes("/d/oferta/") &&
+      !value.includes("otodom")
+    );
   } catch {
     return false;
   }
@@ -142,7 +150,10 @@ function normalizeCitySlug(value: string) {
 }
 
 function toSlug(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function decodeHtml(value: string) {

@@ -3,16 +3,10 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@mieszkania/shared": [
-        "../../packages/shared/src"
-      ]
+      "@mieszkania/shared": ["../../packages/shared/src"]
     },
     "outDir": "dist",
-    "types": [
-      "node"
-    ]
+    "types": ["node"]
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }

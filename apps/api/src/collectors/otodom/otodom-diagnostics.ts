@@ -9,7 +9,11 @@ import type { FetchedListingDocument } from "../types";
 const compress = promisify(gzip);
 
 export class OtodomMissingPriceError extends Error {
-  constructor(externalId: string, url: string, public readonly diagnostics: Record<string, unknown>) {
+  constructor(
+    externalId: string,
+    url: string,
+    public readonly diagnostics: Record<string, unknown>,
+  ) {
     super(`MISSING_PRICE: ${externalId} (${url})`);
   }
 }
@@ -23,7 +27,7 @@ export async function missingPriceError(document: FetchedListingDocument, extern
     finalUrl: document.finalUrl ?? document.url,
     responseBytes: Buffer.byteLength(document.html),
     hasNextData: document.html.includes("__NEXT_DATA__"),
-    responseChecksum: checksum
+    responseChecksum: checksum,
   };
   try {
     await mkdir(join(storageRoot, "logs/otodom-responses"), { recursive: true });

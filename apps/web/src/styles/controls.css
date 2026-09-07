@@ -1,0 +1,658 @@
+/* Follow-up polish: offers, navigation, sync recovery, map and settings. */
+
+.sync-hero-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 8px;
+}
+.sync-refresh-button {
+  white-space: nowrap;
+}
+.sync-step-fields {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, 0.65fr);
+  gap: 10px;
+  margin-top: 10px;
+}
+.sync-step-fields .field-label,
+.sync-queue-limit {
+  display: grid;
+  gap: 5px;
+}
+.sync-center .field-label {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.sync-center .field-label > span {
+  color: var(--ink-soft);
+}
+.sync-center .field-label .text-input {
+  color: var(--ink);
+  background: var(--surface-muted);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+}
+.sync-center .field-hint {
+  color: var(--ink-soft);
+}
+.sync-center .field-label .text-input:focus {
+  border-color: var(--brand);
+  outline: 2px solid var(--brand-soft);
+  outline-offset: 1px;
+}
+.sync-queue-limit,
+.sync-process-actions,
+.sync-recovery-note {
+  grid-column: 1 / -1;
+}
+.sync-queue-limit {
+  margin-top: 10px;
+}
+.sync-process-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+.sync-process-actions .sync-main-button {
+  margin: 0;
+}
+.sync-recovery-note {
+  color: var(--ink-soft);
+  line-height: 1.45;
+}
+.sync-delay-note {
+  grid-column: 1 / -1;
+  display: block;
+  padding: 9px 11px;
+  border: 1px solid color-mix(in srgb, #d9902f 35%, var(--line));
+  border-radius: 10px;
+  color: color-mix(in srgb, #9b5f13 78%, var(--ink));
+  background: color-mix(in srgb, #f4b85d 14%, var(--surface));
+  line-height: 1.45;
+}
+.sync-connector {
+  position: relative;
+  z-index: 6;
+  overflow: visible;
+}
+.sync-connector span {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 4px solid var(--page);
+  border-radius: 50%;
+  color: #fff;
+  background: var(--brand-strong);
+  box-shadow: var(--shadow-sm);
+}
+.sync-connector span::before {
+  content: "→";
+  font-size: 1.2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+.sync-connector span::after {
+  display: none;
+}
+
+/* Listing cards are now composed as a visual summary, not a stack of boxes. */
+.listing-card {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 20px;
+  background: var(--surface);
+}
+.listing-card-content {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 14px 15px 16px;
+}
+.listing-thumb-wrap {
+  aspect-ratio: 16 / 10;
+  margin: 0;
+  border-radius: 19px 19px 0 0;
+  box-shadow: none;
+}
+.listing-thumb {
+  aspect-ratio: 16 / 10;
+  clip-path: none;
+  border-radius: 0;
+}
+.listing-card h3 {
+  min-height: 2.65em;
+  margin: 0;
+  padding: 0;
+  font-size: 1.06rem;
+  line-height: 1.32;
+  letter-spacing: -0.012em;
+}
+.listing-topline {
+  margin: 0;
+  color: var(--ink-soft);
+}
+.listing-topline > span:first-child {
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+.listing-location-line {
+  min-height: 1.35em;
+  margin: 0;
+  line-height: 1.4;
+}
+.listing-card dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  margin: 3px 0;
+}
+.listing-metric {
+  min-height: 58px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+  box-shadow: none;
+}
+.listing-metric dt {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+.listing-metric dd {
+  margin-top: 3px;
+  color: var(--ink);
+  font-size: 0.9rem;
+  font-weight: 900;
+}
+.listing-metric.metric-price {
+  border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+  background: var(--brand-soft);
+}
+.listing-metric.metric-price dd {
+  color: var(--brand-strong);
+  font-size: 1rem;
+}
+.listing-metric.metric-area,
+.listing-metric.metric-pps,
+.listing-metric.metric-rooms {
+  background: var(--surface-muted);
+}
+.listing-card .badge-row {
+  margin-top: 1px;
+}
+.favorite-star {
+  top: 10px;
+  right: 10px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  background: rgba(16, 27, 23, 0.72);
+  color: #fff;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.2);
+}
+.listing-bottom-left-stack {
+  left: 10px;
+  bottom: 36px;
+  gap: 5px;
+}
+.listing-dream-chip {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  padding: 4px;
+  border-width: 1px;
+  border-color: rgba(255, 255, 255, 0.7);
+  color: #153f35;
+  background: rgba(244, 252, 248, 0.9);
+  box-shadow: 0 7px 16px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+}
+.listing-dream-chip strong {
+  font-size: 0.75rem;
+}
+.listing-ranking-chip {
+  min-height: 25px;
+  padding: 5px 8px;
+  font-size: 0.65rem;
+}
+.listing-source-chip-footer {
+  bottom: 8px;
+  padding: 5px 8px;
+  font-size: 0.62rem;
+}
+.listing-status-group {
+  right: 9px;
+  bottom: 34px;
+}
+.listing-status-chip {
+  width: 30px;
+  height: 30px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+}
+.sun-compass-compact {
+  top: 9px;
+  right: auto;
+  left: 50%;
+  width: 50px;
+  height: 50px;
+  transform: translateX(-50%);
+}
+.sun-compass-compact .sun-compass-label {
+  font-size: 0.44rem;
+}
+.sun-compass-compact .sun-compass-sides {
+  width: 22px;
+  height: 22px;
+  font-size: 0.75rem;
+}
+.sun-compass-compact .sun-compass-marker {
+  width: 9px;
+  height: 9px;
+}
+
+/* Better emphasis inside long portal descriptions. */
+.listing-description {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  color: var(--ink);
+  background: var(--surface);
+}
+.listing-description p {
+  line-height: 1.72;
+}
+.listing-description-highlight {
+  padding: 0 0.12em;
+  border-radius: 4px;
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand-soft) 82%, transparent);
+  font-weight: 900;
+}
+
+/* Actions in the offer view form one clear toolbar. */
+.detail-header {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(460px, 0.95fr);
+  gap: 18px;
+  align-items: start;
+  margin: 0 0 14px;
+  padding: 18px 20px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.detail-header h2 {
+  max-width: none;
+}
+.detail-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  width: 100%;
+  max-width: none;
+}
+.detail-actions .action-button {
+  width: 100%;
+  min-height: 42px;
+  justify-content: flex-start;
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  background: var(--surface-muted);
+  font-size: 0.74rem;
+}
+.detail-actions .action-button:first-child {
+  color: #fff;
+  border-color: var(--brand-strong);
+  background: var(--brand-strong);
+}
+.detail-actions .shortlist-active {
+  color: var(--brand-strong);
+  border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
+  background: var(--brand-soft);
+}
+.detail-actions .danger-button {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--line));
+  background: color-mix(in srgb, var(--danger) 8%, var(--surface));
+}
+.listing-record-id {
+  color: var(--ink-soft);
+  background: var(--surface-muted);
+}
+
+/* Map filters: a distinct, calm control surface. */
+.map-filter-shell {
+  margin-bottom: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.map-filter-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 17px 19px;
+}
+.map-filter-heading h3 {
+  margin: 0 0 4px;
+  font-size: 1.1rem;
+}
+.map-filter-heading p:last-child {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+.map-filter-heading > div:last-child {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.map-result-count {
+  padding: 8px 11px;
+  border-radius: 999px;
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+  font-size: 0.76rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+.map-filter-toggle {
+  display: none;
+}
+.map-filter-panel {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(110px, 1fr));
+  gap: 10px;
+  align-items: end;
+  margin: 0;
+  padding: 15px 19px 19px;
+  border: 0;
+  border-top: 1px solid var(--line);
+  border-radius: 0;
+  background: var(--surface-muted);
+}
+.map-filter-panel label {
+  min-width: 0;
+  color: var(--ink-soft);
+}
+.map-filter-panel .text-input {
+  width: 100%;
+  min-height: 42px;
+}
+.map-search-field {
+  grid-column: span 2;
+}
+.map-room-filters,
+.map-transit-filters {
+  min-height: 54px;
+  border-color: var(--line);
+  border-radius: 11px;
+  background: var(--surface);
+}
+.map-room-filters {
+  grid-column: span 2;
+}
+.map-transit-filters {
+  grid-column: span 2;
+}
+.map-room-filters legend,
+.map-transit-filters legend,
+.map-room-filters label,
+.map-transit-filters label {
+  color: var(--ink-soft);
+}
+
+/* Settings become a readable preferences workspace. */
+.settings-panel {
+  width: min(1180px, 100%);
+  background: var(--page);
+}
+.settings-header {
+  position: sticky;
+  top: -22px;
+  z-index: 20;
+  margin: -22px -22px 18px;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--line);
+  background: color-mix(in srgb, var(--page) 92%, transparent);
+  backdrop-filter: blur(18px);
+}
+.settings-title {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+}
+.settings-title-icon {
+  display: grid;
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 15px;
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+}
+.settings-title h2 {
+  margin: 0 0 3px;
+  font-size: 1.65rem;
+}
+.settings-title p:last-child {
+  margin: 0;
+}
+.settings-panel > .settings-grid {
+  gap: 10px;
+}
+.settings-panel > .settings-grid .ops-card {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border-color: var(--line);
+  border-radius: 15px;
+  background: var(--surface);
+}
+.settings-panel > .result-box {
+  margin-top: 12px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 17px;
+  background: var(--surface);
+}
+.settings-panel > .result-box > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--ink);
+  font-family: Georgia, serif;
+  font-size: 1.25rem;
+}
+.settings-panel .field-hint {
+  color: var(--ink-soft);
+  line-height: 1.4;
+}
+.settings-panel .matrix-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  background: var(--surface-muted);
+}
+.preferred-location-list {
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+
+/* Dark inputs need explicit contrast because several legacy forms had white surfaces. */
+:root[data-theme="dark"] .text-input,
+:root[data-theme="dark"] input.text-input,
+:root[data-theme="dark"] select.text-input,
+:root[data-theme="dark"] textarea.text-input {
+  color: #eef6f2 !important;
+  border-color: #3b4d47 !important;
+  background: #111a17 !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.025) !important;
+}
+:root[data-theme="dark"] .text-input::placeholder {
+  color: #758780 !important;
+  opacity: 1;
+}
+:root[data-theme="dark"] select.text-input option {
+  color: #eef6f2;
+  background: #111a17;
+}
+:root[data-theme="dark"] input:-webkit-autofill,
+:root[data-theme="dark"] input:-webkit-autofill:hover,
+:root[data-theme="dark"] input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #eef6f2;
+  box-shadow: 0 0 0 1000px #111a17 inset !important;
+  caret-color: #eef6f2;
+}
+
+@media (max-width: 1100px) {
+  .detail-header {
+    grid-template-columns: 1fr;
+  }
+  .map-filter-panel {
+    grid-template-columns: repeat(3, minmax(120px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .workspace-navigation {
+    width: auto;
+    margin: 0;
+  }
+  .sync-hero-actions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .sync-connector span {
+    width: 38px;
+    height: 38px;
+  }
+  .sync-connector span::before {
+    content: "↓";
+  }
+  .detail-header {
+    display: grid;
+    padding: 16px;
+  }
+  .detail-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow: visible;
+  }
+  .detail-actions .action-button {
+    flex: initial;
+  }
+  .map-filter-toggle {
+    display: inline-flex;
+  }
+  .map-filter-panel {
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .map-filter-panel.is-open {
+    display: grid;
+  }
+  .map-search-field,
+  .map-room-filters,
+  .map-transit-filters {
+    grid-column: 1 / -1;
+  }
+  .settings-header {
+    top: -14px;
+    margin: -14px -14px 16px;
+    padding: 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .sync-hero-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+  .sync-step-fields,
+  .sync-process-actions {
+    grid-template-columns: 1fr;
+  }
+  .sync-process-actions .action-button {
+    width: 100%;
+  }
+  .listing-card-content {
+    padding: 13px;
+  }
+  .listing-card h3 {
+    min-height: 0;
+  }
+  .listing-dream-chip {
+    width: 38px;
+    min-width: 38px;
+    height: 38px;
+  }
+  .listing-dream-chip strong {
+    font-size: 0.68rem;
+  }
+  .map-filter-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 15px;
+  }
+  .map-filter-heading > div:last-child {
+    width: 100%;
+    justify-content: space-between;
+  }
+  .map-filter-panel,
+  .map-filter-panel.is-open {
+    grid-template-columns: 1fr;
+    padding: 13px 15px 16px;
+  }
+  .map-filter-panel > *,
+  .map-search-field,
+  .map-room-filters,
+  .map-transit-filters {
+    grid-column: 1;
+  }
+  .detail-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .detail-actions .action-button {
+    min-height: 44px;
+    font-size: 0.7rem;
+  }
+  .settings-title-icon {
+    width: 40px;
+    height: 40px;
+  }
+  .settings-title h2 {
+    font-size: 1.35rem;
+  }
+  .settings-title p:last-child {
+    display: none;
+  }
+  .settings-panel > .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .listing-facts-table tr {
+    border-color: var(--line);
+    background: var(--surface);
+  }
+  .listing-facts-table th {
+    color: var(--ink-soft);
+    background: var(--surface-muted);
+  }
+  .listing-facts-table td {
+    color: var(--ink);
+    background: var(--surface);
+  }
+  .listing-facts-table td + th {
+    border-color: var(--line);
+  }
+}

@@ -35,7 +35,7 @@ export class GratkaDiscovery implements SourceDiscovery {
 
 function buildSearchUrl(citySlug: string, page: number, contract?: SearchContract) {
   const query = new URLSearchParams({
-    page: String(page)
+    page: String(page),
   });
 
   if (contract?.minPrice) {
@@ -78,7 +78,7 @@ function extractOfferLinks(html: string): SourceListingReference[] {
 
     deduped.set(externalId, {
       externalId,
-      url
+      url,
     });
   }
 
@@ -86,7 +86,10 @@ function extractOfferLinks(html: string): SourceListingReference[] {
 }
 
 function normalizeOfferUrl(url: string) {
-  return url.replace(/&amp;/gi, "&").replace(/[?#].*$/, "").replace(/\/+$/, "");
+  return url
+    .replace(/&amp;/gi, "&")
+    .replace(/[?#].*$/, "")
+    .replace(/\/+$/, "");
 }
 
 function extractExternalId(url: string) {
@@ -95,5 +98,5 @@ function extractExternalId(url: string) {
 }
 
 function decodeHtml(value: string) {
-  return value.replace(/&amp;/gi, "&").replace(/&quot;/gi, "\"");
+  return value.replace(/&amp;/gi, "&").replace(/&quot;/gi, '"');
 }

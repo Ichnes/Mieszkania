@@ -3,11 +3,12 @@ import type { ParsedListing, SourceListingReference } from "../types";
 type JsonRecord = Record<string, unknown>;
 
 export function buildMorizonSearchUrl(city: string, page: number) {
-  const normalizedCity = city
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .trim()
-    .toLowerCase() || "warszawa";
+  const normalizedCity =
+    city
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim()
+      .toLowerCase() || "warszawa";
   const url = new URL(`https://www.morizon.pl/mieszkania/najnowsze/${normalizedCity}/`);
   url.searchParams.set("ps[living_area_from]", "56");
   url.searchParams.set("ps[market_type]", "2");
@@ -23,10 +24,12 @@ export function extractMorizonReferences(html: string): SourceListingReference[]
     html.matchAll(/href=["']([^"']*\/oferta\/[^"'?#]+-mzn(\d+)(?:[?#][^"']*)?)["']/gi),
     (match) => ({
       externalId: `morizon-${match[2]}`,
-      url: new URL(decodeHtml(match[1]), "https://www.morizon.pl").toString().split("#")[0]
-    })
+      url: new URL(decodeHtml(match[1]), "https://www.morizon.pl").toString().split("#")[0],
+    }),
   );
-  return Array.from(new Map(references.map((reference) => [reference.externalId, reference])).values());
+  return Array.from(
+    new Map(references.map((reference) => [reference.externalId, reference])).values(),
+  );
 }
 
 export function externalIdFromMorizonUrl(url: string) {
@@ -39,52 +42,68 @@ export function externalIdFromMorizonUrl(url: string) {
   return `morizon-${id}`;
 }
 
-export function parseMorizonListing(url: string, html: string, visibleText = stripHtml(html)): ParsedListing {
+export function parseMorizonListing(
+  url: string,
+  html: string,
+  visibleText = stripHtml(html),
+): ParsedListing {
   const jsonLd = extractJsonLd(html);
   const offer = findOffer(jsonLd);
   const information = extractInformationRows(html);
   const highlighted = extractHighlightedParameters(html);
-  const title = stripHtml(firstMatch(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i))
-    || stringValue(offer?.name)
-    || meta(html, "og:title")
-    || "Oferta Morizon";
+  const title =
+    stripHtml(firstMatch(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i)) ||
+    stringValue(offer?.name) ||
+    meta(html, "og:title") ||
+    "Oferta Morizon";
   const description = stripHtml(stringValue(offer?.description) || extractDescriptionHtml(html));
   const text = `${title}\n${description}\n${visibleText}`;
   const floorValue = information[normalizeLabel("Piętro")] ?? highlighted[normalizeLabel("Piętro")];
   const floorParts = floorValue?.match(/(parter|\d+)\s*(?:\/|z)\s*(\d+)/i);
-  const areaSqm = numberValue(information[normalizeLabel("Pow. całkowita")])
-    ?? numberValue(highlighted[normalizeLabel("Powierzchnia")])
-    ?? numberValue(text.match(/(?:Powierzchnia|powierzchni)\s*[:\n]?\s*([\d,.]+)\s*m(?:²|2)/i)?.[1]);
-  const rooms = numberValue(information[normalizeLabel("Liczba pokoi")])
-    ?? numberValue(highlighted[normalizeLabel("Pokoje")])
-    ?? numberValue(text.match(/(?:Pokoje|Liczba pokoi)\s*[:\n]?\s*(\d+)/i)?.[1]);
-  const floor = floorParts?.[1]?.toLowerCase() === "parter" ? 0 : numberValue(floorParts?.[1] ?? floorValue);
-  const totalFloors = numberValue(floorParts?.[2]) ?? numberValue(information[normalizeLabel("Liczba pięter")]);
+  const areaSqm =
+    numberValue(information[normalizeLabel("Pow. całkowita")]) ??
+    numberValue(highlighted[normalizeLabel("Powierzchnia")]) ??
+    numberValue(text.match(/(?:Powierzchnia|powierzchni)\s*[:\n]?\s*([\d,.]+)\s*m(?:²|2)/i)?.[1]);
+  const rooms =
+    numberValue(information[normalizeLabel("Liczba pokoi")]) ??
+    numberValue(highlighted[normalizeLabel("Pokoje")]) ??
+    numberValue(text.match(/(?:Pokoje|Liczba pokoi)\s*[:\n]?\s*(\d+)/i)?.[1]);
+  const floor =
+    floorParts?.[1]?.toLowerCase() === "parter" ? 0 : numberValue(floorParts?.[1] ?? floorValue);
+  const totalFloors =
+    numberValue(floorParts?.[2]) ?? numberValue(information[normalizeLabel("Liczba pięter")]);
   const yearBuilt = numberValue(information[normalizeLabel("Rok budowy")]);
   const publishedAt = parsePolishDate(information[normalizeLabel("Data dodania")]);
   const seller = recordValue(offer?.seller);
-  const phone = normalizePhone(extractVisiblePhone(html)) ?? normalizePhone(stringValue(seller?.telephone));
-  const priceAmount = numberValue(stringValue(offer?.price))
-    ?? numberValue(text.match(/([\d\s.]+)\s*zł/i)?.[1]);
+  const phone =
+    normalizePhone(extractVisiblePhone(html)) ?? normalizePhone(stringValue(seller?.telephone));
+  const priceAmount =
+    numberValue(stringValue(offer?.price)) ?? numberValue(text.match(/([\d\s.]+)\s*zł/i)?.[1]);
   const coordinates = extractCoordinates(html);
   // The dedicated location row belongs to the current advert. Prefer it over
   // marketing copy, navigation and similar offers, which can contain unrelated
   // Warsaw street or district names.
   const portalLocation = extractMorizonLocation(html);
-  const district = portalLocation.district
-    ?? extractDistrict(`${title}\n${stringValue(offer?.name) ?? ""}\n${description}`);
+  const district =
+    portalLocation.district ??
+    extractDistrict(`${title}\n${stringValue(offer?.name) ?? ""}\n${description}`);
   const street = extractStreetFromDescription(description) ?? portalLocation.street;
   const city = /warszaw/i.test(text) || /\/warszawa(?:-|\/)/i.test(url) ? "Warszawa" : "Warszawa";
   const images = extractMorizonImages(html);
   const additionalProperty = Object.entries(information).map(([normalizedName, value]) => ({
     "@type": "PropertyValue",
     name: displayLabel(normalizedName),
-    value
+    value,
   }));
-  const enrichedJsonLd = offer ? { ...offer, additionalProperty } : { "@type": "Offer", additionalProperty };
+  const enrichedJsonLd = offer
+    ? { ...offer, additionalProperty }
+    : { "@type": "Offer", additionalProperty };
   const marketLabel = information[normalizeLabel("Rynek")] ?? "";
   const archivedNotice = /To ogłoszenie nie jest już dostępne/i.test(text);
-  const removed = /oferta (?:jest )?nieaktualna|ogłoszenie (?:jest )?nieaktualne|oferta archiwalna|ogłoszenie archiwalne/i.test(text);
+  const removed =
+    /oferta (?:jest )?nieaktualna|ogłoszenie (?:jest )?nieaktualne|oferta archiwalna|ogłoszenie archiwalne/i.test(
+      text,
+    );
 
   return {
     externalId: externalIdFromMorizonUrl(url),
@@ -118,14 +137,16 @@ export function parseMorizonListing(url: string, html: string, visibleText = str
       propertyNumber: information[normalizeLabel("Numer ogłoszenia")],
       viewCount: numberValue(information[normalizeLabel("Liczba odsłon")]),
       galleryExpectedCount: extractGalleryCount(html) ?? images.length,
-      galleryVerified: images.length > 1
-    }
+      galleryVerified: images.length > 1,
+    },
   };
 }
 
 function extractJsonLd(html: string) {
   const values: JsonRecord[] = [];
-  for (const match of html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+  for (const match of html.matchAll(
+    /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi,
+  )) {
     try {
       const parsed = JSON.parse(match[1]) as unknown;
       if (Array.isArray(parsed)) values.push(...parsed.filter(isRecord));
@@ -153,8 +174,15 @@ function extractInformationRows(html: string) {
     const start = starts[index].index ?? 0;
     const end = starts[index + 1]?.index ?? Math.min(html.length, start + 5000);
     const row = html.slice(start, end);
-    const label = stripHtml(row.match(/<span[^>]*data-cy=["']informationTableLabel["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] ?? "");
-    const value = stripHtml(row.match(/<(?:div|span)[^>]*data-cy=["'](?:itemValue|propertyNumber)["'][^>]*>([\s\S]*?)<\/(?:div|span)>/i)?.[1] ?? "");
+    const label = stripHtml(
+      row.match(/<span[^>]*data-cy=["']informationTableLabel["'][^>]*>([\s\S]*?)<\/span>/i)?.[1] ??
+        "",
+    );
+    const value = stripHtml(
+      row.match(
+        /<(?:div|span)[^>]*data-cy=["'](?:itemValue|propertyNumber)["'][^>]*>([\s\S]*?)<\/(?:div|span)>/i,
+      )?.[1] ?? "",
+    );
     const key = normalizeLabel(label);
     if (key && value && rows[key] === undefined) rows[key] = value;
   }
@@ -163,13 +191,21 @@ function extractInformationRows(html: string) {
 
 function extractHighlightedParameters(html: string) {
   const values: Record<string, string> = {};
-  const labels = Array.from(html.matchAll(/<div[^>]*data-cy=["']detailsHighlightedParametersLabel["'][^>]*>([\s\S]*?)<\/div>/gi));
+  const labels = Array.from(
+    html.matchAll(
+      /<div[^>]*data-cy=["']detailsHighlightedParametersLabel["'][^>]*>([\s\S]*?)<\/div>/gi,
+    ),
+  );
   for (let index = 0; index < labels.length; index += 1) {
     const start = labels[index].index ?? 0;
     const end = labels[index + 1]?.index ?? Math.min(html.length, start + 2500);
     const item = html.slice(start, end);
     const label = stripHtml(labels[index][1]);
-    const value = stripHtml(item.match(/<div[^>]*data-cy=["']detailsHighlightedParametersValue["'][^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? "");
+    const value = stripHtml(
+      item.match(
+        /<div[^>]*data-cy=["']detailsHighlightedParametersValue["'][^>]*>([\s\S]*?)<\/div>/i,
+      )?.[1] ?? "",
+    );
     const key = normalizeLabel(label);
     if (key && value && values[key] === undefined) values[key] = value;
   }
@@ -177,23 +213,33 @@ function extractHighlightedParameters(html: string) {
 }
 
 function extractDescriptionHtml(html: string) {
-  const match = html.match(/<div[^>]*class=["'][^"']*details-description__content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+  const match = html.match(
+    /<div[^>]*class=["'][^"']*details-description__content[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+  );
   return match?.[1] ?? "";
 }
 
 function extractVisiblePhone(html: string) {
-  const revealed = html.match(/<[^>]+data-cy=["']phoneContactNumber["'][^>]*>([\s\S]{0,100}?)<\//i)?.[1];
+  const revealed = html.match(
+    /<[^>]+data-cy=["']phoneContactNumber["'][^>]*>([\s\S]{0,100}?)<\//i,
+  )?.[1];
   if (revealed) return stripHtml(revealed);
-  const visible = html.match(/<[^>]+class=["'][^"']*phone-contact__number[^"']*["'][^>]*>([\s\S]{0,100}?)<\//i)?.[1];
+  const visible = html.match(
+    /<[^>]+class=["'][^"']*phone-contact__number[^"']*["'][^>]*>([\s\S]{0,100}?)<\//i,
+  )?.[1];
   return stripHtml(visible ?? "");
 }
 
 function extractCoordinates(html: string) {
-  for (const match of html.matchAll(/["']latitude["']\s*:\s*(-?\d+(?:\.\d+)?)[\s,]+["']longitude["']\s*:\s*(-?\d+(?:\.\d+)?)/gi)) {
+  for (const match of html.matchAll(
+    /["']latitude["']\s*:\s*(-?\d+(?:\.\d+)?)[\s,]+["']longitude["']\s*:\s*(-?\d+(?:\.\d+)?)/gi,
+  )) {
     const point = validPolishPoint(Number(match[1]), Number(match[2]));
     if (point) return point;
   }
-  for (const match of html.matchAll(/["']latitude["']\s*:\s*\d+\s*,\s*["']longitude["']\s*:\s*\d+\s*}\s*,\s*(\d{2}\.\d+)\s*,\s*(\d{2}\.\d+)/gi)) {
+  for (const match of html.matchAll(
+    /["']latitude["']\s*:\s*\d+\s*,\s*["']longitude["']\s*:\s*\d+\s*}\s*,\s*(\d{2}\.\d+)\s*,\s*(\d{2}\.\d+)/gi,
+  )) {
     const point = validPolishPoint(Number(match[1]), Number(match[2]));
     if (point) return point;
   }
@@ -208,9 +254,24 @@ function validPolishPoint(latitude: number, longitude: number) {
 
 function extractDistrict(text: string) {
   const districts = [
-    "Praga-Północ", "Praga-Południe", "Śródmieście", "Białołęka", "Targówek", "Żoliborz",
-    "Mokotów", "Wilanów", "Ursynów", "Bemowo", "Bielany", "Ochota", "Ursus", "Wawer",
-    "Wesoła", "Włochy", "Wola", "Rembertów"
+    "Praga-Północ",
+    "Praga-Południe",
+    "Śródmieście",
+    "Białołęka",
+    "Targówek",
+    "Żoliborz",
+    "Mokotów",
+    "Wilanów",
+    "Ursynów",
+    "Bemowo",
+    "Bielany",
+    "Ochota",
+    "Ursus",
+    "Wawer",
+    "Wesoła",
+    "Włochy",
+    "Wola",
+    "Rembertów",
   ];
   const normalizedText = normalizeLabel(text);
   const exact = districts.find((district) => normalizedText.includes(normalizeLabel(district)));
@@ -223,13 +284,14 @@ function extractDistrict(text: string) {
     [/\bwoli|wole\b/, "Wola"],
     [/\bsrodmiesci(?:u|a|em)\b/, "Śródmieście"],
     [/\bwilanow(?:ie|u|em)\b/, "Wilanów"],
-    [/\btargowk(?:u|iem)\b/, "Targówek"]
+    [/\btargowk(?:u|iem)\b/, "Targówek"],
   ];
   return inflections.find(([pattern]) => pattern.test(normalizedText))?.[1];
 }
 
 function extractStreetFromDescription(description: string) {
-  const pattern = /(?:(?:przy|na|od)\s+ulic(?:y|\u0119)|(?:przy\s+)?ul\.?|ulica|(?:przy|na|od)\s+alei|al\.?|aleja|(?:przy|na|od)\s+placu|pl\.?|plac)\s+([^,.;\n]{2,90}?)(?=\s+(?:na|w)\s+(?:warszaw|dzielnic)|[,.;\n]|$)/gi;
+  const pattern =
+    /(?:(?:przy|na|od)\s+ulic(?:y|\u0119)|(?:przy\s+)?ul\.?|ulica|(?:przy|na|od)\s+alei|al\.?|aleja|(?:przy|na|od)\s+placu|pl\.?|plac)\s+([^,.;\n]{2,90}?)(?=\s+(?:na|w)\s+(?:warszaw|dzielnic)|[,.;\n]|$)/gi;
   for (const match of description.matchAll(pattern)) {
     const candidate = match[1]?.trim();
     if (!candidate || candidate.split(/\s+/).length > 8) continue;
@@ -242,15 +304,25 @@ function extractStreetFromDescription(description: string) {
 }
 
 function extractMorizonLocation(html: string) {
-  const headingHtml = html.match(/<h2\b[^>]*data-cy=["']locationRowTitle["'][^>]*>([\s\S]*?)<\/h2>/i)?.[1];
+  const headingHtml = html.match(
+    /<h2\b[^>]*data-cy=["']locationRowTitle["'][^>]*>([\s\S]*?)<\/h2>/i,
+  )?.[1];
   if (!headingHtml) return {};
 
-  const mainLocationMatch = /<div\b[^>]*class=["'][^"']*location-row__main-location[^"']*["'][^>]*>([\s\S]*?)<\/div>/i.exec(headingHtml);
-  const streetSection = mainLocationMatch ? headingHtml.slice(0, mainLocationMatch.index) : headingHtml;
-  const street = Array.from(streetSection.matchAll(/<span\b[^>]*>([\s\S]*?)<\/span>/gi), (match) => stripHtml(match[1]))
-    .find(Boolean);
+  const mainLocationMatch =
+    /<div\b[^>]*class=["'][^"']*location-row__main-location[^"']*["'][^>]*>([\s\S]*?)<\/div>/i.exec(
+      headingHtml,
+    );
+  const streetSection = mainLocationMatch
+    ? headingHtml.slice(0, mainLocationMatch.index)
+    : headingHtml;
+  const street = Array.from(streetSection.matchAll(/<span\b[^>]*>([\s\S]*?)<\/span>/gi), (match) =>
+    stripHtml(match[1]),
+  ).find(Boolean);
   const locationLabels = mainLocationMatch
-    ? Array.from(mainLocationMatch[1].matchAll(/<span\b[^>]*>([\s\S]*?)<\/span>/gi), (match) => stripHtml(match[1])).filter(Boolean)
+    ? Array.from(mainLocationMatch[1].matchAll(/<span\b[^>]*>([\s\S]*?)<\/span>/gi), (match) =>
+        stripHtml(match[1]),
+      ).filter(Boolean)
     : [];
   const district = extractDistrict(locationLabels.join("\n"));
 
@@ -273,14 +345,16 @@ function extractMorizonImages(html: string) {
     if (!selected || !isMorizonImage(selected.url)) continue;
     const position = Math.max(0, Number(positionMatch[2]) - 1);
     const existing = candidates.get(position);
-    if (!existing || selected.width >= existing.width) candidates.set(position, { ...selected, caption: alt });
+    if (!existing || selected.width >= existing.width)
+      candidates.set(position, { ...selected, caption: alt });
   }
 
   for (const [position, serialized] of extractSerializedGalleryImages(html, cover).entries()) {
     const existing = candidates.get(position);
     if (!existing || serialized.width >= existing.width) candidates.set(position, serialized);
   }
-  if (cover && isMorizonImage(cover) && !candidates.has(0)) candidates.set(0, { url: decodeHtml(cover), width: 0 });
+  if (cover && isMorizonImage(cover) && !candidates.has(0))
+    candidates.set(0, { url: decodeHtml(cover), width: 0 });
 
   const seen = new Set<string>();
   return [...candidates.entries()]
@@ -295,7 +369,7 @@ function extractMorizonImages(html: string) {
       sourceUrl: largestMorizonVariant(image.url),
       position,
       caption: image.caption,
-      isPrimary: index === 0
+      isPrimary: index === 0,
     }));
 }
 
@@ -310,7 +384,9 @@ function extractSerializedGalleryImages(html: string, cover?: string) {
   if (!galleryGroup) return result;
 
   const byToken = new Map<string, { url: string; width: number }>();
-  for (const match of html.matchAll(/https:\/\/img\d*\.staticmorizon\.com\.pl\/thumb\/([A-Za-z0-9_=-]+)\/[^"'\\<>\s]+/gi)) {
+  for (const match of html.matchAll(
+    /https:\/\/img\d*\.staticmorizon\.com\.pl\/thumb\/([A-Za-z0-9_=-]+)\/[^"'\\<>\s]+/gi,
+  )) {
     const token = match[1];
     if (decodedGalleryGroup(token) !== galleryGroup) continue;
     const url = decodeHtml(match[0]).replace(/[),;]+$/, "");
@@ -348,16 +424,23 @@ function bestImageFromTag(tag: string) {
     const match = part.trim().match(/^(\S+)\s+(\d+)w$/);
     if (match) options.push({ url: decodeHtml(match[1]), width: Number(match[2]) });
   }
-  return options.filter((option) => isMorizonImage(option.url)).sort((left, right) => right.width - left.width)[0];
+  return options
+    .filter((option) => isMorizonImage(option.url))
+    .sort((left, right) => right.width - left.width)[0];
 }
 
 function extractGalleryCount(html: string) {
-  const values = Array.from(html.matchAll(/aria-label=["']\d+\s*\/\s*(\d+)["']/gi), (match) => Number(match[1]));
+  const values = Array.from(html.matchAll(/aria-label=["']\d+\s*\/\s*(\d+)["']/gi), (match) =>
+    Number(match[1]),
+  );
   return values.length > 0 ? Math.max(...values) : undefined;
 }
 
 function imageIdentity(url: string) {
-  return url.match(/\/thumb\/([^/]+)\//i)?.[1] ?? url.replace(/\/(?:3x2_)?(?:xs|s|m|l|xl):[^/]+\//i, "/size/").split("?")[0];
+  return (
+    url.match(/\/thumb\/([^/]+)\//i)?.[1] ??
+    url.replace(/\/(?:3x2_)?(?:xs|s|m|l|xl):[^/]+\//i, "/size/").split("?")[0]
+  );
 }
 
 function isMorizonImage(value: string) {
@@ -370,16 +453,27 @@ function isMorizonImage(value: string) {
 
 function meta(html: string, key: string) {
   const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return decodeHtml(
-    html.match(new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']+)`, "i"))?.[1]
-      ?? html.match(new RegExp(`<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escaped}["']`, "i"))?.[1]
-      ?? ""
-  ) || undefined;
+  return (
+    decodeHtml(
+      html.match(
+        new RegExp(`<meta[^>]+(?:property|name)=["']${escaped}["'][^>]+content=["']([^"']+)`, "i"),
+      )?.[1] ??
+        html.match(
+          new RegExp(
+            `<meta[^>]+content=["']([^"']+)["'][^>]+(?:property|name)=["']${escaped}["']`,
+            "i",
+          ),
+        )?.[1] ??
+        "",
+    ) || undefined
+  );
 }
 
 function attribute(tag: string, name: string) {
   const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return decodeHtml(tag.match(new RegExp(`\\b${escaped}=["']([^"']*)["']`, "i"))?.[1] ?? "") || undefined;
+  return (
+    decodeHtml(tag.match(new RegExp(`\\b${escaped}=["']([^"']*)["']`, "i"))?.[1] ?? "") || undefined
+  );
 }
 
 function parsePolishDate(value?: string) {
@@ -396,7 +490,10 @@ function normalizePhone(value?: string) {
 
 function numberValue(value?: string) {
   if (!value) return undefined;
-  const normalized = value.replace(/[\s\u00a0]/g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+  const normalized = value
+    .replace(/[\s\u00a0]/g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "");
   const parsed = Number(normalized);
   return Number.isFinite(parsed) && parsed >= 0 ? parsed : undefined;
 }
@@ -437,17 +534,27 @@ function displayLabel(normalized: string) {
   const known: Record<string, string> = {
     "rok budowy": "Rok budowy",
     "typ budynku": "Rodzaj zabudowy",
-    "pietro": "Piętro",
-    "balkon": "Balkon",
+    pietro: "Piętro",
+    balkon: "Balkon",
     "stan nieruchomosci": "Stan nieruchomości",
     "typ kuchni": "Typ kuchni",
-    "liczba lazienek": "Liczba łazienek"
+    "liczba lazienek": "Liczba łazienek",
   };
   return known[normalized] ?? normalized.charAt(0).toLocaleUpperCase("pl-PL") + normalized.slice(1);
 }
 
-function firstMatch(value: string, pattern: RegExp) { return value.match(pattern)?.[1] ?? ""; }
-function stringValue(value: unknown) { return typeof value === "string" ? value : typeof value === "number" ? String(value) : undefined; }
-function recordValue(value: unknown) { return isRecord(value) ? value : undefined; }
-function isRecord(value: unknown): value is JsonRecord { return Boolean(value) && typeof value === "object" && !Array.isArray(value); }
-function typeIncludes(value: unknown, expected: string) { return Array.isArray(value) ? value.includes(expected) : value === expected; }
+function firstMatch(value: string, pattern: RegExp) {
+  return value.match(pattern)?.[1] ?? "";
+}
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : typeof value === "number" ? String(value) : undefined;
+}
+function recordValue(value: unknown) {
+  return isRecord(value) ? value : undefined;
+}
+function isRecord(value: unknown): value is JsonRecord {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+function typeIncludes(value: unknown, expected: string) {
+  return Array.isArray(value) ? value.includes(expected) : value === expected;
+}

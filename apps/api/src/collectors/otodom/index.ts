@@ -1,15 +1,5 @@
-import { OtodomDiscovery } from "./otodom-discovery";
-import { OtodomFetcher } from "./otodom-fetcher";
-import { OtodomParser } from "./otodom-parser";
-import { OtodomStorage } from "./otodom-storage";
-import { missingPriceError, OtodomMissingPriceError } from "./otodom-diagnostics";
-import { downloadListingMedia } from "../../services/media-downloader";
-import { archiveOfferArtifacts } from "../../services/offer-archive";
-import { geocodeListing, reverseGeocodeListing } from "../../services/geocoding";
-import { getFamilySettings } from "../../services/family-settings";
-import { appendImportFailureLog } from "../../services/import-failure-log";
-import { isUnavailableListingDocument, markListingArchived } from "../../services/listing-archive";
-import { purgeInvalidSourceListing } from "../../services/listing-repository";
+import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
+import { appendImportFailureLog } from "../../services/collecting/import-failure-log";
 import {
   claimListingImportBatch,
   completeListingImport,
@@ -17,8 +7,21 @@ import {
   failListingImport,
   getKnownListingExternalIds,
   getListingImportQueueStatus,
-  retryFailedListingImportsNow
-} from "../../services/listing-import-queue";
+  retryFailedListingImportsNow,
+} from "../../services/collecting/listing-import-queue";
+import { geocodeListing, reverseGeocodeListing } from "../../services/geography/geocoding";
+import {
+  isUnavailableListingDocument,
+  markListingArchived,
+} from "../../services/listings/listing-archive";
+import { purgeInvalidSourceListing } from "../../services/listings/listing-repository";
+import { downloadListingMedia } from "../../services/media/media-downloader";
+import { getFamilySettings } from "../../services/settings/family-settings";
+import { missingPriceError, OtodomMissingPriceError } from "./otodom-diagnostics";
+import { OtodomDiscovery } from "./otodom-discovery";
+import { OtodomFetcher } from "./otodom-fetcher";
+import { OtodomParser } from "./otodom-parser";
+import { OtodomStorage } from "./otodom-storage";
 
 export class OtodomCollector {
   private readonly discovery = new OtodomDiscovery();
@@ -26,7 +29,10 @@ export class OtodomCollector {
   private readonly parser = new OtodomParser();
   private readonly storage = new OtodomStorage();
 
-  async collectOne(url: string, options?: { downloadMedia?: boolean; externalId?: string; refreshMode?: "full" | "price_only" }) {
+  async collectOne(
+    url: string,
+    options?: { downloadMedia?: boolean; externalId?: string; refreshMode?: "full" | "price_only" },
+  ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
     const document = await this.fetcher.fetchListing(url);
     if (!isDirectOtodomListingDocument(document.finalUrl ?? document.url)) {
@@ -37,7 +43,7 @@ export class OtodomCollector {
         sourceKey: "otodom",
         externalId: options?.externalId,
         canonicalUrl: url,
-        reason: `Link niedostępny: HTTP ${document.statusCode}`
+        reason: `Link niedostępny: HTTP ${document.statusCode}`,
       });
       if (archived) {
         return buildArchivedCollectorResult(archived.listingId, options?.externalId ?? url, url);
@@ -48,7 +54,9 @@ export class OtodomCollector {
     const parsedFromPortal = await this.parser.parse(document);
     // Przy odświeżaniu rekord z bazy jest źródłem prawdy dla ID. Portal może
     // przekierować wygasły albo zmieniony link na stronę pomocniczą.
-    const parsed = options?.externalId ? { ...parsedFromPortal, externalId: options.externalId } : parsedFromPortal;
+    const parsed = options?.externalId
+      ? { ...parsedFromPortal, externalId: options.externalId }
+      : parsedFromPortal;
     if (!parsed.priceAmount || parsed.priceAmount <= 0) {
       throw await missingPriceError(document, parsed.externalId);
     }
@@ -60,20 +68,20 @@ export class OtodomCollector {
             district: parsed.district,
             neighborhood: parsed.neighborhood,
             street: parsed.street,
-            addressText: parsed.addressText
+            addressText: parsed.addressText,
           });
     const normalizedParsed = geocoded
       ? {
           ...parsed,
           latitude: geocoded.latitude,
-          longitude: geocoded.longitude
+          longitude: geocoded.longitude,
         }
       : parsed;
     const reverseGeocoded =
       !isPriceOnlyRefresh && normalizedParsed.latitude && normalizedParsed.longitude
         ? await reverseGeocodeListing({
             latitude: normalizedParsed.latitude,
-            longitude: normalizedParsed.longitude
+            longitude: normalizedParsed.longitude,
           }).catch(async (error: unknown) => {
             await appendImportFailureLog({
               sourceKey: "otodom",
@@ -81,18 +89,25 @@ export class OtodomCollector {
               canonicalUrl: url,
               error: error instanceof Error ? error.message : String(error),
               attempts: 1,
-              context: { stage: "reverse_geocoding", fallback: "portal_location", cause: error instanceof Error ? String(error.cause ?? "") : "" }
+              context: {
+                stage: "reverse_geocoding",
+                fallback: "portal_location",
+                cause: error instanceof Error ? String(error.cause ?? "") : "",
+              },
             });
             return null;
           })
         : null;
     const enrichedParsed = {
       ...normalizedParsed,
-      city: normalizedParsed.city === "Unknown" ? reverseGeocoded?.city ?? normalizedParsed.city : normalizedParsed.city,
+      city:
+        normalizedParsed.city === "Unknown"
+          ? (reverseGeocoded?.city ?? normalizedParsed.city)
+          : normalizedParsed.city,
       district: normalizedParsed.district ?? reverseGeocoded?.district ?? undefined,
       neighborhood: normalizedParsed.neighborhood ?? reverseGeocoded?.neighborhood ?? undefined,
       street: normalizedParsed.street ?? reverseGeocoded?.street ?? undefined,
-      addressText: normalizedParsed.addressText ?? reverseGeocoded?.addressText ?? undefined
+      addressText: normalizedParsed.addressText ?? reverseGeocoded?.addressText ?? undefined,
     };
     const archivedArtifacts = isPriceOnlyRefresh
       ? { basePath: "", rawHtmlPath: "", parsedJsonPath: "" }
@@ -101,7 +116,7 @@ export class OtodomCollector {
           externalId: enrichedParsed.externalId,
           timestamp: new Date().toISOString(),
           html: document.html,
-          parsed: enrichedParsed
+          parsed: enrichedParsed,
         });
     const stored = await this.storage.upsertListingSnapshot({
       sourceKey: "otodom",
@@ -109,21 +124,27 @@ export class OtodomCollector {
       refreshMode: options?.refreshMode,
       rawArtifact: {
         type: isPriceOnlyRefresh ? "json" : "html",
-        storageKey: "rawStorageKey" in archivedArtifacts
-          ? archivedArtifacts.rawStorageKey
-          : `sources/otodom/${enrichedParsed.externalId}/price/${Date.now()}.json`,
+        storageKey:
+          "rawStorageKey" in archivedArtifacts
+            ? archivedArtifacts.rawStorageKey
+            : `sources/otodom/${enrichedParsed.externalId}/price/${Date.now()}.json`,
         payload: isPriceOnlyRefresh
           ? { url: document.url, priceAmount: enrichedParsed.priceAmount }
           : {
               url: document.url,
-              checksum: "rawChecksum" in archivedArtifacts ? archivedArtifacts.rawChecksum : undefined,
-              parsedStorageKey: "parsedStorageKey" in archivedArtifacts ? archivedArtifacts.parsedStorageKey : undefined,
-              encoding: "encoding" in archivedArtifacts ? archivedArtifacts.encoding : undefined
-            }
-      }
+              checksum:
+                "rawChecksum" in archivedArtifacts ? archivedArtifacts.rawChecksum : undefined,
+              parsedStorageKey:
+                "parsedStorageKey" in archivedArtifacts
+                  ? archivedArtifacts.parsedStorageKey
+                  : undefined,
+              encoding: "encoding" in archivedArtifacts ? archivedArtifacts.encoding : undefined,
+            },
+      },
     });
 
-    const mediaResults = options?.downloadMedia === false ? [] : await downloadListingMedia(stored.mediaAssets);
+    const mediaResults =
+      options?.downloadMedia === false ? [] : await downloadListingMedia(stored.mediaAssets);
     return {
       ...stored,
       parsed: {
@@ -132,10 +153,10 @@ export class OtodomCollector {
         city: enrichedParsed.city,
         district: enrichedParsed.district,
         neighborhood: enrichedParsed.neighborhood,
-        imageCount: enrichedParsed.images.length
+        imageCount: enrichedParsed.images.length,
       },
       mediaResults,
-      archivedArtifacts
+      archivedArtifacts,
     };
   }
 
@@ -144,7 +165,7 @@ export class OtodomCollector {
     return this.discovery.discoverListingUrls({
       ...input,
       city: input.city || settings.searchContract.city,
-      contract: settings.searchContract
+      contract: settings.searchContract,
     });
   }
 
@@ -177,17 +198,20 @@ export class OtodomCollector {
           city,
           startPage: currentPage,
           pages: pagesInBatch,
-          contract: settings.searchContract
+          contract: settings.searchContract,
         });
       } catch (cause) {
-        error = cause instanceof Error ? cause.message || cause.name || "Otodom discovery failed" : "Otodom discovery failed";
+        error =
+          cause instanceof Error
+            ? cause.message || cause.name || "Otodom discovery failed"
+            : "Otodom discovery failed";
         break;
       }
       const batchResult = await enqueueListingImports({
         sourceKey: "otodom",
         city,
         priority: input.priority ?? 100,
-        items: links
+        items: links,
       });
 
       queued += batchResult.queued;
@@ -203,20 +227,32 @@ export class OtodomCollector {
       scannedPages,
       discovered,
       queued,
-      stoppedBecause: error !== undefined
-        ? "error"
-        : emptyBatches >= stopAfterEmptyBatches
-          ? "empty_batches"
-          : "max_pages",
-      error
+      stoppedBecause:
+        error !== undefined
+          ? "error"
+          : emptyBatches >= stopAfterEmptyBatches
+            ? "empty_batches"
+            : "max_pages",
+      error,
     };
   }
 
-  async collectPage(input: { city: string; page?: number; startPage?: number; pages?: number; limit?: number }) {
+  async collectPage(input: {
+    city: string;
+    page?: number;
+    startPage?: number;
+    pages?: number;
+    limit?: number;
+  }) {
     const settings = await getFamilySettings();
     const pages = Math.max(1, Math.min(5, input.pages ?? 1));
     const limit = Math.max(1, Math.min(50, input.limit ?? 12));
-    const discovered = await this.discovery.discoverListingUrls({ ...input, city: input.city, pages, contract: settings.searchContract });
+    const discovered = await this.discovery.discoverListingUrls({
+      ...input,
+      city: input.city,
+      pages,
+      contract: settings.searchContract,
+    });
     const results = [];
     let created = 0;
     let updated = 0;
@@ -239,7 +275,7 @@ export class OtodomCollector {
         results.push({
           error: error instanceof Error ? error.message : "unknown error",
           externalId: item.externalId,
-          url: item.url
+          url: item.url,
         });
       }
     }
@@ -254,19 +290,27 @@ export class OtodomCollector {
       updated,
       unchanged,
       failed,
-      results
+      results,
     };
   }
 
-  async processQueue(input?: { limit?: number; concurrency?: number; downloadMedia?: boolean; queueKind?: "all" | "price_updates" }) {
+  async processQueue(input?: {
+    limit?: number;
+    concurrency?: number;
+    downloadMedia?: boolean;
+    queueKind?: "all" | "price_updates";
+  }) {
     const limit = Math.max(1, Math.min(500, input?.limit ?? 100));
     const concurrency = Math.max(1, Math.min(16, input?.concurrency ?? 8));
     const claimed = await claimListingImportBatch({
       sourceKey: "otodom",
       limit,
-      queueKind: input?.queueKind
+      queueKind: input?.queueKind,
     });
-    const knownExternalIds = await getKnownListingExternalIds({ sourceKey: "otodom", externalIds: claimed.map((item) => item.external_id) });
+    const knownExternalIds = await getKnownListingExternalIds({
+      sourceKey: "otodom",
+      externalIds: claimed.map((item) => item.external_id),
+    });
 
     let completed = 0;
     let failed = 0;
@@ -277,10 +321,14 @@ export class OtodomCollector {
       const results = await Promise.allSettled(
         batch.map(async (item) => {
           const priceOnly = knownExternalIds.has(item.external_id);
-          await this.collectOne(item.canonical_url, { downloadMedia: priceOnly ? false : true, externalId: item.external_id, refreshMode: priceOnly ? "price_only" : "full" });
+          await this.collectOne(item.canonical_url, {
+            downloadMedia: priceOnly ? false : true,
+            externalId: item.external_id,
+            refreshMode: priceOnly ? "price_only" : "full",
+          });
           await completeListingImport(item.id);
           return item;
-        })
+        }),
       );
 
       for (let offset = 0; offset < results.length; offset += 1) {
@@ -297,17 +345,24 @@ export class OtodomCollector {
         failures.push({
           externalId: item.external_id,
           url: item.canonical_url,
-          error: message
+          error: message,
         });
         if (message.startsWith("NOT_DIRECT_OTODOM_LISTING:")) {
-          await purgeInvalidSourceListing({ sourceKey: "otodom", externalId: item.external_id, queueItemId: item.id });
+          await purgeInvalidSourceListing({
+            sourceKey: "otodom",
+            externalId: item.external_id,
+            queueItemId: item.id,
+          });
           continue;
         }
         await failListingImport({
           id: item.id,
           error: message,
           attempts: item.attempts + 1,
-          metadata: result.reason instanceof OtodomMissingPriceError ? result.reason.diagnostics : undefined
+          metadata:
+            result.reason instanceof OtodomMissingPriceError
+              ? result.reason.diagnostics
+              : undefined,
         });
       }
     }
@@ -316,7 +371,7 @@ export class OtodomCollector {
       claimed: claimed.length,
       completed,
       failed,
-      failures
+      failures,
     };
   }
 
@@ -327,7 +382,7 @@ export class OtodomCollector {
   async retryFailed(limit?: number) {
     return retryFailedListingImportsNow({
       sourceKey: "otodom",
-      limit
+      limit,
     });
   }
 
@@ -349,7 +404,7 @@ export class OtodomCollector {
       maxPages: input?.maxPages,
       batchPages: input?.batchPages,
       stopAfterEmptyBatches: input?.stopAfterEmptyBatches,
-      priority: input?.priority
+      priority: input?.priority,
     });
 
     const maxRounds = Math.max(1, Math.min(200, input?.maxRounds ?? 50));
@@ -363,7 +418,7 @@ export class OtodomCollector {
       const batch = await this.processQueue({
         limit: input?.processLimit ?? 200,
         concurrency: input?.concurrency ?? 8,
-        downloadMedia: true
+        downloadMedia: true,
       });
 
       processedRounds += 1;
@@ -391,7 +446,7 @@ export class OtodomCollector {
       totalCompleted,
       totalFailed,
       finalQueueStatus,
-      stoppedBecause
+      stoppedBecause,
     };
   }
 }
@@ -420,7 +475,10 @@ function describeCollectorError(error: unknown): string {
 function isDirectOtodomListingDocument(url: string) {
   try {
     const parsed = new URL(url);
-    return parsed.hostname.endsWith("otodom.pl") && /^\/pl\/oferta\/[^/]+ID[a-z0-9]+/i.test(parsed.pathname);
+    return (
+      parsed.hostname.endsWith("otodom.pl") &&
+      /^\/pl\/oferta\/[^/]+ID[a-z0-9]+/i.test(parsed.pathname)
+    );
   } catch {
     return false;
   }
@@ -436,13 +494,13 @@ function buildArchivedCollectorResult(listingId: string, externalId: string, url
       externalId,
       title: "Oferta archiwalna",
       city: "Unknown",
-      imageCount: 0
+      imageCount: 0,
     },
     mediaResults: [],
     archivedArtifacts: {
       basePath: "",
       rawHtmlPath: "",
-      parsedJsonPath: url
-    }
+      parsedJsonPath: url,
+    },
   };
 }

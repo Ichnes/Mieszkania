@@ -1,15 +1,27 @@
 import { createHash } from "node:crypto";
 import type { PoolClient } from "pg";
-import type { CollectorStorage } from "../types";
 import { pool } from "../../db";
-import { ensureSource } from "../../services/source-registry";
-import { enrichListingFromDescription } from "../../services/listing-description-facts";
-import { findWarsawDistrictAtPoint } from "../../services/warsaw-district-boundaries";
-import { autoMergeDuplicateByDescription } from "../../services/listing-duplicates";
-import { normalizePolish, normalizeWarsawListingCity, normalizeWarsawStreetCandidate, sanitizeWarsawAddressText } from "../../services/address-normalization";
-import { canonicalWarsawDistrict, canonicalWarsawNeighborhood, sameStreetOrLocation } from "../../services/warsaw-neighborhoods";
-import { estimateWarsawListingNeighborhood } from "../../services/listing-neighborhood-estimator";
-import { compactArchivePayload, createListingArchiveChecksum } from "../../services/offer-archive";
+import {
+  compactArchivePayload,
+  createListingArchiveChecksum,
+} from "../../services/archive/offer-archive";
+import { ensureSource } from "../../services/collecting/source-registry";
+import { autoMergeDuplicateByDescription } from "../../services/duplicates/listing-duplicates";
+import {
+  normalizePolish,
+  normalizeWarsawListingCity,
+  normalizeWarsawStreetCandidate,
+  sanitizeWarsawAddressText,
+} from "../../services/geography/address-normalization";
+import { findWarsawDistrictAtPoint } from "../../services/geography/warsaw-district-boundaries";
+import {
+  canonicalWarsawDistrict,
+  canonicalWarsawNeighborhood,
+  sameStreetOrLocation,
+} from "../../services/geography/warsaw-neighborhoods";
+import { estimateWarsawListingNeighborhood } from "../../services/insights/listing-neighborhood-estimator";
+import { enrichListingFromDescription } from "../../services/listings/listing-description-facts";
+import type { CollectorStorage } from "../types";
 
 type ExistingListingRow = {
   id: string;
@@ -59,38 +71,48 @@ export class OtodomStorage implements CollectorStorage {
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/[łŁ]/g, "l")
       .toLowerCase();
-    if (normalizedListingText.includes("ogloszenie archiwalne") && input.listing.status !== "removed") {
+    if (
+      normalizedListingText.includes("ogloszenie archiwalne") &&
+      input.listing.status !== "removed"
+    ) {
       input = { ...input, listing: { ...input.listing, status: "removed" } };
     }
 
     const portalDistrictNeighborhood = canonicalWarsawNeighborhood(input.listing.district);
-    const normalizedDistrict = canonicalWarsawDistrict(input.listing.district) ?? input.listing.district;
+    const normalizedDistrict =
+      canonicalWarsawDistrict(input.listing.district) ?? input.listing.district;
     const normalizedCity = normalizeWarsawListingCity(
       input.listing.city,
       normalizedDistrict,
-      `${input.listing.addressText ?? ""} ${input.listing.title}`
+      `${input.listing.addressText ?? ""} ${input.listing.title}`,
     );
     if (normalizedCity === "Warszawa") {
       const streetCandidate = normalizeWarsawStreetCandidate(input.listing.street);
       const inferredNeighborhood = await estimateWarsawListingNeighborhood({
-          district: normalizedDistrict,
-          neighborhood: input.listing.neighborhood ?? portalDistrictNeighborhood,
-          street: streetCandidate,
-          addressText: input.listing.addressText,
-          title: input.listing.title,
-          description: input.listing.description,
-          latitude: input.listing.latitude,
-          longitude: input.listing.longitude
-        });
-      const neighborhood = inferredNeighborhood && normalizePolish(inferredNeighborhood) !== normalizePolish(normalizedDistrict ?? "")
-        ? inferredNeighborhood
-        : undefined;
-      const street = sameStreetOrLocation(streetCandidate, neighborhood) ? undefined : streetCandidate ?? undefined;
-      const addressText = sanitizeWarsawAddressText(input.listing.addressText, {
         district: normalizedDistrict,
-        neighborhood,
-        city: normalizedCity
-      }) ?? ([street, neighborhood, normalizedCity].filter(Boolean).join(", ") || undefined);
+        neighborhood: input.listing.neighborhood ?? portalDistrictNeighborhood,
+        street: streetCandidate,
+        addressText: input.listing.addressText,
+        title: input.listing.title,
+        description: input.listing.description,
+        latitude: input.listing.latitude,
+        longitude: input.listing.longitude,
+      });
+      const neighborhood =
+        inferredNeighborhood &&
+        normalizePolish(inferredNeighborhood) !== normalizePolish(normalizedDistrict ?? "")
+          ? inferredNeighborhood
+          : undefined;
+      const street = sameStreetOrLocation(streetCandidate, neighborhood)
+        ? undefined
+        : (streetCandidate ?? undefined);
+      const addressText =
+        sanitizeWarsawAddressText(input.listing.addressText, {
+          district: normalizedDistrict,
+          neighborhood,
+          city: normalizedCity,
+        }) ??
+        ([street, neighborhood, normalizedCity].filter(Boolean).join(", ") || undefined);
       input = {
         ...input,
         listing: {
@@ -99,8 +121,8 @@ export class OtodomStorage implements CollectorStorage {
           district: normalizedDistrict,
           neighborhood,
           street,
-          addressText
-        }
+          addressText,
+        },
       };
     }
     for (let attempt = 1; attempt <= 5; attempt += 1) {
@@ -114,56 +136,62 @@ export class OtodomStorage implements CollectorStorage {
           // circular lock dependency in PostgreSQL.
           await db.query("select pg_advisory_xact_lock(735189241)");
           const sourceId = await ensureSource(db, input.sourceKey);
-            const parsedListing = enrichListingFromDescription(input.listing);
-            const pointDistrict = parsedListing.city.toLowerCase() === "warszawa" && parsedListing.latitude != null && parsedListing.longitude != null
+          const parsedListing = enrichListingFromDescription(input.listing);
+          const pointDistrict =
+            parsedListing.city.toLowerCase() === "warszawa" &&
+            parsedListing.latitude != null &&
+            parsedListing.longitude != null
               ? await findWarsawDistrictAtPoint(parsedListing.latitude, parsedListing.longitude, db)
               : null;
-            // The district is derived from the listing point and official OSM boundary,
-            // so it is more reliable than a portal label (or a previous approximation).
-            const pointNeighborhood = pointDistrict
-              ? canonicalWarsawNeighborhood(parsedListing.neighborhood, pointDistrict)
-                ?? await estimateWarsawListingNeighborhood({
-                  district: pointDistrict,
-                  neighborhood: parsedListing.neighborhood,
-                  street: parsedListing.street,
-                  addressText: parsedListing.addressText,
-                  title: parsedListing.title,
-                  description: parsedListing.description,
-                  latitude: parsedListing.latitude,
-                  longitude: parsedListing.longitude
-                })
-              : parsedListing.neighborhood;
-            const listing = pointDistrict
-              ? {
+          // The district is derived from the listing point and official OSM boundary,
+          // so it is more reliable than a portal label (or a previous approximation).
+          const pointNeighborhood = pointDistrict
+            ? (canonicalWarsawNeighborhood(parsedListing.neighborhood, pointDistrict) ??
+              (await estimateWarsawListingNeighborhood({
+                district: pointDistrict,
+                neighborhood: parsedListing.neighborhood,
+                street: parsedListing.street,
+                addressText: parsedListing.addressText,
+                title: parsedListing.title,
+                description: parsedListing.description,
+                latitude: parsedListing.latitude,
+                longitude: parsedListing.longitude,
+              })))
+            : parsedListing.neighborhood;
+          const listing = pointDistrict
+            ? {
                 ...parsedListing,
                 district: pointDistrict,
                 neighborhood: pointNeighborhood,
                 addressText: sanitizeWarsawAddressText(parsedListing.addressText, {
                   district: pointDistrict,
                   neighborhood: pointNeighborhood,
-                  city: parsedListing.city
-                })
+                  city: parsedListing.city,
+                }),
               }
-              : parsedListing;
-            const existingListing = await db.query<ExistingListingRow>(
-              `
+            : parsedListing;
+          const existingListing = await db.query<ExistingListingRow>(
+            `
                 select id, price_amount::text, title, description, status::text, content_checksum
                 from listings
                 where source_id = $1 and external_id = $2
                 limit 1
               `,
-              [sourceId, listing.externalId]
-            );
+            [sourceId, listing.externalId],
+          );
 
-            const existing = existingListing.rows[0];
-            const preserveExistingData = input.refreshMode === "price_only" && Boolean(existing);
-            const pricePerSqm =
-              listing.priceAmount && listing.areaSqm ? listing.priceAmount / listing.areaSqm : null;
-            const contentChecksum = createListingArchiveChecksum(listing as unknown as Record<string, unknown>);
-            const contentChanged = !preserveExistingData && (!existing || existing.content_checksum !== contentChecksum);
+          const existing = existingListing.rows[0];
+          const preserveExistingData = input.refreshMode === "price_only" && Boolean(existing);
+          const pricePerSqm =
+            listing.priceAmount && listing.areaSqm ? listing.priceAmount / listing.areaSqm : null;
+          const contentChecksum = createListingArchiveChecksum(
+            listing as unknown as Record<string, unknown>,
+          );
+          const contentChanged =
+            !preserveExistingData && (!existing || existing.content_checksum !== contentChecksum);
 
-            const listingResult = await db.query<{ id: string }>(
-              `
+          const listingResult = await db.query<{ id: string }>(
+            `
                 insert into listings (
                   source_id,
                   external_id,
@@ -242,39 +270,46 @@ export class OtodomStorage implements CollectorStorage {
                   updated_at = now()
                 returning id
               `,
-              [
-                sourceId,
-                listing.externalId,
-                listing.canonicalUrl,
-                listing.title,
-                listing.description ?? null,
-                listing.offerType,
-                listing.marketType,
-                listing.status,
-                listing.priceAmount ?? null,
-                pricePerSqm,
-                listing.areaSqm ?? null,
-                listing.rooms ?? null,
-                listing.floor ?? null,
-                listing.totalFloors ?? null,
-                listing.yearBuilt ?? null,
-                listing.latitude ?? null,
-                listing.longitude ?? null,
-                listing.sourceContactPhone ?? null,
-                listing.addressText ?? null,
-                listing.district ?? null,
-                listing.neighborhood ?? null,
-                listing.city,
-                listing.publishedAt ?? null,
-                contentChecksum,
-                preserveExistingData
-              ]
-            );
+            [
+              sourceId,
+              listing.externalId,
+              listing.canonicalUrl,
+              listing.title,
+              listing.description ?? null,
+              listing.offerType,
+              listing.marketType,
+              listing.status,
+              listing.priceAmount ?? null,
+              pricePerSqm,
+              listing.areaSqm ?? null,
+              listing.rooms ?? null,
+              listing.floor ?? null,
+              listing.totalFloors ?? null,
+              listing.yearBuilt ?? null,
+              listing.latitude ?? null,
+              listing.longitude ?? null,
+              listing.sourceContactPhone ?? null,
+              listing.addressText ?? null,
+              listing.district ?? null,
+              listing.neighborhood ?? null,
+              listing.city,
+              listing.publishedAt ?? null,
+              contentChecksum,
+              preserveExistingData,
+            ],
+          );
 
-            const listingId = await resolveListingId(db, sourceId, listing.externalId, listingResult.rows[0]?.id);
+          const listingId = await resolveListingId(
+            db,
+            sourceId,
+            listing.externalId,
+            listingResult.rows[0]?.id,
+          );
 
-            const snapshotResult = !contentChanged ? null : await db.query<{ id: string }>(
-              `
+          const snapshotResult = !contentChanged
+            ? null
+            : await db.query<{ id: string }>(
+                `
                 insert into listing_snapshots (
                   listing_id,
                   title,
@@ -290,24 +325,25 @@ export class OtodomStorage implements CollectorStorage {
                 values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
                 returning id
               `,
-              [
-                listingId,
-                listing.title,
-                listing.description ?? null,
-                listing.status,
-                listing.priceAmount ?? null,
-                pricePerSqm,
-                listing.areaSqm ?? null,
-                listing.rooms ?? null,
-                listing.floor ?? null,
-                JSON.stringify(compactArchivePayload(listing.rawPayload))
-              ]
-            );
+                [
+                  listingId,
+                  listing.title,
+                  listing.description ?? null,
+                  listing.status,
+                  listing.priceAmount ?? null,
+                  pricePerSqm,
+                  listing.areaSqm ?? null,
+                  listing.rooms ?? null,
+                  listing.floor ?? null,
+                  JSON.stringify(compactArchivePayload(listing.rawPayload)),
+                ],
+              );
 
-            const snapshotId = snapshotResult?.rows[0]?.id ?? null;
+          const snapshotId = snapshotResult?.rows[0]?.id ?? null;
 
-            const compactArtifactPayload = compactArchivePayload(input.rawArtifact.payload);
-            if (contentChanged) await db.query(
+          const compactArtifactPayload = compactArchivePayload(input.rawArtifact.payload);
+          if (contentChanged)
+            await db.query(
               `
                 insert into crawl_artifacts (source_id, listing_id, artifact_type, storage_key, checksum, payload_raw)
                 values ($1, $2, $3, $4, $5, $6)
@@ -318,35 +354,41 @@ export class OtodomStorage implements CollectorStorage {
                 input.rawArtifact.type,
                 input.rawArtifact.storageKey,
                 createHash("sha256").update(JSON.stringify(compactArtifactPayload)).digest("hex"),
-                JSON.stringify(compactArtifactPayload)
-              ]
+                JSON.stringify(compactArtifactPayload),
+              ],
             );
 
-            const action = await upsertPriceEvents(db, {
-              existing,
-              listingId,
-              snapshotId,
-              nextPriceAmount: listing.priceAmount ?? null,
-              nextStatus: listing.status,
-              contentChanged
-            });
+          const action = await upsertPriceEvents(db, {
+            existing,
+            listingId,
+            snapshotId,
+            nextPriceAmount: listing.priceAmount ?? null,
+            nextStatus: listing.status,
+            contentChanged,
+          });
 
-            if (action === "created") {
-              await autoMergeDuplicateByDescription(db, listingId);
-            }
+          if (action === "created") {
+            await autoMergeDuplicateByDescription(db, listingId);
+          }
 
-            const mediaAssets: Array<{ assetId: string; storageKey: string; sourceUrl: string }> = [];
+          const mediaAssets: Array<{ assetId: string; storageKey: string; sourceUrl: string }> = [];
 
-            // Gratka historically saved three low-resolution previews and later
-            // appended better variants, leaving stale images visible forever.
-            // A full Gratka refresh is authoritative, so replace its image map
-            // before inserting the complete XL gallery captured in this run.
-            if (contentChanged && input.sourceKey === "gratka") {
-              await db.query("delete from listing_images where listing_id = $1", [listingId]);
-            }
+          // Gratka historically saved three low-resolution previews and later
+          // appended better variants, leaving stale images visible forever.
+          // A full Gratka refresh is authoritative, so replace its image map
+          // before inserting the complete XL gallery captured in this run.
+          if (contentChanged && input.sourceKey === "gratka") {
+            await db.query("delete from listing_images where listing_id = $1", [listingId]);
+          }
 
-            if (contentChanged) for (const image of listing.images) {
-              const storageKey = buildStorageKey(input.sourceKey, listing.externalId, image.position, image.sourceUrl);
+          if (contentChanged)
+            for (const image of listing.images) {
+              const storageKey = buildStorageKey(
+                input.sourceKey,
+                listing.externalId,
+                image.position,
+                image.sourceUrl,
+              );
               const assetResult = await db.query<{ id: string }>(
                 `
                   insert into listing_media_assets (storage_key, source_url, content_hash, download_status)
@@ -359,8 +401,8 @@ export class OtodomStorage implements CollectorStorage {
                 [
                   storageKey,
                   image.sourceUrl,
-                  createHash("sha256").update(image.sourceUrl).digest("hex")
-                ]
+                  createHash("sha256").update(image.sourceUrl).digest("hex"),
+                ],
               );
               const assetId = await resolveMediaAssetId(db, storageKey, assetResult.rows[0]?.id);
 
@@ -394,14 +436,14 @@ export class OtodomStorage implements CollectorStorage {
                   image.sourceUrl,
                   image.position,
                   image.caption ?? null,
-                  image.isPrimary
-                ]
+                  image.isPrimary,
+                ],
               );
 
               mediaAssets.push({
                 assetId,
                 storageKey,
-                sourceUrl: image.sourceUrl
+                sourceUrl: image.sourceUrl,
               });
             }
 
@@ -420,7 +462,9 @@ export class OtodomStorage implements CollectorStorage {
         }
         // Concurrent collectors may briefly lock the same indexes. Jitter keeps
         // retries from colliding again in the same order.
-        await new Promise((resolve) => setTimeout(resolve, 100 * 2 ** (attempt - 1) + Math.floor(Math.random() * 120)));
+        await new Promise((resolve) =>
+          setTimeout(resolve, 100 * 2 ** (attempt - 1) + Math.floor(Math.random() * 120)),
+        );
       }
     }
 
@@ -449,7 +493,7 @@ async function resolveListingId(
   db: PoolClient,
   sourceId: string,
   externalId: string,
-  returnedId?: string
+  returnedId?: string,
 ) {
   if (returnedId) {
     return returnedId;
@@ -462,7 +506,7 @@ async function resolveListingId(
       where source_id = $1 and external_id = $2
       limit 1
     `,
-    [sourceId, externalId]
+    [sourceId, externalId],
   );
 
   const listingId = result.rows[0]?.id;
@@ -473,11 +517,7 @@ async function resolveListingId(
   return listingId;
 }
 
-async function resolveMediaAssetId(
-  db: PoolClient,
-  storageKey: string,
-  returnedId?: string
-) {
+async function resolveMediaAssetId(db: PoolClient, storageKey: string, returnedId?: string) {
   if (returnedId) {
     return returnedId;
   }
@@ -489,7 +529,7 @@ async function resolveMediaAssetId(
       where storage_key = $1
       limit 1
     `,
-    [storageKey]
+    [storageKey],
   );
 
   const assetId = result.rows[0]?.id;
@@ -509,7 +549,7 @@ async function upsertPriceEvents(
     nextPriceAmount: number | null;
     nextStatus: string;
     contentChanged: boolean;
-  }
+  },
 ) {
   if (!input.existing) {
     await db.query(
@@ -517,7 +557,7 @@ async function upsertPriceEvents(
         insert into price_events (listing_id, snapshot_id, event_type, previous_price_amount, new_price_amount)
         values ($1, $2, 'created', null, $3)
       `,
-      [input.listingId, input.snapshotId, input.nextPriceAmount]
+      [input.listingId, input.snapshotId, input.nextPriceAmount],
     );
 
     return "created" as const;
@@ -536,7 +576,7 @@ async function upsertPriceEvents(
         )
         values ($1, $2, 'removed', $3, $3)
       `,
-      [input.listingId, input.snapshotId, previousPrice]
+      [input.listingId, input.snapshotId, previousPrice],
     );
 
     return "updated" as const;
@@ -554,7 +594,7 @@ async function upsertPriceEvents(
         )
         values ($1, $2, 'relisted', $3, $4)
       `,
-      [input.listingId, input.snapshotId, previousPrice, input.nextPriceAmount]
+      [input.listingId, input.snapshotId, previousPrice, input.nextPriceAmount],
     );
 
     return "updated" as const;
@@ -580,12 +620,14 @@ async function upsertPriceEvents(
       [
         input.listingId,
         input.snapshotId,
-        previousPrice !== null && input.nextPriceAmount !== null && input.nextPriceAmount < previousPrice
+        previousPrice !== null &&
+        input.nextPriceAmount !== null &&
+        input.nextPriceAmount < previousPrice
           ? "price_drop"
           : "price_increase",
         previousPrice,
-        input.nextPriceAmount
-      ]
+        input.nextPriceAmount,
+      ],
     );
 
     return "updated" as const;
@@ -598,7 +640,12 @@ async function upsertPriceEvents(
   return "unchanged" as const;
 }
 
-function buildStorageKey(sourceKey: string, externalId: string, position: number, sourceUrl: string) {
+function buildStorageKey(
+  sourceKey: string,
+  externalId: string,
+  position: number,
+  sourceUrl: string,
+) {
   const hash = createHash("sha1").update(sourceUrl).digest("hex").slice(0, 12);
   return `sources/${sourceKey}/${externalId}/images/${position}-${hash}`;
 }

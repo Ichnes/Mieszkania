@@ -1,0 +1,12 @@
+node_modules/
+dist/
+storage/
+.local/
+.agents/
+.codex/
+package-lock.json
+*.geojson
+*.sql
+
+packages/shared/src/*.js
+apps/web/vite.config.js

@@ -1,89 +1,57 @@
 # Mieszkania
 
-Monorepo dla aplikacji do monitorowania rynku mieszkaniowego:
+Lokalna aplikacja do przeglądania ofert z ośmiu portali, porównywania cen, map,
+statystyk i planowania oglądań. Dane oraz ustawienia użytkownika zostają na jego komputerze.
 
-- zbieranie i normalizacja ogloszen,
-- historia zmian cen i opisow,
-- porownanie ofert do danych transakcyjnych RCN,
-- alerty i dashboard analityczny.
+## Uruchomienie
 
-## Struktura
+Wymagania: **Node.js 22.14+**, npm i uruchomiony **PostgreSQL 16+**. Docker nie jest używany.
 
-- `docs/` - produkt, architektura, model danych
-- [Lista zadań i stan prac](docs/TODO.md)
-- `apps/web` - frontend React
-- `apps/api` - backend HTTP
-- `packages/shared` - wspolne typy i kontrakty
-
-## Zakres MVP
-
-1. Import ofert z ograniczonej liczby zrodel.
-2. Wspolny model ogloszenia i snapshotow.
-3. Historia zmian ceny i statusu.
-4. Podstawowy dashboard z lista ofert i alertami.
-5. Integracja z danymi RCN jako osobny strumien analityczny.
-
-## Start
-
-Wymagania: Node.js 22+, npm i PostgreSQL 16 (lokalny lub przez Docker).
-
-```bash
+```sh
 npm install
-# Skopiuj .env.example do .env i ustaw własny DATABASE_URL.
-docker compose up -d postgres
 npm run dev
 ```
 
-Otwórz `http://localhost:5173`. W ustawieniach dodaj własne miejsca dojazdu i kryteria.
-Istniejącej lokalnej bazy nie trzeba tworzyć ponownie.
+Otwórz **http://localhost:5173/oferty**. Pierwsza instalacja pobiera również Chromium
+dla kolektorów ofert; wymaga dostępu do internetu.
 
-## Prywatne dane i udostępnianie
+Przy pierwszym starcie aplikacja tworzy lokalny `.env` z szablonu, buduje wspólny pakiet
+oraz przygotowuje bazę i tabele. Domyślne połączenie to PostgreSQL na `localhost:5432`,
+użytkownik i hasło `postgres`, baza `mieszkania`. Jeśli Twoje dane są inne, popraw
+`DATABASE_URL` w `.env` i ponów `npm run dev`. **npm nie instaluje serwera PostgreSQL.**
+Istniejąca baza i zapisane ustawienia są zachowywane. Nowa baza zaczyna bez ofert i adresów pracy.
 
-Kod można udostępnić bez bazy, archiwum ofert i ustawień użytkownika.
-`.env`, `storage/`, `.local/`, zbudowane pliki i kopie bazy są wykluczone przez `.gitignore`.
-Adresy pracy nie są wpisane w kod: nowa instalacja zaczyna z pustą listą miejsc.
+Pierwsze oferty dodasz w **Aktualizacja** lub przez **Import pojedynczego linku**.
+Adresy dojazdu i preferencje zmienisz w ustawieniach.
 
-Ustawienia są odczytywane z lokalnej tabeli `app_settings`. Zapis ustawień aktualizuje
-również `storage/settings/family-settings.json`. Jeśli w bazie zabraknie ustawień,
-aplikacja odtworzy je z tego lokalnego pliku. Istniejący rekord bazy ma pierwszeństwo.
-Nie kopiuj `storage/` ani `.env` do repozytorium znajomego. Osoby korzystające z tego
-samego uruchomionego serwera współdzielą jego ustawienia; osobna instalacja ma własne dane.
+## Struktura
 
-Przed publikacją sprawdź `git status --short` i `git diff --cached`.
-Przykładowy przebieg pierwszego wysłania (origin wskazuje repozytorium GitHub):
-
-```bash
-git add .
-git diff --cached --stat
-git commit -m "Initial application"
-git push -u origin HEAD
+```text
+apps/web/src/       app, pages, features, shared, styles
+apps/api/src/       http/routes, collectors, background, services, db, scripts
+packages/shared/   wspólne kontrakty i konfiguracja regionu
+scripts/           przygotowanie startu i uruchamianie testów
+docs/              instrukcje, architektura, referencje i archiwalne notatki
+storage/           lokalne dane, zdjęcia i backupy — poza Git
 ```
 
-## Priorytety techniczne
+## Polecenia
 
-1. Stabilny model danych przed budowa kolektorow.
-2. Rozdzielenie UI, API i workerow ETL.
-3. Projektowanie pod sledzenie zmian w czasie, nie tylko aktualny stan.
+| Polecenie              | Działanie                                                                |
+| ---------------------- | ------------------------------------------------------------------------ |
+| `npm run dev`          | Przygotowanie bazy, frontend, API i obserwowanie zmian wspólnego pakietu |
+| `npm run setup`        | Sprawdzenie konfiguracji i przygotowanie lokalnej bazy                   |
+| `npm test`             | Wszystkie testy API i frontendu                                          |
+| `npm run typecheck`    | Kontrola typów                                                           |
+| `npm run build`        | Kompilacja projektu i produkcyjny frontend                               |
+| `npm run format`       | Spójne formatowanie kodu i dokumentacji                                  |
+| `npm run format:check` | Kontrola formatowania                                                    |
 
-## Utrzymanie storage
+## Dokumentacja i dane prywatne
 
-- `npm run storage:report` — raport logicznego i fizycznego rozmiaru archiwum oraz mediów.
-- `npm run storage:migrate` — dry-run migracji starego archiwum ofert do gzip; dodaj `-- --apply`, aby wykonać.
-- `npm run media:deduplicate` — dry-run deduplikacji zdjęć; `-- --apply` zastępuje wyłącznie identyczne pliki hardlinkami.
-- `npm run storage:db-report` — read-only raport największych tabel i payloadów JSONB.
-- `npm run storage:db-compact` — dry-run usuwania redundantnego HTML z JSONB po potwierdzeniu pliku archiwum; wykonanie: `-- --apply`.
-- `npm run storage:db-reclaim` — dry-run operacji `VACUUM FULL`; wykonanie z `-- --apply` wymaga okna serwisowego.
+Zacznij od [spisu dokumentacji](docs/README.md), [instrukcji startu](docs/guides/getting-started.md)
+i [architektury](docs/architecture/overview.md). Bieżące zadania są w [docs/TODO.md](docs/TODO.md).
 
-Oferty ukryte i archiwalne pozostają w bazie. Pełny HTML jest przechowywany w skompresowanym archiwum, a migratory pomijają rekordy bez potwierdzonego pliku źródłowego.
-
-## Naprawa historycznych ID Otodom
-
-`npm run ids:repair-otodom` sprawdza zgodność identyfikatorów z końcówką `-ID…` linku.
-`-- --apply` zapisuje poprawki transakcyjnie i tworzy lokalny backup w `storage/backups/`.
-Jeśli istnieją już kopie pod poprawnym ID, przejrzyj plan z `-- --merge-same-offer`;
-wykonanie wymaga obu flag. Narzędzie zachowuje historię i obrazy, a konflikt danych
-użytkownika lub trwające przetwarzanie błędnego wpisu przerywa operację.
-W razie konfliktu najpierw wstrzymaj automatyzację. Po naprawie przywróć jej poprzedni stan.
-
-Oceny ręczne, wagi i ranking zostały wycofane z interfejsu. Dawne dane pozostają
-w lokalnej bazie; bieżące widoki nie pobierają ani nie przeliczają punktacji.
+`.env`, `storage/`, `.local/`, zależności i buildy są ignorowane przez Git. Nie wysyłaj
+znajomemu swojej bazy ani tych katalogów. Każda osobna instalacja ma własne dane;
+urządzenia podłączone do tego samego uruchomionego serwera współdzielą jego ustawienia.

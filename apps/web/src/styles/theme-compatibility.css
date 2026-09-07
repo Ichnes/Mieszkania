@@ -1,0 +1,519 @@
+/* Dark mode coverage for older components with hard-coded surfaces. */
+:root[data-theme="dark"] .result-box,
+:root[data-theme="dark"] .feature-card,
+:root[data-theme="dark"] .calendar-card,
+:root[data-theme="dark"] .compare-card,
+:root[data-theme="dark"] .duplicate-copy-card,
+:root[data-theme="dark"] .duplicate-member,
+:root[data-theme="dark"] .rcn-transaction,
+:root[data-theme="dark"] .rate-change-box {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface-muted);
+}
+:root[data-theme="dark"] .result-box strong,
+:root[data-theme="dark"] .feature-card strong,
+:root[data-theme="dark"] .calendar-card strong,
+:root[data-theme="dark"] .compare-card strong {
+  color: var(--ink);
+}
+:root[data-theme="dark"] .tab-button {
+  color: var(--ink);
+  border-color: var(--line);
+  background: var(--surface);
+}
+:root[data-theme="dark"] .tab-button.active {
+  color: var(--brand-strong);
+  background: var(--brand-soft);
+}
+:root[data-theme="dark"] .listing-facts-table th {
+  background: var(--surface-muted);
+}
+:root[data-theme="dark"] .listing-facts-table td,
+:root[data-theme="dark"] .listing-facts-table th {
+  border-color: var(--line);
+}
+:root[data-theme="dark"] .cost-donut-chart .recharts-text {
+  fill: var(--ink);
+}
+
+@media (max-width: 1260px) {
+  .app-shell {
+    padding-inline: 12px;
+  }
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .detail-grid {
+    grid-template-columns: minmax(0, 1.75fr) minmax(300px, 0.85fr);
+  }
+  .workspace-navigation .tab-button {
+    font-size: 0.72rem;
+  }
+  .data-tool-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .relisting-result-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 1680px) {
+  .listing-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .listings-workspace {
+    grid-template-columns: 300px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .app-shell {
+    width: 100%;
+    padding: 10px 12px calc(94px + env(safe-area-inset-bottom));
+  }
+  .app-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    min-height: 58px;
+    margin: 0 -4px 10px;
+    padding: 4px;
+    background: color-mix(in srgb, var(--page) 88%, transparent);
+    backdrop-filter: blur(18px);
+  }
+  .brand-button small {
+    display: none;
+  }
+  .top-dashboard-frame {
+    margin-bottom: 12px;
+  }
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .hero > div:first-child {
+    min-height: 210px;
+    padding: 26px 22px;
+    border-radius: 24px;
+  }
+  .hero h1 {
+    max-width: 15ch;
+  }
+  .hero-card {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 10px;
+    padding: 20px;
+    border-radius: 22px;
+  }
+  .hero-card > span,
+  .hero-card > strong,
+  .hero-card > p {
+    grid-column: 1 / -1;
+  }
+  .hero-card strong {
+    margin-bottom: 0;
+  }
+  .hero-card p {
+    margin-bottom: 8px;
+  }
+  .hero-card .action-button {
+    margin: 0;
+  }
+  .hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .compact-panel {
+    padding: 18px;
+  }
+
+  .workspace-navigation {
+    position: fixed;
+    top: auto;
+    right: 8px;
+    bottom: max(8px, env(safe-area-inset-bottom));
+    left: 8px;
+    z-index: 1200;
+    margin: 0;
+    padding: 6px;
+    border-radius: 20px;
+    box-shadow: 0 14px 50px rgba(0, 0, 0, 0.2);
+  }
+  .workspace-navigation .tabs-row {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .workspace-navigation .tabs-row::-webkit-scrollbar {
+    display: none;
+  }
+  .workspace-navigation .tab-button {
+    flex: 1 0 72px;
+    display: grid;
+    justify-items: center;
+    gap: 3px;
+    min-height: 54px;
+    padding: 6px 5px;
+    font-size: 0.6rem;
+  }
+  .workspace-navigation .tab-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .listings-workspace,
+  .listings-workspace.filters-collapsed {
+    display: block;
+  }
+  .filters-sidebar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1300;
+    width: min(420px, 92vw);
+    padding: 10px;
+    transform: translateX(104%);
+    transition: transform 220ms ease;
+  }
+  .filters-sidebar.mobile-open {
+    transform: translateX(0);
+  }
+  .filters-panel,
+  .filters-collapsed .filters-panel {
+    position: relative;
+    top: 0;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 18px;
+    overflow-y: auto;
+    border-radius: 22px;
+    background: var(--surface);
+    box-shadow: var(--shadow-md);
+  }
+  .filters-collapsed .filters-panel > :not(.filters-collapse-button) {
+    display: initial;
+  }
+  .filters-collapsed .filters-panel > .panel-header {
+    display: flex;
+  }
+  .filters-collapsed .filters-panel > .filters-grid {
+    display: grid;
+  }
+  .filters-mobile-backdrop {
+    position: fixed;
+    z-index: 1250;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    border: 0;
+    background: rgba(7, 17, 14, 0.55);
+    backdrop-filter: blur(4px);
+  }
+  .filter-mobile-close {
+    display: grid;
+    flex: 0 0 auto;
+  }
+  .filters-panel .panel-header {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+  .mobile-filter-trigger {
+    position: sticky;
+    top: 66px;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    min-height: 46px;
+    margin-bottom: 10px;
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    color: var(--brand-strong);
+    background: color-mix(in srgb, var(--surface) 92%, transparent);
+    box-shadow: var(--shadow-sm);
+    backdrop-filter: blur(14px);
+    font-weight: 850;
+  }
+  .mobile-filter-trigger span {
+    display: grid;
+    min-width: 22px;
+    height: 22px;
+    place-items: center;
+    border-radius: 99px;
+    color: #fff;
+    background: var(--brand-strong);
+    font-size: 0.7rem;
+  }
+  .filters-actions {
+    bottom: -18px;
+  }
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sync-flow {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .stale-refresh-summary {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .stale-refresh-metrics {
+    width: 100%;
+  }
+  .sync-connector {
+    min-height: 24px;
+  }
+  .sync-connector span {
+    width: 2px;
+    height: 24px;
+  }
+  .sync-connector span::after {
+    top: auto;
+    right: 50%;
+    bottom: -1px;
+    transform: translateX(50%) rotate(135deg);
+  }
+  .data-tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .relisting-results-heading {
+    align-items: start;
+    flex-direction: column;
+  }
+  .relisting-result-card {
+    grid-template-columns: 1fr;
+  }
+  .relisting-arrow {
+    transform: rotate(90deg);
+    justify-self: center;
+  }
+  .relisting-price-difference,
+  .relisting-reasons {
+    grid-column: 1;
+  }
+  .data-tools-heading {
+    align-items: start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .data-tools-heading > p {
+    text-align: left;
+  }
+
+  .detail-overlay {
+    padding: 0;
+  }
+  .detail-panel {
+    width: 100%;
+    height: 100dvh;
+    max-height: 100dvh;
+    padding: 14px;
+    border: 0;
+    border-radius: 0;
+  }
+  .detail-header {
+    padding-right: 42px;
+  }
+  .detail-grid {
+    grid-template-columns: 1fr;
+  }
+  .detail-actions {
+    flex-direction: row;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .detail-actions .action-button {
+    flex: 0 0 auto;
+  }
+  .quick-contact-card {
+    grid-template-columns: 1fr auto;
+  }
+  .quick-contact-card > div {
+    grid-column: 1 / -1;
+  }
+  .mortgage-layout,
+  .mortgage-visuals,
+  .premium-mortgage-visuals {
+    grid-template-columns: 1fr;
+  }
+  .mortgage-explainer {
+    grid-template-columns: 1fr;
+  }
+  .mortgage-form {
+    position: static;
+  }
+}
+
+@media (max-width: 600px) {
+  .text-input,
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .hero > div:first-child {
+    min-height: 190px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 10vw, 2.7rem);
+  }
+  .hero .lead {
+    font-size: 0.9rem;
+  }
+  .hero-card {
+    grid-template-columns: 1fr;
+  }
+  .hero-card > * {
+    grid-column: 1 !important;
+  }
+  .compact-panel .panel-header {
+    align-items: flex-start;
+    flex-direction: row;
+  }
+  .calendar-grid {
+    grid-template-columns: 1fr;
+  }
+  .listing-grid {
+    grid-template-columns: 1fr;
+  }
+  .panel {
+    padding: 16px;
+    border-radius: 17px;
+  }
+  .sync-hero {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 20px;
+  }
+  .sync-state {
+    width: 100%;
+    justify-content: center;
+  }
+  .stale-refresh-summary {
+    padding: 16px;
+  }
+  .stale-refresh-heading {
+    min-width: 0;
+    align-items: flex-start;
+  }
+  .stale-refresh-metrics {
+    grid-template-columns: 1fr;
+  }
+  .stale-refresh-metrics > div {
+    min-height: 54px;
+  }
+  .sync-step {
+    padding: 18px;
+  }
+  .sync-metrics > div {
+    padding: 10px 5px;
+  }
+  .sync-details summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .portal-status-table {
+    padding: 8px 14px;
+    overflow-x: auto;
+  }
+  .portal-status-row {
+    grid-template-columns: minmax(125px, 1fr) repeat(3, 70px);
+    min-width: 370px;
+  }
+  .sync-detail-actions {
+    flex-direction: column;
+    padding-inline: 14px;
+  }
+  .data-tools {
+    padding: 18px;
+  }
+  .quick-contact-card {
+    grid-template-columns: 1fr;
+  }
+  .quick-contact-card > * {
+    grid-column: 1;
+  }
+  .quick-contact-card .action-button {
+    width: 100%;
+  }
+  .detail-section-tabs {
+    position: sticky;
+    top: -14px;
+    z-index: 14;
+    overflow-x: auto;
+  }
+  .detail-section-tabs .tab-button {
+    flex: 1 0 auto;
+  }
+  .listing-facts-table tr {
+    display: grid;
+    grid-template-columns: minmax(105px, 0.45fr) 1fr;
+  }
+  .listing-facts-table th,
+  .listing-facts-table td {
+    width: auto;
+  }
+  .listing-facts-table td[colspan="3"] {
+    grid-column: auto;
+  }
+  .evaluation-table-head {
+    display: none;
+  }
+  .evaluation-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 12px;
+  }
+  .evaluation-criterion {
+    grid-column: 1 / -1;
+  }
+  .evaluation-row label > span {
+    display: block;
+    text-align: left;
+  }
+  .duplicate-candidate-card .panel-inline-actions {
+    grid-template-columns: 1fr;
+  }
+  .mortgage-stat-grid,
+  .mortgage-compare,
+  .mortgage-savings,
+  .premium-donuts,
+  .mortgage-chart-grid {
+    grid-template-columns: 1fr;
+  }
+  .cost-donut {
+    grid-template-columns: 1fr;
+  }
+  .premium-mortgage-visuals .recharts-responsive-container {
+    min-height: 260px;
+  }
+  .mortgage-table-wrap {
+    margin-inline: -16px;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

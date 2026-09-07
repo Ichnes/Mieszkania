@@ -20,7 +20,7 @@ export const warsawMetropolitanRegion: SupportedRegion = {
     "Otwock",
     "Minsk Mazowiecki",
     "Grodzisk Mazowiecki",
-    "Blonie"
+    "Blonie",
   ],
   rcnPowiatKeys: [
     "m-st-warszawa",
@@ -32,6 +32,6 @@ export const warsawMetropolitanRegion: SupportedRegion = {
     "powiat-warszawski-zachodni",
     "powiat-grodziski",
     "powiat-minski",
-    "powiat-otwocki"
-  ]
+    "powiat-otwocki",
+  ],
 };

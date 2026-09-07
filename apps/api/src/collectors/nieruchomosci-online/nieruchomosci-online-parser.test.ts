@@ -8,5 +8,8 @@ test("reads the year from the current Nieruchomości-online attributes markup", 
 });
 
 test("keeps support for the legacy strong/span markup", () => {
-  assert.equal(extractNieruchomosciOnlineConstructionYear(`<strong>Rok budowy:</strong><span>2007</span>`), 2007);
+  assert.equal(
+    extractNieruchomosciOnlineConstructionYear(`<strong>Rok budowy:</strong><span>2007</span>`),
+    2007,
+  );
 });

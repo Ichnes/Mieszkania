@@ -14,7 +14,7 @@ test("keeps every Gratka gallery image and selects the 1350 px fit variant", asy
         offers: { price: 1_200_000 },
         floorSize: 64,
         numberOfRooms: 3,
-        address: { addressLocality: "Warszawa", streetAddress: "Nubijska" }
+        address: { addressLocality: "Warszawa", streetAddress: "Nubijska" },
       })}
     </script>
     <swiper-container>
@@ -27,7 +27,7 @@ test("keeps every Gratka gallery image and selects the 1350 px fit variant", asy
     url: `https://gratka.pl/nieruchomosci/mieszkanie/ob/${externalId}`,
     finalUrl: `https://gratka.pl/nieruchomosci/mieszkanie/ob/${externalId}`,
     statusCode: 200,
-    html
+    html,
   });
 
   assert.equal(parsed.images.length, 2);
@@ -46,7 +46,7 @@ test("treats an offer redirected to the Gratka results page as removed", async (
         <head><title>Mieszkania Warszawa - Gratka.pl</title></head>
         <body><h1>Mieszkania na sprzedaż Warszawa</h1></body>
       </html>
-    `
+    `,
   });
 
   assert.equal(parsed.status, "removed");
@@ -67,29 +67,33 @@ test("treats the Gratka archived notification as removed", async () => {
           <h2 class="notification__title">To ogłoszenie nie jest już dostępne.</h2>
           <p>Na szczęście mamy coś podobnego.</p>
         </div>
-      </div>`
+      </div>`,
   });
 
   assert.equal(parsed.status, "removed");
 });
 
 test("distinguishes a Gratka street breadcrumb from a real Warsaw neighborhood", async () => {
-  const parse = async (tail: string[], description: string) => new GratkaParser().parse({
-    url: "https://gratka.pl/nieruchomosci/mieszkanie-warszawa-praga-poludnie/ob/48799269",
-    statusCode: 200,
-    html: `
+  const parse = async (tail: string[], description: string) =>
+    new GratkaParser().parse({
+      url: "https://gratka.pl/nieruchomosci/mieszkanie-warszawa-praga-poludnie/ob/48799269",
+      statusCode: 200,
+      html: `
       <script type="application/ld+json">${JSON.stringify({
         "@type": "Product",
         name: "Mieszkanie na sprzedaż",
         description,
         offers: { price: 1_200_000 },
-        address: { addressLocality: "Warszawa" }
+        address: { addressLocality: "Warszawa" },
       })}</script>
       <script type="application/ld+json">${JSON.stringify({
         "@type": "BreadcrumbList",
-        itemListElement: ["Warszawa", "Praga-Południe", ...tail].map((name) => ({ "@type": "ListItem", name }))
-      })}</script>`
-  });
+        itemListElement: ["Warszawa", "Praga-Południe", ...tail].map((name) => ({
+          "@type": "ListItem",
+          name,
+        })),
+      })}</script>`,
+    });
 
   const streetOnly = await parse(["Fundamentowa"], "Mieszkanie przy ul. Fundamentowej.");
   assert.equal(streetOnly.neighborhood, undefined);
@@ -97,7 +101,7 @@ test("distinguishes a Gratka street breadcrumb from a real Warsaw neighborhood",
 
   const withNeighborhood = await parse(
     ["Gocław", "Władysława Umińskiego"],
-    "Na Pradze-Południe przy ul. Umińskiego BUDYNEK/OSIEDLE. Mieszkanie położone jest na Gocławiu."
+    "Na Pradze-Południe przy ul. Umińskiego BUDYNEK/OSIEDLE. Mieszkanie położone jest na Gocławiu.",
   );
   assert.equal(withNeighborhood.neighborhood, "Gocław");
   assert.equal(withNeighborhood.street, "Władysława Umińskiego");
@@ -112,7 +116,7 @@ function buildImageVariants(externalId: string, imageId: string) {
     srcset: [
       `${root}/3x2_xs:fit/mieszkanie.jpg 300w`,
       `${root}/3x2_l:fit/mieszkanie.jpg 900w`,
-      `${root}/3x2_xl:fit/mieszkanie.jpg 1350w`
-    ].join(", ")
+      `${root}/3x2_xl:fit/mieszkanie.jpg 1350w`,
+    ].join(", "),
   };
 }

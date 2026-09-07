@@ -44,7 +44,7 @@ function loadRootEnvFile(path: string) {
 
 function stripWrappingQuotes(value: string) {
   if (
-    (value.startsWith("\"") && value.endsWith("\"")) ||
+    (value.startsWith('"') && value.endsWith('"')) ||
     (value.startsWith("'") && value.endsWith("'"))
   ) {
     return value.slice(1, -1);

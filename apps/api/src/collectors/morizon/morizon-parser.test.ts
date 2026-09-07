@@ -1,8 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { buildMorizonSearchUrl, externalIdFromMorizonUrl, extractMorizonReferences, parseMorizonListing } from "./morizon-parser";
+import {
+  buildMorizonSearchUrl,
+  externalIdFromMorizonUrl,
+  extractMorizonReferences,
+  parseMorizonListing,
+} from "./morizon-parser";
 
-const offerUrl = "https://www.morizon.pl/oferta/sprzedaz-mieszkanie-warszawa-bialoleka-zeglugi-wislanej-67m2-mzn2047781128";
+const offerUrl =
+  "https://www.morizon.pl/oferta/sprzedaz-mieszkanie-warszawa-bialoleka-zeglugi-wislanej-67m2-mzn2047781128";
 
 test("builds filtered Morizon result pages and discovers unique offer URLs", () => {
   const page = new URL(buildMorizonSearchUrl("Warszawa", 2));
@@ -13,9 +19,10 @@ test("builds filtered Morizon result pages and discovers unique offer URLs", () 
   assert.equal(page.searchParams.get("ps[price_to]"), "2000000");
   assert.equal(page.searchParams.get("page"), "2");
   assert.equal(externalIdFromMorizonUrl(offerUrl), "morizon-2047781128");
-  assert.deepEqual(extractMorizonReferences(`<a href="/oferta/test-mzn2047781128"></a><a href="${offerUrl}"></a>`), [
-    { externalId: "morizon-2047781128", url: offerUrl }
-  ]);
+  assert.deepEqual(
+    extractMorizonReferences(`<a href="/oferta/test-mzn2047781128"></a><a href="${offerUrl}"></a>`),
+    [{ externalId: "morizon-2047781128", url: offerUrl }],
+  );
 });
 
 test("parses Morizon schema data, information tables, dates, phone and ordered gallery", () => {
@@ -34,7 +41,7 @@ test("parses Morizon schema data, information tables, dates, phone and ordered g
       price: 929000,
       description: "<p>Przy ul. Żeglugi Wiślanej 1 na warszawskiej Białołęce. Balkon i garaż.</p>",
       image: "https://img1.staticmorizon.com.pl/thumb/photo-1/3x2_l:fit/image.jpg",
-      seller: { "@type": "Organization", telephone: "222 668 143" }
+      seller: { "@type": "Organization", telephone: "222 668 143" },
     })}</script>
     <h1>Nowoczesne 4-pokojowe mieszkanie po remoncie</h1>
     ${row("Pow. całkowita", "67,90 m²")}
@@ -75,7 +82,7 @@ test("prefers Morizon detail rows, highlighted floor and revealed phone", () => 
       "@type": "Offer",
       name: "Mieszkanie na sprzedaż, 68 m²",
       price: 1_971_000,
-      seller: { telephone: "222668143" }
+      seller: { telephone: "222668143" },
     })}</script>
     <h1>Mieszkanie na sprzedaż, 68 m²</h1>
     <div data-cy="informationTableRow">
@@ -102,15 +109,22 @@ test("prefers Morizon detail rows, highlighted floor and revealed phone", () => 
 });
 
 test("keeps serialized gallery images from the current offer and excludes similar offers", () => {
-  const token = (group: string, image: number) => Buffer.from(`https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/22/74/${group}_${image}_mieszkanie.jpg`).toString("base64url");
+  const token = (group: string, image: number) =>
+    Buffer.from(
+      `https://d-gr.cdngr.pl/kadry/k/r/gr-ogl/22/74/${group}_${image}_mieszkanie.jpg`,
+    ).toString("base64url");
   const current = [token("48257521", 101), token("48257521", 102), token("48257521", 103)];
   const similar = token("99999999", 201);
-  const imageUrl = (value: string, variant = "3x2_s:fill_and_crop") => `https://img1.staticmorizon.com.pl/thumb/${value}/${variant}/mieszkanie.jpg`;
+  const imageUrl = (value: string, variant = "3x2_s:fill_and_crop") =>
+    `https://img1.staticmorizon.com.pl/thumb/${value}/${variant}/mieszkanie.jpg`;
   const html = `
     <script type="application/ld+json">${JSON.stringify({ "@type": "Offer", image: imageUrl(current[0]), price: 950000 })}</script>
     <h1>Mieszkanie Warszawa Białołęka</h1>
     <script>${JSON.stringify([
-      imageUrl(current[0]), imageUrl(current[1], "3x2_l:fit"), imageUrl(current[2]), imageUrl(similar, "3x2_xl:fit")
+      imageUrl(current[0]),
+      imageUrl(current[1], "3x2_l:fit"),
+      imageUrl(current[2]),
+      imageUrl(similar, "3x2_xl:fit"),
     ])}</script>`;
   const parsed = parseMorizonListing(offerUrl, html);
   assert.equal(parsed.images.length, 3);
@@ -119,7 +133,10 @@ test("keeps serialized gallery images from the current offer and excludes simila
 });
 
 test("marks Morizon archived notification as removed", () => {
-  const parsed = parseMorizonListing(offerUrl, `<h1>Archiwalne mieszkanie</h1><div class="notification archived__notification"><h2>To ogłoszenie nie jest już dostępne.</h2></div>`);
+  const parsed = parseMorizonListing(
+    offerUrl,
+    `<h1>Archiwalne mieszkanie</h1><div class="notification archived__notification"><h2>To ogłoszenie nie jest już dostępne.</h2></div>`,
+  );
   assert.equal(parsed.status, "removed");
 });
 
@@ -127,7 +144,8 @@ test("uses the dedicated Morizon location row instead of an unrelated h2 heading
   const html = `
     <script type="application/ld+json">${JSON.stringify({
       "@type": "Offer",
-      description: "Praktycznie jak pierwsze piÄ™tro - od ulicy pierwsze piÄ™tro - od dziedziĹ„ca murek na podwyĹĽszeniu."
+      description:
+        "Praktycznie jak pierwsze piÄ™tro - od ulicy pierwsze piÄ™tro - od dziedziĹ„ca murek na podwyĹĽszeniu.",
     })}</script>
     <h1>Mieszkanie na sprzedaĹĽ</h1>
     <h2>pierwsze piÄ™tro - od dziedziĹ„ca murek na podwyĹĽszeniu</h2>
@@ -154,7 +172,7 @@ test("prefers an explicitly named street in the description over the Morizon loc
   const html = `
     <script type="application/ld+json">${JSON.stringify({
       "@type": "Offer",
-      description: "Mieszkanie znajduje siÄ™ przy ulicy Marymonckiej 12, blisko metra."
+      description: "Mieszkanie znajduje siÄ™ przy ulicy Marymonckiej 12, blisko metra.",
     })}</script>
     <h1>Mieszkanie na sprzedaĹĽ</h1>
     <h2 data-cy="locationRowTitle">

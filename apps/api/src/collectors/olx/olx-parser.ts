@@ -1,5 +1,5 @@
+import { normalizeWarsawListingCity } from "../../services/geography/address-normalization";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
-import { normalizeWarsawListingCity } from "../../services/address-normalization";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -15,32 +15,47 @@ export class OlxParser implements ListingParser {
       findStringByKey(state, "title"),
       extractMetaTag(document.html, "property", "og:title"),
       extractTitle(document.html),
-      `OLX listing ${fallbackId}`
+      `OLX listing ${fallbackId}`,
     )!;
     const description = firstString(
       readString(jsonLd, "description"),
       findStringByKey(state, "description"),
       extractMetaTag(document.html, "property", "og:description"),
-      extractMetaDescription(document.html)
+      extractMetaDescription(document.html),
     );
     const combinedText = `${title}\n${description ?? ""}\n${pageText}`;
     const district = inferDistrictFromText(combinedText);
-    const city = normalizeWarsawListingCity(
-      firstString(inferCityFromUrl(document.finalUrl ?? document.url), findStringNearLabel(pageText, "Lokalizacja"), "Warszawa"),
-      district,
-      combinedText
-    ) || "Warszawa";
+    const city =
+      normalizeWarsawListingCity(
+        firstString(
+          inferCityFromUrl(document.finalUrl ?? document.url),
+          findStringNearLabel(pageText, "Lokalizacja"),
+          "Warszawa",
+        ),
+        district,
+        combinedText,
+      ) || "Warszawa";
     const street = extractStreetFromText(combinedText);
     const addressText = compactAddress(street, district, city);
     const priceAmount = firstNumber(
       readNumber(getRecordAtPath(jsonLd, ["offers"]), "price"),
       findNumberNearLabel(pageText, "Cena"),
-      readNumberFromString(extractMetaTag(document.html, "property", "product:price:amount"))
+      readNumberFromString(extractMetaTag(document.html, "property", "product:price:amount")),
     );
-    const areaSqm = firstNumber(findNumberNearLabel(pageText, "Powierzchnia"), findAreaFromText(combinedText));
-    const rooms = firstNumber(findRoomsFromText(combinedText), findNumberNearLabel(pageText, "Liczba pokoi"));
-    const floorInfo = parseFloorInfo(firstString(findStringNearLabel(pageText, "Poziom"), findStringNearLabel(pageText, "Piętro")));
-    const marketType = normalizePolish(combinedText).includes("rynek pierwotny") ? "primary" : "secondary";
+    const areaSqm = firstNumber(
+      findNumberNearLabel(pageText, "Powierzchnia"),
+      findAreaFromText(combinedText),
+    );
+    const rooms = firstNumber(
+      findRoomsFromText(combinedText),
+      findNumberNearLabel(pageText, "Liczba pokoi"),
+    );
+    const floorInfo = parseFloorInfo(
+      firstString(findStringNearLabel(pageText, "Poziom"), findStringNearLabel(pageText, "Piętro")),
+    );
+    const marketType = normalizePolish(combinedText).includes("rynek pierwotny")
+      ? "primary"
+      : "secondary";
     const publishedAt = firstValidIsoDate(
       readString(jsonLd, "datePublished"),
       readString(jsonLd, "datePosted"),
@@ -50,12 +65,12 @@ export class OlxParser implements ListingParser {
       findStringByKey(state, "created_at"),
       findStringByKey(state, "displayDate"),
       extractMetaTag(document.html, "property", "article:published_time"),
-      extractMetaTag(document.html, "name", "datePublished")
+      extractMetaTag(document.html, "name", "datePublished"),
     );
     const images = collectImages(document.html, jsonLd, state, {
       externalId: fallbackId,
       title,
-      url: document.finalUrl ?? document.url
+      url: document.finalUrl ?? document.url,
     });
 
     return {
@@ -79,14 +94,14 @@ export class OlxParser implements ListingParser {
       images: images.map((sourceUrl, index) => ({
         sourceUrl,
         position: index,
-        isPrimary: index === 0
+        isPrimary: index === 0,
       })),
       rawPayload: {
         jsonLd,
         url: document.url,
         finalUrl: document.finalUrl,
-        statusCode: document.statusCode
-      }
+        statusCode: document.statusCode,
+      },
     };
   }
 }
@@ -94,7 +109,7 @@ export class OlxParser implements ListingParser {
 function extractJsonLd(html: string) {
   const matches = Array.from(
     html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi),
-    (match) => match[1]?.trim()
+    (match) => match[1]?.trim(),
   ).filter(Boolean);
 
   for (const value of matches) {
@@ -122,11 +137,16 @@ function extractEmbeddedState(html: string) {
   }
 }
 
-function collectImages(html: string, jsonLd: unknown, state: unknown, context: { externalId: string; title: string; url: string }) {
+function collectImages(
+  html: string,
+  jsonLd: unknown,
+  state: unknown,
+  context: { externalId: string; title: string; url: string },
+) {
   const candidates = [
     ...collectJsonLdImages(jsonLd),
     ...collectCurrentAdImages(state, context),
-    ...extractOpenGraphImages(html)
+    ...extractOpenGraphImages(html),
   ];
   const bestByKey = new Map<string, string>();
 
@@ -160,7 +180,12 @@ function collectJsonLdImages(value: unknown): string[] {
 
     const type = item["@type"];
     const types = Array.isArray(type) ? type : [type];
-    if (!types.some((candidate) => typeof candidate === "string" && ["Product", "Apartment", "Offer"].includes(candidate))) {
+    if (
+      !types.some(
+        (candidate) =>
+          typeof candidate === "string" && ["Product", "Apartment", "Offer"].includes(candidate),
+      )
+    ) {
       return [];
     }
 
@@ -168,7 +193,10 @@ function collectJsonLdImages(value: unknown): string[] {
   });
 }
 
-function collectCurrentAdImages(value: unknown, context: { externalId: string; title: string; url: string }) {
+function collectCurrentAdImages(
+  value: unknown,
+  context: { externalId: string; title: string; url: string },
+) {
   const records = collectRecords(value);
   const matchingRecords = records.filter((record) => isCurrentListingRecord(record, context));
   return matchingRecords.flatMap((record) => collectGalleryFields(record));
@@ -187,7 +215,10 @@ function collectRecords(value: unknown): JsonRecord[] {
   return [record, ...Object.values(record).flatMap((entry) => collectRecords(entry))];
 }
 
-function isCurrentListingRecord(record: JsonRecord, context: { externalId: string; title: string; url: string }) {
+function isCurrentListingRecord(
+  record: JsonRecord,
+  context: { externalId: string; title: string; url: string },
+) {
   if (!hasGalleryFields(record)) {
     return false;
   }
@@ -197,9 +228,13 @@ function isCurrentListingRecord(record: JsonRecord, context: { externalId: strin
     readString(record, "id"),
     readString(record, "adId"),
     readString(record, "listId"),
-    readString(record, "externalId")
+    readString(record, "externalId"),
   );
-  const candidateUrl = firstString(readString(record, "url"), readString(record, "href"), readString(record, "canonicalUrl"));
+  const candidateUrl = firstString(
+    readString(record, "url"),
+    readString(record, "href"),
+    readString(record, "canonicalUrl"),
+  );
   const candidateTitle = firstString(readString(record, "title"), readString(record, "subject"));
 
   if (candidateId && normalizeComparableId(candidateId).includes(normalizeComparableId(rawId))) {
@@ -210,7 +245,9 @@ function isCurrentListingRecord(record: JsonRecord, context: { externalId: strin
     return true;
   }
 
-  return Boolean(candidateTitle && normalizeComparable(candidateTitle) === normalizeComparable(context.title));
+  return Boolean(
+    candidateTitle && normalizeComparable(candidateTitle) === normalizeComparable(context.title),
+  );
 }
 
 function hasGalleryFields(record: JsonRecord) {
@@ -222,7 +259,7 @@ function collectGalleryFields(record: JsonRecord) {
     ...collectGalleryValue(record.photos),
     ...collectGalleryValue(record.images),
     ...collectGalleryValue(record.gallery),
-    ...collectGalleryValue(record.image)
+    ...collectGalleryValue(record.image),
   ];
 }
 
@@ -247,7 +284,7 @@ function collectGalleryValue(value: unknown): string[] {
       readString(record, "original"),
       readString(record, "large"),
       readString(record, "medium"),
-      readString(record, "src")
+      readString(record, "src"),
     );
 
     if (direct) {
@@ -255,7 +292,11 @@ function collectGalleryValue(value: unknown): string[] {
     }
 
     return Object.entries(record)
-      .filter(([key]) => /link|url|original|large|medium|src|image/i.test(key) && !/thumbnail|thumb|small|icon|avatar|logo/i.test(key))
+      .filter(
+        ([key]) =>
+          /link|url|original|large|medium|src|image/i.test(key) &&
+          !/thumbnail|thumb|small|icon|avatar|logo/i.test(key),
+      )
       .flatMap(([, entry]) => collectGalleryValue(entry));
   }
 
@@ -292,7 +333,7 @@ function imageQuality(value: string) {
 function extractOpenGraphImages(html: string) {
   return Array.from(
     html.matchAll(/<meta\s+property=["']og:image["']\s+content=["']([\s\S]*?)["']\s*\/?>/gi),
-    (match) => sanitizeMetaContent(match[1])
+    (match) => sanitizeMetaContent(match[1]),
   ).filter((value): value is string => typeof value === "string" && isListingPhotoUrl(value));
 }
 
@@ -307,7 +348,10 @@ function extractMetaDescription(html: string) {
 }
 
 function extractMetaTag(html: string, attribute: "property" | "name", value: string) {
-  const pattern = new RegExp(`<meta\\s+${attribute}=["']${escapeRegExp(value)}["']\\s+content=["']([\\s\\S]*?)["']\\s*\\/?>`, "i");
+  const pattern = new RegExp(
+    `<meta\\s+${attribute}=["']${escapeRegExp(value)}["']\\s+content=["']([\\s\\S]*?)["']\\s*\\/?>`,
+    "i",
+  );
   const match = html.match(pattern);
   return sanitizeMetaContent(match?.[1] ?? null);
 }
@@ -396,7 +440,7 @@ function inferDistrictFromText(text: string) {
     "targowek",
     "wlochy",
     "wawer",
-    "srodmiescie"
+    "srodmiescie",
   ];
   const found = knownDistricts.find((district) => normalized.includes(district));
   return found ? titleCase(found) : null;
@@ -422,7 +466,9 @@ function getRecordAtPath(value: unknown, path: string[]) {
     current = (current as JsonRecord)[segment];
   }
 
-  return current && typeof current === "object" && !Array.isArray(current) ? (current as JsonRecord) : null;
+  return current && typeof current === "object" && !Array.isArray(current)
+    ? (current as JsonRecord)
+    : null;
 }
 
 function getRecord(value: unknown) {
@@ -449,7 +495,10 @@ function readNumberFromString(value: string | null | undefined) {
     return null;
   }
 
-  const cleaned = value.replace(/\s+/g, "").replace(",", ".").replace(/[^\d.-]/g, "");
+  const cleaned = value
+    .replace(/\s+/g, "")
+    .replace(",", ".")
+    .replace(/[^\d.-]/g, "");
   const numeric = Number(cleaned);
   return Number.isFinite(numeric) ? numeric : null;
 }
@@ -492,7 +541,7 @@ function stripHtml(value: string | null) {
     value
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<\/(?:p|div|li|tr|h\d)>/gi, "\n")
-      .replace(/<[^>]+>/g, " ")
+      .replace(/<[^>]+>/g, " "),
   )
     .replace(/\s+\n/g, "\n")
     .replace(/\n\s+/g, "\n")
@@ -508,7 +557,7 @@ function decodeHtml(value: string) {
   return value
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
-    .replace(/&quot;/gi, "\"")
+    .replace(/&quot;/gi, '"')
     .replace(/&#39;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">");
@@ -519,11 +568,17 @@ function normalizeTitle(value: string) {
 }
 
 function normalizePolish(value: string) {
-  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 }
 
 function normalizeComparable(value: string) {
-  return normalizePolish(value).replace(/[^a-z0-9]+/g, " ").replace(/\s+/g, " ").trim();
+  return normalizePolish(value)
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function normalizeComparableId(value: string) {
@@ -558,7 +613,9 @@ function isListingPhotoUrl(value: string) {
     const url = new URL(value);
     const hostname = url.hostname.toLowerCase();
     const pathname = url.pathname.toLowerCase();
-    return hostname.includes("olxcdn.com") && pathname.includes("/files/") && pathname.includes("/image");
+    return (
+      hostname.includes("olxcdn.com") && pathname.includes("/files/") && pathname.includes("/image")
+    );
   } catch {
     return false;
   }
@@ -570,7 +627,10 @@ function extractExternalId(url: string) {
 }
 
 function toSlug(value: string) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function escapeRegExp(value: string) {

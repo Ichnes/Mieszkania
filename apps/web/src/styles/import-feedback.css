@@ -1,0 +1,111 @@
+/* Import failures must be impossible to miss and immediately actionable. */
+.sync-error-banner {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  margin: 12px 0 16px;
+  padding: 15px 17px;
+  border: 1px solid #dfa7a1;
+  border-radius: 16px;
+  color: #7e2925;
+  background: #fff0ed;
+  box-shadow: 0 8px 24px rgba(126, 41, 37, 0.08);
+}
+.sync-error-banner > svg {
+  color: #b8443e;
+}
+.sync-error-banner strong {
+  display: block;
+  margin-bottom: 3px;
+}
+.sync-error-banner p {
+  margin: 0;
+  line-height: 1.4;
+}
+.sync-error-actions {
+  display: flex;
+  gap: 7px;
+}
+.sync-error-actions .action-button {
+  white-space: nowrap;
+}
+
+/* Explicit dark surfaces for portal links and dashboard filter actions. */
+.portal-status-row > span:first-child {
+  color: var(--ink);
+  font-weight: 850;
+}
+:root[data-theme="dark"] .source-link-row a,
+:root[data-theme="dark"] .source-links-list a,
+:root[data-theme="dark"] .source-links-list span {
+  color: #ffd0b1;
+  border: 1px solid #704731;
+  background: #2d211b;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+}
+:root[data-theme="dark"] .source-link-row a:hover,
+:root[data-theme="dark"] .source-links-list a:hover {
+  color: #fff;
+  border-color: #a96743;
+  background: #412b21;
+}
+:root[data-theme="dark"] .listing-source-chip {
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.54);
+  background: rgba(8, 14, 12, 0.86);
+}
+:root[data-theme="dark"] .portal-status-table {
+  color: #edf3f0;
+  background: #101815;
+}
+:root[data-theme="dark"] .portal-status-row {
+  border-color: #33413c;
+}
+:root[data-theme="dark"] .portal-status-row > span:first-child {
+  color: #f3c2a2;
+}
+:root[data-theme="dark"] .filters-panel .filters-actions {
+  border-top-color: #35433e;
+  background: #131c19 !important;
+  box-shadow: 0 -12px 24px rgba(0, 0, 0, 0.3);
+}
+:root[data-theme="dark"] .filters-panel .filters-actions .action-button:first-child {
+  color: #fff;
+  border-color: #c66b41;
+  background: #b85f37;
+}
+:root[data-theme="dark"] .filters-panel .filters-actions .secondary-button {
+  color: #e8efec;
+  border-color: #44534e;
+  background: #0e1613;
+}
+:root[data-theme="dark"] .map-offer-preview-accuracy {
+  color: #f1b58f;
+  background: #3a261d;
+}
+:root[data-theme="dark"] .sync-error-banner {
+  color: #ffd0cc;
+  border-color: #70403c;
+  background: #2c1c1b;
+}
+:root[data-theme="dark"] .sync-error-banner > svg {
+  color: #ff9188;
+}
+
+@media (max-width: 700px) {
+  .sync-error-banner {
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: start;
+  }
+  .sync-error-actions {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+  }
+  .sync-error-actions .action-button {
+    width: 100%;
+    white-space: normal;
+  }
+}

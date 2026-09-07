@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently --names web,api --restart-tries -1 --restart-after 1000 \"npm run dev -w @mieszkania/web\" \"npm run dev -w @mieszkania/api\"",
+    "dev": "concurrently --kill-others-on-fail --names shared,web,api \"npm run dev -w @mieszkania/shared\" \"npm run dev -w @mieszkania/web\" \"npm run dev -w @mieszkania/api\"",
     "dev:web": "npm run dev -w @mieszkania/web",
     "dev:api": "npm run dev -w @mieszkania/api",
     "build": "npm run build -w @mieszkania/shared && npm run build -w @mieszkania/web && npm run build -w @mieszkania/api",
@@ -22,9 +22,21 @@
     "years:backfill-adresowo": "npm run years:backfill-adresowo -w @mieszkania/api --",
     "years:queue-refresh": "npm run years:queue-refresh -w @mieszkania/api --",
     "media:deduplicate": "npm run media:deduplicate -w @mieszkania/api --",
-    "ids:repair-otodom": "npm run ids:repair-otodom -w @mieszkania/api --"
+    "ids:repair-otodom": "npm run ids:repair-otodom -w @mieszkania/api --",
+    "postinstall": "npm run build -w @mieszkania/shared && node scripts/ensure-browser.mjs",
+    "predev": "node scripts/prepare-dev.mjs",
+    "setup": "node scripts/prepare-dev.mjs",
+    "pretest": "npm run build -w @mieszkania/shared",
+    "test": "npm run test -w @mieszkania/api && npm run test -w @mieszkania/web",
+    "format": "prettier --write apps packages scripts docs README.md AGENTS.md *.json",
+    "format:check": "prettier --check apps packages scripts docs README.md AGENTS.md *.json",
+    "setup:browser": "node scripts/ensure-browser.mjs"
   },
   "devDependencies": {
-    "concurrently": "^9.2.0"
+    "concurrently": "^9.2.0",
+    "prettier": "^3.8.1"
+  },
+  "engines": {
+    "node": ">=22.14.0"
   }
 }

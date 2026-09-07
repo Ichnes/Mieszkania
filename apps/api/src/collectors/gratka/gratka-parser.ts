@@ -1,6 +1,9 @@
+import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
+import {
+  canonicalWarsawNeighborhood,
+  inferWarsawNeighborhood,
+} from "../../services/geography/warsaw-neighborhoods";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
-import { sanitizeStreetCandidate } from "../../services/address-normalization";
-import { canonicalWarsawNeighborhood, inferWarsawNeighborhood } from "../../services/warsaw-neighborhoods";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -15,47 +18,59 @@ export class GratkaParser implements ListingParser {
     const geoNode = getRecordAtPath(productNode, ["geo"]);
     const breadcrumbs = findBreadcrumbNames(jsonLd);
     const redirectedAwayFromOffer = isRedirectedAwayFromRequestedOffer(document);
-    const listingUrl = redirectedAwayFromOffer ? document.url : document.finalUrl ?? document.url;
+    const listingUrl = redirectedAwayFromOffer ? document.url : (document.finalUrl ?? document.url);
     const fallbackId = extractExternalId(listingUrl);
     const title = normalizeTitle(
       firstString(
         readString(productNode, "name"),
-      readString(productNode, "headline"),
-      readString(webPageNode, "headline"),
-      extractMetaTag(document.html, "property", "og:title"),
-      extractTitle(primaryHtml),
-      extractTitle(document.html),
-      `Gratka listing ${fallbackId}`
-    ) ?? `Gratka listing ${fallbackId}`
+        readString(productNode, "headline"),
+        readString(webPageNode, "headline"),
+        extractMetaTag(document.html, "property", "og:title"),
+        extractTitle(primaryHtml),
+        extractTitle(document.html),
+        `Gratka listing ${fallbackId}`,
+      ) ?? `Gratka listing ${fallbackId}`,
     );
     const description = firstString(
       stripHtml(readString(productNode, "description")),
       stripHtml(readString(webPageNode, "description")),
       extractMetaTag(document.html, "property", "og:description"),
       extractMetaDescription(primaryHtml),
-      extractMetaDescription(document.html)
+      extractMetaDescription(document.html),
     );
     const additionalProperties = getArrayAtPath(productNode, ["additionalProperty"]) ?? [];
     const htmlAddress = extractAddressFromHtml(primaryHtml);
-    const street = cleanLocationLabel(firstString(
-      readString(addressNode, "streetAddress"),
-      htmlAddress?.street,
-      breadcrumbs.street,
-      extractStreetFromText(description),
-      extractStreetFromText(title)
-    ));
+    const street = cleanLocationLabel(
+      firstString(
+        readString(addressNode, "streetAddress"),
+        htmlAddress?.street,
+        breadcrumbs.street,
+        extractStreetFromText(description),
+        extractStreetFromText(title),
+      ),
+    );
     const city = firstString(
       readString(addressNode, "addressLocality"),
       htmlAddress?.city,
       breadcrumbs.city,
       inferCityFromUrl(document.finalUrl ?? document.url),
-      "Unknown"
+      "Unknown",
     )!;
-    const locationHaystack = [title, description, street, readString(addressNode, "streetAddress"), city].filter(Boolean).join(" ");
-    const district = htmlAddress?.district ?? breadcrumbs.district ?? inferDistrictFromText(locationHaystack);
-    const neighborhood = canonicalWarsawNeighborhood(htmlAddress?.neighborhood, district)
-      ?? canonicalWarsawNeighborhood(breadcrumbs.neighborhood, district)
-      ?? inferNeighborhoodFromText(locationHaystack, district);
+    const locationHaystack = [
+      title,
+      description,
+      street,
+      readString(addressNode, "streetAddress"),
+      city,
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const district =
+      htmlAddress?.district ?? breadcrumbs.district ?? inferDistrictFromText(locationHaystack);
+    const neighborhood =
+      canonicalWarsawNeighborhood(htmlAddress?.neighborhood, district) ??
+      canonicalWarsawNeighborhood(breadcrumbs.neighborhood, district) ??
+      inferNeighborhoodFromText(locationHaystack, district);
     const priceAmount = firstNumber(
       readNumber(productNode, "price"),
       readNumber(offerNode, "price"),
@@ -64,7 +79,7 @@ export class GratkaParser implements ListingParser {
       extractPriceFromText(primaryHtml),
       extractPriceFromText(description),
       extractPriceFromText(extractMetaDescription(document.html)),
-      extractPriceFromText(title)
+      extractPriceFromText(title),
     );
     const areaSqm = firstNumber(
       readNumber(productNode, "floorSize"),
@@ -73,36 +88,56 @@ export class GratkaParser implements ListingParser {
       extractAreaFromText(primaryHtml),
       extractAreaFromText(description),
       extractAreaFromText(title),
-      extractAreaFromText(extractMetaDescription(document.html))
+      extractAreaFromText(extractMetaDescription(document.html)),
     );
-    const rooms = sanitizeRoomsValue(firstNumber(
-      sanitizeRoomsValue(readNumber(productNode, "numberOfRooms")),
-      readAdditionalPropertyNumber(additionalProperties, "Liczba pokoi"),
-      extractRoomsFromText(primaryHtml),
-      extractRoomsFromText(description),
-      extractRoomsFromText(title)
-    ));
+    const rooms = sanitizeRoomsValue(
+      firstNumber(
+        sanitizeRoomsValue(readNumber(productNode, "numberOfRooms")),
+        readAdditionalPropertyNumber(additionalProperties, "Liczba pokoi"),
+        extractRoomsFromText(primaryHtml),
+        extractRoomsFromText(description),
+        extractRoomsFromText(title),
+      ),
+    );
     const floorInfo = firstString(
       readAdditionalPropertyValue(additionalProperties, "Piętro"),
-      readAdditionalPropertyValue(additionalProperties, "Pietro")
+      readAdditionalPropertyValue(additionalProperties, "Pietro"),
     );
     const { floor, totalFloors } = parseFloorInfo(floorInfo);
     const htmlCoordinates = extractCoordinatesFromHtml(document.html);
     const latitude = firstNumber(readNumber(geoNode, "latitude"), htmlCoordinates?.latitude);
     const longitude = firstNumber(readNumber(geoNode, "longitude"), htmlCoordinates?.longitude);
-    const sourceContactPhone = extractSourceContactPhone(productNode, offerNode, additionalProperties, document.html, primaryHtml);
+    const sourceContactPhone = extractSourceContactPhone(
+      productNode,
+      offerNode,
+      additionalProperties,
+      document.html,
+      primaryHtml,
+    );
     const marketType = inferMarketType(
       firstString(
         readAdditionalPropertyValue(additionalProperties, "Rynek"),
-        document.finalUrl?.toLowerCase().includes("/pierwotny") ? "pierwotny" : "wtórny"
-      )
+        document.finalUrl?.toLowerCase().includes("/pierwotny") ? "pierwotny" : "wtórny",
+      ),
     );
     const addressText = firstString(
       compactAddress(street, neighborhood ?? district, city),
-      htmlAddress?.addressText
+      htmlAddress?.addressText,
     );
-    const imageUrls = collectListingImages(productNode, document.html, primaryHtml, title, fallbackId);
-    const publishedAt = extractPublishedAt(productNode, offerNode, webPageNode, document.html, primaryHtml);
+    const imageUrls = collectListingImages(
+      productNode,
+      document.html,
+      primaryHtml,
+      title,
+      fallbackId,
+    );
+    const publishedAt = extractPublishedAt(
+      productNode,
+      offerNode,
+      webPageNode,
+      document.html,
+      primaryHtml,
+    );
 
     return {
       externalId: fallbackId,
@@ -125,19 +160,29 @@ export class GratkaParser implements ListingParser {
       publishedAt: publishedAt ?? undefined,
       marketType,
       offerType: "sale",
-      status: redirectedAwayFromOffer || document.statusCode === 404 || /to ogloszenie nie jest juz dostepne|pod tym adresem nic nie ma|oferta nie jest dostepna/i.test(`${document.html} ${title} ${description ?? ""}`.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[łŁ]/g, "l")) ? "removed" : "active",
+      status:
+        redirectedAwayFromOffer ||
+        document.statusCode === 404 ||
+        /to ogloszenie nie jest juz dostepne|pod tym adresem nic nie ma|oferta nie jest dostepna/i.test(
+          `${document.html} ${title} ${description ?? ""}`
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[łŁ]/g, "l"),
+        )
+          ? "removed"
+          : "active",
       images: imageUrls.map((sourceUrl, index) => ({
         sourceUrl,
         position: index,
-        isPrimary: index === 0
+        isPrimary: index === 0,
       })),
       rawPayload: {
         jsonLd,
         html: document.html,
         primaryHtml,
         url: document.url,
-        statusCode: document.statusCode
-      }
+        statusCode: document.statusCode,
+      },
     };
   }
 }
@@ -147,7 +192,7 @@ function extractPublishedAt(
   offerNode: JsonRecord | null,
   webPageNode: JsonRecord | null,
   html: string,
-  primaryHtml: string
+  primaryHtml: string,
 ) {
   return firstValidIsoDate(
     readString(productNode, "datePublished"),
@@ -163,13 +208,15 @@ function extractPublishedAt(
     extractMetaContent(primaryHtml, "og:published_time"),
     extractMetaContent(html, "og:published_time"),
     extractMetaContent(primaryHtml, "datePublished"),
-    extractMetaContent(html, "datePublished")
+    extractMetaContent(html, "datePublished"),
   );
 }
 
 function extractExternalId(url: string) {
   const match = url.match(/\/ob\/(\d+)/i);
-  return match ? `gratka-${match[1]}` : `gratka-${Buffer.from(url).toString("base64url").slice(0, 12)}`;
+  return match
+    ? `gratka-${match[1]}`
+    : `gratka-${Buffer.from(url).toString("base64url").slice(0, 12)}`;
 }
 
 function isRedirectedAwayFromRequestedOffer(document: FetchedListingDocument) {
@@ -185,7 +232,7 @@ function isRedirectedAwayFromRequestedOffer(document: FetchedListingDocument) {
 function extractJsonLdDocuments(html: string) {
   const matches = Array.from(
     html.matchAll(/<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi),
-    (match) => match[1]?.trim()
+    (match) => match[1]?.trim(),
   ).filter(Boolean);
   const documents: unknown[] = [];
 
@@ -205,7 +252,13 @@ function findProductNode(values: unknown[]) {
     const record = getRecord(item);
     const type = record?.["@type"];
     const types = Array.isArray(type) ? type : [type];
-    if (types.some((entry) => typeof entry === "string" && ["Product", "Apartment", "Offer", "SingleFamilyResidence", "Residence"].includes(entry))) {
+    if (
+      types.some(
+        (entry) =>
+          typeof entry === "string" &&
+          ["Product", "Apartment", "Offer", "SingleFamilyResidence", "Residence"].includes(entry),
+      )
+    ) {
       return record;
     }
   }
@@ -270,8 +323,13 @@ function findBreadcrumbNames(values: unknown[]) {
     const city = names.find((value) => normalizeComparable(value) === "warszawa");
     const district = names.find((value) => isKnownDistrict(value));
     const districtIndex = names.findIndex((value) => isKnownDistrict(value));
-    const locationTail = (districtIndex >= 0 ? names.slice(districtIndex + 1) : names)
-      .filter((value) => isUsefulLocationLabel(value) && !isKnownDistrict(value) && normalizeComparable(value) !== "warszawa" && !normalizeComparable(value).includes("gratka.pl"));
+    const locationTail = (districtIndex >= 0 ? names.slice(districtIndex + 1) : names).filter(
+      (value) =>
+        isUsefulLocationLabel(value) &&
+        !isKnownDistrict(value) &&
+        normalizeComparable(value) !== "warszawa" &&
+        !normalizeComparable(value).includes("gratka.pl"),
+    );
     const neighborhood = canonicalWarsawNeighborhood(locationTail[0], district);
     const street = neighborhood ? locationTail[1] : locationTail.at(-1);
     const score = (city ? 1 : 0) + (district ? 4 : 0) + (neighborhood ? 2 : 0) + (street ? 3 : 0);
@@ -295,13 +353,13 @@ function collectListingImages(
   html: string,
   primaryHtml: string,
   listingTitle: string,
-  externalId: string
+  externalId: string,
 ) {
   const productImages = [
     ...toImageList(productNode?.image),
     ...extractPrimaryHtmlImages(primaryHtml, listingTitle),
     ...extractOpenGraphImages(html),
-    ...extractHtmlListingImages(html, externalId)
+    ...extractHtmlListingImages(html, externalId),
   ];
 
   return dedupeImageVariants(productImages, externalId).slice(0, 50);
@@ -330,7 +388,7 @@ function toImageList(value: unknown): string[] {
 function extractOpenGraphImages(html: string) {
   return Array.from(
     html.matchAll(/<meta\s+property=["']og:image["']\s+content=["']([\s\S]*?)["']\s*\/?>/gi),
-    (match) => sanitizeMetaContent(match[1])
+    (match) => sanitizeMetaContent(match[1]),
   ).filter((value): value is string => typeof value === "string" && isImageUrl(value));
 }
 
@@ -353,8 +411,10 @@ function extractHtmlListingImages(html: string, externalId: string) {
   const normalizedHtml = decodeLooseHtml(html);
   const tagUrls = extractImageTagCandidates(normalizedHtml).flatMap((candidate) => candidate.urls);
   const rawUrls = Array.from(
-    normalizedHtml.matchAll(/https?:\/\/(?:thumbs\.cdngr\.pl|img\d*\.staticmorizon\.com\.pl|d-gr\.cdngr\.pl)[^"'<>\s)\\]+/gi),
-    (match) => cleanupImageUrl(match[0])
+    normalizedHtml.matchAll(
+      /https?:\/\/(?:thumbs\.cdngr\.pl|img\d*\.staticmorizon\.com\.pl|d-gr\.cdngr\.pl)[^"'<>\s)\\]+/gi,
+    ),
+    (match) => cleanupImageUrl(match[0]),
   );
 
   return [...tagUrls, ...rawUrls]
@@ -371,7 +431,7 @@ function extractImageTagCandidates(html: string) {
       urls: ["src", "data-src", "data-lazy-src", "srcset", "data-srcset"]
         .flatMap((attribute) => splitImageAttribute(readHtmlAttribute(tag, attribute)))
         .map(cleanupImageUrl)
-        .filter(Boolean)
+        .filter(Boolean),
     };
   });
 }
@@ -402,8 +462,8 @@ function cleanupImageUrl(value: string) {
 
 function decodeLooseHtml(value: string) {
   return value
-    .replace(/&quot;/g, "\"")
-    .replace(/&#34;/g, "\"")
+    .replace(/&quot;/g, '"')
+    .replace(/&#34;/g, '"')
     .replace(/&amp;/g, "&")
     .replace(/\\u0026/g, "&")
     .replace(/\\\//g, "/");
@@ -439,7 +499,10 @@ function dedupeImageVariants(values: string[], externalId: string) {
   const numericId = extractNumericExternalId(externalId);
   const byKey = new Map<string, string>();
 
-  for (const value of values.map(cleanupImageUrl).filter(isImageUrl).map(preferLargestGratkaVariant)) {
+  for (const value of values
+    .map(cleanupImageUrl)
+    .filter(isImageUrl)
+    .map(preferLargestGratkaVariant)) {
     if (numericId && !imageBelongsToListing(value, numericId)) {
       continue;
     }
@@ -455,7 +518,9 @@ function dedupeImageVariants(values: string[], externalId: string) {
 }
 
 function preferLargestGratkaVariant(url: string) {
-  const match = url.match(/^https?:\/\/(?:thumbs\.cdngr\.pl|img\d*\.staticmorizon\.com\.pl)\/thumb\/([^/]+)\/(?:3x2_[a-z]+(?::[^/]*)?|og_image(?::[^/]*)?)\/(.+)$/i);
+  const match = url.match(
+    /^https?:\/\/(?:thumbs\.cdngr\.pl|img\d*\.staticmorizon\.com\.pl)\/thumb\/([^/]+)\/(?:3x2_[a-z]+(?::[^/]*)?|og_image(?::[^/]*)?)\/(.+)$/i,
+  );
   if (!match) {
     return url;
   }
@@ -517,14 +582,14 @@ function parseFloorInfo(value?: string | null) {
   if (match) {
     return {
       floor: Number(match[1]),
-      totalFloors: Number(match[2])
+      totalFloors: Number(match[2]),
     };
   }
 
   const single = value.match(/(\d+)/);
   return {
     floor: single ? Number(single[1]) : undefined,
-    totalFloors: undefined
+    totalFloors: undefined,
   };
 }
 
@@ -550,8 +615,8 @@ function readAdditionalPropertyNumber(properties: unknown[], name: string) {
 
 function extractPriceFromMeta(html: string) {
   return parseLooseNumber(
-    extractMetaTag(html, "property", "product:price:amount")
-      ?? extractMetaTag(html, "name", "price")
+    extractMetaTag(html, "property", "product:price:amount") ??
+      extractMetaTag(html, "name", "price"),
   );
 }
 
@@ -582,7 +647,7 @@ function extractRoomsFromText(value?: string | null) {
   const patterns = [
     /\b(\d{1,2})\s*[-/]?\s*pok(?:oje|oi|\.|ój)?\b/i,
     /\b(\d{1,2})-pokojowe\b/i,
-    /\b(\d{1,2})\s*rooms?\b/i
+    /\b(\d{1,2})\s*rooms?\b/i,
   ];
 
   for (const pattern of patterns) {
@@ -605,7 +670,9 @@ function extractStreetFromText(value?: string | null) {
     return null;
   }
 
-  const match = value.match(/\b(?:na\s+ulicy|przy\s+ulicy|ul\.?|ulica)\s+([\p{L}0-9 .-]{2,80}?)(?=\s+(?:BUDYNEK|OSIEDLE|NIERUCHOMOŚĆ|ROZKŁAD|LOKALIZACJA|OKOLICA)\b|[,.;\n]|$)/iu);
+  const match = value.match(
+    /\b(?:na\s+ulicy|przy\s+ulicy|ul\.?|ulica)\s+([\p{L}0-9 .-]{2,80}?)(?=\s+(?:BUDYNEK|OSIEDLE|NIERUCHOMOŚĆ|ROZKŁAD|LOKALIZACJA|OKOLICA)\b|[,.;\n]|$)/iu,
+  );
   return sanitizeStreetCandidate(match?.[1]);
 }
 
@@ -643,7 +710,7 @@ function inferDistrictFromText(value: string) {
     ["natolin", "Ursynów"],
     ["imielin", "Ursynów"],
     ["stoklosy", "Ursynów"],
-    ["chrzanow", "Bemowo"]
+    ["chrzanow", "Bemowo"],
   ];
 
   for (const [needle, district] of aliases) {
@@ -677,7 +744,7 @@ function isKnownDistrict(value: string) {
     "Wilanów",
     "Włochy",
     "Wola",
-    "Żoliborz"
+    "Żoliborz",
   ].some((district) => normalizeComparable(district) === normalizeComparable(value));
 }
 
@@ -689,7 +756,9 @@ function normalizeTitle(value: string) {
 }
 
 function compactAddress(...parts: Array<string | null | undefined>) {
-  const filtered = parts.map((part) => part?.trim()).filter((part): part is string => Boolean(part));
+  const filtered = parts
+    .map((part) => part?.trim())
+    .filter((part): part is string => Boolean(part));
   return filtered.length > 0 ? filtered.join(", ") : null;
 }
 
@@ -721,7 +790,7 @@ function isUsefulLocationLabel(value?: string | null) {
     "ogloszenia",
     "gratka pl",
     "sprzedaz",
-    "mieszkania"
+    "mieszkania",
   ].some((generic) => normalized === generic || normalized.includes(generic));
 }
 
@@ -730,7 +799,7 @@ function extractSourceContactPhone(
   offerNode: JsonRecord | null,
   additionalProperties: unknown[],
   html: string,
-  primaryHtml: string
+  primaryHtml: string,
 ) {
   return firstString(
     extractTopContactPhoneFromHtml(primaryHtml),
@@ -744,7 +813,7 @@ function extractSourceContactPhone(
     extractPhoneFromHtml(primaryHtml),
     extractPhoneFromHtml(html),
     extractPhoneFromTelHref(primaryHtml),
-    extractPhoneFromTelHref(html)
+    extractPhoneFromTelHref(html),
   );
 }
 
@@ -754,7 +823,9 @@ function extractPhoneFromTelHref(html: string) {
 }
 
 function extractTopContactPhoneFromHtml(html: string) {
-  const topContactMatch = html.match(/(?:topContactPersonName|details-contact__name)[\s\S]{0,2000}?(?:data-cy=["']phoneContactNumber["'][^>]*>|class=["'][^"']*phone-contact__number[^"']*["'][^>]*>)([\s\S]{5,80}?)<\//i);
+  const topContactMatch = html.match(
+    /(?:topContactPersonName|details-contact__name)[\s\S]{0,2000}?(?:data-cy=["']phoneContactNumber["'][^>]*>|class=["'][^"']*phone-contact__number[^"']*["'][^>]*>)([\s\S]{5,80}?)<\//i,
+  );
   return normalizePhone(stripHtml(topContactMatch?.[1] ?? null));
 }
 
@@ -767,10 +838,7 @@ function extractSerializedAgentPhoneFromHtml(html: string) {
 }
 
 function extractPhoneFromHtml(html: string) {
-  const patterns = [
-    /\+48[\s-]*\d{3}[\s-]*\d{3}[\s-]*\d{3}/,
-    /\b\d{3}[\s-]*\d{3}[\s-]*\d{3}\b/
-  ];
+  const patterns = [/\+48[\s-]*\d{3}[\s-]*\d{3}[\s-]*\d{3}/, /\b\d{3}[\s-]*\d{3}[\s-]*\d{3}\b/];
 
   const normalizedHtml = html
     .replace(/<[^>]+>/g, " ")
@@ -794,12 +862,12 @@ function extractCoordinatesFromHtml(html: string) {
   const patterns: Array<{ latitude: RegExp; longitude: RegExp }> = [
     {
       latitude: /["']latitude["']\s*:\s*["']?(-?\d{1,2}\.\d+)["']?/i,
-      longitude: /["']longitude["']\s*:\s*["']?(-?\d{1,3}\.\d+)["']?/i
+      longitude: /["']longitude["']\s*:\s*["']?(-?\d{1,3}\.\d+)["']?/i,
     },
     {
       latitude: /data-lat(?:itude)?=["'](-?\d{1,2}\.\d+)["']/i,
-      longitude: /data-lon(?:gitude)?|data-lng=["'](-?\d{1,3}\.\d+)["']/i
-    }
+      longitude: /data-lon(?:gitude)?|data-lng=["'](-?\d{1,3}\.\d+)["']/i,
+    },
   ];
 
   for (const pattern of patterns) {
@@ -826,18 +894,25 @@ function extractAddressFromHtml(html: string) {
     .replace(/&nbsp;/gi, " ")
     .replace(/\s+/g, " ")
     .trim();
-  const warsawAddressMatch = plain.match(/([A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż0-9 .-]{3,80}?,\s*(?:Warszawa|[A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż -]{3,40}),\s*Warszawa)/i);
+  const warsawAddressMatch = plain.match(
+    /([A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż0-9 .-]{3,80}?,\s*(?:Warszawa|[A-ZĄĆĘŁŃÓŚŹŻa-ząćęłńóśźż -]{3,40}),\s*Warszawa)/i,
+  );
   const addressText = warsawAddressMatch?.[1]?.trim() ?? null;
   if (!addressText) {
     return null;
   }
 
-  const segments = addressText.split(",").map((value) => value.trim()).filter(Boolean);
+  const segments = addressText
+    .split(",")
+    .map((value) => value.trim())
+    .filter(Boolean);
   const street = cleanLocationLabel(segments[0]) ?? undefined;
   const middle = segments[1] ?? undefined;
   const city = segments.at(-1) ?? undefined;
-  const district = middle && isKnownDistrict(middle) ? middle : inferDistrictFromText(addressText) ?? undefined;
-  const neighborhood = middle && !isKnownDistrict(middle) ? cleanLocationLabel(middle) ?? undefined : undefined;
+  const district =
+    middle && isKnownDistrict(middle) ? middle : (inferDistrictFromText(addressText) ?? undefined);
+  const neighborhood =
+    middle && !isKnownDistrict(middle) ? (cleanLocationLabel(middle) ?? undefined) : undefined;
   const cleanedAddressText = compactAddress(street, neighborhood ?? district, city);
 
   return {
@@ -845,7 +920,7 @@ function extractAddressFromHtml(html: string) {
     street,
     district,
     neighborhood,
-    city
+    city,
   };
 }
 
@@ -867,18 +942,28 @@ function extractMetaDescription(html: string) {
 function extractMetaTag(html: string, attribute: "property" | "name", value: string) {
   const pattern = new RegExp(
     `<meta\\s+${attribute}=["']${escapeRegExp(value)}["']\\s+content=["']([\\s\\S]*?)["']\\s*\\/?>`,
-    "i"
+    "i",
   );
   const match = html.match(pattern);
   return sanitizeMetaContent(match?.[1] ?? null);
 }
 
 function sanitizeMetaContent(value: string | null) {
-  return value?.replace(/&quot;/g, "\"").replace(/&amp;/g, "&").trim() ?? null;
+  return (
+    value
+      ?.replace(/&quot;/g, '"')
+      .replace(/&amp;/g, "&")
+      .trim() ?? null
+  );
 }
 
 function stripHtml(value: string | null) {
-  return value?.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim() ?? null;
+  return (
+    value
+      ?.replace(/<[^>]+>/g, " ")
+      .replace(/\s+/g, " ")
+      .trim() ?? null
+  );
 }
 
 function dedupe(values: string[]) {
@@ -894,7 +979,12 @@ function parseLooseNumber(value?: string | null) {
     return null;
   }
 
-  const numeric = Number(value.replace(/[^\d.,-]/g, "").replace(/\./g, "").replace(",", "."));
+  const numeric = Number(
+    value
+      .replace(/[^\d.,-]/g, "")
+      .replace(/\./g, "")
+      .replace(",", "."),
+  );
   return Number.isFinite(numeric) ? numeric : null;
 }
 
@@ -987,7 +1077,7 @@ function readNumber(value: unknown, ...path: string[]) {
 function extractMetaContent(html: string, property: string) {
   const pattern = new RegExp(
     `<meta[^>]+(?:property|name)=["']${escapeRegExp(property)}["'][^>]+content=["']([^"']+)["'][^>]*>`,
-    "i"
+    "i",
   );
   return pattern.exec(html)?.[1]?.trim() ?? null;
 }
@@ -1020,7 +1110,9 @@ function getRecordAtPath(value: unknown, path: string[]) {
     }
     current = (current as JsonRecord)[segment];
   }
-  return current && typeof current === "object" && !Array.isArray(current) ? (current as JsonRecord) : null;
+  return current && typeof current === "object" && !Array.isArray(current)
+    ? (current as JsonRecord)
+    : null;
 }
 
 function getArrayAtPath(value: unknown, path: string[]) {

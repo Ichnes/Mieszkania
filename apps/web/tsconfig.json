@@ -5,14 +5,8 @@
     "noEmit": true,
     "baseUrl": ".",
     "paths": {
-      "@mieszkania/shared": [
-        "../../packages/shared/src"
-      ]
+      "@mieszkania/shared": ["../../packages/shared/src"]
     }
   },
-  "include": [
-    "src",
-    "src/vite-env.d.ts",
-    "vite.config.ts"
-  ]
+  "include": ["src", "src/vite-env.d.ts", "vite.config.ts"]
 }

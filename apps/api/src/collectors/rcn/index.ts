@@ -11,8 +11,8 @@ export class RcnCollector {
         key: powiat.key,
         label: powiat.label,
         wfsCapabilitiesUrl: powiat.wfsCapabilitiesUrl,
-        status: "planned"
-      }))
+        status: "planned",
+      })),
     };
   }
 
@@ -27,9 +27,9 @@ export class RcnCollector {
           key: powiat.key,
           label: powiat.label,
           wfsCapabilitiesUrl: powiat.wfsCapabilitiesUrl,
-          status: await checkCapabilities(powiat)
-        }))
-      )
+          status: await checkCapabilities(powiat),
+        })),
+      ),
     };
   }
 
@@ -50,8 +50,8 @@ async function checkCapabilities(powiat: RcnPowiatConfig): Promise<"planned" | "
   try {
     const response = await fetch(powiat.wfsCapabilitiesUrl, {
       headers: {
-        accept: "application/xml,text/xml"
-      }
+        accept: "application/xml,text/xml",
+      },
     });
 
     if (!response.ok) {
@@ -59,7 +59,9 @@ async function checkCapabilities(powiat: RcnPowiatConfig): Promise<"planned" | "
     }
 
     const text = await response.text();
-    return text.includes("WFS_Capabilities") || text.includes("FeatureTypeList") ? "checked" : "planned";
+    return text.includes("WFS_Capabilities") || text.includes("FeatureTypeList")
+      ? "checked"
+      : "planned";
   } catch {
     return "planned";
   }

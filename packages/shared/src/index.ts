@@ -6,14 +6,39 @@ export type DashboardStat = {
 };
 
 export type MarketStatsResponse = {
-  scope?: { city: string; minArea: number; maxArea?: number; minPrice: number; maxPrice: number; roomsMin: number };
-  signals?: {
-    active: number; oldestObserved: number; observationDays: number; repeatedCuts: number; discounted: number;
-    medianCutAmount: number | null; medianCutPercent: number | null;
-    freshLast48Hours: number;
-    pressureDistricts: Array<{ district: string; active: number; discounted: number; sharePercent: number }>;
+  scope?: {
+    city: string;
+    minArea: number;
+    maxArea?: number;
+    minPrice: number;
+    maxPrice: number;
+    roomsMin: number;
   };
-  totals: { active: number; archived: number; averagePricePerSqm: number; medianPricePerSqm: number; averageArea: number; newLast7Days: number; archivedLast30Days: number };
+  signals?: {
+    active: number;
+    oldestObserved: number;
+    observationDays: number;
+    repeatedCuts: number;
+    discounted: number;
+    medianCutAmount: number | null;
+    medianCutPercent: number | null;
+    freshLast48Hours: number;
+    pressureDistricts: Array<{
+      district: string;
+      active: number;
+      discounted: number;
+      sharePercent: number;
+    }>;
+  };
+  totals: {
+    active: number;
+    archived: number;
+    averagePricePerSqm: number;
+    medianPricePerSqm: number;
+    averageArea: number;
+    newLast7Days: number;
+    archivedLast30Days: number;
+  };
   periodDays: 30 | 90 | 180;
   comparison: {
     newListings: number;
@@ -29,8 +54,30 @@ export type MarketStatsResponse = {
     priceDropSharePercent: number;
     medianDaysOnMarket: number | null;
   };
-  districts: Array<{ district: string; active: number; archived: number; averagePricePerSqm: number; medianPricePerSqm: number; pricedListings: number; averageArea: number; archiveRate: number; priceDrops: number; priceIncreases: number; newLast7Days: number; newInPeriod: number; archivedInPeriod: number; medianDaysOnMarket: number | null; geometry?: unknown; neighborhoods: Array<{ neighborhood: string; active: number; averagePricePerSqm: number }> }>;
-  activity: Array<{ week: string; newListings: number; archivedListings: number; medianPricePerSqm: number }>;
+  districts: Array<{
+    district: string;
+    active: number;
+    archived: number;
+    averagePricePerSqm: number;
+    medianPricePerSqm: number;
+    pricedListings: number;
+    averageArea: number;
+    archiveRate: number;
+    priceDrops: number;
+    priceIncreases: number;
+    newLast7Days: number;
+    newInPeriod: number;
+    archivedInPeriod: number;
+    medianDaysOnMarket: number | null;
+    geometry?: unknown;
+    neighborhoods: Array<{ neighborhood: string; active: number; averagePricePerSqm: number }>;
+  }>;
+  activity: Array<{
+    week: string;
+    newListings: number;
+    archivedListings: number;
+    medianPricePerSqm: number;
+  }>;
   priceDistribution: Array<{ label: string; count: number; sharePercent: number }>;
   segments: {
     rooms: Array<{ label: string; count: number; sharePercent: number }>;
@@ -80,7 +127,16 @@ export type PlanningActSummary = {
 
 export type ImmediateSurroundingsFinding = {
   osmKey: string;
-  category: "industry" | "construction" | "waste" | "power" | "fuel" | "railway" | "major_road" | "nightlife" | "civic";
+  category:
+    | "industry"
+    | "construction"
+    | "waste"
+    | "power"
+    | "fuel"
+    | "railway"
+    | "major_road"
+    | "nightlife"
+    | "civic";
   label: string;
   name: string;
   distanceMeters: number;
@@ -197,9 +253,31 @@ export type ListingEvaluationEntry = {
 };
 
 export type EvaluationWeights = Record<EvaluationDimensionKey, number>;
-export type ListingContactStatus = "new" | "contacted" | "negotiating" | "viewing_scheduled" | "rejected" | "closed";
-export type ListingDecisionStage = "new" | "to_call" | "after_call" | "to_viewing" | "after_viewing" | "to_offer" | "rejected" | "bought";
-export type ListingContactEventType = "call" | "message" | "email" | "meeting" | "viewing_note" | "negotiation" | "status_change" | "other";
+export type ListingContactStatus =
+  | "new"
+  | "contacted"
+  | "negotiating"
+  | "viewing_scheduled"
+  | "rejected"
+  | "closed";
+export type ListingDecisionStage =
+  | "new"
+  | "to_call"
+  | "after_call"
+  | "to_viewing"
+  | "after_viewing"
+  | "to_offer"
+  | "rejected"
+  | "bought";
+export type ListingContactEventType =
+  | "call"
+  | "message"
+  | "email"
+  | "meeting"
+  | "viewing_note"
+  | "negotiation"
+  | "status_change"
+  | "other";
 
 export type SearchContract = {
   city: string;
@@ -638,7 +716,7 @@ export const evaluationDimensions: EvaluationDimension[] = [
   { key: "resale", label: "Późniejsza sprzedaż" },
   { key: "child_friendly", label: "Oferta dla dziecka" },
   { key: "healthcare", label: "Apteka/szpital" },
-  { key: "amount_to_change", label: "Zakres zmian" }
+  { key: "amount_to_change", label: "Zakres zmian" },
 ];
 
 export function createDefaultSearchContract(): SearchContract {
@@ -647,18 +725,30 @@ export function createDefaultSearchContract(): SearchContract {
     minPrice: 900000,
     maxPrice: 2200000,
     minArea: 56,
-    roomsMin: 3
+    roomsMin: 3,
   };
 }
 
 export function createDefaultWeights(): EvaluationWeights {
-  return Object.fromEntries(evaluationDimensions.map((dimension) => [dimension.key, 4])) as EvaluationWeights;
+  return Object.fromEntries(
+    evaluationDimensions.map((dimension) => [dimension.key, 4]),
+  ) as EvaluationWeights;
 }
 
 export function createDefaultDreamListingProfile(): DreamListingProfile {
   return {
     label: "Mieszkanie docelowe",
-    preferredDistricts: ["Mokotów", "Żoliborz", "Saska Kępa", "Ochota", "Praga-Północ", "Wola", "Śródmieście", "Ursynów", "Wilanów"],
+    preferredDistricts: [
+      "Mokotów",
+      "Żoliborz",
+      "Saska Kępa",
+      "Ochota",
+      "Praga-Północ",
+      "Wola",
+      "Śródmieście",
+      "Ursynów",
+      "Wilanów",
+    ],
     minArea: 70,
     maxArea: 110,
     minRooms: 3,
@@ -666,7 +756,7 @@ export function createDefaultDreamListingProfile(): DreamListingProfile {
     maxPricePerSqm: 22000,
     maxMetroDistanceMeters: 1200,
     requiresGarage: true,
-    prefersBalcony: true
+    prefersBalcony: true,
   };
 }
 
@@ -682,49 +772,57 @@ export const warsawMetroStations: MetroStation[] = [
   { name: "Imielin", latitude: 52.1493, longitude: 21.0454 },
   { name: "Stokłosy", latitude: 52.1561, longitude: 21.0347 },
   { name: "Ursynów", latitude: 52.1618, longitude: 21.0279 },
-  { name: "Służew", latitude: 52.1727, longitude: 21.0260 },
+  { name: "Służew", latitude: 52.1727, longitude: 21.026 },
   { name: "Wilanowska", latitude: 52.1817, longitude: 21.0225 },
   { name: "Wierzbno", latitude: 52.1895, longitude: 21.0177 },
-  { name: "Racławicka", latitude: 52.1984, longitude: 21.0120 },
+  { name: "Racławicka", latitude: 52.1984, longitude: 21.012 },
   { name: "Pole Mokotowskie", latitude: 52.2088, longitude: 21.0078 },
-  { name: "Politechnika", latitude: 52.2175, longitude: 21.0150 },
-  { name: "Centrum", latitude: 52.2300, longitude: 21.0107 },
-  { name: "Świętokrzyska", latitude: 52.2350, longitude: 21.0089 },
-  { name: "Ratusz Arsenał", latitude: 52.2441, longitude: 21.0010 },
+  { name: "Politechnika", latitude: 52.2175, longitude: 21.015 },
+  { name: "Centrum", latitude: 52.23, longitude: 21.0107 },
+  { name: "Świętokrzyska", latitude: 52.235, longitude: 21.0089 },
+  { name: "Ratusz Arsenał", latitude: 52.2441, longitude: 21.001 },
   { name: "Dworzec Gdański", latitude: 52.2577, longitude: 20.9946 },
   { name: "Plac Wilsona", latitude: 52.2691, longitude: 20.9846 },
   { name: "Marymont", latitude: 52.2719, longitude: 20.9729 },
   { name: "Słodowiec", latitude: 52.2767, longitude: 20.9602 },
   { name: "Stare Bielany", latitude: 52.2815, longitude: 20.9494 },
   { name: "Wawrzyszew", latitude: 52.2868, longitude: 20.9398 },
-  { name: "Młociny", latitude: 52.2907, longitude: 20.9290 },
+  { name: "Młociny", latitude: 52.2907, longitude: 20.929 },
   { name: "Bemowo", latitude: 52.2372, longitude: 20.9131 },
-  { name: "Ulrychów", latitude: 52.2404, longitude: 20.9290 },
+  { name: "Ulrychów", latitude: 52.2404, longitude: 20.929 },
   { name: "Księcia Janusza", latitude: 52.2394, longitude: 20.9434 },
   { name: "Młynów", latitude: 52.2379, longitude: 20.9608 },
-  { name: "Płocka", latitude: 52.2330, longitude: 20.9669 },
+  { name: "Płocka", latitude: 52.233, longitude: 20.9669 },
   { name: "Rondo Daszyńskiego", latitude: 52.2303, longitude: 20.9847 },
   { name: "Rondo ONZ", latitude: 52.2331, longitude: 20.9988 },
   { name: "Nowy Świat-Uniwersytet", latitude: 52.2368, longitude: 21.0179 },
   { name: "Centrum Nauki Kopernik", latitude: 52.2393, longitude: 21.0302 },
   { name: "Stadion Narodowy", latitude: 52.2466, longitude: 21.0436 },
   { name: "Dworzec Wileński", latitude: 52.2548, longitude: 21.0356 },
-  { name: "Szwedzka", latitude: 52.2634, longitude: 21.0440 },
-  { name: "Targówek Mieszkaniowy", latitude: 52.2690, longitude: 21.0510 },
-  { name: "Trocka", latitude: 52.2756, longitude: 21.0550 },
+  { name: "Szwedzka", latitude: 52.2634, longitude: 21.044 },
+  { name: "Targówek Mieszkaniowy", latitude: 52.269, longitude: 21.051 },
+  { name: "Trocka", latitude: 52.2756, longitude: 21.055 },
   { name: "Zacisze", latitude: 52.2832, longitude: 21.0648 },
   { name: "Kondratowicza", latitude: 52.2919, longitude: 21.0488 },
-  { name: "Bródno", latitude: 52.2953, longitude: 21.0297 }
+  { name: "Bródno", latitude: 52.2953, longitude: 21.0297 },
 ];
 
-export function distanceMetersBetween(latitude: number, longitude: number, targetLatitude: number, targetLongitude: number) {
+export function distanceMetersBetween(
+  latitude: number,
+  longitude: number,
+  targetLatitude: number,
+  targetLongitude: number,
+) {
   const earthRadius = 6371000;
   const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
   const dLat = toRadians(targetLatitude - latitude);
   const dLon = toRadians(targetLongitude - longitude);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRadians(latitude)) * Math.cos(toRadians(targetLatitude)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(toRadians(latitude)) *
+      Math.cos(toRadians(targetLatitude)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return earthRadius * c;
 }
@@ -734,12 +832,16 @@ export function findNearestWarsawMetroStation(latitude?: number, longitude?: num
     return null;
   }
 
-  return warsawMetroStations
-    .map((station) => ({
-      ...station,
-      distanceMeters: Math.round(distanceMetersBetween(latitude, longitude, station.latitude, station.longitude))
-    }))
-    .sort((left, right) => left.distanceMeters - right.distanceMeters)[0] ?? null;
+  return (
+    warsawMetroStations
+      .map((station) => ({
+        ...station,
+        distanceMeters: Math.round(
+          distanceMetersBetween(latitude, longitude, station.latitude, station.longitude),
+        ),
+      }))
+      .sort((left, right) => left.distanceMeters - right.distanceMeters)[0] ?? null
+  );
 }
 
 export function createDefaultFamilySettings(): FamilySettings {
@@ -749,9 +851,9 @@ export function createDefaultFamilySettings(): FamilySettings {
     dreamProfile: createDefaultDreamListingProfile(),
     weights: {
       user: createDefaultWeights(),
-      spouse: createDefaultWeights()
+      spouse: createDefaultWeights(),
     },
-    maxWeightTotal: 80
+    maxWeightTotal: 80,
   };
 }
 
@@ -759,18 +861,18 @@ export const sampleStats: DashboardStat[] = [
   {
     label: "Aktywne oferty",
     value: "1 284",
-    description: "po normalizacji i deduplikacji w miescie pilotażowym"
+    description: "po normalizacji i deduplikacji w miescie pilotażowym",
   },
   {
     label: "Zmiany cen / 7 dni",
     value: "173",
-    description: "snapshoty wykryte przez warstwe monitoringu"
+    description: "snapshoty wykryte przez warstwe monitoringu",
   },
   {
     label: "Średnia cena / m²",
     value: "18 420 zł",
-    description: "średnia cena ofertowa w aktywnych ofertach"
-  }
+    description: "średnia cena ofertowa w aktywnych ofertach",
+  },
 ];
 
 export const sampleListings: ListingCard[] = [
@@ -789,7 +891,7 @@ export const sampleListings: ListingCard[] = [
     imageUrls: [],
     badges: [],
     isShortlisted: true,
-    rankingScore: 74
+    rankingScore: 74,
   },
   {
     id: "listing-2",
@@ -806,7 +908,7 @@ export const sampleListings: ListingCard[] = [
     imageUrls: [],
     badges: [],
     isShortlisted: false,
-    rankingScore: 68
+    rankingScore: 68,
   },
   {
     id: "listing-3",
@@ -823,8 +925,8 @@ export const sampleListings: ListingCard[] = [
     imageUrls: [],
     badges: [],
     isShortlisted: false,
-    rankingScore: 63
-  }
+    rankingScore: 63,
+  },
 ];
 
 export const sampleAlerts: AlertSummary[] = [
@@ -835,7 +937,7 @@ export const sampleAlerts: AlertSummary[] = [
     district: "Mokotow",
     trigger: "Spadek ceny o min. 3% lub nowa oferta 2-3 pokoje",
     deliveryChannel: "telegram",
-    status: "active"
+    status: "active",
   },
   {
     id: "alert-2",
@@ -843,6 +945,6 @@ export const sampleAlerts: AlertSummary[] = [
     city: "Warszawa",
     trigger: "Cena ofertowa co najmniej 2% ponizej mediany transakcyjnej",
     deliveryChannel: "email",
-    status: "active"
-  }
+    status: "active",
+  },
 ];
