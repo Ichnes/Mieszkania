@@ -1,0 +1,42 @@
+# Dependencies and generated builds
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+apps/web/vite.config.js
+packages/shared/src/*.js
+
+# Local runtime and QA artifacts
+.local/
+playwright-report/
+test-results/
+.nyc_output/
+*.pid
+*.pid.lock
+*.tmp
+*.bak
+
+# Editors and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets
+.env*
+!.env.example
+
+# Tool caches and logs
+.turbo/
+.vite/
+.cache/
+*.log
+
+# Database dumps and backups
+*.dump
+*.dump.gz
+*.backup
+*.sql.gz
+
+# Runtime database, offer archive, media cache and collector logs
+storage/

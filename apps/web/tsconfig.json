@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "noEmit": true,
+    "baseUrl": ".",
+    "paths": {
+      "@mieszkania/shared": [
+        "../../packages/shared/src"
+      ]
+    }
+  },
+  "include": [
+    "src",
+    "src/vite-env.d.ts",
+    "vite.config.ts"
+  ]
+}

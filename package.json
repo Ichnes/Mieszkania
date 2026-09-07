@@ -1,0 +1,30 @@
+{
+  "name": "mieszkania-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently --names web,api --restart-tries -1 --restart-after 1000 \"npm run dev -w @mieszkania/web\" \"npm run dev -w @mieszkania/api\"",
+    "dev:web": "npm run dev -w @mieszkania/web",
+    "dev:api": "npm run dev -w @mieszkania/api",
+    "build": "npm run build -w @mieszkania/shared && npm run build -w @mieszkania/web && npm run build -w @mieszkania/api",
+    "typecheck": "npm run typecheck -w @mieszkania/shared && npm run typecheck -w @mieszkania/web && npm run typecheck -w @mieszkania/api",
+    "storage:report": "npm run storage:report -w @mieszkania/api",
+    "storage:db-report": "npm run storage:db-report -w @mieszkania/api",
+    "storage:db-compact": "npm run storage:db-compact -w @mieszkania/api --",
+    "storage:db-reclaim": "npm run storage:db-reclaim -w @mieszkania/api --",
+    "storage:migrate": "npm run storage:migrate -w @mieszkania/api --",
+    "years:backfill": "npm run years:backfill -w @mieszkania/api --",
+    "duplicates:backfill-facts": "npm run duplicates:backfill-facts -w @mieszkania/api --",
+    "years:backfill-adresowo": "npm run years:backfill-adresowo -w @mieszkania/api --",
+    "years:queue-refresh": "npm run years:queue-refresh -w @mieszkania/api --",
+    "media:deduplicate": "npm run media:deduplicate -w @mieszkania/api --",
+    "ids:repair-otodom": "npm run ids:repair-otodom -w @mieszkania/api --"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.0"
+  }
+}
