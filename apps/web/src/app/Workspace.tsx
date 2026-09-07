@@ -45,6 +45,13 @@ export function Workspace({ model }: { model: WorkspaceState }) {
     <main className="app-shell">
       <AppHeader model={model} />
       <AppNavigation />
+      {model.listingOpenError && (
+        <section className="panel" role="alert">
+          <h2>Nie można otworzyć oferty</h2>
+          <p>{model.listingOpenError}</p>
+          <Link to="/oferty">Wróć do ofert</Link>
+        </section>
+      )}
       <Suspense
         fallback={
           <div className="panel" role="status">

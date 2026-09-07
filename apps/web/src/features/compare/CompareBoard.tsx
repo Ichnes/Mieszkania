@@ -1,85 +1,128 @@
 import type { ListingSummary } from "@mieszkania/shared";
-import { formatViewingDate } from "../../shared/lib/format";
-import { ListingBadgeRow } from "../listings/components/ListingBadgeRow";
-import { contactStatusDisplay, decisionStageDisplay } from "../listings/lib/contact";
+import { ArrowUpRight, ImageOff, X } from "lucide-react";
+import { Link } from "react-router-dom";
+import { formatPln } from "../../shared/lib/format";
 
-export function CompareBoard(input: {
+const yesNo = (value?: boolean) => (value === undefined ? "Brak danych" : value ? "Tak" : "Nie");
+const fields: { label: string; value: (listing: ListingSummary) => string }[] = [
+  { label: "Cena ofertowa", value: (l) => l.priceLabel },
+  {
+    label: "Cena z dodatkami",
+    value: (l) => (l.totalAcquisitionPrice ? formatPln(l.totalAcquisitionPrice) : "Brak danych"),
+  },
+  { label: "Cena za m²", value: (l) => l.pricePerSqmLabel ?? "Brak danych" },
+  { label: "Powierzchnia", value: (l) => l.areaLabel },
+  { label: "Pokoje", value: (l) => l.roomsCount?.toString() ?? "Brak danych" },
+  {
+    label: "Piętro",
+    value: (l) =>
+      l.floor === undefined
+        ? "Brak danych"
+        : `${l.floor === 0 ? "Parter" : l.floor}${l.totalFloors !== undefined ? ` / ${l.totalFloors}` : ""}`,
+  },
+  { label: "Rok budowy", value: (l) => l.yearBuilt?.toString() ?? "Brak danych" },
+  {
+    label: "Miejsce postojowe",
+    value: (l) =>
+      [l.hasGarage && "Garaż", l.hasOutdoorParking && "Naziemne"].filter(Boolean).join(" · ") ||
+      "Brak miejsca postojowego w opisie",
+  },
+  { label: "Winda", value: (l) => yesNo(l.hasLift) },
+  { label: "Balkon", value: (l) => yesNo(l.hasBalcony) },
+  { label: "Komórka lokatorska", value: (l) => yesNo(l.hasStorage) },
+  {
+    label: "Dopasowanie do preferencji",
+    value: (l) => (typeof l.dreamScore === "number" ? `${l.dreamScore}%` : "Brak danych"),
+  },
+];
+
+export function CompareBoard({
+  listings,
+  onOpen,
+  onRemove,
+}: {
   listings: ListingSummary[];
-  onOpen: (listingId: string) => void | Promise<void>;
-  onRemove: (listingId: string) => void;
+  onOpen: (id: string) => void | Promise<void>;
+  onRemove: (id: string) => void;
 }) {
-  if (input.listings.length === 0) {
-    return <div className="result-box">Dodaj 2-5 ofert z kart przez przycisk `Porównaj`.</div>;
-  }
-
+  if (!listings.length)
+    return (
+      <div className="comparison-empty">
+        <span className="eyebrow">Twój wybór</span>
+        <h2>Które mieszkanie wybrać?</h2>
+        <p>
+          Dodaj od 2 do 5 ofert przyciskiem „Porównaj” na karcie mieszkania. Zobaczysz ich ceny i
+          cechy obok siebie.
+        </p>
+        <Link className="action-button" to="/oferty">
+          Wybierz oferty <ArrowUpRight size={18} />
+        </Link>
+      </div>
+    );
   return (
-    <div className="compare-board">
-      {input.listings.map((listing) => (
-        <article key={listing.id} className="compare-card">
-          <div className="compare-card-header">
-            <div className="compare-card-heading">
-              <button
-                type="button"
-                className="map-card-title"
-                onClick={() => void input.onOpen(listing.id)}
-              >
-                {listing.title}
-              </button>
-              <p className="muted">
-                {listing.district}
-                {listing.neighborhood ? ` / ${listing.neighborhood}` : ""}
-              </p>
-              <ListingBadgeRow badges={listing.badges.slice(0, 4)} />
-            </div>
-            <button
-              type="button"
-              className="action-button secondary-button"
-              onClick={() => input.onRemove(listing.id)}
-            >
-              Usuń
-            </button>
-          </div>
-
-          <div className="compare-card-body">
-            {listing.thumbnailUrl ? (
-              <img
-                className="compare-card-image"
-                src={listing.thumbnailUrl}
-                alt={listing.title}
-                loading="lazy"
-              />
-            ) : null}
-            <div className="compare-card-grid">
-              <CompareField label="Cena" value={listing.priceLabel} />
-              <CompareField label="Metraz" value={listing.areaLabel} />
-              <CompareField label="PLN/m2" value={listing.pricePerSqmLabel ?? "-"} />
-              <CompareField label="Etap" value={decisionStageDisplay(listing.decisionStage)} />
-              <CompareField label="Kontakt" value={contactStatusDisplay(listing.contactStatus)} />
-              <CompareField
-                label="Oglądanie"
-                value={
-                  listing.viewingScheduledAt ? formatViewingDate(listing.viewingScheduledAt) : "-"
-                }
-              />
-              <CompareField
-                label="Wymarzone mieszkanie"
-                value={typeof listing.dreamScore === "number" ? `${listing.dreamScore}%` : "-"}
-              />
-              <CompareField label="RCN" value={listing.rcnDeltaLabel} />
-              <CompareField label="Podsumowanie" value={listing.summary} wide />
-            </div>
-          </div>
-        </article>
-      ))}
-    </div>
-  );
-}
-
-export function CompareField(input: { label: string; value: string; wide?: boolean }) {
-  return (
-    <div className={input.wide ? "compare-field compare-field-wide" : "compare-field"}>
-      <span className="compare-field-label">{input.label}</span>
-      <strong className="compare-field-value">{input.value}</strong>
-    </div>
+    <>
+      {listings.length === 1 && (
+        <p className="comparison-hint">
+          Masz pierwszą ofertę. Dodaj kolejną, żeby porównać różnice.
+        </p>
+      )}
+      <p className="comparison-scroll-hint">Przesuń tabelę w bok, aby zobaczyć pozostałe oferty.</p>
+      <div
+        className="comparison-scroll"
+        tabIndex={0}
+        role="region"
+        aria-label="Tabela porównania ofert"
+      >
+        <table className="comparison-table">
+          <caption className="comparison-caption">Ceny i cechy wybranych mieszkań</caption>
+          <thead>
+            <tr>
+              <th scope="col" className="comparison-label">
+                <span>Co porównujemy</span>
+                <small>{listings.length} z 5 ofert</small>
+              </th>
+              {listings.map((l) => (
+                <th scope="col" key={l.id}>
+                  <div className="comparison-property">
+                    <div className="comparison-photo">
+                      {l.thumbnailUrl ? (
+                        <img src={l.thumbnailUrl} alt="" loading="lazy" />
+                      ) : (
+                        <ImageOff size={36} />
+                      )}
+                      <button
+                        className="comparison-remove"
+                        onClick={() => onRemove(l.id)}
+                        aria-label={`Usuń z porównania: ${l.title}`}
+                      >
+                        <X size={18} />
+                      </button>
+                    </div>
+                    <div className="comparison-property-text">
+                      <span className="eyebrow">{l.district || l.city}</span>
+                      <button className="comparison-title" onClick={() => void onOpen(l.id)}>
+                        {l.title}
+                        <ArrowUpRight size={16} />
+                      </button>
+                      <p>{[l.neighborhood, l.street].filter(Boolean).join(" · ") || l.city}</p>
+                    </div>
+                  </div>
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {fields.map((field) => (
+              <tr key={field.label}>
+                <th scope="row">{field.label}</th>
+                {listings.map((l) => (
+                  <td key={l.id}>{field.value(l)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

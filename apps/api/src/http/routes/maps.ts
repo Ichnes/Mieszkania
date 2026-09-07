@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import "../../config";
+import { pool } from "../../db";
 import { getWarsawRailwayMap } from "../../services/geography/railway-map";
 import { enrichListingsFromLocalStreets } from "../../services/geography/street-enrichment-backfill";
 import { getWarsawTramwayMap } from "../../services/geography/tramway-map";
@@ -10,6 +11,12 @@ import {
 import { importWarsawStreets } from "../../services/geography/warsaw-street-importer";
 
 export function registerMapsRoutes(app: FastifyInstance) {
+  app.get("/api/streets/warsaw/status", async () => {
+    const result = await pool.query(
+      "select count(distinct normalized_name)::int as count, max(updated_at) as updated_at from streets",
+    );
+    return { count: result.rows[0].count, updatedAt: result.rows[0].updated_at };
+  });
   app.get("/api/map/railway", async () => getWarsawRailwayMap());
 
   app.get("/api/map/tramway", async () => getWarsawTramwayMap());

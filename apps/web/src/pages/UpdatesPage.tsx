@@ -122,7 +122,7 @@ export function UpdatesPage({
       {activeTab === "backfill" ? (
         <section className="sync-center">
           <Link className="action-button secondary-button" to="/import">
-            Import pojedynczego linku i danych RCN
+            Import i przygotowanie danych · ulice, oferty, RCN
           </Link>
           <div className="panel sync-hero">
             <div>

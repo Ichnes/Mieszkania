@@ -12,6 +12,8 @@ export function OffersPage({
 }: {
   model: Pick<
     WorkspaceState,
+    | "compareListingIds"
+    | "toggleCompareListing"
     | "activeTab"
     | "filtersPanelCollapsed"
     | "mobileFiltersOpen"
@@ -465,6 +467,8 @@ export function OffersPage({
                 listings={visibleListings}
                 onOpen={openListing}
                 onToggleShortlist={toggleShortlist}
+                compareIds={model.compareListingIds}
+                onToggleCompare={model.toggleCompareListing}
                 updatingShortlistId={isUpdatingShortlist}
                 isLoading={isLoadingListings}
               />

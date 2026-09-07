@@ -1,3 +1,4 @@
+import { copyText } from "../../../shared/lib/clipboard";
 import type {
   CollectorRunResponse,
   DuplicateCandidate,
@@ -115,6 +116,7 @@ export function ListingDetailPanel(input: {
   const [activeDetailTab, setActiveDetailTab] = useState<
     "overview" | "manual" | "contact" | "features"
   >("overview");
+  const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [copiedId, setCopiedId] = useState(false);
   const detailPanelRef = useRef<HTMLElement | null>(null);
   const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
@@ -284,6 +286,23 @@ export function ListingDetailPanel(input: {
               >
                 {copiedId ? "✓" : <ClipboardCheck size={14} aria-hidden="true" />}
               </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                onClick={async () => {
+                  try {
+                    await copyText(
+                      `${window.location.origin}/oferty?listing=${encodeURIComponent(input.listing.id)}`,
+                    );
+                    setLinkCopyStatus("Link skopiowany");
+                  } catch {
+                    setLinkCopyStatus("Skopiuj adres z paska przeglądarki");
+                  }
+                }}
+              >
+                Kopiuj link
+              </button>
+              {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
             </div>
             <ListingBadgeRow badges={input.listing.badges} />
           </div>

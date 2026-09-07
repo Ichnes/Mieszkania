@@ -17,3 +17,7 @@
 [TODO.md](TODO.md) zawiera aktualny stan prac. `archive/` przechowuje wcześniejsze
 raporty i nieaktualne założenia — nie są instrukcją uruchomienia obecnej wersji.
 W katalogu głównym repo pozostają tylko README oraz AGENTS.md z zasadami pracy nad kodem.
+
+Zasady dla narzędzi i osób zmieniających kod: [AGENTS.md](../AGENTS.md).
+Ten plik pozostaje w katalogu repo; przeniesienie do `docs/` ograniczyłoby automatyczne
+wykrywanie jego zasad dla kodu w `apps/` i `packages/`.

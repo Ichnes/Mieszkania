@@ -59,3 +59,6 @@ Instalacja i przygotowanie startu sprawdzają Chromium dla Playwrighta i pobiera
 jeżeli go brakuje. Można powtórzyć ten krok poleceniem `npm run setup:browser`.
 Na Linuksie mogą być potrzebne biblioteki systemowe; polecenie
 `npx playwright install --with-deps chromium` instaluje je z uprawnieniami administratora.
+
+Po pierwszym uruchomieniu przejdź do **Aktualizacja → Import i przygotowanie danych**
+i pobierz katalog ulic Warszawy. Jest to jednorazowe przygotowanie lokalizacji.

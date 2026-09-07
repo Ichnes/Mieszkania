@@ -92,11 +92,13 @@ export function useWorkspaceController() {
   const [selectedListingDuplicateCandidates, setSelectedListingDuplicateCandidates] = useState<
     DuplicateCandidate[]
   >([]);
+  const [listingOpenError, setListingOpenError] = useState<string | null>(null);
   const [isOpeningListing, setIsOpeningListing] = useState(false);
   const [isLoadingListingInsights, setIsLoadingListingInsights] = useState(false);
   const [isLoadingDuplicateCandidates, setIsLoadingDuplicateCandidates] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSaveError, setSettingsSaveError] = useState<string | null>(null);
+  const [compareSnapshots, setCompareSnapshots] = useState<ListingSummary[]>([]);
   const [compareListingIds, setCompareListingIds] = useState<string[]>([]);
   const [mediaBackfillError, setMediaBackfillError] = useState<string | null>(null);
   const [isRunningAll, setIsRunningAll] = useState(false);
@@ -231,6 +233,7 @@ export function useWorkspaceController() {
     if (state.status !== "ready") return;
     const openFromUrl = () => {
       const listingId = new URLSearchParams(location.search).get("listing");
+      if (!listingId) setListingOpenError(null);
       if (listingId && listingId !== selectedListing?.id) void openListing(listingId, false);
       if (!listingId && selectedListing) setSelectedListing(null);
     };
@@ -374,6 +377,7 @@ export function useWorkspaceController() {
     compareListingIds,
     dashboardListings,
     visibleListings,
+    compareSnapshots,
   );
   const totalListingsPages = Math.max(1, Math.ceil(listingsTotal / listingsPerPage));
   const listingInsights = buildListingInsights(dashboard.stats, dashboardListings);
@@ -554,6 +558,7 @@ export function useWorkspaceController() {
     isLoadingListingInsights,
     loadListingInsights,
     setMortgageDraft,
+    listingOpenError,
     isOpeningListing,
     settingsOpen,
     saveSettings,
@@ -759,14 +764,24 @@ export function useWorkspaceController() {
   async function openListing(listingId: string, updateUrl = true) {
     window.dispatchEvent(new Event("mieszkania:open-listing"));
     setIsOpeningListing(true);
+    setListingOpenError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}`);
-      if (!response.ok) return;
+      const response = await fetch(`${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}`);
+      if (!response.ok)
+        throw new Error(
+          response.status === 404
+            ? "Nie znaleziono tej oferty w tej lokalnej bazie. Sprawdź, czy link prowadzi do tego samego komputera."
+            : "Nie udało się otworzyć oferty. Sprawdź ID oraz połączenie z komputerem udostępniającym aplikację.",
+        );
       const detail = (await response.json()) as ListingDetail;
       setSelectedListing(detail);
       if (updateUrl) void navigate(listingHref(detail.id));
       void loadListingInsights(detail.id);
       void loadDuplicateCandidates(detail.id);
+    } catch (error) {
+      setListingOpenError(
+        error instanceof Error ? error.message : "Nie udało się otworzyć oferty.",
+      );
     } finally {
       setIsOpeningListing(false);
     }
@@ -938,6 +953,16 @@ export function useWorkspaceController() {
   }
 
   function toggleCompareListing(listingId: string) {
+    const snapshot = [
+      ...visibleListings,
+      ...dashboardListings,
+      ...(selectedListing ? [selectedListing] : []),
+    ].find((l) => l.id === listingId);
+    if (snapshot)
+      setCompareSnapshots((current) => [
+        ...current.filter((l) => l.id !== listingId && compareListingIds.includes(l.id)),
+        snapshot,
+      ]);
     setCompareListingIds((current) => {
       if (current.includes(listingId)) {
         return current.filter((id) => id !== listingId);

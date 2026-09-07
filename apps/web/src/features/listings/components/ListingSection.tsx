@@ -14,6 +14,8 @@ import { ListingImageSlide } from "./ListingImageSlide";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingSection(input: {
+  compareIds: string[];
+  onToggleCompare: (id: string) => void;
   title: string;
   listings: ListingSummary[];
   onOpen: (listingId: string) => void | Promise<void>;
@@ -200,6 +202,17 @@ export function ListingSection(input: {
                   </div>
                 </dl>
                 <ListingBadgeRow badges={nonCommercialBadges} />
+                <button
+                  type="button"
+                  className="listing-compare-action"
+                  aria-pressed={input.compareIds.includes(listing.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    input.onToggleCompare(listing.id);
+                  }}
+                >
+                  {input.compareIds.includes(listing.id) ? "W porównaniu · usuń" : "Porównaj"}
+                </button>
               </div>
             </article>
           );

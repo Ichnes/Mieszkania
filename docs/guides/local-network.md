@@ -37,3 +37,23 @@ Wtedy adres pozostaje taki sam: `http://otomieszkanie:5173`.
 - Komputer z aplikacją oraz polecenie `npm run dev` muszą pozostać uruchomione.
 
 Adres bez portu, np. `http://otomieszkanie`, wymagałby dodatkowo serwera działającego na porcie 80 lub reverse proxy. Obecna wersja korzysta z portu `5173`, żeby nie wymagać uprawnień administratora.
+
+## Link do konkretnej oferty
+
+Otwórz ofertę na urządzeniu korzystającym z adresu LAN i wybierz **Kopiuj link**.
+Link zachowuje nazwę lub IP komputera oraz port, np.
+`http://192.168.1.25:5173/oferty?listing=UUID`. Nie zamieniaj go na `localhost` —
+na telefonie oznaczałoby to sam telefon. Lokalny UUID działa w bazie komputera,
+który udostępnia aplikację; osobna instalacja znajomego ma inną bazę.
+
+Gdy strona główna działa, ale oferta nie, sprawdź pełny link wraz z `?listing=`.
+Aplikacja wyświetla komunikat przy brakującej ofercie lub błędzie API.
+Nie usuwaj bazy ani ustawień w celu naprawienia linku.
+
+## „Nie możemy teraz pobrać danych” tylko na telefonie
+
+Starsza konfiguracja `VITE_API_URL=http://localhost:3001` wskazywała na komputer
+przy pracy lokalnej, ale na sam telefon przy wejściu przez Wi-Fi. Obecnie przy wejściu
+przez IP lub nazwę LAN aplikacja zastępuje taki adres połączeniem przez proxy na tym
+samym adresie co strona. Zalecane ustawienie to puste `VITE_API_URL=`.
+Po aktualizacji odśwież stronę na telefonie. Nie trzeba udostępniać portu API `3001`.

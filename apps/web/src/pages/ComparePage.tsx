@@ -1,33 +1,31 @@
+import { Plus } from "lucide-react";
+import { Link } from "react-router-dom";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { CompareBoard } from "../features/compare/CompareBoard";
 
 export function ComparePage({
   model,
 }: {
-  model: Pick<
-    WorkspaceState,
-    "activeTab" | "compareListings" | "openListing" | "removeFromCompare"
-  >;
+  model: Pick<WorkspaceState, "compareListings" | "openListing" | "removeFromCompare">;
 }) {
-  const { activeTab, compareListings, openListing, removeFromCompare } = model;
   return (
-    <>
-      {activeTab === "compare" ? (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <p className="eyebrow">Compare</p>
-              <h2>Porównanie ofert 2-5</h2>
-            </div>
-            <div className="pill">{compareListings.length} wybrane</div>
-          </div>
-          <CompareBoard
-            listings={compareListings}
-            onOpen={openListing}
-            onRemove={removeFromCompare}
-          />
-        </section>
-      ) : null}
-    </>
+    <section className="comparison-page">
+      <header className="comparison-heading">
+        <div>
+          <p className="eyebrow">Decyzja bez przełączania kart</p>
+          <h1>Porównaj mieszkania</h1>
+          <p>Cena, przestrzeń i codzienna wygoda — wszystko obok siebie.</p>
+        </div>
+        <Link className="action-button secondary-button" to="/oferty">
+          <Plus size={18} />
+          Dodaj oferty
+        </Link>
+      </header>
+      <CompareBoard
+        listings={model.compareListings}
+        onOpen={model.openListing}
+        onRemove={model.removeFromCompare}
+      />
+    </section>
   );
 }
