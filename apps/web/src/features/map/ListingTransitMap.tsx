@@ -58,14 +58,16 @@ export function ListingTransitMap(input: {
   }, [mapAttempt]);
 
   useEffect(() => {
-    void fetch(`${apiBaseUrl}/api/map/railway`)
+    const controller = new AbortController();
+    void fetch(`${apiBaseUrl}/api/map/railway`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setRailwayMap(data))
       .catch(() => setRailwayMap(null));
-    void fetch(`${apiBaseUrl}/api/map/tramway`)
+    void fetch(`${apiBaseUrl}/api/map/tramway`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setTramStops(data?.stops ?? []))
       .catch(() => setTramStops([]));
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {

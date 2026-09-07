@@ -50,6 +50,7 @@ import { ListingParcelCard } from "./ListingParcelCard";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingDetailPanel(input: {
+  downPayment: number;
   listing: ListingDetail;
   duplicateCandidates: DuplicateCandidate[];
   onClose: () => void;
@@ -477,7 +478,7 @@ export function ListingDetailPanel(input: {
                 </>
               ) : null}
             </div>
-            <MortgageQuickPreview listing={input.listing} />
+            <MortgageQuickPreview listing={input.listing} downPayment={input.downPayment} />
             <div className="detail-section-tabs">
               <button
                 className={tabClass(activeDetailTab === "overview")}
@@ -572,7 +573,8 @@ export function ListingDetailPanel(input: {
                   <tr>
                     <th>Piętro</th>
                     <td>
-                      {input.listing.floor ?? "-"} / {input.listing.totalFloors ?? "-"}
+                      {input.listing.floor === 0 ? "Parter" : (input.listing.floor ?? "-")} /{" "}
+                      {input.listing.totalFloors ?? "-"}
                     </td>
                     <th>Czynsz</th>
                     <td>{maintenanceFee ?? "-"}</td>
@@ -674,7 +676,10 @@ export function ListingDetailPanel(input: {
                   zaliczkami). Podobne zapisy automatycznie uzupełniają tę wartość.
                 </p>
               ) : null}
-              <DescriptionReview description={input.listing.description} />
+              <DescriptionReview
+                description={input.listing.description}
+                floor={input.listing.floor}
+              />
               <ListingDescription value={input.listing.description} />
               <section className="subsection rcn-transactions">
                 <div className="section-topline">

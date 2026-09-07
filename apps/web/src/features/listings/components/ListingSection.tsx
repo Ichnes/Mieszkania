@@ -14,6 +14,7 @@ import { ListingImageSlide } from "./ListingImageSlide";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingSection(input: {
+  downPayment: number;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
   title: string;
@@ -148,7 +149,7 @@ export function ListingSection(input: {
                       {listing.isActive === false ? "✕" : "✓"}
                     </span>
                   </div>
-                  <ListingImageSlide listing={listing} />
+                  <ListingImageSlide listing={listing} downPayment={input.downPayment} />
                   {listing.sourceLabel ? (
                     <span className="listing-source-chip listing-source-chip-footer">
                       {listing.sourceLabel}

@@ -255,3 +255,21 @@ test("highlights developer standard descriptions as negative", () => {
     assert.match(highlighted[0]?.text ?? "", /stanie deweloperskim/i);
   }
 });
+
+test("noise field names, moderately quiet ratings and speakers are not loudness drawbacks", () => {
+  for (const text of [
+    "Głośność: umiarkowanie ciche",
+    "Głośność: ciche",
+    "Wbudowane głośniki.",
+    "Mieszkanie nie jest głośne.",
+  ]) {
+    assert.equal(
+      getDescriptionHighlightParts(text).some((p) => p.tone === "negative"),
+      false,
+      text,
+    );
+  }
+  assert.ok(
+    getDescriptionHighlightParts("Mieszkanie jest głośne.").some((p) => p.tone === "negative"),
+  );
+});

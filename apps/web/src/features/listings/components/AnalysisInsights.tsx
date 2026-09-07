@@ -42,35 +42,33 @@ export function SurroundingsSummary({ findings }: { findings: ImmediateSurroundi
   );
 }
 
-export function DescriptionReview({ description }: { description?: string }) {
-  const insights = analyzeDescription(description ?? "");
-  if (!description) return null;
+export function DescriptionReview({
+  description,
+  floor,
+}: {
+  description?: string;
+  floor?: number;
+}) {
+  const insights = analyzeDescription(description ?? "", floor);
+  if (!insights.length) return null;
   return (
     <section className="description-review">
-      <p className="eyebrow">Przed kontaktem ze sprzedającym</p>
-      <h3>Co warto doprecyzować</h3>
-      <p className="muted">
-        Pytania na podstawie treści ogłoszenia. Cytaty to deklaracje sprzedającego.
-      </p>
-      {insights.length ? (
-        <div className="insight-card-grid">
-          {insights.map((insight) => (
-            <article className="insight-category" key={insight.key}>
-              <h4>{insight.label}</h4>
-              <p>{insight.question}</p>
-              <details>
-                <summary>Fragment opisu</summary>
-                <blockquote>{insight.evidence}</blockquote>
-              </details>
-            </article>
-          ))}
-        </div>
-      ) : (
-        <p className="muted">
-          Brak wyraźnych wzmianek dla tej listy pytań. Przy kontakcie ustal pełną cenę, opłaty, stan
-          prawny i termin wydania.
-        </p>
-      )}
+      <p className="eyebrow">Przygotuj się do rozmowy</p>
+      <h3>Co sprawdzić w tej ofercie</h3>
+      <p className="muted">Konkretne warunki z opisu, ich znaczenie i pytania do sprzedającego.</p>
+      <div className="insight-card-grid">
+        {insights.map((insight) => (
+          <article className="insight-category" key={insight.key}>
+            <h4>{insight.label}</h4>
+            <blockquote>{insight.evidence}</blockquote>
+            <p className="review-reason">{insight.reason}</p>
+            <p>
+              <strong>Zapytaj: </strong>
+              {insight.question}
+            </p>
+          </article>
+        ))}
+      </div>
     </section>
   );
 }

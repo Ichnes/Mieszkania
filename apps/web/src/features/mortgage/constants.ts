@@ -1,1 +1,1 @@
-export const DEFAULT_DOWN_PAYMENT = 430_000;
+export { defaultDownPayment as DEFAULT_DOWN_PAYMENT } from "@mieszkania/shared";

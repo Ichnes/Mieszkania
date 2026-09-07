@@ -1,3 +1,4 @@
+import { defaultDownPayment } from "@mieszkania/shared";
 import type { FamilySettings } from "@mieszkania/shared";
 import {
   CircleAlert,
@@ -95,6 +96,34 @@ export function SettingsPanel(input: {
             <X size={20} aria-hidden="true" />
           </button>
         </div>
+
+        <section className="settings-section">
+          <div className="settings-section-heading">
+            <div>
+              <h3>Finansowanie zakupu</h3>
+              <p>
+                Ten sam wkład własny wykorzystujemy w kalkulatorze oraz przy szacowaniu rat na
+                ofertach.
+              </p>
+            </div>
+          </div>
+          <label className="field-label">
+            <span>Planowany wkład własny (zł)</span>
+            <input
+              className="text-input"
+              type="number"
+              min="0"
+              step="1000"
+              value={local.financing?.downPayment ?? defaultDownPayment}
+              onChange={(event) =>
+                setLocal((current) => ({
+                  ...current,
+                  financing: { downPayment: Math.max(0, Number(event.target.value)) },
+                }))
+              }
+            />
+          </label>
+        </section>
 
         <section className="settings-section">
           <div className="settings-section-heading">

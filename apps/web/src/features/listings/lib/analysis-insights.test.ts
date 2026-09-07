@@ -39,3 +39,37 @@ test("description questions retain original evidence and avoid simple negations"
   assert.equal(insights[0].evidence, "Miejsce dodatkowo płatne 50 000 zł.");
   assert.equal(analyzeDescription("").length, 0);
 });
+
+test("does not manufacture questions from clear positive or resolved statements", () => {
+  assert.deepEqual(
+    analyzeDescription(
+      "Pełna własność z księgą wieczystą. Dostępne od 1 maja. Zakup bez prowizji. Nie wymaga remontu.",
+    ),
+    [],
+  );
+  assert.deepEqual(analyzeDescription("Brak windy.", 0), []);
+});
+
+test("questions explain consequences and preserve source evidence", () => {
+  const items = analyzeDescription(
+    "Lokal wynajęty do grudnia. Garaż: zakup obowiązkowy, dodatkowo płatny 50 000 zł.",
+  );
+  assert.deepEqual(
+    items.map((i) => i.key),
+    ["availability", "extras"],
+  );
+  assert.match(items[0].question, /umowa najmu/);
+  assert.match(items[1].question, /łączną cenę/);
+  assert.ok(items.every((i) => i.reason.length > 30 && i.evidence.length > 0));
+});
+
+test("storage rooms do not imply tenants", () => {
+  assert.deepEqual(
+    analyzeDescription("Dwa miejsca w garażu i 2 komórki lokatorskie. Mieszkanie na parterze."),
+    [],
+  );
+});
+
+test("prospective tenants and zero commission are not unresolved conditions", () => {
+  assert.deepEqual(analyzeDescription("Idealne dla najemców. Brak prowizji."), []);
+});

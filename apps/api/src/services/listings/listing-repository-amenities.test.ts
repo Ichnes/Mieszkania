@@ -412,3 +412,55 @@ test("parking under the block counts, guest-only parking and negations do not", 
     );
   }
 });
+
+test("ground-floor apartment is not negated by an earlier garage or storage mention", () => {
+  const description =
+    "Z OGRODEM, dwoma miejscami w garażu i 2 komórkami lokatorskimi Mieszkanie znajduje się na parterze w 3 piętrowym budynku z 2003 roku.";
+  assert.deepEqual(inferBuildingDetails(description), {
+    floor: 0,
+    totalFloors: 3,
+    yearBuilt: 2003,
+  });
+  assert.equal(
+    inferBuildingDetails(
+      "Lokal znajduje się na podwyższonym parterze kameralnego, 3-piętrowego budynku.",
+    ).floor,
+    0,
+  );
+  assert.equal(inferBuildingDetails("Mieszkanie nie znajduje się na parterze.").floor, undefined);
+  assert.equal(inferBuildingDetails("Na parterze znajduje się recepcja.").floor, undefined);
+  assert.equal(inferBuildingDetails("Komórka lokatorska na parterze.").floor, undefined);
+});
+
+test("refusing agents means a direct offer, even with a stale agency hint", () => {
+  for (const description of [
+    "Nie współpracuję z pośrednikami.",
+    "Nie współpracuje z pośrednikami",
+    "Nie współpracujemy z agencjami.",
+    "Pośrednikom dziękuję.",
+    "Proszę pośredników o niekontaktowanie się.",
+  ]) {
+    const badges = inferCommercialInfo(description, {
+      nextData: { props: { pageProps: { ad: { advertiserType: "agency" } } } },
+    }).badges;
+    assert.ok(badges.includes("Oferta bezpośrednia"), description);
+    assert.ok(!badges.includes("Oferta pośrednika"), description);
+  }
+  assert.ok(
+    inferCommercialInfo(
+      "Współpracujemy z pośrednikami. Oferta biura nieruchomości.",
+    ).badges.includes("Oferta pośrednika"),
+  );
+});
+
+test("unified floor parser preserves fractions and floor-of-building notation", () => {
+  for (const [text, floor, total] of [
+    ["Piętro parter / 3", 0, 3],
+    ["Mieszkanie na 3 piętrze z 8", 3, 8],
+    ["Poziom: 0/3", 0, 3],
+  ] as const) {
+    const result = inferBuildingDetails(text);
+    assert.equal(result.floor, floor);
+    assert.equal(result.totalFloors, total);
+  }
+});

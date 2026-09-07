@@ -280,3 +280,39 @@
   border-color: var(--line);
   color: var(--ink);
 }
+
+.listing-loading-dialog {
+  position: relative;
+  min-height: 260px;
+}
+.listing-loading-dialog > .icon-button {
+  position: absolute;
+  right: 20px;
+  top: 20px;
+  z-index: 1;
+}
+.listing-loading-dialog > [role="status"] {
+  padding: 56px 24px;
+  text-align: center;
+}
+.description-review .review-reason {
+  padding: 12px;
+  border-left: 3px solid #b88441;
+  background: rgba(180, 132, 65, 0.08);
+  line-height: 1.6;
+}
+.description-review blockquote {
+  margin: 12px 0;
+  padding-left: 12px;
+  border-left: 2px solid currentColor;
+  opacity: 0.75;
+  font-size: 13px;
+}
+@media (max-width: 680px) {
+  .listing-loading-dialog > [role="status"] {
+    padding: 56px 12px;
+  }
+  .description-review .insight-card-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

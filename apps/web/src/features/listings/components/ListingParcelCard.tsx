@@ -5,7 +5,7 @@ import type {
   PlanningContextResponse,
 } from "@mieszkania/shared";
 import { CircleAlert, Map as MapIcon, MapPin, RefreshCw } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiBaseUrl } from "../../../shared/lib/api";
 import { formatPlanningDate } from "../../../shared/lib/format";
 import { SurroundingsSummary } from "./AnalysisInsights";
@@ -15,6 +15,7 @@ export function ListingParcelCard({
 }: {
   listing: Pick<ListingDetail, "id" | "latitude" | "longitude">;
 }) {
+  const activeRequest = useRef<AbortController | null>(null);
   const [context, setContext] = useState<ParcelContextResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -25,6 +26,7 @@ export function ListingParcelCard({
 
   useEffect(() => {
     const controller = new AbortController();
+    activeRequest.current = controller;
     setContext(null);
     setError(null);
     setPlanning(null);
@@ -51,7 +53,7 @@ export function ListingParcelCard({
     return () => controller.abort();
   }, [listing.id, parcelRefreshAttempt]);
 
-  async function loadPlanning(refresh = false, signal?: AbortSignal) {
+  async function loadPlanning(refresh = false, signal = activeRequest.current?.signal) {
     setPlanningLoading(true);
     setPlanningError(null);
     try {

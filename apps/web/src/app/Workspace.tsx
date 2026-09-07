@@ -1,3 +1,4 @@
+import { ListingLoadingDialog } from "./components/ListingLoadingDialog";
 import { lazy, Suspense } from "react";
 import { Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { WorkspaceState } from "./useWorkspaceController";
@@ -90,19 +91,16 @@ export function Workspace({ model }: { model: WorkspaceState }) {
             }
           />
         </Routes>
-
-        {selectedListing ? <ListingDialog model={model} /> : null}
-
-        {isOpeningListing && !selectedListing ? (
-          <aside className="detail-overlay">
-            <section className="detail-panel">
-              <div className="result-box">Ladowanie oferty...</div>
-            </section>
-          </aside>
-        ) : null}
-
-        {settingsOpen ? <SettingsDialog model={model} /> : null}
       </Suspense>
+      {selectedListing ? (
+        <Suspense fallback={<ListingLoadingDialog onClose={model.closeListing} />}>
+          <ListingDialog model={model} />
+        </Suspense>
+      ) : null}
+      {isOpeningListing && !selectedListing ? (
+        <ListingLoadingDialog onClose={model.closeListing} />
+      ) : null}
+      <Suspense fallback={null}>{settingsOpen ? <SettingsDialog model={model} /> : null}</Suspense>
     </main>
   );
 }

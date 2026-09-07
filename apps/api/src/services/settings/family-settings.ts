@@ -52,6 +52,7 @@ export async function updateFamilySettings(input: FamilySettings): Promise<Famil
 export function mergeSettings(stored?: Partial<FamilySettings>) {
   const defaults = createDefaultFamilySettings();
   const settings: FamilySettings = {
+    financing: stored?.financing ?? defaults.financing,
     workplaces: stored?.workplaces ?? defaults.workplaces,
     searchContract: normalizeSearchContract(stored?.searchContract, defaults.searchContract),
     dreamProfile: normalizeDreamProfile(stored?.dreamProfile, defaults.dreamProfile),
@@ -67,7 +68,14 @@ export function mergeSettings(stored?: Partial<FamilySettings>) {
 
 function validateAndNormalizeSettings(input: FamilySettings): FamilySettings {
   const maxWeightTotal = input.maxWeightTotal || 80;
+  const downPayment = input.financing?.downPayment;
   const normalized: FamilySettings = {
+    financing: {
+      downPayment:
+        typeof downPayment === "number" && Number.isFinite(downPayment)
+          ? Math.max(0, Math.round(downPayment))
+          : createDefaultFamilySettings().financing!.downPayment,
+    },
     workplaces: input.workplaces.slice(0, 6).map((workplace, index) =>
       normalizeKnownWorkplace({
         key: workplace.key || `workplace-${index + 1}`,

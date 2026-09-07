@@ -31,7 +31,7 @@ export function UpdatesPage({
     | "refreshStaleListingStatus"
     | "isRefreshingQueueStatus"
     | "discoverAllCity"
-    | "setDiscoverAllCity"
+    | "setSettingsOpen"
     | "discoverAllMaxPages"
     | "setDiscoverAllMaxPages"
     | "runDiscoverAllPortals"
@@ -80,7 +80,7 @@ export function UpdatesPage({
     refreshStaleListingStatus,
     isRefreshingQueueStatus,
     discoverAllCity,
-    setDiscoverAllCity,
+    setSettingsOpen,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,
@@ -251,13 +251,20 @@ export function UpdatesPage({
               <div className="sync-step-body">
                 <div className="sync-step-fields">
                   <label className="field-label">
-                    <span>Miasto</span>
+                    <span>Miasto z preferencji</span>
                     <input
                       className="text-input"
                       value={discoverAllCity}
-                      onChange={(event) => setDiscoverAllCity(event.target.value)}
-                      placeholder="warszawa"
+                      readOnly
+                      placeholder="Miasto z zakresu ofert"
                     />
+                    <button
+                      className="action-button secondary-button"
+                      type="button"
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      Zmień w preferencjach
+                    </button>
                   </label>
                   <label className="field-label">
                     <span>Ile stron na portal</span>

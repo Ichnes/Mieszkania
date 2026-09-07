@@ -1,7 +1,7 @@
+import { useMortgageInput } from "./useMortgageInput";
 import { LoaderCircle } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { formatPln } from "../../shared/lib/format";
-import { DEFAULT_DOWN_PAYMENT } from "./constants";
 import {
   calculateBankCosts,
   calculatePurchaseCosts,
@@ -15,45 +15,77 @@ export const PremiumMortgageVisuals = lazy(() => import("./MortgageVisuals"));
 
 export function MortgageCalculator({
   draft,
+  defaultDownPayment,
+  onSaveDownPayment,
+  savingSettings,
+  settingsError,
   onBackToListing,
 }: {
   draft: MortgageDraft;
+  defaultDownPayment: number;
+  onSaveDownPayment: (value: number) => void | Promise<void>;
+  savingSettings: boolean;
+  settingsError: string | null;
   onBackToListing: () => void;
 }) {
-  const [propertyTotal, setPropertyTotal] = useState(draft.propertyTotal || 1_200_000);
-  const [downPayment, setDownPayment] = useState(
-    Math.min(DEFAULT_DOWN_PAYMENT, draft.propertyTotal || 1_200_000),
+  const [propertyTotal, setPropertyTotal] = useMortgageInput(
+    "propertyTotal",
+    draft.propertyTotal || 1_200_000,
   );
-  const [rate, setRate] = useState(5.8);
-  const [months, setMonths] = useState(360);
-  const [monthlyTarget, setMonthlyTarget] = useState(8500);
-  const [oneOffAmount, setOneOffAmount] = useState(0);
-  const [oneOffMonth, setOneOffMonth] = useState(1);
-  const [strategy, setStrategy] = useState<"shorten" | "lower_payment">("lower_payment");
-  const [rateChangeMonth, setRateChangeMonth] = useState(13);
-  const [rateAfterChange, setRateAfterChange] = useState(4.8);
-  const [rateChangeEnabled, setRateChangeEnabled] = useState(false);
-  const [rateTransitionMonths, setRateTransitionMonths] = useState(12);
+  const [downPayment, setDownPayment] = useState(
+    Math.min(defaultDownPayment, draft.propertyTotal || 1_200_000),
+  );
+  const [rate, setRate] = useMortgageInput("rate", 5.8);
+  const [months, setMonths] = useMortgageInput("months", 360);
+  const [monthlyTarget, setMonthlyTarget] = useMortgageInput("monthlyTarget", 8500);
+  const [oneOffAmount, setOneOffAmount] = useMortgageInput("oneOffAmount", 0);
+  const [oneOffMonth, setOneOffMonth] = useMortgageInput("oneOffMonth", 1);
+  const [strategy, setStrategy] = useMortgageInput<"shorten" | "lower_payment">(
+    "strategy",
+    "lower_payment",
+  );
+  const [rateChangeMonth, setRateChangeMonth] = useMortgageInput("rateChangeMonth", 13);
+  const [rateAfterChange, setRateAfterChange] = useMortgageInput("rateAfterChange", 4.8);
+  const [rateChangeEnabled, setRateChangeEnabled] = useMortgageInput("rateChangeEnabled", false);
+  const [rateTransitionMonths, setRateTransitionMonths] = useMortgageInput(
+    "rateTransitionMonths",
+    12,
+  );
   const [showAllInstallments, setShowAllInstallments] = useState(false);
   const [showBaselineSchedule, setShowBaselineSchedule] = useState(false);
-  const [insurancePresetKey, setInsurancePresetKey] =
-    useState<MortgageInsurancePreset["key"]>("ing_basic");
-  const [includeLifeInsurance, setIncludeLifeInsurance] = useState(true);
-  const [includePropertyInsurance, setIncludePropertyInsurance] = useState(true);
-  const [marketType, setMarketType] = useState<"primary" | "secondary">("secondary");
-  const [firstHomeExemption, setFirstHomeExemption] = useState(false);
-  const [customCommission, setCustomCommission] = useState(0);
-  const [customValuation, setCustomValuation] = useState(500);
-  const [customLifeRate, setCustomLifeRate] = useState(0.035);
-  const [customPropertyRate, setCustomPropertyRate] = useState(0.01);
-  const [monthlyAccountFee, setMonthlyAccountFee] = useState(0);
+  const [insurancePresetKey, setInsurancePresetKey] = useMortgageInput<
+    MortgageInsurancePreset["key"]
+  >("insurancePresetKey", "ing_basic");
+  const [includeLifeInsurance, setIncludeLifeInsurance] = useMortgageInput(
+    "includeLifeInsurance",
+    true,
+  );
+  const [includePropertyInsurance, setIncludePropertyInsurance] = useMortgageInput(
+    "includePropertyInsurance",
+    true,
+  );
+  const [marketType, setMarketType] = useMortgageInput<"primary" | "secondary">(
+    "marketType",
+    "secondary",
+  );
+  const [firstHomeExemption, setFirstHomeExemption] = useMortgageInput("firstHomeExemption", false);
+  const [customCommission, setCustomCommission] = useMortgageInput("customCommission", 0);
+  const [customValuation, setCustomValuation] = useMortgageInput("customValuation", 500);
+  const [customLifeRate, setCustomLifeRate] = useMortgageInput("customLifeRate", 0.035);
+  const [customPropertyRate, setCustomPropertyRate] = useMortgageInput("customPropertyRate", 0.01);
+  const [monthlyAccountFee, setMonthlyAccountFee] = useMortgageInput("monthlyAccountFee", 0);
 
   useEffect(() => {
     if (draft.propertyTotal > 0) {
       setPropertyTotal(draft.propertyTotal);
-      setDownPayment(Math.min(DEFAULT_DOWN_PAYMENT, draft.propertyTotal));
+      setDownPayment(Math.min(defaultDownPayment, draft.propertyTotal));
     }
-  }, [draft.propertyTotal]);
+  }, [draft.propertyTotal, draft.listingId]);
+
+  useEffect(
+    () => setDownPayment(Math.min(defaultDownPayment, propertyTotal)),
+    [defaultDownPayment],
+  );
 
   const principal = Math.max(0, propertyTotal - downPayment);
   const rateChange = rateChangeEnabled
@@ -86,7 +118,8 @@ export function MortgageCalculator({
   const insurancePreset =
     insurancePresetKey === "custom"
       ? customPreset
-      : mortgageInsurancePresets.find((preset) => preset.key === insurancePresetKey)!;
+      : (mortgageInsurancePresets.find((preset) => preset.key === insurancePresetKey) ??
+        mortgageInsurancePresets[0]);
   const bankCosts = calculateBankCosts({
     principal,
     rows: modified.rows,
@@ -446,7 +479,25 @@ export function MortgageCalculator({
             value={propertyTotal}
             onChange={setPropertyTotal}
           />
-          <MortgageInput label="Wkład własny" value={downPayment} onChange={setDownPayment} />
+          <div>
+            <MortgageInput label="Wkład własny" value={downPayment} onChange={setDownPayment} />
+            <small>Domyślnie z Preferencji wyszukiwania.</small>
+            {downPayment !== defaultDownPayment && (
+              <button
+                type="button"
+                className="action-button secondary-button"
+                disabled={savingSettings}
+                onClick={() => void onSaveDownPayment(downPayment)}
+              >
+                {savingSettings ? "Zapisywanie…" : "Zapisz wkład w preferencjach"}
+              </button>
+            )}
+            {settingsError && (
+              <p role="alert" className="error-text">
+                {settingsError}
+              </p>
+            )}
+          </div>
           <MortgageInput label="Oprocentowanie roczne (%)" value={rate} onChange={setRate} />
           <MortgageInput label="Liczba rat" value={months} onChange={setMonths} integer />
           <MortgageInput

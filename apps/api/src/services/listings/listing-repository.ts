@@ -36,7 +36,8 @@ import {
   getMediaResponsePath,
 } from "../media/image-repository";
 import { getFamilySettings } from "../settings/family-settings";
-import { inferConstructionYear } from "./listing-description-facts";
+import { inferBuildingDetails } from "./listing-description-facts";
+export { inferBuildingDetails } from "./listing-description-facts";
 import { buildEffectiveListingDateSql } from "./listing-recency";
 import {
   extractStreetFromLocationTitle,
@@ -1555,69 +1556,6 @@ export function resolveListingAmenities(
   };
 }
 
-export function inferBuildingDetails(description: string) {
-  const text = normalizePolish(description);
-  const explicitFraction = text.match(/\bpietr(?:o|ze)?\s*[:,-]?\s*(\d{1,2})\s*\/\s*(\d{1,2})\b/);
-  const ordinalFloors: Array<[string, number]> = [
-    ["pierwsz", 1],
-    ["drug", 2],
-    ["trzec", 3],
-    ["czwart", 4],
-    ["piat", 5],
-    ["szost", 6],
-    ["siodm", 7],
-    ["osm", 8],
-    ["dziewiat", 9],
-    ["dziesiat", 10],
-  ];
-  const groundFloor =
-    /\b(?:na\s+(?:(?:wysokim|niskim)\s+)?parterze|(?:wysoki|niski)\s+parter|pietro\s*[:=-]\s*parter|(?:mieszkanie|lokal)\s+parterow\w*)\b/g;
-  const hasGroundFloor = [...text.matchAll(groundFloor)].some((match) => {
-    const before = text.slice(Math.max(0, match.index! - 70), match.index);
-    const clause = before.split(/[.!?;]/).at(-1) ?? "";
-    const after = text.slice(match.index! + match[0].length, match.index! + match[0].length + 45);
-    if (
-      /^\s+(?:(?:jest|sa|znajduj\w*\s+sie)\s+)?(?:sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(
-        after,
-      )
-    )
-      return false;
-    return !/\b(?:nie|bez|sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(clause);
-  });
-  const floorFromOrdinal = ordinalFloors.find(([stem]) =>
-    new RegExp(`\\b${stem}\\w*\\s+pietr(?:ze|o)\\b`).test(text),
-  )?.[1];
-  const floorFromNumber = text.match(/\b(?:na\s+)?(\d{1,2})(?:\.|-\w+)?\s+pietr(?:ze|o)\b/)?.[1];
-  const totalFloorWords: Array<[string, number]> = [
-    ["jedno", 1],
-    ["dwu", 2],
-    ["trzy", 3],
-    ["cztero", 4],
-    ["piecio", 5],
-    ["szescio", 6],
-    ["siedmio", 7],
-    ["osmio", 8],
-    ["dziewiecio", 9],
-    ["dziesiecio", 10],
-  ];
-  const totalFromWord = totalFloorWords.find(([prefix]) =>
-    new RegExp(`\\b${prefix}pietrow\\w*(?:\\s+(?:blok|budyn)\\w*)?`).test(text),
-  )?.[1];
-  const totalFromNumber = text.match(/\b(\d{1,2})\s*[- ]?pietrow\w*(?:\s+(?:blok|budyn)\w*)?/)?.[1];
-  const yearBuilt = inferConstructionYear(description);
-
-  return {
-    floor: explicitFraction
-      ? Number(explicitFraction[1])
-      : (floorFromOrdinal ??
-        (floorFromNumber ? Number(floorFromNumber) : hasGroundFloor ? 0 : undefined)),
-    totalFloors: explicitFraction
-      ? Number(explicitFraction[2])
-      : (totalFromWord ?? (totalFromNumber ? Number(totalFromNumber) : undefined)),
-    yearBuilt,
-  };
-}
-
 function buildListingBadges(input: {
   commercialBadges: string[];
   amenityBadges: string[];
@@ -2733,7 +2671,9 @@ export function inferCommercialInfo(
 ) {
   const normalizedDescription = normalizePolish(description ?? "");
   const directByNoIntermediation =
-    /nie\s+(?:jestesmy|jestem)\s+zainteresowan(?:i|y)\s+posrednictwem/.test(normalizedDescription);
+    /nie\s+(?:(?:jestesmy|jestem)\s+zainteresowan\w*\s+posrednictwem|wspolprac\w*\s+z\s+(?:posrednik\w*|agencj\w*|biur\w*))|(?:posrednikom|agencjom|biurom\s+nieruchomosci)\s+(?:serdecznie\s+)?dziekuj\w*|(?:prosze|prosimy)\s+(?:posrednik\w*|agencj\w*)\s+o\s+(?:niekontaktowanie|nie\s+kontaktowanie)/.test(
+      normalizedDescription,
+    );
   const nextData = getRecordAtPath(snapshotPayload, ["nextData"]);
   const productNode = findProductNode(getRecordAtPath(snapshotPayload, ["jsonLd"]));
   const advertiserHint = firstString(

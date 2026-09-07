@@ -1128,3 +1128,10 @@
 .district-svg {
   height: 500px;
 }
+
+/* Match the field wrappers to the surrounding dark forms. */
+:root[data-theme="dark"] .settings-panel .field-label {
+  color: var(--ink);
+  background: var(--surface-muted);
+  border-color: var(--line);
+}

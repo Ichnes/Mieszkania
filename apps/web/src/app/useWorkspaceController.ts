@@ -70,6 +70,7 @@ export function useWorkspaceController() {
     initialListingsSession.currentListingsPage,
   );
   const listingsMainRef = useRef<HTMLDivElement | null>(null);
+  const listingRequest = useRef<{ id: string; controller: AbortController } | null>(null);
   const [selectedListing, setSelectedListing] = useState<ListingDetail | null>(null);
   const [marketStats, setMarketStats] = useState<MarketStatsResponse | null>(null);
   const [marketStatsLoading, setMarketStatsLoading] = useState(false);
@@ -166,7 +167,6 @@ export function useWorkspaceController() {
     queueStatusCheckedAt,
     isRefreshingQueueStatus,
     discoverAllCity,
-    setDiscoverAllCity,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,
@@ -194,7 +194,11 @@ export function useWorkspaceController() {
     duplicateAutoMergeError,
     relistingScanError,
     setCollectError,
-  } = useImportController({ refreshDashboard, applyFilters });
+  } = useImportController({
+    refreshDashboard,
+    applyFilters,
+    searchCity: state.status === "ready" ? state.settings.searchContract.city : "",
+  });
 
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
@@ -231,14 +235,19 @@ export function useWorkspaceController() {
 
   useEffect(() => {
     if (state.status !== "ready") return;
-    const openFromUrl = () => {
-      const listingId = new URLSearchParams(location.search).get("listing");
-      if (!listingId) setListingOpenError(null);
-      if (listingId && listingId !== selectedListing?.id) void openListing(listingId, false);
-      if (!listingId && selectedListing) setSelectedListing(null);
-    };
-    openFromUrl();
-  }, [state.status, selectedListing?.id, location.pathname, location.search]);
+    syncListingFromUrl();
+  }, [state.status, location.pathname, location.search]);
+
+  useEffect(() => {
+    if (state.status !== "ready") return;
+    // History can change again before React commits a route transition. Cancel
+    // or resume immediately using the actual URL, not a stale rendered location.
+    const onHistory = () => syncListingFromUrl();
+    window.addEventListener("popstate", onHistory);
+    return () => window.removeEventListener("popstate", onHistory);
+  }, [state.status]);
+
+  useEffect(() => () => listingRequest.current?.controller.abort(), []);
 
   useEffect(() => {
     void refreshQueueStatus();
@@ -481,7 +490,6 @@ export function useWorkspaceController() {
     refreshStaleListingStatus,
     isRefreshingQueueStatus,
     discoverAllCity,
-    setDiscoverAllCity,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,
@@ -534,6 +542,7 @@ export function useWorkspaceController() {
     settings,
     isLoadingMapListings,
     selectedListingDuplicateCandidates,
+    closeListing,
     setSelectedListing,
     reviewDuplicatePair,
     dismissListing,
@@ -761,73 +770,112 @@ export function useWorkspaceController() {
     }
   }
 
-  async function openListing(listingId: string, updateUrl = true) {
-    window.dispatchEvent(new Event("mieszkania:open-listing"));
-    setIsOpeningListing(true);
-    setListingOpenError(null);
-    try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}`);
-      if (!response.ok)
-        throw new Error(
-          response.status === 404
-            ? "Nie znaleziono tej oferty w tej lokalnej bazie. Sprawdź, czy link prowadzi do tego samego komputera."
-            : "Nie udało się otworzyć oferty. Sprawdź ID oraz połączenie z komputerem udostępniającym aplikację.",
-        );
-      const detail = (await response.json()) as ListingDetail;
-      setSelectedListing(detail);
-      if (updateUrl) void navigate(listingHref(detail.id));
-      void loadListingInsights(detail.id);
-      void loadDuplicateCandidates(detail.id);
-    } catch (error) {
-      setListingOpenError(
-        error instanceof Error ? error.message : "Nie udało się otworzyć oferty.",
-      );
-    } finally {
-      setIsOpeningListing(false);
+  function syncListingFromUrl() {
+    const id = new URLSearchParams(window.location.search).get("listing");
+    if (id) {
+      if (listingRequest.current?.id !== id) void openListing(id, false);
+    } else {
+      cancelListingRequests();
+      setSelectedListing(null);
+      setListingOpenError(null);
     }
   }
 
-  async function loadDuplicateCandidates(listingId: string) {
+  function cancelListingRequests() {
+    listingRequest.current?.controller.abort();
+    listingRequest.current = null;
+    setIsOpeningListing(false);
+    setIsLoadingListingInsights(false);
+    setIsLoadingDuplicateCandidates(false);
+    setSelectedListingDuplicateCandidates([]);
+  }
+
+  function closeListing() {
+    cancelListingRequests();
+    setSelectedListing(null);
+    setListingOpenError(null);
+    void navigate(location.pathname);
+  }
+
+  async function openListing(listingId: string, updateUrl = true) {
+    cancelListingRequests();
+    const controller = new AbortController();
+    listingRequest.current = { id: listingId, controller };
+    const { signal } = controller;
+    window.dispatchEvent(new Event("mieszkania:open-listing"));
+    setSelectedListing(null);
+    setIsOpeningListing(true);
+    setListingOpenError(null);
+    if (updateUrl) void navigate(listingHref(listingId));
+    try {
+      const response = await fetch(`${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}`, {
+        signal,
+      });
+      if (!response.ok)
+        throw new Error(
+          response.status === 404
+            ? "Nie znaleziono tej oferty w tej lokalnej bazie."
+            : "Nie udało się otworzyć oferty. Spróbuj ponownie.",
+        );
+      const detail = (await response.json()) as ListingDetail;
+      if (signal.aborted) return;
+      setSelectedListing(detail);
+      void loadListingInsights(detail.id, false, signal);
+      void loadDuplicateCandidates(detail.id, signal);
+    } catch (error) {
+      if (!signal.aborted)
+        setListingOpenError(
+          error instanceof Error ? error.message : "Nie udało się otworzyć oferty.",
+        );
+    } finally {
+      if (!signal.aborted) setIsOpeningListing(false);
+    }
+  }
+
+  async function loadDuplicateCandidates(
+    listingId: string,
+    signal = listingRequest.current?.controller.signal,
+  ) {
     setIsLoadingDuplicateCandidates(true);
     try {
       const response = await fetch(
         `${apiBaseUrl}/api/duplicates/candidates?limit=40&listingId=${encodeURIComponent(listingId)}`,
+        { signal },
       );
-      if (!response.ok) {
-        setSelectedListingDuplicateCandidates([]);
-        return;
-      }
-
+      if (!response.ok) return;
       const result = (await response.json()) as DuplicateCandidatesResponse;
-      setSelectedListingDuplicateCandidates(result.items);
+      if (!signal?.aborted) setSelectedListingDuplicateCandidates(result.items);
+    } catch (error) {
+      if (!signal?.aborted) setSelectedListingDuplicateCandidates([]);
     } finally {
-      setIsLoadingDuplicateCandidates(false);
+      if (!signal?.aborted) setIsLoadingDuplicateCandidates(false);
     }
   }
 
-  async function loadListingInsights(listingId: string, force = false) {
+  async function loadListingInsights(
+    listingId: string,
+    force = false,
+    signal = listingRequest.current?.controller.signal,
+  ) {
     setIsLoadingListingInsights(true);
     try {
       const response = await fetch(
-        `${apiBaseUrl}/api/listings/${listingId}/insights${force ? "?refresh=true" : ""}`,
+        `${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}/insights${force ? "?refresh=true" : ""}`,
+        { signal },
       );
       if (!response.ok) return;
       const insights = (await response.json()) as Pick<
         ListingDetail,
         "commutes" | "amenities" | "amenityAnalysis"
       >;
+      if (signal?.aborted) return;
       setSelectedListing((current) =>
-        current?.id === listingId
-          ? {
-              ...current,
-              commutes: insights.commutes,
-              amenities: insights.amenities,
-              amenityAnalysis: insights.amenityAnalysis,
-            }
-          : current,
+        current?.id === listingId ? { ...current, ...insights } : current,
       );
+    } catch (error) {
+      // Optional enrichment must never reopen a dismissed offer or reject globally.
     } finally {
-      setIsLoadingListingInsights(false);
+      if (!signal?.aborted) setIsLoadingListingInsights(false);
     }
   }
 

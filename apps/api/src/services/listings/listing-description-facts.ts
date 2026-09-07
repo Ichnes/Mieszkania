@@ -2,7 +2,7 @@ import type { ParsedListing } from "../../collectors/types";
 
 export function enrichListingFromDescription(listing: ParsedListing): ParsedListing {
   const description = cleanListingDescription(listing.description);
-  const floorFacts = inferFloorFacts(description);
+  const floorFacts = inferBuildingDetails(description ?? "");
   const yearBuilt = listing.yearBuilt ?? inferConstructionYear(description);
   const streetFromTitle = extractStreetFromTitle(listing.title);
   const suppliedStreet = isPlausibleStreet(listing.street) ? listing.street?.trim() : undefined;
@@ -132,29 +132,71 @@ export function cleanListingDescription(value?: string) {
   );
 }
 
-function inferFloorFacts(description?: string): { floor?: number; totalFloors?: number } {
-  if (!description) return {};
+export function inferBuildingDetails(description: string) {
   const text = normalize(description);
-  const pairPatterns = [
-    /\b(?:pietro|poziom)\s*[:\-]?\s*(parter|\d+)\s*\/\s*(\d+)\b/,
-    /\b(?:na|polozon\w*\s+na|usytuowan\w*\s+na)\s+(parter|\d+)\.?\s*pietr\w*\s+(?:z|w)\s+(\d+)\b/,
-    /\b(?:na|polozon\w*\s+na|usytuowan\w*\s+na)\s+(parter|\d+)\.?\s*pietr\w*\s+w\s+(\d+)\.?\s*pietr\w*\s+budynk\w*/,
-    /\b(parter|\d+)\.?\s*pietr\w*\s+(?:z|w)\s+(\d+)\.?\s*pietr\w*\s+budynk\w*/,
+  const explicitFraction =
+    text.match(/\b(?:pietr(?:o|ze)?|poziom)\s*[:,-]?\s*(parter|\d{1,2})\s*\/\s*(\d{1,2})\b/) ??
+    text.match(/\b(?:na\s+)?(\d{1,2})\.?\s*pietr(?:ze|o)\s+(?:z|w)\s+(\d{1,2})\b/);
+  const ordinalFloors: Array<[string, number]> = [
+    ["pierwsz", 1],
+    ["drug", 2],
+    ["trzec", 3],
+    ["czwart", 4],
+    ["piat", 5],
+    ["szost", 6],
+    ["siodm", 7],
+    ["osm", 8],
+    ["dziewiat", 9],
+    ["dziesiat", 10],
   ];
+  const groundFloor =
+    /\b(?:na\s+(?:(?:wysokim|niskim|podwyzszonym|slonecznym)\s+)?parterze|(?:wysoki|niski)\s+parter|pietro\s*[:=-]\s*parter|(?:mieszkanie|lokal)\s+parterow\w*)\b/g;
+  const hasGroundFloor = [...text.matchAll(groundFloor)].some((match) => {
+    const before = text.slice(Math.max(0, match.index! - 70), match.index);
+    const clause = before.split(/[.!?;]|\b(?:mieszkanie|apartament|lokal)\b/).at(-1) ?? "";
+    const after = text.slice(match.index! + match[0].length, match.index! + match[0].length + 45);
+    if (
+      /^\s+(?:(?:jest|sa|znajduj\w*\s+sie)\s+)?(?:sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(
+        after,
+      )
+    )
+      return false;
+    return !/\b(?:nie|bez|sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(clause);
+  });
+  const floorFromOrdinal = ordinalFloors.find(([stem]) =>
+    new RegExp(`\\b${stem}\\w*\\s+pietr(?:ze|o)\\b`).test(text),
+  )?.[1];
+  const floorFromNumber = text.match(/\b(?:na\s+)?(\d{1,2})(?:\.|-\w+)?\s+pietr(?:ze|o)\b/)?.[1];
+  const totalFloorWords: Array<[string, number]> = [
+    ["jedno", 1],
+    ["dwu", 2],
+    ["trzy", 3],
+    ["cztero", 4],
+    ["piecio", 5],
+    ["szescio", 6],
+    ["siedmio", 7],
+    ["osmio", 8],
+    ["dziewiecio", 9],
+    ["dziesiecio", 10],
+  ];
+  const totalFromWord = totalFloorWords.find(([prefix]) =>
+    new RegExp(`\\b${prefix}pietrow\\w*(?:\\s+(?:blok|budyn)\\w*)?`).test(text),
+  )?.[1];
+  const totalFromNumber = text.match(/\b(\d{1,2})\s*[- ]?pietrow\w*(?:\s+(?:blok|budyn)\w*)?/)?.[1];
+  const yearBuilt = inferConstructionYear(description);
 
-  for (const pattern of pairPatterns) {
-    const match = text.match(pattern);
-    if (match) return { floor: floorValue(match[1]), totalFloors: Number(match[2]) || undefined };
-  }
-
-  const single = text.match(
-    /\b(?:na|polozon\w*\s+na|usytuowan\w*\s+na)\s+(parter|\d+)\.?\s*pietr\w*/,
-  );
-  return single ? { floor: floorValue(single[1]) } : {};
-}
-
-function floorValue(value: string) {
-  return value === "parter" ? 0 : Number(value) || undefined;
+  return {
+    floor: explicitFraction
+      ? explicitFraction[1] === "parter"
+        ? 0
+        : Number(explicitFraction[1])
+      : (floorFromOrdinal ??
+        (floorFromNumber ? Number(floorFromNumber) : hasGroundFloor ? 0 : undefined)),
+    totalFloors: explicitFraction
+      ? Number(explicitFraction[2])
+      : (totalFromWord ?? (totalFromNumber ? Number(totalFromNumber) : undefined)),
+    yearBuilt,
+  };
 }
 
 function normalize(value: string) {

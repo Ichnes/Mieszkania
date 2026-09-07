@@ -38,3 +38,23 @@ ceny i cechy znajdują się w tych samych wierszach. Na małym ekranie przewijaj
 w bok. Kliknięcie tytułu otwiera ofertę, krzyżyk usuwa ją z porównania, a **Dodaj oferty**
 wraca do listy. Zmiana filtrów lub strony listy nie usuwa wcześniejszego wyboru.
 Wybór obowiązuje w bieżącej sesji aplikacji; odświeżenie całej strony go resetuje.
+
+## Preferencje i finansowanie
+
+Miasto w **Aktualizacji** pochodzi z **Preferencji wyszukiwania → Zakres pobieranych ofert**.
+Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe wyszukiwania
+na wszystkich ośmiu portalach używają wybranego miasta.
+
+W sekcji **Finansowanie zakupu** zapisz planowany wkład własny. Korzystają z niego
+szacunki na kartach, szczegóły oferty i kalkulator. Kwotę można też zapisać z kalkulatora
+przyciskiem **Zapisz wkład w preferencjach**. Te preferencje są wspólne dla lokalnej instalacji,
+przechowywane w bazie i lokalnej kopii `storage/settings/family-settings.json`, pomijanej przez Git.
+Pozostałe parametry symulacji kredytu zapamiętuje przeglądarka na danym urządzeniu.
+
+## Czytanie i otwieranie ofert
+
+Sekcja **Co sprawdzić w tej ofercie** pojawia się, gdy opis daje konkretny powód
+np. do sprawdzenia własności, najmu, dodatkowych kosztów albo remontu. Pytanie zawiera
+cytat i uzasadnienie; brak przesłanek oznacza brak sekcji.
+Okno oferty można zamknąć również podczas ładowania, przyciskiem, Escape lub kliknięciem tła.
+Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.

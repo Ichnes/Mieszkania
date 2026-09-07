@@ -52,3 +52,16 @@ test("fresh installs have no personal addresses and merging keeps locally saved 
   assert.deepEqual(mergeSettings({ workplaces }).workplaces, workplaces);
   assert.deepEqual(mergeSettings({ workplaces: [] }).workplaces, []);
 });
+
+test("saved financing preserves zero and normalizes invalid down payments", () => {
+  assert.equal(mergeSettings({ financing: { downPayment: 0 } }).financing?.downPayment, 0);
+  assert.equal(
+    mergeSettings({ financing: { downPayment: 250000.4 } }).financing?.downPayment,
+    250000,
+  );
+  assert.equal(mergeSettings({ financing: { downPayment: -1 } }).financing?.downPayment, 0);
+  assert.equal(
+    mergeSettings({ financing: { downPayment: NaN } }).financing?.downPayment,
+    mergeSettings().financing?.downPayment,
+  );
+});

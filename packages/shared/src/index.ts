@@ -300,7 +300,10 @@ export type DreamListingProfile = {
   prefersBalcony: boolean;
 };
 
+export const defaultDownPayment = 430_000;
+
 export type FamilySettings = {
+  financing?: { downPayment: number };
   workplaces: Array<{
     key: string;
     label: string;
@@ -846,6 +849,7 @@ export function findNearestWarsawMetroStation(latitude?: number, longitude?: num
 
 export function createDefaultFamilySettings(): FamilySettings {
   return {
+    financing: { downPayment: defaultDownPayment },
     workplaces: [],
     searchContract: createDefaultSearchContract(),
     dreamProfile: createDefaultDreamListingProfile(),

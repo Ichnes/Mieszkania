@@ -4,7 +4,13 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 import { formatPln, parseNumericLabel } from "../../../shared/lib/format";
 import { calculateMortgage } from "../../mortgage/lib/mortgage-simulation";
 
-export function ListingImageSlide({ listing }: { listing: ListingSummary }) {
+export function ListingImageSlide({
+  listing,
+  downPayment,
+}: {
+  listing: ListingSummary;
+  downPayment: number;
+}) {
   const imageUrls =
     listing.imageUrls.length > 0
       ? listing.imageUrls
@@ -145,12 +151,12 @@ export function ListingImageSlide({ listing }: { listing: ListingSummary }) {
             const total =
               listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
             const payment = calculateMortgage(
-              Math.max(0, total - 400_000),
+              Math.max(0, total - downPayment),
               5.8,
               360,
               0,
             ).basePayment;
-            return total > 400_000 ? (
+            return total > downPayment ? (
               <span className="listing-mortgage-chip">Rata: {formatPln(payment)}</span>
             ) : null;
           })()}

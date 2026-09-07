@@ -1,4 +1,3 @@
-import { useLocation, useNavigate } from "react-router-dom";
 import { ListingDetailPanel } from "../../features/listings/components/ListingDetailPanel";
 import { DEFAULT_DOWN_PAYMENT } from "../../features/mortgage/constants";
 import { parseNumericLabel } from "../../shared/lib/format";
@@ -9,9 +8,10 @@ export function ListingDialog({
 }: {
   model: Pick<
     WorkspaceState,
+    | "settings"
     | "selectedListing"
     | "selectedListingDuplicateCandidates"
-    | "setSelectedListing"
+    | "closeListing"
     | "openListing"
     | "reviewDuplicatePair"
     | "toggleShortlist"
@@ -41,12 +41,10 @@ export function ListingDialog({
     | "setActiveTab"
   >;
 }) {
-  const navigate = useNavigate();
-  const location = useLocation();
   const {
     selectedListing,
     selectedListingDuplicateCandidates,
-    setSelectedListing,
+    closeListing,
     openListing,
     reviewDuplicatePair,
     toggleShortlist,
@@ -79,12 +77,10 @@ export function ListingDialog({
     <>
       {selectedListing ? (
         <ListingDetailPanel
+          downPayment={model.settings.financing?.downPayment ?? DEFAULT_DOWN_PAYMENT}
           listing={selectedListing}
           duplicateCandidates={selectedListingDuplicateCandidates}
-          onClose={() => {
-            void navigate(location.pathname);
-            setSelectedListing(null);
-          }}
+          onClose={closeListing}
           onOpenRelatedListing={openListing}
           onReviewDuplicate={reviewDuplicatePair}
           onToggleShortlist={toggleShortlist}
@@ -119,12 +115,15 @@ export function ListingDialog({
               listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
             setMortgageDraft({
               propertyTotal,
-              principal: Math.max(0, propertyTotal - DEFAULT_DOWN_PAYMENT),
+              principal: Math.max(
+                0,
+                propertyTotal - (model.settings.financing?.downPayment ?? DEFAULT_DOWN_PAYMENT),
+              ),
               listingTitle: listing.title,
               listingId: listing.id,
             });
+            closeListing();
             setActiveTab("mortgage");
-            setSelectedListing(null);
           }}
         />
       ) : null}

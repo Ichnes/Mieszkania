@@ -1,3 +1,4 @@
+import { defaultDownPayment } from "@mieszkania/shared";
 import { LoaderCircle, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, X } from "lucide-react";
 import { defaultFilters } from "../app/session";
 import { ListingSortKey } from "../app/types";
@@ -12,6 +13,7 @@ export function OffersPage({
 }: {
   model: Pick<
     WorkspaceState,
+    | "settings"
     | "compareListingIds"
     | "toggleCompareListing"
     | "activeTab"
@@ -467,6 +469,7 @@ export function OffersPage({
                 listings={visibleListings}
                 onOpen={openListing}
                 onToggleShortlist={toggleShortlist}
+                downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}
                 compareIds={model.compareListingIds}
                 onToggleCompare={model.toggleCompareListing}
                 updatingShortlistId={isUpdatingShortlist}

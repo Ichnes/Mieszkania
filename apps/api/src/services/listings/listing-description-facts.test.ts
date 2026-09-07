@@ -70,3 +70,20 @@ test("reads a valid structured construction year and ignores portal zero placeho
   );
   assert.equal(inferStructuredConstructionYear({ buildingYear: 2099 }, 2026), undefined);
 });
+
+test("import uses the same ground-floor interpretation as existing listings", () => {
+  const listing = enrichListingFromDescription({
+    title: "Mieszkanie",
+    description: "Garaż i komórka. Mieszkanie znajduje się na parterze w 3 piętrowym budynku.",
+    city: "Warszawa",
+    externalId: "example",
+    canonicalUrl: "https://example.com",
+    marketType: "secondary",
+    offerType: "sale",
+    status: "active",
+    images: [],
+    rawPayload: {},
+  });
+  assert.equal(listing.floor, 0);
+  assert.equal(listing.totalFloors, 3);
+});

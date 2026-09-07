@@ -22,7 +22,9 @@ import { DuplicateAutoMergeResult, StaleListingRefreshStatus } from "./types";
 export function useImportController({
   refreshDashboard,
   applyFilters,
+  searchCity,
 }: {
+  searchCity: string;
   refreshDashboard: () => Promise<void>;
   applyFilters: (
     nextFilters?: ListingFilters,
@@ -44,7 +46,7 @@ export function useImportController({
 
   const [bulkLimit, setBulkLimit] = useState("12");
 
-  const [discoverAllCity, setDiscoverAllCity] = useState("warszawa");
+  const discoverAllCity = searchCity;
 
   const [discoverAllMaxPages, setDiscoverAllMaxPages] = useState("50");
 
@@ -1219,7 +1221,6 @@ export function useImportController({
     queueStatusCheckedAt,
     isRefreshingQueueStatus,
     discoverAllCity,
-    setDiscoverAllCity,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,

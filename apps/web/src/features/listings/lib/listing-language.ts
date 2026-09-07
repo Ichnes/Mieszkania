@@ -123,6 +123,8 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
     `(?:dębow${suffix}\\s+desk${suffix})`,
   ].join("|");
   const contextualNeutral = [
+    `głośność\\s*:\\s*(?:umiarkowanie\\s+)?cich${suffix}`,
+    `(?<![\\p{L}])nie\\s+(?:(?:jest|są|bywa)\\s+)?głośn(?:y|a|e|o|ym|ych|ego|ej|ymi|ą)(?![\\p{L}])`,
     `zakup\\s+obligatoryjn${suffix}\\s*[-–—,:]?\\s*nie\\s+ma\\s+możliwoś${suffix}\\s+zakupu[^.!?;]{0,80}?bez\\s+(?:miejsc${suffix}\\s+(?:postojow${suffix}|parkingow${suffix}|garażow${suffix}))`,
     `(?:obowiązkow${suffix}|obligatoryjn${suffix})\\s+zakup[^.!?;]{0,80}?(?:miejsc${suffix}\\s+(?:postojow${suffix}|parkingow${suffix}|garażow${suffix}))`,
   ].join("|");
@@ -136,7 +138,7 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
     `(?:do\\s+odświeżenia|do\\s+wymiany|okn${suffix}\\s+do\\s+wymiany|instalacj${suffix}\\s+do\\s+wymiany|dach${suffix}\\s+do\\s+wymiany)`,
     `brak\\s+księg${suffix}\\s+wieczyst${suffix}`,
     `(?:wysok${suffix}|ostatni${suffix})\\s+piętr${suffix}\\s+(?:bez|i\\s+nie\\s+ma)\\s+wind${suffix}`,
-    `(?:ruchliw${suffix}\\s+ulic${suffix}|głośn${suffix}|(?:(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix})\\s+(?:jest\\s+|są\\s+)?ciemn${suffix}|ciemn${suffix}\\s+(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix}))|zadłużon${suffix}|zawilgocon${suffix}|wilgoć|grzyb${suffix}|suterena|niski\\s+parter)`,
+    `(?:ruchliw${suffix}\\s+ulic${suffix}|głośn(?:y|a|e|o|ym|ych|ego|ej|ymi|ą)(?![\\p{L}])|(?:(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix})\\s+(?:jest\\s+|są\\s+)?ciemn${suffix}|ciemn${suffix}\\s+(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix}))|zadłużon${suffix}|zawilgocon${suffix}|wilgoć|grzyb${suffix}|suterena|niski\\s+parter)`,
   ].join("|");
   const positive = [
     `\\bbezczynsz${suffix}`,
