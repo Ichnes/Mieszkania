@@ -3,6 +3,30 @@ import test from "node:test";
 import { extractOfferLinks } from "./otodom-discovery";
 import { OtodomParser } from "./otodom-parser";
 import { extractOtodomExternalId } from "./otodom-url";
+import { extractFeatures } from "../../services/listings/listing-repository";
+
+test("Otodom finish and maintenance fields are retained independently of the description", async () => {
+  const parsed = await new OtodomParser().parse({
+    url: "https://www.otodom.pl/pl/oferta/test-ID4finish",
+    finalUrl: "https://www.otodom.pl/pl/oferta/test-ID4finish",
+    statusCode: 200,
+    html: '<title>Mieszkanie</title><div data-sentry-element="ItemGridContainer"><div>Stan wykończenia<!-- -->:</div><div>do wykończenia</div></div><div><div>Czynsz<!-- -->:</div><div>850 zł</div></div>',
+  });
+  assert.deepEqual(parsed.rawPayload.portalFeatures, {
+    finishQuality: "do wykończenia",
+    fees: "850 zł",
+  });
+  const features = extractFeatures({
+    description: "Jasne mieszkanie",
+    snapshotPayload: parsed.rawPayload,
+  });
+  assert.ok(
+    features.some(
+      (feature) => feature.key === "finish_quality" && feature.value === "do wykończenia",
+    ),
+  );
+  assert.ok(features.some((feature) => feature.key === "fees" && feature.value === "850 zł"));
+});
 
 test("reads an explicit Otodom lift value from the detail grid", async () => {
   const parser = new OtodomParser();

@@ -5,6 +5,7 @@ import type {
   DuplicateCandidate,
   ListingContactEventType,
   ListingDetail,
+  FamilySettings,
 } from "@mieszkania/shared";
 import {
   Archive,
@@ -49,8 +50,10 @@ import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
 import { SunExposureCompass } from "./SunExposureCompass";
+import { ListingScorePanel } from "./ListingScorePanel";
 
 export function ListingDetailPanel(input: {
+  settings: FamilySettings;
   downPayment: number;
   listing: ListingDetail;
   duplicateCandidates: DuplicateCandidate[];
@@ -116,7 +119,7 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features"
+    "overview" | "manual" | "contact" | "features" | "score"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [copiedId, setCopiedId] = useState(false);
@@ -469,7 +472,17 @@ export function ListingDetailPanel(input: {
               >
                 <ClipboardCheck size={16} aria-hidden="true" /> Cechy
               </button>
+              <button
+                className={tabClass(activeDetailTab === "score")}
+                type="button"
+                onClick={() => setActiveDetailTab("score")}
+              >
+                <Star size={16} aria-hidden="true" /> Ocena
+              </button>
             </div>
+            {activeDetailTab === "score" && (
+              <ListingScorePanel listing={input.listing} settings={input.settings} />
+            )}
             <div
               className={
                 activeDetailTab === "overview" ? "detail-tab-section" : "detail-section-hidden"

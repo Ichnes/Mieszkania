@@ -1,7 +1,6 @@
 import {
   createDefaultFamilySettings,
   createDefaultSearchContract,
-  type EvaluationWeights,
   type FamilySettings,
 } from "@mieszkania/shared";
 import { existsSync, readFileSync } from "node:fs";
@@ -29,6 +28,7 @@ export async function getFamilySettings(): Promise<FamilySettings> {
     const hydrated = await ensureWorkplaceCoordinates(merged);
     const shouldPersistHydrated =
       !result.rows[0]?.value ||
+      Boolean(stored && ("weights" in stored || "maxWeightTotal" in stored)) ||
       !existsSync(localPath) ||
       hasMissingWorkplaceCoordinates(stored?.workplaces) ||
       hasSuspiciousWorkplaceCoordinates(stored?.workplaces) ||
@@ -56,18 +56,12 @@ export function mergeSettings(stored?: Partial<FamilySettings>) {
     workplaces: stored?.workplaces ?? defaults.workplaces,
     searchContract: normalizeSearchContract(stored?.searchContract, defaults.searchContract),
     dreamProfile: normalizeDreamProfile(stored?.dreamProfile, defaults.dreamProfile),
-    weights: {
-      user: { ...defaults.weights.user, ...(stored?.weights?.user ?? {}) },
-      spouse: { ...defaults.weights.spouse, ...(stored?.weights?.spouse ?? {}) },
-    },
-    maxWeightTotal: stored?.maxWeightTotal ?? defaults.maxWeightTotal,
   };
 
   return validateAndNormalizeSettings(settings);
 }
 
 function validateAndNormalizeSettings(input: FamilySettings): FamilySettings {
-  const maxWeightTotal = input.maxWeightTotal || 80;
   const downPayment = input.financing?.downPayment;
   const normalized: FamilySettings = {
     financing: {
@@ -87,15 +81,7 @@ function validateAndNormalizeSettings(input: FamilySettings): FamilySettings {
     ),
     searchContract: normalizeSearchContract(input.searchContract),
     dreamProfile: normalizeDreamProfile(input.dreamProfile),
-    weights: {
-      user: clampWeights(input.weights.user),
-      spouse: clampWeights(input.weights.spouse),
-    },
-    maxWeightTotal,
   };
-
-  ensureWeightBudget(normalized.weights.user, maxWeightTotal, "user");
-  ensureWeightBudget(normalized.weights.spouse, maxWeightTotal, "spouse");
 
   return normalized;
 }
@@ -169,24 +155,6 @@ export function normalizeDreamProfile(
     requiresGarage: Boolean(stored?.requiresGarage ?? defaults.requiresGarage),
     prefersBalcony: Boolean(stored?.prefersBalcony ?? defaults.prefersBalcony),
   };
-}
-
-function clampWeights(weights: EvaluationWeights): EvaluationWeights {
-  const next = { ...weights };
-
-  for (const [key, value] of Object.entries(next)) {
-    next[key as keyof EvaluationWeights] = Math.max(1, Math.min(7, Number(value) || 1));
-  }
-
-  return next;
-}
-
-function ensureWeightBudget(weights: EvaluationWeights, maxWeightTotal: number, rater: string) {
-  const total = Object.values(weights).reduce((sum, value) => sum + value, 0);
-
-  if (total > maxWeightTotal) {
-    throw new Error(`Weight budget exceeded for ${rater}. Max is ${maxWeightTotal}.`);
-  }
 }
 
 async function geocodeWorkplaces(settings: FamilySettings, force = false) {

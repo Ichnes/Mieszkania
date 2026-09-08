@@ -1,8 +1,23 @@
-import { createDefaultDreamListingProfile } from "@mieszkania/shared";
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createDefaultFamilySettings } from "@mieszkania/shared";
 import { mergeSettings, normalizeDreamProfile } from "./family-settings";
+import { createDefaultDreamListingProfile } from "@mieszkania/shared";
 
+test("legacy weights are discarded while current preferences survive normalization", () => {
+  const defaults = createDefaultFamilySettings();
+  const legacy = {
+    ...defaults,
+    financing: { downPayment: 500000 },
+    weights: { user: { price: 7 } },
+    maxWeightTotal: 80,
+  };
+  const cleaned = mergeSettings(legacy);
+  assert.equal("weights" in cleaned, false);
+  assert.equal("maxWeightTotal" in cleaned, false);
+  assert.equal(cleaned.financing?.downPayment, 500000);
+  assert.deepEqual(cleaned.dreamProfile, defaults.dreamProfile);
+});
 test("keeps newly added preferred districts beyond the old twelve-item limit", () => {
   const preferredDistricts = [
     "Bemowo",

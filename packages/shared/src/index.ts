@@ -252,7 +252,6 @@ export type ListingEvaluationEntry = {
   note?: string;
 };
 
-export type EvaluationWeights = Record<EvaluationDimensionKey, number>;
 export type ListingContactStatus =
   | "new"
   | "contacted"
@@ -313,8 +312,6 @@ export type FamilySettings = {
   }>;
   searchContract: SearchContract;
   dreamProfile: DreamListingProfile;
-  weights: Record<"user" | "spouse", EvaluationWeights>;
-  maxWeightTotal: number;
 };
 
 export type ListingEvaluationSummary = {
@@ -376,6 +373,7 @@ export type ListingSummary = {
   hasBalcony?: boolean;
   hasAirConditioning?: boolean;
   finishQuality?: "ready" | "to_finish" | "unknown";
+  maintenanceFeeLabel?: string;
   additionalPurchaseCosts?: { garage?: number; storage?: number; total: number };
   totalAcquisitionPrice?: number;
   rcnDeltaLabel: string;
@@ -732,12 +730,6 @@ export function createDefaultSearchContract(): SearchContract {
   };
 }
 
-export function createDefaultWeights(): EvaluationWeights {
-  return Object.fromEntries(
-    evaluationDimensions.map((dimension) => [dimension.key, 4]),
-  ) as EvaluationWeights;
-}
-
 export function createDefaultDreamListingProfile(): DreamListingProfile {
   return {
     label: "Mieszkanie docelowe",
@@ -853,11 +845,6 @@ export function createDefaultFamilySettings(): FamilySettings {
     workplaces: [],
     searchContract: createDefaultSearchContract(),
     dreamProfile: createDefaultDreamListingProfile(),
-    weights: {
-      user: createDefaultWeights(),
-      spouse: createDefaultWeights(),
-    },
-    maxWeightTotal: 80,
   };
 }
 
@@ -952,3 +939,9 @@ export const sampleAlerts: AlertSummary[] = [
     status: "active",
   },
 ];
+export {
+  computeDreamScore,
+  computeDreamEvaluation,
+  getPriceDropPoints,
+  getListingAgePoints,
+} from "./dream-score.js";

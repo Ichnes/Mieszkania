@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createDefaultFamilySettings } from "@mieszkania/shared";
+import { computeDreamScore, createDefaultFamilySettings } from "@mieszkania/shared";
 import { pool } from "../../db";
 import fs from "node:fs";
 import { getListingsPage } from "./listing-repository";
@@ -21,6 +21,7 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   }));
   let rcnQueries = 0;
   const imageRequests: string[][] = [];
+  const priceEvents: Array<Record<string, string>> = [];
   // Prevent local settings backup writes: this test uses only in-memory database rows.
   t.mock.method(fs, "existsSync", () => true);
   t.mock.method(pool, "query", async (sql: string, values: unknown[]) => {
@@ -28,6 +29,10 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
       return { rows: [{ value: createDefaultFamilySettings() }] };
     if (sql.includes("count(*)::text as total")) return { rows: [{ total: String(rows.length) }] };
     if (sql.includes("l.canonical_url")) return { rows };
+    if (sql.includes("from price_events")) {
+      assert.equal((values[0] as string[]).length, rows.length);
+      return { rows: priceEvents };
+    }
     if (sql.includes("from transaction_rcn")) {
       rcnQueries++;
       return { rows: [{ sample_count: "0", avg_price_per_sqm: null }] };
@@ -60,4 +65,27 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     "Changed description must invalidate the cached match score",
   );
   assert.ok(updated.items[0].dreamScore! > result.items[0].dreamScore!);
+  const settings = createDefaultFamilySettings();
+  assert.equal(
+    updated.items[0].dreamScore,
+    computeDreamScore(updated.items[0], settings.dreamProfile, settings.workplaces),
+  );
+
+  // A price event alone must invalidate the score cache and change global order.
+  for (const row of rows) row.description = changed.description;
+  const target = rows[0];
+  await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });
+  priceEvents.push({
+    listing_id: target.id,
+    event_type: "price_decreased",
+    previous_price_amount: "1100000",
+    new_price_amount: "1000000",
+    changed_at: "2026-09-08T10:00:00Z",
+  });
+  const discounted = await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });
+  assert.equal(discounted.items[0].id, target.id);
+  assert.equal(
+    discounted.items[0].dreamScore,
+    computeDreamScore(discounted.items[0], settings.dreamProfile, settings.workplaces),
+  );
 });

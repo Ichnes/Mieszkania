@@ -1,5 +1,51 @@
 # Bieżące zadania
 
+## Kategorie zasad punktacji i publikacja zmian (2026-09-08)
+
+- [x] Panel zasad podzielony na Koszty, Lokalizację, Układ, Budynek i Wykończenie; przełączniki z ikonami, karty kryteriów i oznaczenia punktów bieżącej oferty. Panel umieszczony nad tabelą.
+- [x] Playwright: wszystkie kategorie zawierają dokładnie raz każde kryterium; przełączanie i brak przepełnienia na 1440/1280/390 px. Obejrzane zrzuty laptop/telefon.
+- [x] Pełne testy: 108 API + 64 frontend, bez błędów. Build przechodzi. Przygotowany zakres commitu: całość zmian punktacji z tej sesji, odczyt pól Otodom, usunięcie weights i zakładka Ocena. Wysyłka do origin/main zgodnie z poleceniem użytkownika; bez storage, .env i .local.
+
+## Wynajem co najmniej dwóch miejsc parkingowych (2026-09-08)
+
+- [x] Zakres i implementacja: dodatkowe −5 pkt za wynajem/dzierżawę lub miesięczny koszt co najmniej dwóch miejsc; zachowane +5 za liczbę miejsc.
+- [x] Osobny wiersz i zasada w zakładce Ocena; dokumentacja oraz test cytatu użytkownika, odmian, negacji i ceny zakupu. Układ tabeli pozostaje responsywny.
+- [x] Weryfikacja: 13 testów punktacji, pełny zestaw API/frontend, build i formatowanie poprawne.
+
+## Zakładka Ocena, finansowanie i dane Otodom (2026-09-08)
+
+- [x] Usunięte nieużywane weights/maxWeightTotal z typu, domyślnych ustawień i walidacji; migracja starych zapisów przy odczycie zachowuje pozostałe preferencje.
+- [x] Nowe punkty: brak balkonu −8 przy włączonej preferencji, brak roku −3, prysznic +3, brak kwoty czynszu −2, najwyższe piętro dodatkowe +3.
+- [x] Rata uwzględnia zapisany wkład, całkowitą cenę nabycia oraz założenia podglądu 5,8%/360 rat. Ponad 7500 zł −10; poniżej liniowe 0–10 pkt. Cache uwzględnia finansowanie.
+- [x] Wspólne obliczenia zwracają pełne rozbicie z zasadami; czwarta zakładka Ocena i przycisk zasad, tabela przewijana lokalnie na telefonie.
+- [x] Otodom: odczyt stanu wykończenia i czynszu z siatki pól; strukturalne cechy dostępne przed globalnym sortowaniem i w szczegółach. Naprawiony odczyt metrażu z kropką dziesiętną.
+- [x] Testy nowych reguł, sumy tabeli, zależności od wkładu, migracji ustawień i pól Otodom. Pełny zestaw testów przeszedł; końcowa weryfikacja zachowanych testów ustawień i typów poniżej.
+- [x] Playwright: zakładka, rozwijanie zasad i brak przepełnienia dla 1440/1280/390 px; usunięte 4 px przepełnienia starego mobilnego paska zamknięcia. Obejrzane zrzuty laptop/telefon.
+- [x] Końcowy build przechodzi; zachowane wcześniejsze testy ustawień i nowy test migracji (5/5). Playwright ponownie przechodzi dla 1440/1280/390 px po ustawieniu mobilnych zakładek 2×2.
+- [x] Lokalna baza/API i kopia family-settings nie zawierają już weights/maxWeightTotal. Ranking HTTP 200 i zgodność wyników API ze wspólnym algorytmem (pierwszy odczyt około 7,1 s). Kontrola diff bez błędów. Brak pozostałych prac w tym zakresie.
+
+## Materiały, stolarka, parking i stan deweloperski (2026-09-08)
+
+- [x] Zakres: blaty ze spieku/granitu/konglomeratu +8, deska dębowa w premii drewnianej podłogi +6, co najmniej dwa miejsca parkingowe +5, stolarka na wymiar +5.
+- [x] Wspólne rozpoznawanie odmian w opisach, deduplikacja premii i sprawdzenia negacji/imitacji; progi cenowe zastępują −10 za stan do wykończenia.
+- [x] Dokumentacja progów i granic. Zmiana dotyczy obliczeń, bez zmian układu PC/laptop/mobile.
+- [x] Weryfikacja: 11 testów punktacji i sortowania przechodzi, w tym nowe odmiany, negacje/imitacje i wszystkie granice progów; pełny build z kontrolą typów, Prettier i git diff --check poprawne. Brak dalszych prac w tym zakresie.
+
+## Wyjaśnienie punktacji wymarzonego mieszkania (2026-09-08)
+
+- [x] Zakres: odczyt i wyjaśnienie aktualnych wag, progów, premii i kar bez zmiany algorytmu.
+- [x] Weryfikacja: porównano obliczenia API (`listing-repository.ts`) i frontendu (`dream-profile.ts`); testów nie uruchamiano, ponieważ zadanie dotyczy wyjaśnienia kodu.
+- [x] Ustalono, że wagi są zapisane w kodzie, a wynik normalizowany przez zmienną sumę punktów; osobne ustawienia `weights` nie sterują tym wynikiem.
+- [x] Poprawiono rozbieżność API/frontend, tolerancję metrażu, respektowanie minimum pokoi, nakładające się premie tekstowe i ograniczenie wyniku do 100%.
+
+## Zmiana punktacji wymarzonego mieszkania (2026-09-08)
+
+- [x] Nowe punkty za komórkę, klimatyzację, podłogę, garderobę, ofertę prywatną i prowizję; 3 pokoje od 75 m² +4 pkt, 4 pokoje pozostają ideałem.
+- [x] Nowe przedziały obniżek i wieku oferty; wspólny algorytm w shared, historia cen dostępna przed sortowaniem i stronicowaniem, cache zależny od zdarzenia cenowego i przedziału wieku.
+- [x] Przewodnik z progami i zasadami. Zmiana frontendu dotyczy wyłącznie obliczeń; układ PC/laptop/mobile bez zmian.
+- [x] Weryfikacja: pełne `npm.cmd test` bez błędów (58 testów frontendu, w tym 7 nowych); regresja API obejmuje zmianę kolejności po obniżce i zgodność ze wspólnym wynikiem. `npm.cmd run build` przechodzi; poprawiono błędną wartość stanu wykończenia w nowym teście wykrytą przez TypeScript.
+- [x] Pozostała kontrola: formatowanie zmienionych plików i `git diff --check`; brak dalszych prac w tym zakresie.
+
 ## Reorganizacja aplikacji
 
 - [x] Wydzielone komponenty, funkcje pomocnicze, strony i kontroler importów; usunięte martwe widoki i funkcje.

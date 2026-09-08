@@ -160,7 +160,32 @@ function extractOtodomPortalFeatures(html: string, productNode: JsonRecord | nul
     /<div[^>]*>\s*Winda\s*(?:<!--[\s\S]*?-->)?\s*:?\s*<\/div>\s*<div[^>]*>\s*(tak|nie)\s*<\/div>/i,
   )?.[1];
   const lift = firstString(liftFromDetails, findAdditionalPropertyValue(productNode, "Winda"));
-  return lift ? { lift } : undefined;
+  const detailValue = (label: string) =>
+    html
+      .match(
+        new RegExp(
+          "<div[^>]*>\\s*" +
+            label +
+            "\\s*(?:<!--[\\s\\S]*?-->)?\\s*:?\\s*</div>\\s*<div[^>]*>\\s*([^<]+)\\s*</div>",
+          "i",
+        ),
+      )?.[1]
+      ?.trim();
+  const finishQuality = firstString(
+    detailValue("Stan wykończenia"),
+    findAdditionalPropertyValue(productNode, "Stan wykończenia"),
+  );
+  const fees = firstString(
+    detailValue("Czynsz"),
+    findAdditionalPropertyValue(productNode, "Czynsz"),
+  );
+  return lift || finishQuality || fees
+    ? {
+        ...(lift ? { lift } : {}),
+        ...(finishQuality ? { finishQuality } : {}),
+        ...(fees ? { fees } : {}),
+      }
+    : undefined;
 }
 
 function isUnavailableOfferPage(value: string) {

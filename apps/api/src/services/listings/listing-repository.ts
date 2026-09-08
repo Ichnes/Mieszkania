@@ -12,7 +12,7 @@ import type {
   ListingSummary,
   RcnComparableTransaction,
 } from "@mieszkania/shared";
-import { findNearestWarsawMetroStation } from "@mieszkania/shared";
+import { computeDreamScore, getListingAgePoints } from "@mieszkania/shared";
 import { withDb } from "../../db";
 import { activeRegion } from "../../domain/region";
 import { getRelatedCounts, getRelatedListings } from "../duplicates/listing-duplicates";
@@ -972,11 +972,22 @@ async function getListingsPageByScope(
           ,lr.previous_listing_id::text as relisting_previous_listing_id
           ,lr.previous_price_amount::text as relisting_previous_price_amount
           ,lr.relisted_price_amount::text as relisting_relisted_price_amount
+          ,ls.snapshot_payload_raw
         from listings l
         join sources s on s.id = l.source_id
         left join listing_viewings lv on lv.listing_id = l.id
         left join listing_manual_overrides lmo on lmo.listing_id = l.id
         left join listing_relistings lr on lr.current_listing_id = l.id
+        left join lateral (
+          select jsonb_build_object(
+            'portalFeatures', payload_raw->'portalFeatures',
+            'jsonLd', payload_raw->'jsonLd',
+            'nextData', jsonb_build_object('props', jsonb_build_object('pageProps', jsonb_build_object('ad', jsonb_build_object('attributes', payload_raw#>'{nextData,props,pageProps,ad,attributes}'))))
+          ) as snapshot_payload_raw
+          from listing_snapshots
+          where listing_id = l.id
+          order by captured_at desc limit 1
+        ) ls on true
         where ${clauses.join(" and ")}
         order by ${orderBy}
         limit $${paramIndex}
@@ -989,11 +1000,24 @@ async function getListingsPageByScope(
     // RCN and photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
     let pageRows = listingsResult.rows.map(decodeListingRow);
+    // Price changes must be available before global scoring and pagination.
+    const priceEventsResult = await db.query<PriceEventRow>(
+      `
+        select distinct on (pe.listing_id)
+          pe.listing_id, pe.event_type,
+          pe.previous_price_amount::text, pe.new_price_amount::text, pe.changed_at::text
+        from price_events pe
+        where pe.listing_id = any($1::uuid[])
+        order by pe.listing_id, pe.changed_at desc
+      `,
+      [pageRows.map((row) => row.id)],
+    );
+    const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
     const dreamScores = new Map<string, number>();
     if (isDreamSort) {
       const settings = await getFamilySettings();
       for (const row of pageRows) {
-        dreamScores.set(row.id, getCachedDreamScore(row, settings));
+        dreamScores.set(row.id, getCachedDreamScore(row, settings, latestPriceEvents.get(row.id)));
       }
       pageRows = [...pageRows]
         .sort(
@@ -1004,27 +1028,12 @@ async function getListingsPageByScope(
         .slice(offset, offset + pageSize);
     }
     const listingIds = pageRows.map((row) => row.id);
-    const [priceEventsResult, relatedCounts, imagesByListingId, rcnBenchmarks] = await Promise.all([
-      db.query<PriceEventRow>(
-        `
-        select distinct on (pe.listing_id)
-          pe.listing_id,
-          pe.event_type,
-          pe.previous_price_amount::text,
-          pe.new_price_amount::text,
-          pe.changed_at::text
-        from price_events pe
-        where pe.listing_id = any($1::uuid[])
-        order by pe.listing_id, pe.changed_at desc
-      `,
-        [listingIds],
-      ),
+    const [relatedCounts, imagesByListingId, rcnBenchmarks] = await Promise.all([
       getRelatedCounts(listingIds),
       getListingImagesForListings(listingIds),
       Promise.all(pageRows.map((row) => getRcnBenchmark(db, row))),
     ]);
 
-    const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
     const items = pageRows.map((row, index) => {
       const images = imagesByListingId.get(row.id) ?? [];
       const resolvedImages = images
@@ -1492,7 +1501,14 @@ function mapListingSummary(
     hasLift,
     hasBalcony,
     hasAirConditioning,
-    finishQuality: inferFinishQuality(row.description),
+    finishQuality: extractedFeatures.some(
+      (feature) =>
+        feature.key === "finish_quality" &&
+        /do wykonczenia|dewelopersk|to_finish|to_completion/.test(normalizePolish(feature.value)),
+    )
+      ? "to_finish"
+      : inferFinishQuality(row.description),
+    maintenanceFeeLabel: extractedFeatures.find((feature) => feature.key === "fees")?.value,
     additionalPurchaseCosts,
     totalAcquisitionPrice:
       priceAmount && additionalPurchaseCosts
@@ -2539,6 +2555,16 @@ function extractFeaturesFromPayload(payload?: Record<string, unknown>): ListingF
   const additional = getArrayAtPath(product, ["additionalProperty"]) ?? [];
   const features: ListingFeature[] = [];
   const portalMaintenanceFee = readString(portalFeatures, "fees");
+  const portalFinish =
+    readString(portalFeatures, "finishQuality") ??
+    readString(ad, "attributes", "construction_status");
+  if (portalFinish)
+    features.push({
+      key: "finish_quality",
+      label: "Stan wykończenia",
+      value: portalFinish,
+      source: "payload",
+    });
   if (portalMaintenanceFee) {
     features.push({ key: "fees", label: "Czynsz", value: portalMaintenanceFee, source: "payload" });
   }
@@ -2578,6 +2604,8 @@ function extractFeaturesFromPayload(payload?: Record<string, unknown>): ListingF
       features.push({ key: "lift", label: "Winda", value: "tak", source: "payload" });
     } else if (normalized === "winda" && /^(?:nie|no|false|0)$/.test(normalizedValue)) {
       features.push({ key: "no_lift", label: "Brak windy", value: "tak", source: "payload" });
+    } else if (normalized.includes("stan wykonczenia")) {
+      features.push({ key: "finish_quality", label: "Stan wykończenia", value, source: "payload" });
     } else if (normalized.includes("czynsz")) {
       features.push({ key: "fees", label: "Czynsz", value, source: "payload" });
     } else if (normalized.includes("pietro")) {
@@ -3088,386 +3116,32 @@ function buildListingOrderBy(sort?: ListingFilters["sort"]) {
 // Row content, preferences and calendar year are part of the key, so changes
 // are reflected on the next request without waiting for a TTL.
 const dreamScoreCache = new Map<string, { signature: string; score: number }>();
-function getCachedDreamScore(row: ListingRow, settings: FamilySettings) {
+function getCachedDreamScore(
+  row: ListingRow,
+  settings: FamilySettings,
+  latestEvent?: PriceEventRow,
+) {
   const signature = JSON.stringify([
     row,
+    latestEvent,
     settings.dreamProfile,
     settings.workplaces,
+    settings.financing,
     new Date().getFullYear(),
+    getListingAgePoints(row.first_seen_at ?? row.published_at),
   ]);
   const cached = dreamScoreCache.get(row.id);
   if (cached?.signature === signature) return cached.score;
   const score = computeDreamScore(
-    mapListingSummary(row, undefined, null, 0),
+    mapListingSummary(row, latestEvent, null, 0),
     settings.dreamProfile,
     settings.workplaces,
+    undefined,
+    settings.financing,
   );
   if (dreamScoreCache.size >= 5000) dreamScoreCache.delete(dreamScoreCache.keys().next().value!);
   dreamScoreCache.set(row.id, { signature, score });
   return score;
-}
-
-function computeDreamScore(
-  listing: ListingSummary,
-  profile: Awaited<ReturnType<typeof getFamilySettings>>["dreamProfile"],
-  workplaces: FamilySettings["workplaces"],
-) {
-  const districtNeedle = normalizeLocationComparable(
-    `${listing.district} ${listing.neighborhood ?? ""}`,
-  );
-  const preferredDistricts = profile.preferredDistricts
-    .map((value) => normalizeLocationComparable(value))
-    .filter(Boolean);
-  const area = parseNumericLabel(listing.areaLabel);
-  const price = parseNumericLabel(listing.priceLabel);
-  const pricePerSqm = parseNumericLabel(listing.pricePerSqmLabel);
-  const rooms = listing.roomsCount;
-  let points = 0;
-  let maxPoints = 0;
-  const text = normalizePolish(`${listing.title} ${listing.description ?? ""}`).toLowerCase();
-  const mentions = (...phrases: string[]) =>
-    phrases.some((phrase) => text.includes(normalizePolish(phrase).toLowerCase()));
-
-  if (preferredDistricts.length > 0) {
-    maxPoints += 20;
-    if (
-      preferredDistricts.some(
-        (district) => districtNeedle.includes(district) || district.includes(districtNeedle),
-      )
-    ) {
-      points += 20;
-    }
-  }
-
-  if (profile.minArea > 0 || profile.maxArea > 0) {
-    maxPoints += 20;
-    if (typeof area === "number") {
-      const fitsMin = profile.minArea <= 0 || area >= profile.minArea;
-      const fitsMax = profile.maxArea <= 0 || area <= profile.maxArea;
-      if (fitsMin && fitsMax) {
-        points += 20;
-      } else if (
-        (profile.minArea > 0 && area >= profile.minArea - 5) ||
-        (profile.maxArea > 0 && area <= profile.maxArea + 5)
-      ) {
-        points += 10;
-      }
-    }
-  }
-
-  if (profile.minRooms > 0) {
-    maxPoints += 18;
-    if (typeof rooms === "number") {
-      if (rooms === 4) {
-        points += 18;
-      } else if (rooms > 4) {
-        points += 14;
-      } else if (rooms >= profile.minRooms) {
-        points += 11;
-      }
-    }
-  }
-
-  if (profile.maxPrice > 0) {
-    maxPoints += 15;
-    if (typeof price === "number") {
-      if (price <= profile.maxPrice) {
-        points += 15;
-      } else if (price <= profile.maxPrice * 1.07) {
-        points += 7;
-      }
-    }
-  }
-
-  if (profile.maxPricePerSqm > 0) {
-    maxPoints += 20;
-    if (typeof pricePerSqm === "number") {
-      if (pricePerSqm <= profile.maxPricePerSqm) {
-        const discountRatio = Math.min(
-          1,
-          Math.max(0, (profile.maxPricePerSqm - pricePerSqm) / (profile.maxPricePerSqm * 0.25)),
-        );
-        points += Math.round(6 + discountRatio * 14);
-      } else if (pricePerSqm <= profile.maxPricePerSqm * 1.07) {
-        points += 3;
-      }
-    }
-  }
-
-  maxPoints += 16;
-  if (listing.finishQuality === "ready") {
-    points += 16;
-  } else if (listing.finishQuality === "unknown") {
-    points += 7;
-  } else {
-    // Developer standard requires a separate finishing budget, not merely
-    // cosmetic work.
-    points -= 10;
-  }
-
-  // These are deliberately asymmetric: their absence is a real drawback for the
-  // family profile, not merely a missed small bonus.
-  const garageBonus = profile.requiresGarage ? 24 : 16;
-  const garagePenalty = profile.requiresGarage ? 36 : 10;
-  maxPoints += garageBonus;
-  points += listing.hasGarage ? garageBonus : -garagePenalty;
-  if (!listing.hasGarage && listing.hasOutdoorParking) {
-    maxPoints += 8;
-    points += 8;
-  }
-
-  maxPoints += 6;
-  if (listing.hasStorage) {
-    points += 6;
-  }
-
-  const liftBonus = 21;
-  maxPoints += liftBonus;
-  points += listing.hasLift ? liftBonus : -20;
-
-  // Having both makes day-to-day use with a family much easier, so it earns an
-  // additional joint premium beyond the individual amenities.
-  maxPoints += 12;
-  if (listing.hasGarage && listing.hasLift) {
-    points += 12;
-  }
-
-  // Missing construction year is neutral. Known buildings from 2000 onward
-  // receive progressively more credit, without inventing data for older stock.
-  if (typeof listing.yearBuilt === "number") {
-    maxPoints += 12;
-    if (listing.yearBuilt >= 2000) {
-      const progress = Math.min(
-        1,
-        (listing.yearBuilt - 2000) / Math.max(1, new Date().getFullYear() - 2000),
-      );
-      points += 2 + Math.round(progress * 10);
-    }
-  }
-
-  if (typeof listing.floor === "number") {
-    maxPoints += 5;
-    if (listing.floor <= 0) {
-      points -= 2;
-    } else if (typeof listing.totalFloors === "number" && listing.totalFloors > 0) {
-      points +=
-        listing.floor >= listing.totalFloors
-          ? 5
-          : Math.max(1, Math.round((listing.floor / listing.totalFloors) * 4));
-    } else {
-      points += Math.min(5, Math.max(1, listing.floor));
-    }
-  }
-
-  if (profile.prefersBalcony) {
-    maxPoints += 10;
-    if (listing.hasBalcony) {
-      points += 10;
-    }
-  }
-
-  if (
-    mentions(
-      "drewniana podłoga",
-      "drewniane podłogi",
-      "parkiet",
-      "deska podłogowa",
-      "podłoga z drewna",
-      "egzotycznego drewna",
-      "merbau",
-      "dębowa deska",
-    ) ||
-    /\bpod(?:l|ł)og\w*[^.!?;]{0,70}?dab\w*\s+wedzon\w*\b/.test(text)
-  ) {
-    maxPoints += 3;
-    points += 3;
-  }
-
-  // Soft signals are deliberately bonuses only: portals often omit them, so
-  // absence must not be interpreted as a defect.
-  const premiumSignals = [
-    ["projekt architekta", 8],
-    ["architekta", 6],
-    ["ogrzewanie podłogowe", 3],
-    ["po remoncie", 4],
-    ["swiezo wyremontowane", 4],
-    ["odswiezone", 3],
-    ["garderoba", 3],
-    ["dwie lazienki", 4],
-    ["2 lazienki", 4],
-    ["gabinet", 5],
-    ["wysoki standard", 4],
-    ["wysokiej jakosci", 4],
-    ["zamkniete osiedle", 3],
-    ["monitoring", 2],
-  ] as const;
-  if (listing.hasAirConditioning) {
-    maxPoints += 4;
-    points += 4;
-  }
-  for (const [phrase, value] of premiumSignals) {
-    if (mentions(phrase)) {
-      maxPoints += value;
-      points += value;
-    }
-  }
-
-  if (listing.roomsCount && listing.roomsCount >= 4) {
-    maxPoints += 8;
-    points += listing.roomsCount === 4 ? 8 : 6;
-  }
-
-  if (typeof listing.floor !== "number" && mentions("parter")) points -= 2;
-  if (mentions("jasne", "dobre naslonecznienie", "sloneczne")) {
-    maxPoints += 5;
-    points += 5;
-  }
-
-  // Opportunity signals are separate from the apartment's qualities, but they
-  // deserve a small lift because they create room for a better final deal.
-  if (listing.priceChangePercent <= -3) {
-    maxPoints += 6;
-    points += listing.priceChangePercent <= -7 ? 6 : 4;
-  }
-  const firstSeen = listing.firstSeenAt ?? listing.publishedAt;
-  if (firstSeen && Number.isFinite(Date.parse(firstSeen))) {
-    const daysOnMarket = (Date.now() - Date.parse(firstSeen)) / 86_400_000;
-    if (daysOnMarket >= 60) {
-      maxPoints += 3;
-      points += 3;
-    } else if (daysOnMarket >= 35) {
-      maxPoints += 3;
-      points += 2;
-    }
-  }
-
-  if (profile.maxMetroDistanceMeters > 0) {
-    maxPoints += 10;
-    const nearestMetro = findNearestWarsawMetroStation(listing.latitude, listing.longitude);
-    if (nearestMetro && nearestMetro.distanceMeters <= profile.maxMetroDistanceMeters) {
-      points += 10;
-    } else if (
-      nearestMetro &&
-      nearestMetro.distanceMeters <= profile.maxMetroDistanceMeters * 1.5
-    ) {
-      points += 5;
-    }
-  }
-
-  const commuteDistances = workplaces
-    .map((workplace) =>
-      straightLineDistanceKm(
-        listing.latitude,
-        listing.longitude,
-        workplace.latitude,
-        workplace.longitude,
-      ),
-    )
-    .filter((distance): distance is number => typeof distance === "number");
-  if (commuteDistances.length > 0) {
-    maxPoints += 12;
-    const averageDistance =
-      commuteDistances.reduce((sum, distance) => sum + distance, 0) / commuteDistances.length;
-    if (averageDistance <= 7) {
-      points += 12;
-    } else if (averageDistance <= 12) {
-      points += 8;
-    } else if (averageDistance <= 18) {
-      points += 4;
-    }
-  }
-
-  // Commercial terms affect the real acquisition cost. A broker listing with
-  // explicitly no commission stays neutral; only an actual commission is a penalty.
-  if (listing.badges.includes("Z prowizją")) {
-    points -= 12;
-  } else if (
-    listing.badges.includes("Oferta prywatna") ||
-    listing.badges.includes("Oferta bezpośrednia")
-  ) {
-    points += 8;
-  }
-
-  return maxPoints > 0 ? Math.max(0, Math.round((points / maxPoints) * 100)) : 0;
-}
-
-function straightLineDistanceKm(
-  latitude?: number,
-  longitude?: number,
-  targetLatitude?: number,
-  targetLongitude?: number,
-) {
-  if (
-    [latitude, longitude, targetLatitude, targetLongitude].some(
-      (value) => typeof value !== "number",
-    )
-  ) {
-    return undefined;
-  }
-
-  const toRadians = (value: number) => (value * Math.PI) / 180;
-  const latitudeDelta = toRadians(targetLatitude! - latitude!);
-  const longitudeDelta = toRadians(targetLongitude! - longitude!);
-  const a =
-    Math.sin(latitudeDelta / 2) ** 2 +
-    Math.cos(toRadians(latitude!)) *
-      Math.cos(toRadians(targetLatitude!)) *
-      Math.sin(longitudeDelta / 2) ** 2;
-  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function parseNumericLabel(value?: string) {
-  if (!value) {
-    return undefined;
-  }
-
-  const match = value.match(/-?\d[\d\s.]*(?:,\d+)?/);
-  if (!match?.[0]) {
-    return undefined;
-  }
-
-  const numeric = Number(match[0].replace(/\s+/g, "").replace(/\./g, "").replace(",", "."));
-  return Number.isFinite(numeric) ? numeric : undefined;
-}
-
-function normalizeLocationComparable(value: string) {
-  const replacements: Array<[RegExp, string]> = [
-    [/\bna\b/g, " "],
-    [/\bw\b/g, " "],
-    [/\bwe\b/g, " "],
-    [/\bprzy\b/g, " "],
-    [/\bpradze\b/g, "praga"],
-    [/\bpoludniu\b/g, "poludnie"],
-    [/\bpolnocy\b/g, "polnoc"],
-    [/\bsrodmiesciu\b/g, "srodmiescie"],
-    [/\bzoliborzu\b/g, "zoliborz"],
-    [/\bmokotowie\b/g, "mokotow"],
-    [/\bwoli\b/g, "wola"],
-    [/\bbemowie\b/g, "bemowo"],
-    [/\bbialolece\b/g, "bialoleka"],
-    [/\bbielanach\b/g, "bielany"],
-    [/\bochocie\b/g, "ochota"],
-    [/\bursynowie\b/g, "ursynow"],
-    [/\bursusie\b/g, "ursus"],
-    [/\bwilanowie\b/g, "wilanow"],
-    [/\bwawrze\b/g, "wawer"],
-    [/\bwesolej\b/g, "wesola"],
-    [/\bwlochach\b/g, "wlochy"],
-    [/\bgoclawiu\b/g, "goclaw"],
-    [/\bsaskiej kepie\b/g, "saska kepa"],
-  ];
-
-  let normalized = value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
-    .replace(/-/g, " ");
-
-  for (const [pattern, replacement] of replacements) {
-    normalized = normalized.replace(pattern, replacement);
-  }
-
-  return normalized.replace(/\s+/g, " ").trim();
 }
 
 type JsonRecord = Record<string, unknown>;

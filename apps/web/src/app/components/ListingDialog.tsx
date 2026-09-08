@@ -77,6 +77,7 @@ export function ListingDialog({
     <>
       {selectedListing ? (
         <ListingDetailPanel
+          settings={model.settings}
           downPayment={model.settings.financing?.downPayment ?? DEFAULT_DOWN_PAYMENT}
           listing={selectedListing}
           duplicateCandidates={selectedListingDuplicateCandidates}
