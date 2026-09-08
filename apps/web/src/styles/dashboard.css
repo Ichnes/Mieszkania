@@ -15,16 +15,6 @@
   font-weight: 500;
   overflow-wrap: anywhere;
 }
-.listing-compare-action {
-  width: 100%;
-  min-height: 40px;
-  justify-content: center;
-  margin-top: 10px;
-}
-.listing-compare-action[aria-pressed="true"] {
-  border-color: var(--accent);
-  color: var(--accent);
-}
 #oferty-lista {
   scroll-margin-top: 20px;
 }

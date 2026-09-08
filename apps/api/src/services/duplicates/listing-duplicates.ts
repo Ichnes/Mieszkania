@@ -1170,10 +1170,10 @@ export async function inheritStableDuplicateFacts(db: QueryableDb, groupId: stri
             filter (where nullif(trim(l.neighborhood), '') is not null))[1] as neighborhood,
           (array_agg(nullif(trim(l.address_text), '') order by gm.is_primary desc, l.last_seen_at desc)
             filter (where nullif(trim(l.address_text), '') is not null))[1] as address_text,
-          (array_agg(l.latitude order by gm.is_primary desc, l.last_seen_at desc)
-            filter (where l.latitude is not null))[1] as latitude,
-          (array_agg(l.longitude order by gm.is_primary desc, l.last_seen_at desc)
-            filter (where l.longitude is not null))[1] as longitude
+          case when count(distinct (l.latitude,l.longitude)) filter (where l.latitude is not null and l.longitude is not null) = 1
+            then min(l.latitude) filter (where l.longitude is not null) end as latitude,
+          case when count(distinct (l.latitude,l.longitude)) filter (where l.latitude is not null and l.longitude is not null) = 1
+            then min(l.longitude) filter (where l.latitude is not null) end as longitude
         from listing_duplicate_group_members gm
         join listings l on l.id = gm.listing_id
         where gm.group_id = $1
@@ -1185,14 +1185,26 @@ export async function inheritStableDuplicateFacts(db: QueryableDb, groupId: stri
         floor = coalesce(l.floor, facts.floor),
         total_floors = coalesce(l.total_floors, facts.total_floors),
         area_sqm = coalesce(l.area_sqm, facts.area_sqm),
+        price_per_sqm = case when l.area_sqm is null and facts.area_sqm > 0 then l.price_amount / facts.area_sqm else l.price_per_sqm end,
         district = coalesce(nullif(trim(l.district), ''), facts.district),
         neighborhood = coalesce(nullif(trim(l.neighborhood), ''), facts.neighborhood),
         address_text = coalesce(nullif(trim(l.address_text), ''), facts.address_text),
-        latitude = coalesce(l.latitude, facts.latitude),
-        longitude = coalesce(l.longitude, facts.longitude)
+        latitude = case when l.latitude is null and l.longitude is null then facts.latitude else l.latitude end,
+        longitude = case when l.latitude is null and l.longitude is null then facts.longitude else l.longitude end
       from listing_duplicate_group_members gm, group_facts facts
       where gm.group_id = $1
         and gm.listing_id = l.id
+        and (
+          (l.year_built is null and facts.year_built is not null) or
+          (l.rooms is null and facts.rooms is not null) or
+          (l.floor is null and facts.floor is not null) or
+          (l.total_floors is null and facts.total_floors is not null) or
+          (l.area_sqm is null and facts.area_sqm is not null) or
+          (nullif(trim(l.district),'') is null and facts.district is not null) or
+          (nullif(trim(l.neighborhood),'') is null and facts.neighborhood is not null) or
+          (nullif(trim(l.address_text),'') is null and facts.address_text is not null) or
+          (l.latitude is null and l.longitude is null and facts.latitude is not null and facts.longitude is not null)
+        )
     `,
     [groupId],
   );

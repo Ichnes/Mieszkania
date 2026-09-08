@@ -1,5 +1,21 @@
 # Bieżące zadania
 
+## Jakość danych i statystyki — P1 (2026-09-08)
+
+- [x] Adres: odcięcie narracji i normalizacja odmiany ulicy bez utraty numeru; zgłoszona oferta poprawiona w bazie i sprawdzona w API/UI. Kopia przed zmianą.
+- [x] Braki z potwierdzonych duplikatów uzupełniane także po późniejszej zmianie danych źródłowych. Sprzeczne liczby nie są dziedziczone; współrzędne tylko jako jedna zgodna para. Przeliczenie PLN/m² po odzyskaniu metrażu; brak pustych zapisów.
+- [x] Gratka: poprawiona granica głównej treści (CSS nie kończy oferty), tabela, wyróżnione parametry i galeria; warianty piętro 3/7, parter/5, parter z 4. Każdy oparty na zanonimizowanym fragmencie archiwum i regresji.
+- [x] OLX: parametry bieżącego `ad.ad`, oddzielna cena ofertowa i PLN/m², piętro, mapa, status; odtworzone 121 archiwalnych ofert: 121 cen/metraży/pokoi/lokalizacji/galerii, 115 pięter. Brak aktywnej próbki OLX — weryfikacja dotyczy archiwum.
+- [x] Domiporta/Nieruchomości-online: współrzędne z JSON-LD, mikroformatów z przecinkami i własnej mapy portalu; brak łączenia niepełnych par lub pobierania punktów rekomendacji. Regresje na rzeczywistych fragmentach.
+- [x] Statystyki: dzielnice i poddzielnice normalizowane przed agregacją, również w sygnałach obniżek; 19 unikalnych grup. Frontend nie uśrednia median aliasów. Segmenty mają liczebność, próg 10 ofert z ceną, medianę i kwartyle 25–75%; małe próby nie uczestniczą w porównaniu/rankingu cen dzielnic.
+- [x] Kafelek Pokoje podzielony z Piętrem. „Porównaj” usunięte z kart dashboardu i pozostawione w szczegółach; usunięte nieużywane style przycisku.
+- [x] Naprawa istniejących danych bez pobierania z internetu: 697 uzupełnień z archiwum (536 Gratka, 98 Domiporta, 63 Nieruchomości-online) i 156 uzupełnień rekordów z grup duplikatów w kolejnych transakcjach, w tym 14 brakujących lat budowy. Kopie pól przed zapisami w ignorowanym storage.
+- [x] Kontrola bazy po naprawie: 0 brakujących pięter w 1473 aktywnych rekordach Gratki; 0 niespójnych cen za m². Pozostałe współrzędne: 1 Domiporta i 2 Nieruchomości-online — archiwum nie zawiera punktu właściwej oferty (w dwóch są tylko inne oferty rekomendowane).
+- [x] Testy jednostkowe API/frontendu, dodatkowy test PostgreSQL na tabelach tymczasowych (mediany/kwartyle po scaleniu aliasów, parter, konflikty duplikatów, ceny), typecheck i build. Nowe warianty Gratki sprawdzone osobną regresją po pełnym zestawie.
+- [x] Chromium 1440/1280/390: brak przycisku porównania na kartach, dodanie ze szczegółów działa, poprawny adres i kafelek piętra, segmenty z kwartylami; zero błędów JS/HTTP 500 i przepełnienia statystyk. Obejrzane zrzuty telefonu i desktopu.
+- [x] Końcowe wdrożenie po ostatnim wariancie Gratki: API zdrowe, istniejąca baza zachowana. Powtórzona kontrola UI na 1440/1280/390, zero błędów i przepełnienia. Kod gotowy do synchronizacji z repozytorium.
+- Instrukcje: [naprawa danych i regresje](guides/data-repair.md), [obsługa aplikacji](guides/application.md).
+
 ## Pełny audyt i usprawnienia (2026-09-08)
 
 - [x] Audyt ośmiu widoków, aktualizacji, map/porównania/statystyk i responsywności; [raport z priorytetami](audit-2026-09-08.md).
@@ -23,8 +39,8 @@
 - [ ] P1 bezpieczeństwo: pełna ochrona przed SSRF dla przekierowań/DNS/zdjęć; naprawa łańcucha certyfikatów i usunięcie obejść weryfikacji TLS; walidacja wszystkich payloadów API.
 - [ ] P1 udostępnianie: rola tylko do odczytu dla rodziny i jawnie zaufane proxy dla limitów logowania.
 - [ ] P1 wydajność: profil SQL/tekstu/mediów dla `dream_desc`, jeden zbiorczy status portali, wolniejsze odpytywanie pustej kolejki.
-- [ ] P1 dane: piętro Gratki na archiwalnym HTML, pokrycie parsera OLX, brakujące współrzędne Domiporta/Nieruchomości-online. Każda korekta selektorów z rzeczywistą próbką i regresją.
-- [ ] P1 statystyki: normalizacja dzielnic przed agregacją; nie uśredniać median aliasów w frontendzie. Minimalne próby i kwartyle dla segmentów.
+- [x] P1 dane: piętro Gratki na archiwalnym HTML, pokrycie parsera OLX, brakujące współrzędne Domiporta/Nieruchomości-online. Szczegóły i pozostałe braki w sekcji P1 powyżej.
+- [x] P1 statystyki: normalizacja dzielnic przed agregacją; usunięte uśrednianie median aliasów w frontendzie. Minimalne próby i kwartyle dla segmentów.
 - [ ] P2 UX: mniej oznaczeń na zdjęciach, krótsza Aktualizacja, RCN w opcjonalnym imporcie, utrwalanie porównania po odświeżeniu, trzy stany cech (tak/nie/brak danych).
 - [ ] P2 dostępność: Escape po pełnym otwarciu szczegółów (obecnie obsługiwany przy ładowaniu i w galerii), focus trap i powrót fokusu; sprawdzić współpracę z pełnym ekranem mapy/zdjęć.
 - [ ] P2 porządek: usunąć martwe stany kontrolera importów i pozostałe typy wycofanego rankingu/RCN dopiero po kontroli zależności; utrzymywane odtwarzanie granic MSI zamiast lokalnego skryptu.

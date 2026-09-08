@@ -165,6 +165,10 @@ Pozostałe parametry symulacji kredytu zapamiętuje przeglądarka na danym urzą
 
 ## Czytanie i otwieranie ofert
 
+Kafelek **Pokoje / Piętro** na karcie pokazuje oba parametry. Parter jest oznaczony słowem,
+a brak piętra kreską. Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
+na kartach dashboardu nie ma przycisku **Porównaj**.
+
 Sekcja **Co sprawdzić w tej ofercie** pojawia się, gdy opis daje konkretny powód
 np. do sprawdzenia własności, najmu, dodatkowych kosztów albo remontu. Pytanie zawiera
 cytat i uzasadnienie; brak przesłanek oznacza brak sekcji.
@@ -173,6 +177,14 @@ Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdję
 Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.
 
 ## Zapamiętywanie statystyk i gesty
+
+Dzielnice i poddzielnice są normalizowane przed liczeniem statystyk, dzięki czemu np.
+Gocław i Praga-Południe trafiają do jednej dzielnicy. Mediany powstają z pojedynczych ofert.
+Segmenty pokazują medianę i kwartyle cen za m² (środkowe 50%) przy co najmniej 10 ofertach
+z ceną. Mniejsze próby są oznaczone; kwartyle nie są prognozą ani przedziałem ufności.
+Segmenty i mediana dzielnicy dotyczą ofert wykrytych w wybranym okresie, natomiast
+liczba aktywnych i główna mediana aktywnych opisują bieżący stan. Ceny są aktualnymi cenami
+ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
 Po odświeżeniu wracają zarówno zastosowane kryteria, jak i rozpoczęte zmiany w polach.

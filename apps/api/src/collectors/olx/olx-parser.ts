@@ -1,5 +1,7 @@
 import { normalizeWarsawListingCity } from "../../services/geography/address-normalization";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
+import { parseCoordinatePair } from "../portal-coordinates";
+import { parsePortalFloor } from "../../services/listings/portal-building-facts";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -8,26 +10,35 @@ export class OlxParser implements ListingParser {
     const fallbackId = extractExternalId(document.finalUrl ?? document.url);
     const jsonLd = extractJsonLd(document.html);
     const state = extractEmbeddedState(document.html);
+    const ad = getRecordAtPath(state, ["ad", "ad"]);
+    const params = Array.isArray(ad?.params) ? (ad.params as JsonRecord[]) : [];
+    const parameter = (key: string) => {
+      const item = params.find((item) => item.key === key);
+      return readString(item, "value");
+    };
     const pageText = stripHtml(document.html) ?? "";
 
     const title = firstString(
       readString(jsonLd, "name"),
-      findStringByKey(state, "title"),
+      readString(ad, "title"),
       extractMetaTag(document.html, "property", "og:title"),
       extractTitle(document.html),
       `OLX listing ${fallbackId}`,
     )!;
     const description = firstString(
       readString(jsonLd, "description"),
-      findStringByKey(state, "description"),
+      stripHtml(readString(ad, "description")),
       extractMetaTag(document.html, "property", "og:description"),
       extractMetaDescription(document.html),
     );
     const combinedText = `${title}\n${description ?? ""}\n${pageText}`;
-    const district = inferDistrictFromText(combinedText);
+    const district =
+      readString(ad, "location", "districtName") ??
+      inferDistrictFromText(`${title}\n${description ?? ""}`);
     const city =
       normalizeWarsawListingCity(
         firstString(
+          readString(ad, "location", "cityName"),
           inferCityFromUrl(document.finalUrl ?? document.url),
           findStringNearLabel(pageText, "Lokalizacja"),
           "Warszawa",
@@ -38,20 +49,27 @@ export class OlxParser implements ListingParser {
     const street = extractStreetFromText(combinedText);
     const addressText = compactAddress(street, district, city);
     const priceAmount = firstNumber(
+      readNumber(ad, "price", "regularPrice", "value"),
       readNumber(getRecordAtPath(jsonLd, ["offers"]), "price"),
       findNumberNearLabel(pageText, "Cena"),
       readNumberFromString(extractMetaTag(document.html, "property", "product:price:amount")),
     );
     const areaSqm = firstNumber(
+      readNumberFromString(parameter("m")),
       findNumberNearLabel(pageText, "Powierzchnia"),
       findAreaFromText(combinedText),
     );
     const rooms = firstNumber(
+      readNumberFromString(parameter("rooms")?.match(/\d+/)?.[0]),
       findRoomsFromText(combinedText),
       findNumberNearLabel(pageText, "Liczba pokoi"),
     );
     const floorInfo = parseFloorInfo(
-      firstString(findStringNearLabel(pageText, "Poziom"), findStringNearLabel(pageText, "Piętro")),
+      firstString(
+        parameter("floor_select"),
+        findStringNearLabel(pageText, "Poziom"),
+        findStringNearLabel(pageText, "Piętro"),
+      ),
     );
     const marketType = normalizePolish(combinedText).includes("rynek pierwotny")
       ? "primary"
@@ -67,7 +85,7 @@ export class OlxParser implements ListingParser {
       extractMetaTag(document.html, "property", "article:published_time"),
       extractMetaTag(document.html, "name", "datePublished"),
     );
-    const images = collectImages(document.html, jsonLd, state, {
+    const images = collectImages(document.html, jsonLd, ad, {
       externalId: fallbackId,
       title,
       url: document.finalUrl ?? document.url,
@@ -81,6 +99,10 @@ export class OlxParser implements ListingParser {
       city,
       district: district ?? undefined,
       street: street ?? undefined,
+      ...parseCoordinatePair(
+        getValueAtPath(ad, ["map", "lat"]),
+        getValueAtPath(ad, ["map", "lon"]),
+      ),
       addressText: addressText ?? undefined,
       priceAmount: priceAmount ?? undefined,
       areaSqm: areaSqm ?? undefined,
@@ -90,7 +112,10 @@ export class OlxParser implements ListingParser {
       publishedAt: publishedAt ?? undefined,
       marketType,
       offerType: "sale",
-      status: "active",
+      status:
+        document.statusCode === 404 || document.statusCode === 410 || ad?.isActive === false
+          ? "removed"
+          : "active",
       images: images.map((sourceUrl, index) => ({
         sourceUrl,
         position: index,
@@ -414,7 +439,7 @@ function parseFloorInfo(value: string | null) {
     return { floor: Number(match[1]), totalFloors: Number(match[2]) };
   }
 
-  const floor = readNumberFromString(value);
+  const floor = parsePortalFloor(value.match(/^(?:parter|suterena|-?\d+)\b/i)?.[0]);
   return { floor, totalFloors: null };
 }
 

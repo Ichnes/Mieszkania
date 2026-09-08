@@ -6,7 +6,10 @@ import {
   createListingArchiveChecksum,
 } from "../../services/archive/offer-archive";
 import { ensureSource } from "../../services/collecting/source-registry";
-import { autoMergeDuplicateByDescription } from "../../services/duplicates/listing-duplicates";
+import {
+  autoMergeDuplicateByDescription,
+  inheritStableDuplicateFacts,
+} from "../../services/duplicates/listing-duplicates";
 import {
   normalizePolish,
   normalizeWarsawListingCity,
@@ -371,6 +374,14 @@ export class OtodomStorage implements CollectorStorage {
 
           if (action === "created") {
             await autoMergeDuplicateByDescription(db, listingId);
+          }
+          // A portal can reveal a missing fact long after the offers were merged.
+          if (contentChanged) {
+            const groups = await db.query<{ group_id: string }>(
+              "select group_id from listing_duplicate_group_members where listing_id=$1",
+              [listingId],
+            );
+            for (const group of groups.rows) await inheritStableDuplicateFacts(db, group.group_id);
           }
 
           const mediaAssets: Array<{ assetId: string; storageKey: string; sourceUrl: string }> = [];

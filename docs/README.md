@@ -8,6 +8,7 @@
 - [Obsługa aplikacji](guides/application.md)
 - [Dostęp z innych urządzeń w domu](guides/local-network.md)
 - [Utrzymanie danych i narzędzia naprawcze](guides/maintenance.md)
+- [Uzupełnianie danych z archiwum i duplikatów](guides/data-repair.md)
 
 ## Kod i dane
 

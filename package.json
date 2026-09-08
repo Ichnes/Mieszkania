@@ -10,6 +10,7 @@
     "docker:dev": "node scripts/docker-dev.mjs",
     "auth:user": "node --import tsx apps/api/src/scripts/auth-user.ts",
     "prices:recalculate": "node --import tsx apps/api/src/scripts/maintenance/recalculate-unit-prices.ts",
+    "facts:backfill-portals": "node --import tsx apps/api/src/scripts/maintenance/backfill-portal-facts.ts",
     "dev": "concurrently --kill-others-on-fail --names shared,web,api \"npm run dev -w @mieszkania/shared\" \"npm run dev -w @mieszkania/web\" \"npm run dev -w @mieszkania/api\"",
     "dev:web": "npm run dev -w @mieszkania/web",
     "dev:api": "npm run dev -w @mieszkania/api",

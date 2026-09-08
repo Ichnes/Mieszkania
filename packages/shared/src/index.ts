@@ -5,7 +5,19 @@ export type DashboardStat = {
   trend?: string;
 };
 
+export type MarketSegment = {
+  label: string;
+  count: number;
+  sharePercent: number;
+  pricedListings: number;
+  sufficientSample: boolean;
+  medianPricePerSqm: number | null;
+  lowerQuartilePricePerSqm: number | null;
+  upperQuartilePricePerSqm: number | null;
+};
+
 export type MarketStatsResponse = {
+  minimumSampleSize?: number;
   scope?: {
     city: string;
     minArea: number;
@@ -80,11 +92,11 @@ export type MarketStatsResponse = {
   }>;
   priceDistribution: Array<{ label: string; count: number; sharePercent: number }>;
   segments: {
-    rooms: Array<{ label: string; count: number; sharePercent: number }>;
-    areas: Array<{ label: string; count: number; sharePercent: number }>;
-    buildingAge: Array<{ label: string; count: number; sharePercent: number }>;
-    sources: Array<{ label: string; count: number; sharePercent: number }>;
-    marketTypes: Array<{ label: string; count: number; sharePercent: number }>;
+    rooms: MarketSegment[];
+    areas: MarketSegment[];
+    buildingAge: MarketSegment[];
+    sources: MarketSegment[];
+    marketTypes: MarketSegment[];
   };
 };
 

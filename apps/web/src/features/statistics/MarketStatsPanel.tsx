@@ -1,7 +1,6 @@
 import type { MarketStatsResponse } from "@mieszkania/shared";
 import { ChevronRight, LoaderCircle } from "lucide-react";
 import { Fragment, lazy, Suspense, useState } from "react";
-import { normalizeListingText } from "../listings/lib/listing-language";
 import { StatsDistrictMap } from "./StatsDistrictMap";
 import { MarketStatsFilters } from "./types";
 
@@ -76,108 +75,34 @@ export function MarketStatsPanel({
     "Żoliborz",
     "Bez dzielnicy",
   ];
-  const norm = (value: string) => normalizeListingText(value).replace(/[^a-z]/g, "");
-  const aggregateDistricts = (input: MarketStatsResponse | null) =>
-    names.map((name) => {
-      const matching =
-        input?.districts.filter((district) => norm(district.district) === norm(name)) ?? [];
-      const neighborhoods = new Map<
-        string,
-        { neighborhood: string; active: number; weightedPrice: number; priced: number }
-      >();
-      let active = 0;
-      let archived = 0;
-      let weightedPrice = 0;
-      let priced = 0;
-      let weightedArea = 0;
-      let areaPriced = 0;
-      let weightedMedianPrice = 0;
-      let medianPriced = 0;
-      let priceDrops = 0;
-      let priceIncreases = 0;
-      let newLast7Days = 0;
-      let newInPeriod = 0;
-      let archivedInPeriod = 0;
-      let weightedDaysOnMarket = 0;
-      let daysOnMarketCount = 0;
-
-      for (const district of matching) {
-        active += district.active;
-        archived += district.archived;
-        priceDrops += district.priceDrops;
-        priceIncreases += district.priceIncreases;
-        newLast7Days += district.newLast7Days;
-        newInPeriod += district.newInPeriod;
-        archivedInPeriod += district.archivedInPeriod;
-        if (district.medianPricePerSqm > 0 && district.pricedListings > 0) {
-          weightedMedianPrice += district.medianPricePerSqm * district.pricedListings;
-          medianPriced += district.pricedListings;
-        }
-        if (district.medianDaysOnMarket !== null && district.archivedInPeriod > 0) {
-          weightedDaysOnMarket += district.medianDaysOnMarket * district.archivedInPeriod;
-          daysOnMarketCount += district.archivedInPeriod;
-        }
-        if (district.averagePricePerSqm > 0 && district.active > 0) {
-          weightedPrice += district.averagePricePerSqm * district.active;
-          priced += district.active;
-        }
-        if (district.averageArea > 0 && district.active > 0) {
-          weightedArea += district.averageArea * district.active;
-          areaPriced += district.active;
-        }
-        for (const neighborhood of district.neighborhoods ?? []) {
-          const key = norm(neighborhood.neighborhood || "Nieustalona");
-          const current = neighborhoods.get(key) ?? {
-            neighborhood: neighborhood.neighborhood || "Nieustalona",
-            active: 0,
-            weightedPrice: 0,
-            priced: 0,
-          };
-          current.active += neighborhood.active;
-          if (neighborhood.averagePricePerSqm > 0 && neighborhood.active > 0) {
-            current.weightedPrice += neighborhood.averagePricePerSqm * neighborhood.active;
-            current.priced += neighborhood.active;
-          }
-          neighborhoods.set(key, current);
-        }
-      }
-
-      return {
-        district: name,
-        active,
-        archived,
-        averagePricePerSqm: priced ? weightedPrice / priced : 0,
-        medianPricePerSqm: medianPriced ? weightedMedianPrice / medianPriced : 0,
-        pricedListings: medianPriced,
-        averageArea: areaPriced ? weightedArea / areaPriced : 0,
-        archiveRate: active + archived ? Math.round((archived / (active + archived)) * 100) : 0,
-        priceDrops,
-        priceIncreases,
-        newLast7Days,
-        newInPeriod,
-        archivedInPeriod,
-        medianDaysOnMarket: daysOnMarketCount
-          ? Math.round(weightedDaysOnMarket / daysOnMarketCount)
-          : null,
-        neighborhoods: [...neighborhoods.values()]
-          .map((neighborhood) => ({
-            ...neighborhood,
-            averagePricePerSqm: neighborhood.priced
-              ? neighborhood.weightedPrice / neighborhood.priced
-              : 0,
-          }))
-          .sort(
-            (left, right) =>
-              right.active - left.active ||
-              left.neighborhood.localeCompare(right.neighborhood, "pl"),
-          ),
-      };
-    });
-  const rows = aggregateDistricts(stats);
-  const baselineRows = aggregateDistricts(baseline);
+  const districtRows = (input: MarketStatsResponse | null) =>
+    names.map(
+      (name) =>
+        input?.districts.find((row) => row.district === name) ?? {
+          district: name,
+          active: 0,
+          archived: 0,
+          averagePricePerSqm: 0,
+          medianPricePerSqm: 0,
+          pricedListings: 0,
+          averageArea: 0,
+          archiveRate: 0,
+          priceDrops: 0,
+          priceIncreases: 0,
+          newLast7Days: 0,
+          newInPeriod: 0,
+          archivedInPeriod: 0,
+          medianDaysOnMarket: null,
+          neighborhoods: [],
+        },
+    );
+  const rows = districtRows(stats);
+  const baselineRows = districtRows(baseline);
+  const reliablePrice = (row: MarketStatsResponse["districts"][number]) =>
+    row.pricedListings >= (stats.minimumSampleSize ?? 10) ? row.medianPricePerSqm : -1;
   const sorted = [...rows].sort((left, right) =>
     sort === "price"
-      ? right.medianPricePerSqm - left.medianPricePerSqm
+      ? reliablePrice(right) - reliablePrice(left)
       : sort === "archive"
         ? right.archivedInPeriod - left.archivedInPeriod
         : sort === "drops"
@@ -211,7 +136,9 @@ export function MarketStatsPanel({
           <h2>Co dzieje się teraz na rynku</h2>
           <p className="muted">
             Bieżący okres porównujemy z bezpośrednio poprzednimi {stats.periodDays} dniami. Ceny
-            dzielnic pokazujemy jako medianę, odporną na pojedyncze skrajne oferty.
+            dzielnic pokazujemy jako medianę ofert wykrytych w wybranym okresie. Porównania cen
+            wymagają co najmniej {stats.minimumSampleSize ?? 10} ofert z ceną. Zakres środkowych 50%
+            cen w segmentach to kwartyle 25–75%, nie prognoza ani przedział ufności.
           </p>
         </div>
       </div>
@@ -367,9 +294,14 @@ export function MarketStatsPanel({
                         </td>
                         <td data-label="Mediana ceny za m²" className="stats-mobile-price">
                           <strong className="stats-price-value">
-                            {formatPrice(district.medianPricePerSqm)}
+                            {district.pricedListings >= (stats.minimumSampleSize ?? 10)
+                              ? formatPrice(district.medianPricePerSqm)
+                              : "Mała próba"}
                           </strong>
-                          {baseline ? (
+                          {baseline &&
+                          district.pricedListings >= (stats.minimumSampleSize ?? 10) &&
+                          (baselineDistrict?.pricedListings ?? 0) >=
+                            (stats.minimumSampleSize ?? 10) ? (
                             <small className={`stats-row-delta ${deltaClass(districtDelta)}`}>
                               {formatDelta(districtDelta)}
                             </small>
@@ -419,9 +351,7 @@ export function MarketStatsPanel({
                                   {district.neighborhoods.map((neighborhood) => {
                                     const baselineNeighborhood =
                                       baselineDistrict?.neighborhoods.find(
-                                        (item) =>
-                                          norm(item.neighborhood) ===
-                                          norm(neighborhood.neighborhood),
+                                        (item) => item.neighborhood === neighborhood.neighborhood,
                                       );
                                     const hasBaseline = Boolean(
                                       baselineNeighborhood?.averagePricePerSqm,
@@ -433,7 +363,7 @@ export function MarketStatsPanel({
                                     return (
                                       <article
                                         className="neighborhood-stat-card"
-                                        key={norm(neighborhood.neighborhood)}
+                                        key={neighborhood.neighborhood}
                                       >
                                         <div className="neighborhood-card-top">
                                           <strong>{neighborhood.neighborhood}</strong>
@@ -539,6 +469,21 @@ export function MarketStatsPanel({
                     {item.count.toLocaleString("pl-PL")}{" "}
                     <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
                   </strong>
+                  <p className="stats-segment-sample">
+                    {item.sufficientSample && item.medianPricePerSqm != null ? (
+                      <>
+                        Mediana: <b>{formatPrice(item.medianPricePerSqm)}</b>
+                        <br />
+                        Środkowe 50%:{" "}
+                        {Math.round(item.lowerQuartilePricePerSqm!).toLocaleString("pl-PL")}–
+                        {Math.round(item.upperQuartilePricePerSqm!).toLocaleString("pl-PL")} zł/m²
+                      </>
+                    ) : (
+                      <>Mała próba — potrzeba {stats.minimumSampleSize ?? 10} ofert z ceną</>
+                    )}
+                    <br />
+                    Próba: {item.pricedListings ?? 0} ofert z ceną
+                  </p>
                 </div>
               ))}
             </div>

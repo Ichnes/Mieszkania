@@ -1,5 +1,19 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+
+test("retains house numbers when normalizing declined street names and cuts location prose", () => {
+  assert.equal(
+    normalizeWarsawStreetCandidate("Gwiaździstej 13 na warszawskim Żoliborzu"),
+    "Gwiaździsta 13",
+  );
+  assert.equal(
+    sanitizeWarsawAddressText("Gwiaździstej 13 na warszawskim Żoliborzu, Żoliborz, Warszawa"),
+    "Gwiaździsta 13, Żoliborz, Warszawa",
+  );
+  assert.equal(normalizeWarsawStreetCandidate("Gwiaździsta 13A/2"), "Gwiaździsta 13A/2");
+  assert.equal(normalizeWarsawStreetCandidate("Złotej 44"), "Złota 44");
+  assert.equal(normalizeWarsawStreetCandidate("Na Skraju 12"), "Na Skraju 12");
+});
 import { estimateWarsawNeighborhood } from "../insights/listing-neighborhood-estimator";
 import {
   normalizeWarsawListingCity,

@@ -49,3 +49,28 @@
     margin-top: 12px;
   }
 }
+.metric-rooms-floor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0.5rem;
+}
+.metric-rooms-floor > div {
+  min-width: 0;
+}
+.metric-rooms-floor > div + div {
+  border-left: 1px solid var(--border-color, #d5dbe2);
+  padding-left: 0.5rem;
+}
+.listing-metric.metric-rooms-floor dd {
+  font-size: clamp(0.85rem, 1.5vw, 1rem);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.stats-segment-list .stats-segment-sample {
+  grid-column: 1 / -1;
+  margin: 0.2rem 0 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}

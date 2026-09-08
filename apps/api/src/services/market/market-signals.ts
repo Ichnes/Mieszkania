@@ -1,10 +1,12 @@
 import type { MarketStatsResponse } from "@mieszkania/shared";
 import type { Pool } from "pg";
+import { marketLocationJoinSql } from "./market-locations";
 
 export async function getMarketSignals(
   db: Pool,
   filters: string,
   periodDays: number,
+  locationMapping: string,
 ): Promise<NonNullable<MarketStatsResponse["signals"]>> {
   // One row per visible offer, including only observed price changes in the chosen period.
   const result = await db.query<{
@@ -21,8 +23,8 @@ export async function getMarketSignals(
   }>(
     `
     with eligible as (
-      select l.id, l.district, l.first_seen_at, l.last_seen_at
-      from listings l
+      select l.id, location.district, l.first_seen_at, l.last_seen_at
+      from listings l ${marketLocationJoinSql.replace("$1", "$2")}
       where lower(l.city)='warszawa' and l.status='active' and ${filters}
     ), history as (
       select greatest(0, floor(max(extract(epoch from (now()-first_seen_at))/86400)))::int days
@@ -48,7 +50,7 @@ export async function getMarketSignals(
     from eligible e left join cuts c on c.listing_id=e.id and c.position=1
     group by grouping sets ((e.district), ())
   `,
-    [periodDays],
+    [periodDays, locationMapping],
   );
   const total = result.rows.find((row) => row.is_total === 1);
   return {

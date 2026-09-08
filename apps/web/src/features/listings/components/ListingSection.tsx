@@ -1,5 +1,5 @@
 import type { ListingSummary } from "@mieszkania/shared";
-import { GitCompareArrows, LoaderCircle, RefreshCw } from "lucide-react";
+import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
 import { filterImageBadges, filterNonCommercialBadges } from "../lib/badges";
 import { listingHref } from "../lib/links";
@@ -184,9 +184,24 @@ export function ListingSection(input: {
                     <dt>PLN/m²</dt>
                     <dd>{listing.pricePerSqmLabel ?? "-"}</dd>
                   </div>
-                  <div className="listing-metric metric-rooms">
-                    <dt>Pokoje</dt>
-                    <dd>{listing.roomsCount ? String(listing.roomsCount) : "-"}</dd>
+                  <div className="listing-metric metric-rooms metric-rooms-floor">
+                    <div>
+                      <dt>Pokoje</dt>
+                      <dd>{listing.roomsCount ? String(listing.roomsCount) : "-"}</dd>
+                    </div>
+                    <div>
+                      <dt>Piętro</dt>
+                      <dd>
+                        {listing.floor == null
+                          ? "—"
+                          : listing.floor === 0
+                            ? "Parter"
+                            : listing.floor}
+                        {listing.floor != null && listing.totalFloors != null
+                          ? ` / ${listing.totalFloors}`
+                          : ""}
+                      </dd>
+                    </div>
                   </div>
                 </dl>
                 {listing.priceSource === "negotiated" ? (
@@ -195,18 +210,6 @@ export function ListingSection(input: {
                   </p>
                 ) : null}
                 <ListingBadgeRow badges={nonCommercialBadges} />
-                <button
-                  type="button"
-                  className="action-button secondary-button listing-compare-action"
-                  aria-pressed={input.compareIds.includes(listing.id)}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    input.onToggleCompare(listing.id);
-                  }}
-                >
-                  <GitCompareArrows size={16} aria-hidden="true" />
-                  {input.compareIds.includes(listing.id) ? "W porównaniu" : "Porównaj"}
-                </button>
               </div>
             </article>
           );

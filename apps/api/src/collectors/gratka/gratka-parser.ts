@@ -102,6 +102,24 @@ export class GratkaParser implements ListingParser {
     const floorInfo = firstString(
       readAdditionalPropertyValue(additionalProperties, "Piętro"),
       readAdditionalPropertyValue(additionalProperties, "Pietro"),
+      stripHtml(
+        primaryHtml.match(
+          /data-cy=["']detailsHighlightedParametersLabel["'][^>]*>\s*Piętro\s*<\/div>\s*<div[^>]+data-cy=["']detailsHighlightedParametersValue["'][^>]*>([\s\S]*?)<\/div>/i,
+        )?.[1] ?? null,
+      ),
+      primaryHtml
+        .match(
+          /data-cy=["']informationTableLabel["'][^>]*>\s*Piętro\s*<\/span>\s*<\/div>\s*<div[^>]*>\s*<div[^>]*data-cy=["']itemValue["'][^>]*>\s*([^<]+)/i,
+        )?.[1]
+        ?.trim(),
+      // Captured Gratka gallery header, scoped away from recommended offers.
+      stripHtml(
+        primaryHtml.match(
+          /<div[^>]+class=["'][^"']*basic-info__details[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+        )?.[1] ?? null,
+      )
+        ?.match(/\b(?:piętro\s+(?:\d+|parter)|parter)(?:\s*\/\s*\d+)?/i)?.[0]
+        ?.replace(/^piętro\s+/i, ""),
     );
     const { floor, totalFloors } = parseFloorInfo(floorInfo);
     const htmlCoordinates = extractCoordinatesFromHtml(document.html);
@@ -577,6 +595,10 @@ function parseFloorInfo(value?: string | null) {
   if (!value) {
     return { floor: undefined, totalFloors: undefined };
   }
+  value = value.replace(/\s+z\s+(?=\d)/i, "/");
+
+  if (/^parter\b/i.test(value))
+    return { floor: 0, totalFloors: Number(value.match(/\/\s*(\d+)/)?.[1]) || undefined };
 
   const match = value.match(/(\d+)\s*\/\s*(\d+)/);
   if (match) {
@@ -930,7 +952,11 @@ function extractTitle(html: string) {
 }
 
 function extractPrimaryContentWindow(html: string) {
-  const marker = html.indexOf("properties-in-slider-wrapper");
+  // CSS mentions this class before the offer; only an actual recommendation
+  // element marks the end of the primary listing.
+  const marker = html.search(
+    /<(?:div|section)[^>]+class=["'][^"']*\bproperties-in-slider-wrapper\b[^"']*["']/i,
+  );
   return marker >= 0 ? html.slice(0, marker) : html;
 }
 

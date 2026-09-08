@@ -33,7 +33,10 @@ export function sanitizeStreetCandidate(value?: string | null) {
     .trim();
   if (!candidate) return null;
 
-  const clause = candidate.split(/[,;|\n]|\s+[–—]\s+/, 1)[0]?.trim() ?? "";
+  const clause = (candidate.split(/[,;|\n]|\s+[–—]\s+/, 1)[0]?.trim() ?? "").replace(
+    /(\d+[a-z]?(?:[/-]\d+[a-z]?)?)\s+(?:na|w|we)\s+.*$/iu,
+    "$1",
+  );
   const narrativeIndex = clause.search(streetNarrativeBoundary);
   const street = (narrativeIndex >= 0 ? clause.slice(0, narrativeIndex) : clause)
     .replace(/[.:-]+$/, "")
@@ -53,6 +56,7 @@ const knownWarsawStreetNames = new Map<string, string>(
     "Głębocka",
     "Górczewska",
     "Gumińska",
+    "Gwiaździsta",
     "Inflancka",
     "Modzelewskiego",
     "Nowy Świat",
@@ -123,11 +127,13 @@ export function normalizeWarsawStreetCandidate(value?: string | null) {
   }
 
   const exact = knownWarsawStreetNames.get(normalized);
-  if (exact) return exact;
+  const houseNumber = candidate.match(/\s+(\d+[a-z]?(?:[/-]\d+[a-z]?)?)$/iu)?.[1];
+  const withNumber = (name: string) => (houseNumber ? `${name} ${houseNumber}` : name);
+  if (exact) return withNumber(exact);
   const declined = [...knownWarsawStreetNames.entries()].find(
     ([key]) => canonicalStreetForm(key) === canonicalStreetForm(normalized!),
   );
-  return declined?.[1] ?? candidate;
+  return declined ? withNumber(declined[1]) : candidate;
 }
 
 export function normalizeWarsawStreetAddress(value?: string | null) {

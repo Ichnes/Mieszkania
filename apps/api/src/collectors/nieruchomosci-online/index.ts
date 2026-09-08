@@ -26,6 +26,7 @@ import { downloadListingMedia } from "../../services/media/media-downloader";
 import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomStorage } from "../otodom/otodom-storage";
 import type { ParsedListing, SourceListingReference } from "../types";
+import { extractPortalCoordinates } from "../portal-coordinates";
 
 const sourceKey = "nieruchomosci_online";
 const detailRequestIntervalMs = 5_000;
@@ -601,6 +602,7 @@ export function parseListing(
     city: "Warszawa",
     district,
     street,
+    ...extractPortalCoordinates(product, html),
     addressText: [street, district, "Warszawa"].filter(Boolean).join(", ") || "Warszawa",
     sourceContactPhone: phone,
     priceAmount: price,
