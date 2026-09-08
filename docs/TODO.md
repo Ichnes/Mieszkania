@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Kafelki i widoczność filtrów (2026-09-09)
+
+- [x] Parter jako 0 / liczba pięter, metraż dzielony z rokiem budowy; brak roku oznaczony kreską.
+- [x] Wyraźniejsze przyciski Ulubione / Wszystkie / Tylko ukryte: ikony, wspólna ramka, wypełnienie aktywnego wyboru, aria-pressed, focus i kontrast w obu motywach.
+- [x] Typecheck i build Docker poprawne, wdrożenie na 8080. Chromium 1440/1280/390: sprawdzone kafelki i wszystkie trzy przełączniki, zero błędów JS/przepełnienia; obejrzane zrzuty jasnego i ciemnego motywu. Baza zachowana.
+
 ## Jakość danych i statystyki — P1 (2026-09-08)
 
 - [x] Adres: odcięcie narracji i normalizacja odmiany ulicy bez utraty numeru; zgłoszona oferta poprawiona w bazie i sprawdzona w API/UI. Kopia przed zmianą.

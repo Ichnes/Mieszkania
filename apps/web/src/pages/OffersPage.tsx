@@ -1,5 +1,14 @@
 import { defaultDownPayment } from "@mieszkania/shared";
-import { LoaderCircle, PanelLeftClose, PanelLeftOpen, SlidersHorizontal, X } from "lucide-react";
+import {
+  LoaderCircle,
+  PanelLeftClose,
+  PanelLeftOpen,
+  SlidersHorizontal,
+  X,
+  Star,
+  LayoutGrid,
+  EyeOff,
+} from "lucide-react";
 import { defaultFilters } from "../app/session";
 import { ListingSortKey } from "../app/types";
 import type { WorkspaceState } from "../app/useWorkspaceController";
@@ -101,9 +110,14 @@ export function OffersPage({
                   >
                     <X size={20} aria-hidden="true" />
                   </button>
-                  <div className="section-switches">
+                  <div
+                    className="section-switches offer-visibility-switches"
+                    role="group"
+                    aria-label="Widoczność ofert"
+                  >
                     <button
                       className={filters.shortlistedOnly ? "tab-button active" : "tab-button"}
+                      aria-pressed={Boolean(filters.shortlistedOnly)}
                       type="button"
                       onClick={() => {
                         const nextFilters = {
@@ -116,13 +130,16 @@ export function OffersPage({
                         void applyFilters(nextFilters, 1);
                       }}
                     >
-                      Ulubione
+                      <Star size={16} aria-hidden="true" /> Ulubione
                     </button>
                     <button
                       className={
                         !filters.shortlistedOnly && !filters.archivedOnly && !filters.hiddenOnly
                           ? "tab-button active"
                           : "tab-button"
+                      }
+                      aria-pressed={
+                        !filters.shortlistedOnly && !filters.archivedOnly && !filters.hiddenOnly
                       }
                       type="button"
                       onClick={() => {
@@ -136,10 +153,11 @@ export function OffersPage({
                         void applyFilters(nextFilters, 1);
                       }}
                     >
-                      Wszystkie
+                      <LayoutGrid size={16} aria-hidden="true" /> Wszystkie
                     </button>
                     <button
                       className={filters.hiddenOnly ? "tab-button active" : "tab-button"}
+                      aria-pressed={Boolean(filters.hiddenOnly)}
                       type="button"
                       onClick={() => {
                         const nextFilters = {
@@ -152,7 +170,7 @@ export function OffersPage({
                         void applyFilters(nextFilters, 1);
                       }}
                     >
-                      Tylko ukryte
+                      <EyeOff size={16} aria-hidden="true" /> Tylko ukryte
                     </button>
                   </div>
                 </div>

@@ -176,15 +176,21 @@ export function ListingSection(input: {
                     </dt>
                     <dd>{listing.priceLabel}</dd>
                   </div>
-                  <div className="listing-metric metric-area">
-                    <dt>Metraż</dt>
-                    <dd>{listing.areaLabel}</dd>
+                  <div className="listing-metric metric-area metric-split metric-area-year">
+                    <div>
+                      <dt>Metraż</dt>
+                      <dd>{listing.areaLabel.replace(/m2$/, "m²")}</dd>
+                    </div>
+                    <div>
+                      <dt>Rok budowy</dt>
+                      <dd>{listing.yearBuilt ?? "—"}</dd>
+                    </div>
                   </div>
                   <div className="listing-metric metric-pps">
                     <dt>PLN/m²</dt>
                     <dd>{listing.pricePerSqmLabel ?? "-"}</dd>
                   </div>
-                  <div className="listing-metric metric-rooms metric-rooms-floor">
+                  <div className="listing-metric metric-rooms metric-split metric-rooms-floor">
                     <div>
                       <dt>Pokoje</dt>
                       <dd>{listing.roomsCount ? String(listing.roomsCount) : "-"}</dd>
@@ -192,11 +198,7 @@ export function ListingSection(input: {
                     <div>
                       <dt>Piętro</dt>
                       <dd>
-                        {listing.floor == null
-                          ? "—"
-                          : listing.floor === 0
-                            ? "Parter"
-                            : listing.floor}
+                        {listing.floor ?? "—"}
                         {listing.floor != null && listing.totalFloors != null
                           ? ` / ${listing.totalFloors}`
                           : ""}

@@ -49,22 +49,77 @@
     margin-top: 12px;
   }
 }
-.metric-rooms-floor {
+.metric-split {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 0.5rem;
 }
-.metric-rooms-floor > div {
+.metric-split > div {
   min-width: 0;
 }
-.metric-rooms-floor > div + div {
+.metric-split > div + div {
   border-left: 1px solid var(--border-color, #d5dbe2);
   padding-left: 0.5rem;
 }
-.listing-metric.metric-rooms-floor dd {
+.listing-metric.metric-split dd {
   font-size: clamp(0.85rem, 1.5vw, 1rem);
   overflow-wrap: anywhere;
   white-space: normal;
+}
+.listing-metric.metric-split dt {
+  min-height: 2.4em;
+  line-height: 1.2;
+}
+.listings-workspace .filters-panel .offer-visibility-switches {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--brand);
+  border-radius: 16px;
+  background: var(--brand-soft);
+}
+.listings-workspace .filters-panel .offer-visibility-switches .tab-button {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  min-height: 64px;
+  min-width: 0;
+  padding: 8px 4px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-align: center;
+  white-space: normal;
+}
+.listings-workspace .filters-panel .offer-visibility-switches .tab-button.active {
+  background: var(--brand-strong);
+  border-color: var(--brand-strong);
+  color: #fff;
+  box-shadow: 0 2px 5px #0002;
+}
+:root[data-theme="dark"]
+  .listings-workspace
+  .filters-panel
+  .offer-visibility-switches
+  .tab-button.active {
+  background: #f3b68f;
+  border-color: #f3b68f;
+  color: #24170f;
+}
+.listings-workspace .filters-panel .offer-visibility-switches .tab-button:hover {
+  outline: 2px solid var(--brand);
+  outline-offset: 1px;
+}
+.listings-workspace .filters-panel .offer-visibility-switches .tab-button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: 2px;
 }
 .stats-segment-list .stats-segment-sample {
   grid-column: 1 / -1;

@@ -165,8 +165,10 @@ Pozostałe parametry symulacji kredytu zapamiętuje przeglądarka na danym urzą
 
 ## Czytanie i otwieranie ofert
 
-Kafelek **Pokoje / Piętro** na karcie pokazuje oba parametry. Parter jest oznaczony słowem,
-a brak piętra kreską. Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
+Kafelek **Pokoje / Piętro** na karcie pokazuje oba parametry. Parter ma numer **0** (np. **0 / 5**),
+a brak piętra kreskę. Obok metrażu znajduje się **Rok budowy**; kreska oznacza brak roku.
+Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżniony aktywny wybór.
+Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
 
 Sekcja **Co sprawdzić w tej ofercie** pojawia się, gdy opis daje konkretny powód
