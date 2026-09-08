@@ -4,6 +4,32 @@ import { extractOfferLinks } from "./otodom-discovery";
 import { OtodomParser } from "./otodom-parser";
 import { extractOtodomExternalId } from "./otodom-url";
 import { extractFeatures } from "../../services/listings/listing-repository";
+import { getSavedPortalBuildingFacts } from "../../services/listings/portal-building-facts";
+
+test("Otodom ground_floor is zero in new imports and saved snapshots", async () => {
+  for (const [value, expected] of [
+    ["ground_floor", 0],
+    ["floor_3", 3],
+    ["basement", -1],
+    ["unknown", undefined],
+  ] as const) {
+    const nextData = {
+      props: {
+        pageProps: {
+          ad: { title: "Mieszkanie", attributes: { floor_no: value, building_floors_num: "3" } },
+        },
+      },
+    };
+    const parsed = await new OtodomParser().parse({
+      url: "https://www.otodom.pl/pl/oferta/test-ID4floor",
+      statusCode: 200,
+      html: `<script id="__NEXT_DATA__" type="application/json">${JSON.stringify(nextData)}</script>`,
+    });
+    assert.equal(parsed.floor, expected);
+    assert.equal(getSavedPortalBuildingFacts({ nextData }).floor, expected);
+    assert.equal(getSavedPortalBuildingFacts({ nextData }).totalFloors, 3);
+  }
+});
 
 test("Otodom finish and maintenance fields are retained independently of the description", async () => {
   const parsed = await new OtodomParser().parse({

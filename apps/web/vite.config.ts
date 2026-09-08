@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 const envDir = fileURLToPath(new URL("../../", import.meta.url));
 export default defineConfig(({ mode }) => {
   const env = { ...loadEnv(mode, envDir, ""), ...process.env };
-  const target = `http://localhost:${env.PORT || 3001}`;
+  const target = env.API_PROXY_TARGET || `http://localhost:${env.PORT || 3001}`;
   return {
     envDir,
     plugins: [react()],
@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
       strictPort: true,
       allowedHosts: ["otomieszkanie", "otomieszkanie.local"],
       proxy: {
-        "/api": { target, changeOrigin: true },
+        "/api": { target, changeOrigin: false },
         "/health": { target, changeOrigin: true },
       },
     },

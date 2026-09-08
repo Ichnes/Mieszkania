@@ -9,14 +9,14 @@ function isLoopback(hostname: string) {
   );
 }
 
-export function resolveApiBaseUrl(configured: string | undefined, pageHostname: string) {
+export function resolveApiBaseUrl(configured: string | undefined, _pageHostname: string) {
   const value = configured?.trim().replace(/\/$/, "") ?? "";
   if (!value) return "";
   try {
     const url = new URL(value);
-    // A loopback URL embedded by an older local configuration points at the
-    // phone itself. LAN clients must use the frontend's same-origin API proxy.
-    if (isLoopback(url.hostname) && !isLoopback(pageHostname)) return "";
+    // Older .env files used a separate localhost API. Always use the proxy for
+    // loopback, also on the desktop: auth cookies and writes are same-origin.
+    if (isLoopback(url.hostname)) return "";
   } catch {
     // Relative API prefixes are already resolved against the current host.
   }

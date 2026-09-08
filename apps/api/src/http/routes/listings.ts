@@ -182,6 +182,13 @@ export function registerListingsRoutes(app: FastifyInstance) {
       lastContactAt?: string;
     };
   }>("/api/listings/:id/manual", async (request, reply) => {
+    const price = request.body?.askingPriceOverride;
+    if (
+      price !== undefined &&
+      (typeof price !== "number" || !Number.isFinite(price) || price <= 0 || price > 1e11)
+    ) {
+      return reply.code(400).send({ message: "Cena po rozmowie musi być dodatnią kwotą." });
+    }
     const listing = await updateListingManualData(request.params.id, request.body ?? {});
 
     if (!listing) {

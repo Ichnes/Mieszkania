@@ -81,7 +81,10 @@ i 6 pkt dla większej liczby. Ustawione wyższe minimum pokoi jest respektowane:
 oferta poniżej niego nie dostaje punktów za pokoje ani układ.
 Komórka daje 9 pkt, klimatyzacja 5 pkt, drewniana podłoga 6 pkt, garderoba 5 pkt.
 
-Blaty ze spieku (w tym kwarcowego), granitu lub konglomeratu dają +8 pkt.
+Kryterium **Blat**: granit +8, konglomerat lub spiek (w tym kwarcowy) +7,
+drewno, w tym „blaty z naturalnego dębu”, +5. Kilka materiałów nie sumuje się:
+liczy się najwyższa potwierdzona premia. Mianownik przy rozpoznanym materiale to 8.
+Samo „kamienny” bez podania materiału nie rozstrzyga punktacji; imitacje i laminaty nie dostają premii.
 Deska dębowa, również w opisie „na podłogach wysokiej jakości deska dębowa”,
 liczy się jako drewniana podłoga (+6, raz za tę cechę).
 Co najmniej dwa miejsca parkingowe/postojowe/garażowe dają dodatkowe +5 pkt.
@@ -89,7 +92,8 @@ Jeśli te miejsca są wynajmowane/dzierżawione lub wymagają opłaty miesięczn
 naliczane jest dodatkowe −5 pkt w osobnym wierszu **Wynajem miejsc parkingowych**.
 Premia za liczbę miejsc pozostaje (+5 −5 = 0 pkt łącznie za te dwa kryteria).
 Jednorazowa cena zakupu miejsca ani sam czynsz mieszkania nie uruchamiają tej kary.
-Meble lub zabudowa robione na/pod wymiar przez stolarza dają +5 pkt.
+Meble, kuchnia, szafy lub zabudowa na/pod wymiar albo na zamówienie dają +5 pkt,
+także bez dosłownej wzmianki o stolarzu.
 Rozpoznawane są odmiany i różny szyk zwrotów; powtórzenie cechy nie mnoży premii.
 Premie opierają się na treści ogłoszenia, z kontrolą typowych negacji i imitacji.
 
@@ -127,7 +131,7 @@ Synonimy w opisie nie naliczają wielokrotnie tej samej premii (np. „projekt a
 i „architekta”, „dwie łazienki” i „2 łazienki”).
 
 Portale: Otodom, Gratka, OLX, Nieruchomości-online, Domiporta, Maxon, Adresowo i Morizon.
-Dane dojazdu oraz preferencje należą do lokalnej instalacji. Aplikacja nie ma oddzielnych kont użytkowników.
+Dane dojazdu oraz preferencje należą do lokalnej instalacji. Opcjonalne konta chronią dostęp do wspólnej bazy; nie rozdzielają danych między użytkowników. [Włączenie logowania](login.md).
 
 ## Pierwsze dane i import
 
@@ -164,7 +168,8 @@ Pozostałe parametry symulacji kredytu zapamiętuje przeglądarka na danym urzą
 Sekcja **Co sprawdzić w tej ofercie** pojawia się, gdy opis daje konkretny powód
 np. do sprawdzenia własności, najmu, dodatkowych kosztów albo remontu. Pytanie zawiera
 cytat i uzasadnienie; brak przesłanek oznacza brak sekcji.
-Okno oferty można zamknąć również podczas ładowania, przyciskiem, Escape lub kliknięciem tła.
+Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
+Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
 Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.
 
 ## Zapamiętywanie statystyk i gesty
@@ -179,3 +184,16 @@ Powiększone zdjęcie można przesuwać; przy podstawowym powiększeniu przesuni
 zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje zdjęcie do
 nowego ekranu i resetuje powiększenie. Na telefonie pełny ekran zajmuje obszar aplikacji;
 paski systemowe przeglądarki mogą pozostać widoczne.
+
+## Cena po rozmowie
+
+W szczegółach wpisz **Cena po rozmowie (aktualna)** i wybierz **Zapisz notatki do oferty**.
+Ta kwota jest od tej chwili główną ceną, opisaną jako **Cena po negocjacjach**.
+Korzystają z niej cena za m², filtry i sortowanie cenowe, dopasowanie, podgląd finansowania,
+mapa i porównanie. Obok pozostaje cena z ogłoszenia.
+**Cel negocjacji (planowana kwota)** nie zmienia ceny — to wyłącznie Twój cel.
+Wyczyszczenie aktualnej ceny po rozmowie i zapis przywraca kwotę portalową.
+
+Aktualizacja portalu nie nadpisuje ustaleń po rozmowie. Historia cen, procenty zmian
+z portalu i statystyki rynku nadal dotyczą cen ogłoszeniowych: prywatne negocjacje
+nie są rejestrowane jako obniżki na całym rynku.

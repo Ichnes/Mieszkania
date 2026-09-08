@@ -302,8 +302,18 @@ export function computeDreamEvaluation(
   );
 
   // Each group describes one amenity; synonyms cannot multiply its bonus.
+  if (descriptionFacts.countertopPoints > 0) {
+    points += descriptionFacts.countertopPoints;
+    maxPoints += 8;
+  }
+  record(
+    "Blat",
+    "Granit +8; konglomerat lub spiek +7; drewno (w tym naturalny dąb) +5. Najwyższa potwierdzona premia, tylko raz.",
+    descriptionFacts.countertopPoints
+      ? `Materiał potwierdzony w opisie: +${descriptionFacts.countertopPoints}`
+      : "Brak potwierdzonego materiału",
+  );
   for (const [present, bonus, label] of [
-    [descriptionFacts.stoneCountertop, 8, "Kamienny blat"],
     [descriptionFacts.woodenFloor, 6, "Drewniana podłoga"],
     [descriptionFacts.customCarpentry, 5, "Stolarka na wymiar"],
     [descriptionFacts.multipleParking, 5, "Co najmniej 2 miejsca parkingowe"],

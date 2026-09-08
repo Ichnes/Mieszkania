@@ -1,3 +1,4 @@
+import { apiFetch } from "../../shared/lib/http";
 import type {
   CollectorRunResponse,
   ListingFilters,
@@ -255,7 +256,7 @@ export function useImportController({
     setIsCollecting(true);
     setCollectError(null);
     try {
-      const response = await fetch(resolveCollectorEndpoint(collectUrl.trim()), {
+      const response = await apiFetch(resolveCollectorEndpoint(collectUrl.trim()), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: collectUrl.trim() }),
@@ -274,7 +275,7 @@ export function useImportController({
     setIsBulkCollecting(true);
     setBulkError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/otodom/collect-page`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/otodom/collect-page`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -310,7 +311,7 @@ export function useImportController({
     setIsImportingRcn(true);
     setRcnError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/rcn/import`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/rcn/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scope: "warsaw-metropolitan" }),
@@ -341,7 +342,7 @@ export function useImportController({
         morizonResponse,
         staleRefreshResponse,
       ] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/collectors/otodom/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/otodom/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -351,7 +352,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/gratka/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/gratka/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -361,7 +362,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/olx/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/olx/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -371,7 +372,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/nieruchomosci-online/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/nieruchomosci-online/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -381,7 +382,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/domiporta/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/domiporta/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -391,7 +392,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/maxon/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/maxon/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -401,7 +402,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/adresowo/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/adresowo/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -411,7 +412,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/morizon/discover-all`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/morizon/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -421,7 +422,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/listings/refresh-stale`, {
+        apiFetch(`${apiBaseUrl}/api/listings/refresh-stale`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: "{}",
@@ -489,7 +490,7 @@ export function useImportController({
         }
         setQueueErrorAction("discover");
       }
-      await fetch(`${apiBaseUrl}/api/listings/automation/run`, {
+      await apiFetch(`${apiBaseUrl}/api/listings/automation/run`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}",
@@ -519,7 +520,7 @@ export function useImportController({
       message: "Pobieranie rozpoczęte. Status kolejek odświeża się automatycznie co 3 sekundy.",
     });
     try {
-      const resumeResponse = await fetch(`${apiBaseUrl}/api/listings/automation/resume`, {
+      const resumeResponse = await apiFetch(`${apiBaseUrl}/api/listings/automation/resume`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}",
@@ -539,7 +540,7 @@ export function useImportController({
         adresowoResponse,
         morizonResponse,
       ] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/collectors/otodom/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/otodom/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -548,7 +549,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/gratka/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/gratka/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -557,7 +558,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/olx/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/olx/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -566,7 +567,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/nieruchomosci-online/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/nieruchomosci-online/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -576,7 +577,7 @@ export function useImportController({
             force: true,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/domiporta/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/domiporta/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -585,7 +586,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/maxon/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/maxon/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -594,7 +595,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/adresowo/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/adresowo/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -603,7 +604,7 @@ export function useImportController({
             concurrency: toOptionalNumber(queueConcurrency) ?? 8,
           }),
         }),
-        fetch(`${apiBaseUrl}/api/collectors/morizon/process-queue`, {
+        apiFetch(`${apiBaseUrl}/api/collectors/morizon/process-queue`, {
           method: "POST",
           signal: abortController.signal,
           headers: { "Content-Type": "application/json" },
@@ -713,7 +714,7 @@ export function useImportController({
   async function stopListingAutomation() {
     setIsTogglingListingAutomation(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/automation/pause`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/automation/pause`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: "{}",
@@ -741,6 +742,7 @@ export function useImportController({
   }
 
   async function refreshQueueStatus(origin: "manual" | "monitor" | "passive" = "passive") {
+    if (origin !== "manual" && document.hidden && !processAllAbortRef.current) return;
     if (queueStatusInFlightRef.current) return;
     queueStatusInFlightRef.current = true;
     if (origin === "manual") setIsRefreshingQueueStatus(true);
@@ -757,7 +759,7 @@ export function useImportController({
     try {
       const results = await Promise.allSettled(
         portals.map(async ([key]) => {
-          const response = await fetch(`${apiBaseUrl}/api/collectors/${key}/queue-status`, {
+          const response = await apiFetch(`${apiBaseUrl}/api/collectors/${key}/queue-status`, {
             signal: AbortSignal.timeout(12_000),
           });
           if (!response.ok) throw new Error(String(response.status));
@@ -810,7 +812,7 @@ export function useImportController({
     setIsRetryingFailedQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/otodom/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/otodom/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -828,7 +830,7 @@ export function useImportController({
     setIsRetryingFailedGratkaQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/gratka/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/gratka/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -847,7 +849,7 @@ export function useImportController({
     setIsRetryingFailedOlxQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/olx/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/olx/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -865,7 +867,7 @@ export function useImportController({
     setIsResettingProcessingQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/otodom/reset-processing`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/otodom/reset-processing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -884,7 +886,7 @@ export function useImportController({
     setIsResettingProcessingGratkaQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/gratka/reset-processing`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/gratka/reset-processing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -903,7 +905,7 @@ export function useImportController({
     setIsResettingProcessingOlxQueue(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/olx/reset-processing`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/olx/reset-processing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -920,7 +922,7 @@ export function useImportController({
 
   async function refreshStaleListingStatus() {
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/refresh-stale/status`);
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/refresh-stale/status`);
       if (!response.ok) throw new Error("Nie udało się odczytać statusu automatu.");
       setStaleListingRefresh((await response.json()) as StaleListingRefreshStatus);
     } catch {
@@ -932,7 +934,7 @@ export function useImportController({
     setIsEnrichingListingsFromStreets(true);
     setQueueError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/streets/warsaw/enrich-listings`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/streets/warsaw/enrich-listings`, {
         method: "POST",
       });
       if (!response.ok) throw new Error(`Street enrichment failed with status ${response.status}`);
@@ -958,7 +960,7 @@ export function useImportController({
   async function retryFailedNieruchomosciOnlineQueue() {
     setIsRetryingFailedNieruchomosciOnlineQueue(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/collectors/nieruchomosci-online/retry-failed`,
         {
           method: "POST",
@@ -976,7 +978,7 @@ export function useImportController({
   async function retryFailedDomiportaQueue() {
     setIsRetryingFailedDomiportaQueue(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/domiporta/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/domiporta/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -991,7 +993,7 @@ export function useImportController({
   async function retryFailedMaxonQueue() {
     setIsRetryingFailedMaxonQueue(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/maxon/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/maxon/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -1005,7 +1007,7 @@ export function useImportController({
   async function retryFailedAdresowoQueue() {
     setIsRetryingFailedAdresowoQueue(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/adresowo/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/adresowo/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -1020,7 +1022,7 @@ export function useImportController({
   async function retryFailedMorizonQueue() {
     setIsRetryingFailedMorizonQueue(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/collectors/morizon/retry-failed`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/morizon/retry-failed`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 2000 }),
@@ -1054,7 +1056,7 @@ export function useImportController({
   }
 
   async function resetProcessingNieruchomosciOnlineQueue() {
-    const response = await fetch(
+    const response = await apiFetch(
       `${apiBaseUrl}/api/collectors/nieruchomosci-online/reset-processing`,
       {
         method: "POST",
@@ -1069,7 +1071,7 @@ export function useImportController({
   }
 
   async function resetProcessingDomiportaQueue() {
-    const response = await fetch(`${apiBaseUrl}/api/collectors/domiporta/reset-processing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/collectors/domiporta/reset-processing`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ limit: 2000 }),
@@ -1079,7 +1081,7 @@ export function useImportController({
   }
 
   async function resetProcessingMaxonQueue() {
-    const response = await fetch(`${apiBaseUrl}/api/collectors/maxon/reset-processing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/collectors/maxon/reset-processing`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ limit: 2000 }),
@@ -1089,7 +1091,7 @@ export function useImportController({
   }
 
   async function resetProcessingAdresowoQueue() {
-    const response = await fetch(`${apiBaseUrl}/api/collectors/adresowo/reset-processing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/collectors/adresowo/reset-processing`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ limit: 2000 }),
@@ -1099,7 +1101,7 @@ export function useImportController({
   }
 
   async function resetProcessingMorizonQueue() {
-    const response = await fetch(`${apiBaseUrl}/api/collectors/morizon/reset-processing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/collectors/morizon/reset-processing`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ limit: 2000 }),
@@ -1137,7 +1139,7 @@ export function useImportController({
     setIsRunningDuplicateAutoMerge(true);
     setDuplicateAutoMergeError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/duplicates/auto-merge`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/auto-merge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 10_000 }),
@@ -1158,7 +1160,7 @@ export function useImportController({
     setIsScanningRelistedListings(true);
     setRelistingScanError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/relistings/scan`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/relistings/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 100 }),

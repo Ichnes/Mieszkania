@@ -1,0 +1,51 @@
+/* The offer list is the primary task, including on a narrow screen. */
+.top-dashboard-frame .hero > div:first-child {
+  min-height: 160px;
+  padding: 24px 28px;
+}
+.top-dashboard-frame .hero h1 {
+  max-width: 24ch;
+  font-size: clamp(1.7rem, 2.7vw, 2.5rem);
+  line-height: 1.08;
+}
+.top-dashboard-frame .hero .eyebrow {
+  margin-bottom: 10px;
+}
+.top-dashboard-frame .hero-card {
+  padding: 18px;
+}
+.top-dashboard-frame .hero-card > span,
+.top-dashboard-frame .hero-card > strong,
+.top-dashboard-frame .hero-card > p {
+  display: none;
+}
+.top-dashboard-frame .hero-stat {
+  padding: 12px 16px;
+}
+@media (max-width: 680px) {
+  .top-dashboard-frame .hero {
+    margin: 12px 0;
+    gap: 10px;
+  }
+  .top-dashboard-frame .hero > div:first-child {
+    min-height: 0;
+    padding: 18px 22px;
+    border-radius: 20px;
+  }
+  .top-dashboard-frame .hero .lead {
+    display: none;
+  }
+  .top-dashboard-frame .hero-card {
+    padding: 12px;
+    border-radius: 18px;
+  }
+  .top-dashboard-frame .hero-stat {
+    padding: 10px 12px;
+  }
+  .top-dashboard-frame .hero-stat small {
+    min-height: 0;
+  }
+  .top-dashboard-frame .hero-stats {
+    margin-top: 12px;
+  }
+}

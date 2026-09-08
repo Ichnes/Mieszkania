@@ -238,7 +238,9 @@ export class OtodomStorage implements CollectorStorage {
                     else listings.exclusion_reason
                   end,
                   price_amount = case when $25 then coalesce(excluded.price_amount, listings.price_amount) else excluded.price_amount end,
-                  price_per_sqm = case when $25 then coalesce(excluded.price_per_sqm, listings.price_per_sqm) else excluded.price_per_sqm end,
+                  price_per_sqm = case when $25 then
+                    coalesce(excluded.price_amount, listings.price_amount) / nullif(coalesce(listings.area_sqm, excluded.area_sqm), 0)
+                    else excluded.price_per_sqm end,
                   area_sqm = case when $25 then coalesce(listings.area_sqm, excluded.area_sqm) else excluded.area_sqm end,
                   rooms = case when $25 then coalesce(listings.rooms, excluded.rooms) else excluded.rooms end,
                   floor = case when $25 then coalesce(listings.floor, excluded.floor) else excluded.floor end,

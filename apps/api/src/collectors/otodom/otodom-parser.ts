@@ -1,6 +1,7 @@
 import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
 import { extractOtodomExternalId } from "./otodom-url";
+import { parsePortalFloor as parseFloorNumber } from "../../services/listings/portal-building-facts";
 
 type JsonRecord = Record<string, unknown>;
 
@@ -504,15 +505,6 @@ function extractStreetFromText(text: string | null | undefined) {
   const stripped = stripHtml(text) ?? text;
   const match = stripped.match(/\b(?:ul\.?|ulica)\s+([A-ZĄĆĘŁŃÓŚŹŻ0-9][^,.;<\n]{1,80})/i);
   return sanitizeStreetCandidate(match?.[1]);
-}
-
-function parseFloorNumber(value: string | null) {
-  if (!value) {
-    return null;
-  }
-
-  const match = value.match(/(\d+)/);
-  return match ? Number(match[1]) : null;
 }
 
 function parseFloorInfo(value: string | null) {

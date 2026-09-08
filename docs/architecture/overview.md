@@ -1,7 +1,7 @@
 # Architektura
 
 Projekt to monorepo npm: React/Vite w `apps/web`, Fastify/PostgreSQL w `apps/api` oraz
-wspólne typy w `packages/shared`. Przeglądarka korzysta z API przez proxy Vite.
+wspólne typy w `packages/shared`. Przeglądarka korzysta z API przez proxy Vite w trybie deweloperskim lub Nginx w Dockerze.
 
 ## Frontend
 
@@ -43,3 +43,13 @@ należą do narzędzi utrzymania, a nie do każdego restartu serwera.
 
 Konfiguracja i baza nie należą do kodu aplikacji. `storage/`, `.env` i `.local/` są
 ignorowane przez Git. Nie zapisujemy adresów pracy jako domyślnych wartości w kodzie.
+
+## Logowanie i odczyty
+
+`http/auth.ts` chroni API i zdjęcia przed rejestracją tras, gdy AUTH_ENABLED=true.
+Konta lokalne i scrypt są niezależne od danych ofertowych; sesje pozostają w pamięci API.
+`AuthBoundary` osłania Workspace, a `shared/lib/http.ts` obsługuje nagłówek żądań zapisu i 401.
+
+Dashboard zwraca statystyki i pustą tablicę `listings` zachowaną dla kontraktu;
+listę pobiera osobne paginowane żądanie. Zdjęcia mają asynchroniczne wyszukiwanie
+z pamięcią katalogów do 15 sekund (maks. 4096). RCN nie jest zależnością przeglądania ofert.

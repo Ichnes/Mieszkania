@@ -1,5 +1,9 @@
 # Dostęp z innych urządzeń w domu
 
+Dla Dockera otwórz `http://IP-KOMPUTERA:8080/oferty`; kontenery działają w tle po `docker compose up -d`.
+Zapora powinna dopuszczać port 8080 w sieci prywatnej. Poniższe przykłady z 5173 dotyczą
+uruchomienia bez kontenerów (`npm run dev`). [Logowanie](login.md) można włączyć w obu wariantach.
+
 Aplikacja jest dostępna w tej samej sieci Wi-Fi/LAN. Aby zamiast adresu IP używać stałego, czytelnego linku, ustaw w routerze lokalny rekord DNS:
 
 ```
@@ -19,7 +23,7 @@ Jeżeli router obsługuje domenę `.local`, można użyć także rekordu `otomie
 Dodaj na każdym urządzeniu, które ma korzystać z aplikacji, wpis mapujący `otomieszkanie` na aktualny adres IP komputera z aplikacją. W Windows jest to plik uruchomiony jako administrator:
 
 ```
-C:\\Windows\\System32\\drivers\\etc\\hosts
+C:\Windows\System32\drivers\etc\hosts
 ```
 
 Przykład wpisu:
@@ -36,7 +40,7 @@ Wtedy adres pozostaje taki sam: `http://otomieszkanie:5173`.
 - Na komputerze z aplikacją trzeba zezwolić Zaporze Windows na ruch przychodzący do portu `5173` (sieci prywatne).
 - Komputer z aplikacją oraz polecenie `npm run dev` muszą pozostać uruchomione.
 
-Adres bez portu, np. `http://otomieszkanie`, wymagałby dodatkowo serwera działającego na porcie 80 lub reverse proxy. Obecna wersja korzysta z portu `5173`, żeby nie wymagać uprawnień administratora.
+Adres bez portu, np. `http://otomieszkanie`, wymagałby dodatkowo serwera działającego na porcie 80 lub reverse proxy. Serwer deweloperski korzysta z portu `5173`, żeby nie wymagać uprawnień administratora.
 
 ## Link do konkretnej oferty
 

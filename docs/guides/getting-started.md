@@ -19,12 +19,29 @@ domowej, jeśli zapora Windows pozwala na połączenia. Opcjonalne
 `DOCKER_BIND_ADDRESS=127.0.0.1` ogranicza dostęp do tego komputera.
 `-d` uruchamia kontenery w tle; zamknięcie terminala ich nie zatrzymuje.
 Po restarcie komputera uruchom Docker Desktop — kontenery mają automatyczny restart.
-Nie przekierowuj portu w routerze: aplikacja nie ma logowania, a dostęp z internetu
-wymaga dodatkowej ochrony.
+Przed udostępnieniem przez internet włącz [opcjonalne logowanie](login.md) i HTTPS.
 
 `docker compose logs --tail=100` pokazuje logi. `docker compose down` zatrzymuje
 aplikację i zachowuje dane; dodanie `--volumes` usuwa dane wolumenów.
-Po zmianie kodu ponów `docker compose up -d --build`.
+Po zmianie kodu ponów `docker compose up -d --build`. Nie trzeba wcześniej wykonywać `down`.
+
+### Zmiany kodu bez przebudowy za każdym razem
+
+Z zainstalowanym Node.js uruchom `npm run docker:dev`. Polecenie zachowuje lokalny
+`compose.override.yaml`, uruchamia Vite na tym samym porcie 8080 i obserwuje pliki.
+Frontend odświeża się przez HMR; zmiana API lub wspólnego pakietu synchronizuje pliki
+i restartuje dany serwis. PostgreSQL i dane pozostają uruchomione. Pierwszy start oraz
+zmiana zależności wymagają budowy obrazu.
+
+Terminal z obserwowaniem musi pozostać otwarty. Ctrl+C kończy sesję deweloperską.
+Do zwykłej pracy w tle wróć przez `docker compose up -d --build`. Nie uruchamiaj
+jednocześnie drugiego API na tej samej bazie.
+
+Bez lokalnego Node.js użyj `docker compose -f compose.yaml -f compose.dev.yaml up --build --watch`.
+Jeżeli masz lokalny plik konfiguracji, dopisz `-f compose.override.yaml` **przed**
+`-f compose.dev.yaml`, aby zachować połączenie z dotychczasową bazą.
+Wymagany jest aktualny Compose z obsługą `sync+restart`, `initial_sync` i `!override`.
+Sposób synchronizacji opisuje [Docker Compose Watch](https://docs.docker.com/compose/how-tos/file-watch/).
 
 ### Istniejące dane na tym komputerze
 

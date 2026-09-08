@@ -19,6 +19,7 @@ export function ListingImageSlide({
         : [];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imagesReady, setImagesReady] = useState(false);
+  const [prefetchAdjacent, setPrefetchAdjacent] = useState(false);
   const [visitedImages, setVisitedImages] = useState<Set<string>>(() => new Set());
   const swipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didSwipeRef = useRef(false);
@@ -27,6 +28,7 @@ export function ListingImageSlide({
   useEffect(() => {
     setActiveImageIndex(0);
     setImagesReady(false);
+    setPrefetchAdjacent(false);
     setVisitedImages(new Set());
   }, [listing.id]);
 
@@ -35,10 +37,12 @@ export function ListingImageSlide({
   }
 
   const changeImage = (direction: -1 | 1) => {
+    setPrefetchAdjacent(true);
     setActiveImageIndex((current) => (current + direction + imageUrls.length) % imageUrls.length);
   };
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    setPrefetchAdjacent(true);
     if (event.pointerType === "mouse" || imageUrls.length < 2) {
       return;
     }
@@ -69,6 +73,9 @@ export function ListingImageSlide({
       <div
         className="listing-image-track"
         style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+        onPointerEnter={(event) => {
+          if (event.pointerType === "mouse") setPrefetchAdjacent(true);
+        }}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
         onPointerCancel={() => {
@@ -85,6 +92,7 @@ export function ListingImageSlide({
           index === activeImageIndex ||
           visitedImages.has(imageUrl) ||
           (imagesReady &&
+            prefetchAdjacent &&
             (index === (activeImageIndex + 1) % imageUrls.length ||
               index === (activeImageIndex - 1 + imageUrls.length) % imageUrls.length)) ? (
             <img

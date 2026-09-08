@@ -15,6 +15,7 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     canonical_url: "https://example.com/offer",
     source_name: "Test",
     price_amount: "1000000",
+    price_per_sqm: "22727.27",
     area_sqm: "60",
     rooms: "3",
     status: "active",
@@ -47,6 +48,10 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     .sort()
     .slice(30, 60);
   assert.equal(result.total, 3000);
+  assert.ok(
+    result.items.every((item) => item.pricePerSqmLabel?.replace(/\s/g, "").startsWith("16667")),
+    "Displayed unit price must use the current price and area, not a stale stored value",
+  );
   assert.deepEqual(
     result.items.map((item) => item.id),
     expectedIds,
@@ -88,4 +93,20 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     discounted.items[0].dreamScore,
     computeDreamScore(discounted.items[0], settings.dreamProfile, settings.workplaces),
   );
+
+  // A seller-confirmed price changes personal calculations, but not portal events.
+  Object.assign(target, {
+    manual_asking_price_override: "900000",
+    manual_negotiated_price_amount: "800000",
+  });
+  const personal = await getListingDetail(target.id);
+  assert.equal(personal?.priceSource, "negotiated");
+  assert.equal(personal?.priceLabel.replace(/\D/g, ""), "900000");
+  assert.equal(personal?.advertisedPriceLabel?.replace(/\D/g, ""), "1000000");
+  assert.equal(personal?.pricePerSqmLabel?.replace(/\s/g, ""), "15000PLN/m2");
+  assert.equal(priceEvents[0].new_price_amount, "1000000");
+  Object.assign(target, { manual_asking_price_override: null });
+  const restored = await getListingDetail(target.id);
+  assert.equal(restored?.priceSource, "advertised");
+  assert.equal(restored?.priceLabel.replace(/\D/g, ""), "1000000");
 });

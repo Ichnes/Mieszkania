@@ -1,3 +1,4 @@
+import { apiFetch } from "../../shared/lib/http";
 import type { ListingDetail } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
@@ -60,11 +61,11 @@ export function ListingTransitMap(input: {
 
   useEffect(() => {
     const controller = new AbortController();
-    void fetch(`${apiBaseUrl}/api/map/railway`, { signal: controller.signal })
+    void apiFetch(`${apiBaseUrl}/api/map/railway`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setRailwayMap(data))
       .catch(() => setRailwayMap(null));
-    void fetch(`${apiBaseUrl}/api/map/tramway`, { signal: controller.signal })
+    void apiFetch(`${apiBaseUrl}/api/map/tramway`, { signal: controller.signal })
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => setTramStops(data?.stops ?? []))
       .catch(() => setTramStops([]));

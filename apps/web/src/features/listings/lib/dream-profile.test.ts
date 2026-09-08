@@ -146,10 +146,10 @@ test("mortgage points use saved down payment, acquisition extras and the 7500 th
 
 test("premium countertops, oak floors, carpentry and parking recognize Polish variants once", () => {
   for (const [description, bonus] of [
-    ["Blaty kuchenne wykonane ze spieku kwarcowego", 8],
+    ["Blaty kuchenne wykonane ze spieku kwarcowego", 7],
     ["Kuchnia z blatem z granitu.", 8],
     ["Granitowe blaty kuchenne.", 8],
-    ["Blat wykonany z konglomeratu kwarcowego.", 8],
+    ["Blat wykonany z konglomeratu kwarcowego.", 7],
     ["Blaty ze spieku, blaty granitowe i blat z konglomeratu.", 8],
     ["Na podłogach wysokiej jakości deska dębow", 10],
     ["Na podłodze deski dębowe.", 6],

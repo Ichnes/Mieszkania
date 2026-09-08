@@ -23,6 +23,7 @@ export function buildMapListingPreview(listing: ListingSummary) {
       <strong class="map-offer-preview-title">${escapeHtml(listing.title)}</strong>
       <span class="map-offer-preview-location">${escapeHtml(location)}</span>
       <div class="map-offer-preview-metrics"><strong>${escapeHtml(listing.priceLabel)}</strong>${details ? `<span>${escapeHtml(details)}</span>` : ""}</div>
+      ${listing.priceSource === "negotiated" ? '<span class="price-origin-note">Cena po negocjacjach · w ogłoszeniu: ' + escapeHtml(listing.advertisedPriceLabel ?? "brak ceny") + "</span>" : ""}
       ${accuracy}<span class="map-offer-preview-hint">Kliknij, żeby otworzyć ofertę</span>
     </div>
   </article>`;

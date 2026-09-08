@@ -1,5 +1,35 @@
 # Bieżące zadania
 
+## Pełny audyt i usprawnienia (2026-09-08)
+
+- [x] Audyt ośmiu widoków, aktualizacji, map/porównania/statystyk i responsywności; [raport z priorytetami](audit-2026-09-08.md).
+- [x] Przegląd konfiguracji, bieżących Markdownów, zależności, żądań i pozostałości kodu; poprawione instrukcje Docker/LAN/logowania i odwołania do lokalnych artefaktów. 18 Markdownów, brak zepsutych lokalnych linków.
+- [x] Audyt kompletności 8436 aktywnych rekordów z siedmiu portali, bez aktywnej próbki OLX. Otodom `ground_floor` poprawione w parserze i odczycie istniejących snapshotów. Pozostałe braki opisane per portal.
+- [x] Naprawa globalnej niespójności PLN/m²: zapis `price_only` i odczyt. Backup + transakcja poprawiły 1057 pochodnych wartości, bez zmiany ceny, metrażu i historii.
+- [x] Aktualna cena po rozmowie z oznaczeniem „Cena po negocjacjach”, zachowaną ceną portalową, filtrami/sortowaniem, finansowaniem, mapą i porównaniem. Cel negocjacji jest osobną planowaną kwotą. Sukces/błąd zapisu widoczny w UI.
+- [x] Blat: granit 8, konglomerat/spiek 7, drewno/naturalny dąb 5; najwyższa premia raz. Synonimy mebli na wymiar i kabin prysznicowych, negacje i imitacje w testach.
+- [x] Fraza „BEZPOŚREDNIO OD WŁAŚCICIELI – BRAK PROWIZJI” oraz warianty zero/0 %/zerowa prowizja nie uruchamiają przeciwnej etykiety ani kary. Testy regresji.
+- [x] Ochrona ścieżek mediów, asynchroniczne wyszukiwanie zdjęć, mniej pobrań galerii i zbędnych żądań startowych; kompaktowy pierwszy ekran, działające przewijanie i przyciski porównania.
+- [x] Opcjonalne lokalne logowanie email/hasło, sesje, cookies, limit prób, kontrola Origin i walidacja URL importu. Domyślnie wyłączone; współdzielona baza, bez zewnętrznych integracji.
+- [x] Docker Watch z zachowaniem lokalnego override; sprawdzona synchronizacja Vite i API z restartem serwisu na osobnej pustej bazie/porcie. Poprawione uprawnienia katalogu tymczasowego Vite. PostgreSQL nie jest restartowany przy zmianie kodu.
+- [x] 117 testów API i 70 frontendu, build monorepo. Npm audit: 0 podatności zależności npm. Próba ceny po rozmowie na rzeczywistym PostgreSQL (szczegóły, filtry ceny i PLN/m², mapa), wszystkie próbne zapisy wycofane.
+- [x] Chromium: osiem widoków 1440/1280/390 px, zero błędów JS i przepełnienia, wybór porównania zachowany po następnej stronie. Login/błędne hasło/logout, ochrona API, HttpOnly/SameSite i link do oferty sprawdzone na 1440/390 px; konta testowe tylko w pamięci.
+- [x] Końcowe wdrożenie na 8080 zachowuje dotychczasową bazę/storage. Powtórzony przegląd 8 tras na 3 rozmiarach; zgłoszone oferty mają poprawne ceny i prowizję. Końcowa naprawa uzupełniła 119 wartości powstałych przed wdrożeniem, z osobnym backupem: 0 niespójnych PLN/m² w 12 321 rekordach.
+- [x] Końcowe sprawdzenie działających zabezpieczeń: błędny URL importu odrzucony, ścieżki spoza mediów nie ujawniają plików; logowanie i wylogowanie na finalnym buildzie, ciemny motyw 390 px. Formatowanie i `git diff --check` poprawne.
+
+### Kolejna iteracja — plan po audycie
+
+- [ ] P0 przed publikacją: włączyć logowanie i HTTPS, ustawić APP_ORIGIN; konto obecnie daje pełną edycję wspólnej bazy.
+- [ ] P1 bezpieczeństwo: pełna ochrona przed SSRF dla przekierowań/DNS/zdjęć; naprawa łańcucha certyfikatów i usunięcie obejść weryfikacji TLS; walidacja wszystkich payloadów API.
+- [ ] P1 udostępnianie: rola tylko do odczytu dla rodziny i jawnie zaufane proxy dla limitów logowania.
+- [ ] P1 wydajność: profil SQL/tekstu/mediów dla `dream_desc`, jeden zbiorczy status portali, wolniejsze odpytywanie pustej kolejki.
+- [ ] P1 dane: piętro Gratki na archiwalnym HTML, pokrycie parsera OLX, brakujące współrzędne Domiporta/Nieruchomości-online. Każda korekta selektorów z rzeczywistą próbką i regresją.
+- [ ] P1 statystyki: normalizacja dzielnic przed agregacją; nie uśredniać median aliasów w frontendzie. Minimalne próby i kwartyle dla segmentów.
+- [ ] P2 UX: mniej oznaczeń na zdjęciach, krótsza Aktualizacja, RCN w opcjonalnym imporcie, utrwalanie porównania po odświeżeniu, trzy stany cech (tak/nie/brak danych).
+- [ ] P2 dostępność: Escape po pełnym otwarciu szczegółów (obecnie obsługiwany przy ładowaniu i w galerii), focus trap i powrót fokusu; sprawdzić współpracę z pełnym ekranem mapy/zdjęć.
+- [ ] P2 porządek: usunąć martwe stany kontrolera importów i pozostałe typy wycofanego rankingu/RCN dopiero po kontroli zależności; utrzymywane odtwarzanie granic MSI zamiast lokalnego skryptu.
+- [ ] P2 jakość analizy: zbiór pozytywnych i negatywnych przykładów opisów; fornir/laminat/lite drewno, zamontowane vs przygotowane instalacje, status prawny parkingu.
+
 ## HTTP 500 dashboard po podłączeniu istniejącej bazy do Dockera (2026-09-08)
 
 - [x] Logi potwierdzają wyczerpanie puli połączeń przy równoległym pobieraniu RCN dla dashboardu i listy; błędy także w statusie kolejki.

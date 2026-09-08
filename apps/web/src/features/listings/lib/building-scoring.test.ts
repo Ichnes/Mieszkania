@@ -125,8 +125,8 @@ test("premium vocabulary covers inflections, reversed word order and negations",
     "Blaty konglomeratowe",
   ])
     assert.equal(
-      evaluate(description).rows.find((row) => row.label === "Kamienny blat")!.points,
-      8,
+      evaluate(description).rows.find((row) => row.label === "Blat")!.points,
+      /granit/i.test(description) ? 8 : /spiek|konglomerat/i.test(description) ? 7 : 0,
       description,
     );
   for (const description of [

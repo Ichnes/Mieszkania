@@ -28,3 +28,11 @@ Wstrzymaj automatyzację przed naprawą i przywróć jej poprzedni stan po zako�
 Pozostałe skrypty są w `apps/api/src/scripts/maintenance`, `database` i `storage`.
 Służą do konkretnych napraw; nie uruchamiają się automatycznie podczas `npm run dev`.
 Przed użyciem przeczytaj kod i zapisz lokalną kopię bazy.
+
+## Niespójna cena za m²
+
+`npm run prices:recalculate` pokazuje plan przeliczenia `listings.price_per_sqm` z
+`price_amount / area_sqm`. `npm run prices:recalculate -- --apply` zapisuje wyłącznie
+ten wynik, w transakcji, po utworzeniu backupu NDJSON w `storage/maintenance`.
+Nie zmienia ceny, metrażu, dat ani historii. Cena po rozmowie jest nakładana przy odczycie,
+więc nie jest zapisywana tym narzędziem do kolumny portalowej.

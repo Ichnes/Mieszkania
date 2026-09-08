@@ -110,6 +110,21 @@ export function ListingDetailPanel(input: {
   );
   const [viewingNotes, setViewingNotes] = useState(input.listing.viewing?.notes ?? "");
   const [manual, setManual] = useState<ListingDetail["manual"]>(input.listing.manual);
+  const [manualFeedback, setManualFeedback] = useState<{ error: boolean; message: string } | null>(
+    null,
+  );
+  async function saveManual() {
+    setManualFeedback(null);
+    try {
+      await input.onSaveManual(manual);
+      setManualFeedback({ error: false, message: "Zapisano ustalenia i aktualną cenę." });
+    } catch (error) {
+      setManualFeedback({
+        error: true,
+        message: error instanceof Error ? error.message : "Nie udało się zapisać ustaleń.",
+      });
+    }
+  }
   const [contactEvent, setContactEvent] = useState(
     createEmptyContactEventDraft(input.listing.manual.contactName),
   );
@@ -137,6 +152,7 @@ export function ListingDetailPanel(input: {
     setLightboxImageIndex(null);
     setIsDismissConfirmOpen(false);
     setActiveDetailTab("overview");
+    setManualFeedback(null);
   }, [input.listing.id]);
   useEffect(() => {
     detailPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
@@ -504,8 +520,19 @@ export function ListingDetailPanel(input: {
                     <td>{formatListingDateLabel(input.listing)}</td>
                   </tr>
                   <tr>
-                    <th>Cena</th>
-                    <td className="fact-price">{input.listing.priceLabel}</td>
+                    <th>
+                      {input.listing.priceSource === "negotiated"
+                        ? "Cena po negocjacjach"
+                        : "Cena z ogłoszenia"}
+                    </th>
+                    <td className="fact-price">
+                      {input.listing.priceLabel}
+                      {input.listing.priceSource === "negotiated" ? (
+                        <small className="price-origin-note">
+                          W ogłoszeniu: {input.listing.advertisedPriceLabel ?? "brak ceny"}
+                        </small>
+                      ) : null}
+                    </td>
                     <th>Metraż</th>
                     <td>{input.listing.areaLabel ?? "-"}</td>
                   </tr>
@@ -584,7 +611,7 @@ export function ListingDetailPanel(input: {
                     <td>
                       {manual.askingPriceOverride ? formatPln(manual.askingPriceOverride) : "-"}
                     </td>
-                    <th>Do utargowania</th>
+                    <th>Cel negocjacji</th>
                     <td>
                       {manual.negotiatedPriceAmount ? formatPln(manual.negotiatedPriceAmount) : "-"}
                     </td>
@@ -642,10 +669,13 @@ export function ListingDetailPanel(input: {
                   className="action-button secondary-button"
                   type="button"
                   disabled={input.isSavingManual}
-                  onClick={() => void input.onSaveManual(manual)}
+                  onClick={() => void saveManual()}
                 >
                   {input.isSavingManual ? "Zapisuję…" : "Zapisz numer"}
                 </button>
+                {manualFeedback ? (
+                  <p role={manualFeedback.error ? "alert" : "status"}>{manualFeedback.message}</p>
+                ) : null}
               </div>
               {maintenanceFee ? (
                 <p className="muted listing-facts-hint">
@@ -841,7 +871,7 @@ export function ListingDetailPanel(input: {
                   />
                 </label>
                 <label className="detail-field">
-                  <span>Cena po rozmowie</span>
+                  <span>Cena po rozmowie (aktualna)</span>
                   <input
                     className="text-input"
                     value={stringValue(manual.askingPriceOverride)}
@@ -854,7 +884,7 @@ export function ListingDetailPanel(input: {
                   />
                 </label>
                 <label className="detail-field">
-                  <span>Cena po negocjacji</span>
+                  <span>Cel negocjacji (planowana kwota)</span>
                   <input
                     className="text-input"
                     value={stringValue(manual.negotiatedPriceAmount)}
@@ -891,10 +921,13 @@ export function ListingDetailPanel(input: {
                 <button
                   className="action-button"
                   disabled={input.isSavingManual}
-                  onClick={() => void input.onSaveManual(manual)}
+                  onClick={() => void saveManual()}
                 >
                   {input.isSavingManual ? "Zapisywanie..." : "Zapisz notatki do oferty"}
                 </button>
+                {manualFeedback ? (
+                  <p role={manualFeedback.error ? "alert" : "status"}>{manualFeedback.message}</p>
+                ) : null}
               </div>
             </section>
 
@@ -1195,7 +1228,7 @@ export function ListingDetailPanel(input: {
             </div>
 
             <div className="result-box detail-sidebar-box">
-              <strong>Historia cen</strong>
+              <strong>Historia cen w ogłoszeniu</strong>
               {input.listing.priceHistory.length > 0 ? (
                 <ul className="result-list">
                   {[...input.listing.priceHistory]

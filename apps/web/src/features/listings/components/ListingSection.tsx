@@ -1,12 +1,7 @@
 import type { ListingSummary } from "@mieszkania/shared";
-import { LoaderCircle, RefreshCw } from "lucide-react";
+import { GitCompareArrows, LoaderCircle, RefreshCw } from "lucide-react";
 import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
-import {
-  filterCommercialBadges,
-  filterImageBadges,
-  filterNonCommercialBadges,
-  getRcnIndicator,
-} from "../lib/badges";
+import { filterImageBadges, filterNonCommercialBadges } from "../lib/badges";
 import { listingHref } from "../lib/links";
 import { buildListingPrimaryLocation } from "../lib/location";
 import { ListingBadgeRow } from "./ListingBadgeRow";
@@ -14,6 +9,8 @@ import { ListingImageSlide } from "./ListingImageSlide";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingSection(input: {
+  compareIds: string[];
+  onToggleCompare: (id: string) => void;
   downPayment: number;
   title: string;
   listings: ListingSummary[];
@@ -35,7 +32,7 @@ export function ListingSection(input: {
               <LoaderCircle size={14} className="icon-spin" aria-hidden="true" /> Odświeżam oferty
             </>
           ) : (
-            `${input.listings.length} rekordow`
+            `${input.listings.length} ofert`
           )}
         </div>
       </div>
@@ -50,10 +47,8 @@ export function ListingSection(input: {
           </div>
         ) : null}
         {input.listings.map((listing) => {
-          const commercialBadges = filterCommercialBadges(listing.badges);
           const imageBadges = filterImageBadges(listing.badges);
           const nonCommercialBadges = filterNonCommercialBadges(listing.badges);
-          const rcnIndicator = getRcnIndicator(listing.rcnDeltaLabel);
 
           return (
             <article
@@ -113,14 +108,6 @@ export function ListingSection(input: {
                         aria-label={`Oferta wystawiona ponownie; cena ${listing.relisting.priceChange === "higher" ? "wyższa" : listing.relisting.priceChange === "lower" ? "niższa" : "bez zmian"}`}
                       >
                         <RefreshCw size={17} aria-hidden="true" />
-                      </span>
-                    ) : null}
-                    {rcnIndicator ? (
-                      <span
-                        className={`listing-rcn-chip ${rcnIndicator}`}
-                        title={listing.rcnDeltaLabel}
-                      >
-                        RCN
                       </span>
                     ) : null}
                     {Math.abs(listing.priceChangePercent) > 0 ? (
@@ -184,7 +171,9 @@ export function ListingSection(input: {
                 ) : null}
                 <dl>
                   <div className="listing-metric metric-price">
-                    <dt>Cena</dt>
+                    <dt>
+                      {listing.priceSource === "negotiated" ? "Cena po negocjacjach" : "Cena"}
+                    </dt>
                     <dd>{listing.priceLabel}</dd>
                   </div>
                   <div className="listing-metric metric-area">
@@ -200,7 +189,24 @@ export function ListingSection(input: {
                     <dd>{listing.roomsCount ? String(listing.roomsCount) : "-"}</dd>
                   </div>
                 </dl>
+                {listing.priceSource === "negotiated" ? (
+                  <p className="price-origin-note">
+                    W ogłoszeniu: {listing.advertisedPriceLabel ?? "brak ceny"}
+                  </p>
+                ) : null}
                 <ListingBadgeRow badges={nonCommercialBadges} />
+                <button
+                  type="button"
+                  className="action-button secondary-button listing-compare-action"
+                  aria-pressed={input.compareIds.includes(listing.id)}
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    input.onToggleCompare(listing.id);
+                  }}
+                >
+                  <GitCompareArrows size={16} aria-hidden="true" />
+                  {input.compareIds.includes(listing.id) ? "W porównaniu" : "Porównaj"}
+                </button>
               </div>
             </article>
           );

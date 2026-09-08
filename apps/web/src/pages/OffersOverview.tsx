@@ -35,9 +35,7 @@ export function OffersOverview({
             <div>
               <p className="eyebrow">Wasze poszukiwania · {region.name}</p>
               <h1>Nasze oferty mieszkaniowe</h1>
-              <p className="lead">
-                Oferty z Warszawy, ceny, dojazdy i zapisane oferty w jednym miejscu.
-              </p>
+              <p className="lead">Ceny, dojazdy i zapisane oferty w jednym miejscu.</p>
             </div>
 
             <div className="hero-card">
@@ -50,7 +48,9 @@ export function OffersOverview({
               <p>{listingsTotal || dashboardListings.length} ofert gotowych do porównania.</p>
               <button
                 className="action-button hero-primary-action"
-                onClick={() => setActiveTab("dashboard")}
+                onClick={() =>
+                  document.getElementById("oferty-lista")?.scrollIntoView({ block: "start" })
+                }
               >
                 <Search size={16} aria-hidden="true" /> Przeglądaj oferty
               </button>
@@ -73,37 +73,43 @@ export function OffersOverview({
             ))}
           </div>
 
-          <section className="panel compact-panel">
-            <div className="panel-header">
-              <div className="detail-sidebar">
-                <p className="eyebrow">Kalendarz</p>
-                <h2>Najbliższe wizyty</h2>
+          {upcomingViewings.items.length > 0 ? (
+            <section className="panel compact-panel">
+              <div className="panel-header">
+                <div className="detail-sidebar">
+                  <p className="eyebrow">Kalendarz</p>
+                  <h2>Najbliższe wizyty</h2>
+                </div>
+                <div className="pill">{upcomingViewings.total} zaplanowane</div>
               </div>
-              <div className="pill">{upcomingViewings.total} zaplanowane</div>
-            </div>
-            <div className="calendar-grid">
-              {upcomingViewings.items.length > 0 ? (
-                upcomingViewings.items.map((viewing) => (
-                  <article
-                    key={viewing.id}
-                    className="calendar-card"
-                    onClick={() => void openListing(viewing.listingId)}
-                  >
-                    <span>{formatViewingDate(viewing.scheduledAt)}</span>
-                    <strong>{viewing.listingTitle}</strong>
-                    <p>
-                      {viewing.city}
-                      {viewing.district ? ` / ${viewing.district}` : ""}
-                    </p>
-                    <p>{viewing.addressText ?? "Brak adresu"}</p>
-                    {viewing.notes ? <p className="muted">{viewing.notes}</p> : null}
-                  </article>
-                ))
-              ) : (
-                <div className="result-box">Brak zaplanowanych oglądań.</div>
-              )}
-            </div>
-          </section>
+              <div className="calendar-grid">
+                {upcomingViewings.items.length > 0 ? (
+                  upcomingViewings.items.map((viewing) => (
+                    <article
+                      key={viewing.id}
+                      className="calendar-card"
+                      onClick={() => void openListing(viewing.listingId)}
+                    >
+                      <span>{formatViewingDate(viewing.scheduledAt)}</span>
+                      <strong>{viewing.listingTitle}</strong>
+                      <p>
+                        {viewing.city}
+                        {viewing.district ? ` / ${viewing.district}` : ""}
+                      </p>
+                      <p>{viewing.addressText ?? "Brak adresu"}</p>
+                      {viewing.notes ? <p className="muted">{viewing.notes}</p> : null}
+                    </article>
+                  ))
+                ) : (
+                  <div className="result-box">Brak zaplanowanych oglądań.</div>
+                )}
+              </div>
+            </section>
+          ) : (
+            <p className="empty-viewings-note">
+              Brak zaplanowanych oglądań. Termin dodasz w szczegółach oferty.
+            </p>
+          )}
         </div>
       ) : null}
     </>

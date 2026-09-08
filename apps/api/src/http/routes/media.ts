@@ -2,7 +2,7 @@ import type { FastifyInstance } from "fastify";
 import { readFile } from "node:fs/promises";
 import { extname } from "node:path";
 import "../../config";
-import { findMediaFilePath } from "../../services/media/image-repository";
+import { findMediaFilePathAsync } from "../../services/media/image-repository";
 import { backfillListingMedia } from "../../services/media/media-downloader";
 
 export function registerMediaRoutes(app: FastifyInstance) {
@@ -25,8 +25,8 @@ export function registerMediaRoutes(app: FastifyInstance) {
   });
 
   app.get<{ Params: { storageKey: string } }>("/api/media/:storageKey", async (request, reply) => {
-    const storageKey = decodeURIComponent(request.params.storageKey);
-    const filePath = findMediaFilePath(storageKey);
+    // Fastify has decoded route parameters already. Never decode a second time.
+    const filePath = await findMediaFilePathAsync(request.params.storageKey);
 
     if (!filePath) {
       reply.code(404);
@@ -35,6 +35,8 @@ export function registerMediaRoutes(app: FastifyInstance) {
 
     const bytes = await readFile(filePath);
     reply.header("Content-Type", getMimeType(filePath));
+    reply.header("Cache-Control", "private, max-age=3600");
+    reply.header("X-Content-Type-Options", "nosniff");
     return reply.send(bytes);
   });
 }
@@ -53,6 +55,8 @@ function getMimeType(filePath: string) {
   if (extension === ".webp") {
     return "image/webp";
   }
+  if (extension === ".gif") return "image/gif";
+  if (extension === ".avif") return "image/avif";
 
   return "application/octet-stream";
 }

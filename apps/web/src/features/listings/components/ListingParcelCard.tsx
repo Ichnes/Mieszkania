@@ -1,3 +1,4 @@
+import { apiFetch } from "../../../shared/lib/http";
 import type {
   ListingDetail,
   ParcelContextResponse,
@@ -32,7 +33,7 @@ export function ListingParcelCard({
     setPlanning(null);
     setPlanningError(null);
     setLoading(true);
-    fetch(
+    apiFetch(
       `${apiBaseUrl}/api/listings/${listing.id}/parcel${parcelRefreshAttempt ? "?refresh=true" : ""}`,
       { signal: controller.signal },
     )
@@ -57,7 +58,7 @@ export function ListingParcelCard({
     setPlanningLoading(true);
     setPlanningError(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/listings/${listing.id}/planning${refresh ? "?refresh=true" : ""}`,
         { signal },
       );

@@ -1,4 +1,5 @@
-import { Moon, Settings2, Sun } from "lucide-react";
+import { Moon, Settings2, Sun, LogOut } from "lucide-react";
+import { useAuth } from "../../features/auth/AuthBoundary";
 import type { WorkspaceState } from "../useWorkspaceController";
 
 export function AppHeader({
@@ -10,6 +11,7 @@ export function AppHeader({
   >;
 }) {
   const { setActiveTab, setTheme, theme, setSettingsSaveError, setSettingsOpen } = model;
+  const auth = useAuth();
   return (
     <>
       <header className="app-topbar">
@@ -26,6 +28,17 @@ export function AppHeader({
           </span>
         </button>
         <div className="topbar-actions">
+          {auth?.session.enabled && (
+            <button
+              className="icon-button"
+              type="button"
+              onClick={() => void auth.logout()}
+              aria-label="Wyloguj się"
+              title="Wyloguj się"
+            >
+              <LogOut size={19} aria-hidden="true" />
+            </button>
+          )}
           <button
             className="icon-button"
             type="button"

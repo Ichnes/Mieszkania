@@ -22,7 +22,7 @@ relation["boundary"="administrative"]["admin_level"="10"]
 way(r.msi);out geom;
 ```
 
-Dodatkowo Dąbrówka: relacja `11896729`, pobrana z `https://api.openstreetmap.org/api/0.6/relation/11896729/full.json` (ma informację o MSI w `note`, ale nie ma `name:prefix`). Złożyć węzły w drogi, drogi w zamknięte pierścienie przez `buildDistrictGeometry`. Przypisać dzielnicę po pełnej nazwie MSI. Wola Grzybowska → Wesoła; Ursynów Centrum i teren rezerwatu Las Kabacki → Ursynów. Bieżący skrypt pomocniczy: `.local/convert-msi.ts`; wynik wypisuje na stdout, nie nadpisuje sam danych.
+Dodatkowo Dąbrówka: relacja `11896729`, pobrana z `https://api.openstreetmap.org/api/0.6/relation/11896729/full.json` (ma informację o MSI w `note`, ale nie ma `name:prefix`). Złożyć węzły w drogi, drogi w zamknięte pierścienie przez `buildDistrictGeometry`. Przypisać dzielnicę po pełnej nazwie MSI. Wola Grzybowska → Wesoła; Ursynów Centrum i teren rezerwatu Las Kabacki → Ursynów. Skrypt wykorzystany do jednorazowej konwersji był lokalnym narzędziem, nie należy do repo. Przeniesienie odtwarzania danych do utrzymywanego polecenia jest w TODO.
 
 Niektóre nazwy ogłoszeń oznaczają osiedla lub grupy obszarów, nie MSI. Nie dopasowywać ich do wielokątów przez podobieństwo ani nie dorabiać granic. Mapa pokazuje podział MSI, tabela zachowuje nazwy i statystyki ofert. Kolory odróżniają obszary — nie są skalą cen ani liczby ofert.
 
@@ -30,4 +30,4 @@ Niektóre nazwy ogłoszeń oznaczają osiedla lub grupy obszarów, nie MSI. Nie 
 
 Testy `msi-geometry.test.ts`: komplet dzielnic, unikalne identyfikatory, domknięcie pierścieni, współrzędne w Warszawie, skończone ścieżki i pozycje etykiet, zachowanie otworów, Wola Grzybowska w Wesołej. Test API `warsaw-neighborhoods.test.ts` sprawdza również pełne ciągi lokalizacji.
 
-Przegląd UI: `.local/verify-msi.cjs`, zrzuty `.local/review-ui/msi-*.png`; oba motywy, 1440/1280/390 px, wybór mapą/listą/klawiaturą, bez poziomego przepełnienia.
+Historyczna kontrola UI (lokalne artefakty poza repo): oba motywy, 1440/1280/390 px, wybór mapą/listą/klawiaturą, bez poziomego przepełnienia.

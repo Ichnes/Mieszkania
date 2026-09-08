@@ -23,3 +23,12 @@ nadpisywane podczas naprawy bieżących identyfikatorów.
 Stare dane ocen mogą pozostać w `listing_scores`, mimo że funkcja została wycofana.
 Nie czyścimy danych użytkownika przy starcie. Narzędzia resetu są jawne i oddzielone
 od zwykłego uruchomienia.
+
+## Cena portalowa i cena po rozmowie
+
+`listings.price_amount` oraz `price_events` opisują portal. `listing_manual_overrides.asking_price_override`
+przechowuje aktualną cenę po rozmowie; dodatnia kwota ma pierwszeństwo w osobistych obliczeniach
+i filtrach. `negotiated_price_amount` pozostaje celem negocjacji, zgodnie z dotychczasową logiką alertów.
+API zwraca `priceSource` i `advertisedPriceLabel`, aby UI nie mieszał źródeł.
+Cena za m² jest wyliczana z aktualnej ceny i powierzchni. Naprawa historycznie niespójnej
+kolumny pochodnej ma osobny skrypt; nie zmienia kwot bazowych ani historii portalu.

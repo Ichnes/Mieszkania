@@ -1,4 +1,6 @@
 import Fastify from "fastify";
+import { registerAuth } from "./auth";
+import { registerPortalUrlGuard } from "./portal-url-guard";
 import { createListingAutomation } from "../background/listing-refresh";
 import { createCollectors } from "../collectors/registry";
 import { registerAutomationRoutes } from "./routes/automation";
@@ -21,19 +23,18 @@ import { registerSettingsRoutes } from "./routes/settings";
 import { registerStatisticsRoutes } from "./routes/statistics";
 import { registerViewingsRoutes } from "./routes/viewings";
 
-export function createApp() {
+export function createApp(options: { auth?: Parameters<typeof registerAuth>[1] } = {}) {
   const app = Fastify({ logger: true });
+  registerAuth(app, options.auth);
+  registerPortalUrlGuard(app);
   const collectors = createCollectors();
   const automation = createListingAutomation(app, collectors);
   app.setErrorHandler((error, _request, reply) => {
+    const status = (error as { statusCode?: number }).statusCode;
+    if (status && status >= 400 && status < 500)
+      return reply.code(status).send({ message: "Nieprawidłowe żądanie." });
     app.log.error(error, "API request failed");
     reply.code(500).send({ message: "Operacja nie powiodła się. API nadal działa." });
-  });
-
-  app.addHook("onRequest", async (_request, reply) => {
-    reply.header("Access-Control-Allow-Origin", "*");
-    reply.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
-    reply.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
   });
 
   app.options("/*", async (_request, reply) => {

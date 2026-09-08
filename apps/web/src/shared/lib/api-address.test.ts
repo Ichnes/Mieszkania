@@ -10,7 +10,7 @@ test("LAN clients use the proxy instead of their own loopback address", () => {
 });
 
 test("local development, relative prefixes and explicit remote APIs stay supported", () => {
-  assert.equal(resolveApiBaseUrl("http://localhost:3001", "localhost"), "http://localhost:3001");
+  assert.equal(resolveApiBaseUrl("http://localhost:3001", "localhost"), "");
   assert.equal(resolveApiBaseUrl(undefined, "192.168.0.195"), "");
   assert.equal(resolveApiBaseUrl("/backend/", "192.168.0.195"), "/backend");
   assert.equal(

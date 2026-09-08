@@ -40,6 +40,7 @@ storage/           lokalne dane, zdjęcia i backupy — poza Git
 
 | Polecenie              | Działanie                                                                |
 | ---------------------- | ------------------------------------------------------------------------ |
+| `npm run docker:dev`   | Docker z obserwowaniem zmian kodu                                        |
 | `npm run dev`          | Przygotowanie bazy, frontend, API i obserwowanie zmian wspólnego pakietu |
 | `npm run setup`        | Sprawdzenie konfiguracji i przygotowanie lokalnej bazy                   |
 | `npm test`             | Wszystkie testy API i frontendu                                          |
@@ -52,6 +53,8 @@ storage/           lokalne dane, zdjęcia i backupy — poza Git
 
 Zacznij od [spisu dokumentacji](docs/README.md), [instrukcji startu](docs/guides/getting-started.md)
 i [architektury](docs/architecture/overview.md). Bieżące zadania są w [docs/TODO.md](docs/TODO.md).
+[Audyt aplikacji](docs/audit-2026-09-08.md) opisuje poprawki i kolejne priorytety;
+[opcjonalne logowanie](docs/guides/login.md) przygotowuje dostęp przez email i hasło.
 
 `.env`, `storage/`, `.local/`, zależności i buildy są ignorowane przez Git. Nie wysyłaj
 znajomemu swojej bazy ani tych katalogów. Każda osobna instalacja ma własne dane;

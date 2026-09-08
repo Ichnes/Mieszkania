@@ -1,4 +1,59 @@
 /* Dashboard polish overrides. Kept last so responsive rules remain predictable. */
+.top-dashboard-frame .hero h1 {
+  font-size: clamp(1.7rem, 3vw, 2.6rem);
+}
+.empty-viewings-note {
+  margin: 12px 0;
+  color: var(--ink-soft);
+  font-size: 0.85rem;
+}
+.price-origin-note {
+  display: block;
+  margin: 6px 0;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.listing-compare-action {
+  width: 100%;
+  min-height: 40px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.listing-compare-action[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+#oferty-lista {
+  scroll-margin-top: 20px;
+}
+@media (max-width: 900px) {
+  .top-dashboard-frame .hero {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .top-dashboard-frame .hero-card {
+    padding: 14px;
+  }
+  .top-dashboard-frame .hero-card > span,
+  .top-dashboard-frame .hero-card > strong,
+  .top-dashboard-frame .hero-card > p {
+    display: none;
+  }
+  .top-dashboard-frame .hero-card {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .top-dashboard-frame .hero-card button {
+    flex: 1 1 160px;
+    margin: 0;
+  }
+  .top-dashboard-frame .lead {
+    margin: 8px 0;
+  }
+}
 @media (min-width: 901px) {
   .app-shell {
     padding-top: 24px;

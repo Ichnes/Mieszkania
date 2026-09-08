@@ -2,6 +2,8 @@
 
 ## Uruchomienie i obsługa
 
+- [Opcjonalne logowanie](guides/login.md)
+- [Audyt aplikacji i plan usprawnień](audit-2026-09-08.md)
 - [Start lokalny i rozwiązywanie problemów](guides/getting-started.md)
 - [Obsługa aplikacji](guides/application.md)
 - [Dostęp z innych urządzeń w domu](guides/local-network.md)

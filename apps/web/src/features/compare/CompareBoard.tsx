@@ -5,7 +5,12 @@ import { formatPln } from "../../shared/lib/format";
 
 const yesNo = (value?: boolean) => (value === undefined ? "Brak danych" : value ? "Tak" : "Nie");
 const fields: { label: string; value: (listing: ListingSummary) => string }[] = [
-  { label: "Cena ofertowa", value: (l) => l.priceLabel },
+  { label: "Aktualna cena", value: (l) => l.priceLabel },
+  {
+    label: "Źródło aktualnej ceny",
+    value: (l) => (l.priceSource === "negotiated" ? "Cena po negocjacjach" : "Ogłoszenie"),
+  },
+  { label: "Cena w ogłoszeniu", value: (l) => l.advertisedPriceLabel ?? l.priceLabel },
   {
     label: "Cena z dodatkami",
     value: (l) => (l.totalAcquisitionPrice ? formatPln(l.totalAcquisitionPrice) : "Brak danych"),

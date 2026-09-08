@@ -1,5 +1,6 @@
 import { existsSync, globSync } from "node:fs";
-import { resolve } from "node:path";
+import { readdir } from "node:fs/promises";
+import { basename, dirname, isAbsolute, relative, resolve, extname } from "node:path";
 import { mediaCacheRoot } from "../../config";
 import { withDb } from "../../db";
 
@@ -90,7 +91,10 @@ export async function getListingImagesForListings(
     return result.rows;
   });
 
-  for (const row of rows) {
+  const paths = await Promise.all(
+    rows.map((row) => (row.storage_key ? findMediaFilePathAsync(row.storage_key) : null)),
+  );
+  for (const [index, row] of rows.entries()) {
     const images = imagesByListingId.get(row.listing_id) ?? [];
     images.push({
       id: row.id,
@@ -100,7 +104,7 @@ export async function getListingImagesForListings(
       caption: row.caption,
       storageKey: row.storage_key,
       downloadStatus: row.download_status,
-      localFilePath: row.storage_key ? findMediaFilePath(row.storage_key) : null,
+      localFilePath: paths[index],
     });
     imagesByListingId.set(row.listing_id, images);
   }
@@ -117,13 +121,53 @@ export function findMediaFilePath(storageKey: string) {
 }
 
 export function findMediaFilePaths(storageKey: string) {
-  const exactBasePath = resolve(mediaCacheRoot, storageKey);
+  const exactBasePath = resolveMediaKey(storageKey);
+  if (!exactBasePath) return [];
 
-  if (existsSync(exactBasePath)) {
+  if (isImageFile(exactBasePath) && existsSync(exactBasePath)) {
     return [exactBasePath];
   }
 
-  return globSync(`${exactBasePath}.*`);
+  return globSync(`${exactBasePath}.*`).filter(isImageFile);
+}
+
+export function resolveMediaKey(storageKey: string) {
+  if (
+    !storageKey ||
+    !/^[a-zA-Z0-9_./-]+$/.test(storageKey) ||
+    storageKey.split("/").includes("..") ||
+    isAbsolute(storageKey)
+  )
+    return null;
+  const path = resolve(mediaCacheRoot, storageKey);
+  const within = relative(mediaCacheRoot, path);
+  return !within || within.startsWith("..") || isAbsolute(within) ? null : path;
+}
+function isImageFile(path: string) {
+  return /\.(?:jpe?g|png|webp|gif|avif)$/i.test(path);
+}
+const mediaDirectories = new Map<string, { until: number; files: Promise<string[]> }>();
+export async function findMediaFilePathAsync(storageKey: string) {
+  const basePath = resolveMediaKey(storageKey);
+  if (!basePath) return null;
+  const directory = dirname(basePath);
+  let entry = mediaDirectories.get(directory);
+  if (!entry || entry.until < Date.now()) {
+    if (mediaDirectories.size >= 4096)
+      mediaDirectories.delete(mediaDirectories.keys().next().value!);
+    const files = readdir(directory).catch((error: NodeJS.ErrnoException) => {
+      mediaDirectories.delete(directory);
+      if (error.code === "ENOENT") return [];
+      throw error;
+    });
+    entry = { until: Date.now() + 15_000, files };
+    mediaDirectories.set(directory, entry);
+  }
+  const key = basename(basePath);
+  const file = (await entry.files).find(
+    (name) => isImageFile(name) && (name === key || name === key + extname(name)),
+  );
+  return file ? resolve(directory, file) : null;
 }
 
 export async function getMediaDownloadCandidates(input?: { listingId?: string; limit?: number }) {

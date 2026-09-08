@@ -453,7 +453,7 @@ export function OffersPage({
               </section>
             </aside>
 
-            <div ref={listingsMainRef} className="listings-main">
+            <div id="oferty-lista" ref={listingsMainRef} className="listings-main">
               <button
                 className="mobile-filter-trigger"
                 type="button"
@@ -465,6 +465,8 @@ export function OffersPage({
                 ) : null}
               </button>
               <ListingSection
+                compareIds={model.compareListingIds}
+                onToggleCompare={model.toggleCompareListing}
                 title={listingSectionTitle}
                 listings={visibleListings}
                 onOpen={openListing}

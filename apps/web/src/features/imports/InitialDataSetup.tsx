@@ -1,3 +1,4 @@
+import { apiFetch } from "../../shared/lib/http";
 import { CheckCircle2, Download, MapPinned } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiBaseUrl } from "../../shared/lib/api";
@@ -8,7 +9,7 @@ export function InitialDataSetup() {
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<string | null>(null);
   async function refreshStatus(signal?: AbortSignal) {
-    const response = await fetch(`${apiBaseUrl}/api/streets/warsaw/status`, { signal });
+    const response = await apiFetch(`${apiBaseUrl}/api/streets/warsaw/status`, { signal });
     if (!response.ok) throw new Error("Nie udało się sprawdzić katalogu ulic.");
     setStatus(await response.json());
   }
@@ -24,7 +25,9 @@ export function InitialDataSetup() {
     setError(null);
     setResult(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/streets/warsaw/import`, { method: "POST" });
+      const response = await apiFetch(`${apiBaseUrl}/api/streets/warsaw/import`, {
+        method: "POST",
+      });
       if (!response.ok) throw new Error("Nie udało się pobrać ulic. Spróbuj ponownie za chwilę.");
       const data = (await response.json()) as { imported: number };
       setResult(

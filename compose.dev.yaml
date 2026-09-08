@@ -1,0 +1,44 @@
+services:
+  api:
+    build:
+      target: api-dev
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./apps/api/src
+          target: /app/apps/api/src
+          initial_sync: true
+        - action: sync+restart
+          path: ./packages/shared/src
+          target: /app/packages/shared/src
+          initial_sync: true
+        - action: rebuild
+          path: ./package-lock.json
+  web:
+    build:
+      target: web-dev
+    ports: !override
+      - "${DOCKER_BIND_ADDRESS:-0.0.0.0}:${DOCKER_WEB_PORT:-8080}:5173"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:5173/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+    develop:
+      watch:
+        - action: sync
+          path: ./apps/web/src
+          target: /app/apps/web/src
+          initial_sync: true
+        - action: sync+restart
+          path: ./packages/shared/src
+          target: /app/packages/shared/src
+          initial_sync: true
+        - action: sync+restart
+          path: ./apps/web/vite.config.ts
+          target: /app/apps/web/vite.config.ts
+        - action: rebuild
+          path: ./package-lock.json

@@ -1,3 +1,4 @@
+import { apiFetch } from "../../shared/lib/http";
 import type { FamilySettings, ListingSummary } from "@mieszkania/shared";
 import { SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -158,13 +159,13 @@ export function MapView(input: {
   }, [mapAttempt]);
 
   useEffect(() => {
-    void fetch(`${apiBaseUrl}/api/map/railway`)
+    void apiFetch(`${apiBaseUrl}/api/map/railway`)
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (data) setRailwayMap(data);
       })
       .catch(() => undefined);
-    void fetch(`${apiBaseUrl}/api/map/tramway`)
+    void apiFetch(`${apiBaseUrl}/api/map/tramway`)
       .then((response) => (response.ok ? response.json() : null))
       .then((data) => {
         if (data) setTramwayMap(data);
@@ -694,7 +695,10 @@ export function MapView(input: {
                 {listing.district}
                 {listing.neighborhood ? ` / ${listing.neighborhood}` : ""}
               </p>
-              <p className="muted">{listing.priceLabel}</p>
+              <p className="muted">
+                {listing.priceLabel}
+                {listing.priceSource === "negotiated" ? " · Cena po negocjacjach" : ""}
+              </p>
               <ListingBadgeRow badges={(listing.badges ?? []).slice(0, 3)} />
             </article>
           ))}

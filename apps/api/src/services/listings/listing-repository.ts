@@ -38,6 +38,7 @@ import {
 } from "../media/image-repository";
 import { getFamilySettings } from "../settings/family-settings";
 import { inferBuildingDetails } from "./listing-description-facts";
+import { getSavedPortalBuildingFacts } from "./portal-building-facts";
 export { inferBuildingDetails } from "./listing-description-facts";
 import { buildEffectiveListingDateSql } from "./listing-recency";
 import {
@@ -134,9 +135,15 @@ type ListingsPage = {
 };
 
 export async function getDashboardContext(): Promise<DashboardContext> {
-  const [stats, listings] = await Promise.all([getDashboardStats(), getListings()]);
-  return { stats, listings };
+  // The frontend loads its paginated offers separately. Dashboard insight cards
+  // use only the aggregates, so a second list duplicated image and DB work.
+  return { stats: await getDashboardStats(), listings: [] };
 }
+
+// Personal negotiated price never overwrites the public portal price or its history.
+const EFFECTIVE_PRICE_SQL =
+  "coalesce(case when lmo.asking_price_override > 0 then lmo.asking_price_override end, l.price_amount)";
+const EFFECTIVE_UNIT_PRICE_SQL = "(" + EFFECTIVE_PRICE_SQL + " / nullif(l.area_sqm, 0))";
 
 export async function getListings(filters: ListingFilters = {}): Promise<ListingSummary[]> {
   const page = await getListingsPageByScope("region", {
@@ -159,6 +166,8 @@ export async function getMapListings() {
       source_label: string | null;
       city: string;
       price_label: string | null;
+      advertised_price: string | null;
+      has_negotiated_price: boolean;
       district: string | null;
       neighborhood: string | null;
       latitude: string | null;
@@ -179,7 +188,9 @@ export async function getMapListings() {
         l.title,
         s.name as source_label,
         l.city,
-        l.price_amount::text as price_label,
+        ${EFFECTIVE_PRICE_SQL}::text as price_label,
+        l.price_amount::text as advertised_price,
+        coalesce(lmo.asking_price_override > 0, false) as has_negotiated_price,
         l.district,
         l.neighborhood,
         l.address_text,
@@ -198,6 +209,7 @@ export async function getMapListings() {
         cover.source_url as thumbnail_url
       from listings l
       join sources s on s.id = l.source_id
+      left join listing_manual_overrides lmo on lmo.listing_id = l.id
       left join lateral (
         select previous_price_amount, new_price_amount
         from price_events
@@ -217,7 +229,7 @@ export async function getMapListings() {
         and l.hidden_duplicate_of_id is null
         and coalesce(l.rooms, 0) <> 2
         and l.city = any($1::text[])
-        and (l.price_amount is null or l.price_amount <= ${MAX_VISIBLE_LISTING_PRICE})
+        and (${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${MAX_VISIBLE_LISTING_PRICE})
         and (l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
       order by ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc
     `,
@@ -232,6 +244,10 @@ export async function getMapListings() {
       priceLabel: row.price_label
         ? `${Number(row.price_label).toLocaleString("pl-PL")} zł`
         : "Brak ceny",
+      priceSource: row.has_negotiated_price ? ("negotiated" as const) : ("advertised" as const),
+      advertisedPriceLabel: row.advertised_price
+        ? formatCurrency(Number(row.advertised_price))
+        : undefined,
       areaLabel: row.area_sqm
         ? `${Number(row.area_sqm).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} m2`
         : "Brak metrażu",
@@ -778,8 +794,8 @@ async function getListingsPageByScope(
           ? "coalesce(l.rooms, 0) = 2"
           : "coalesce(l.rooms, 0) <> 2",
       filters.archivedOnly
-        ? "coalesce(l.price_amount, 0) > 0"
-        : `(l.price_amount is null or l.price_amount <= ${MAX_VISIBLE_LISTING_PRICE})`,
+        ? `coalesce(${EFFECTIVE_PRICE_SQL}, 0) > 0`
+        : `(${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${MAX_VISIBLE_LISTING_PRICE})`,
       filters.archivedOnly
         ? "coalesce(l.area_sqm, 0) > 0"
         : `(l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})`,
@@ -812,13 +828,13 @@ async function getListingsPageByScope(
     }
 
     if (filters.minPrice) {
-      clauses.push(`l.price_amount is not null and l.price_amount >= $${paramIndex}`);
+      clauses.push(`${EFFECTIVE_PRICE_SQL} >= $${paramIndex}`);
       values.push(filters.minPrice);
       paramIndex += 1;
     }
 
     if (filters.maxPrice) {
-      clauses.push(`l.price_amount is not null and l.price_amount <= $${paramIndex}`);
+      clauses.push(`${EFFECTIVE_PRICE_SQL} <= $${paramIndex}`);
       values.push(filters.maxPrice);
       paramIndex += 1;
     }
@@ -848,13 +864,13 @@ async function getListingsPageByScope(
     }
 
     if (filters.minPricePerSqm) {
-      clauses.push(`coalesce(l.price_per_sqm, 0) >= $${paramIndex}`);
+      clauses.push(`coalesce(${EFFECTIVE_UNIT_PRICE_SQL}, 0) >= $${paramIndex}`);
       values.push(filters.minPricePerSqm);
       paramIndex += 1;
     }
 
     if (filters.maxPricePerSqm) {
-      clauses.push(`coalesce(l.price_per_sqm, 0) <= $${paramIndex}`);
+      clauses.push(`coalesce(${EFFECTIVE_UNIT_PRICE_SQL}, 0) <= $${paramIndex}`);
       values.push(filters.maxPricePerSqm);
       paramIndex += 1;
     }
@@ -898,6 +914,7 @@ async function getListingsPageByScope(
       `
         select count(*)::text as total
         from listings l
+        left join listing_manual_overrides lmo on lmo.listing_id = l.id
         where ${clauses.join(" and ")}
       `,
       values,
@@ -1366,13 +1383,17 @@ function mapListingSummary(
 ): ListingSummary {
   const contactStatus = parseListingContactStatus(row.manual_contact_status);
   const decisionStage = parseListingDecisionStage(row.manual_decision_stage);
-  const priceAmount = row.price_amount ? Number(row.price_amount) : null;
+  const advertisedPriceAmount = row.price_amount ? Number(row.price_amount) : null;
+  const personalPrice = Number(row.manual_asking_price_override);
+  const priceSource = personalPrice > 0 ? ("negotiated" as const) : ("advertised" as const);
+  const priceAmount = priceSource === "negotiated" ? personalPrice : advertisedPriceAmount;
   const areaSqm = row.area_sqm ? Number(row.area_sqm) : 0;
-  const pricePerSqm = row.price_per_sqm
-    ? Number(row.price_per_sqm)
-    : priceAmount && areaSqm > 0
+  const pricePerSqm =
+    priceAmount && areaSqm > 0
       ? priceAmount / areaSqm
-      : null;
+      : row.price_per_sqm
+        ? Number(row.price_per_sqm)
+        : null;
   const priceChangePercent = getPriceChangePercent(latestEvent);
   const rcnDeltaLabel = "";
   const resolvedDistrict = resolveDistrict(row);
@@ -1394,6 +1415,7 @@ function mapListingSummary(
     row.snapshot_payload_raw ?? undefined,
   );
   const inferredBuildingDetails = inferBuildingDetails(row.description ?? "");
+  const portalBuildingDetails = getSavedPortalBuildingFacts(row.snapshot_payload_raw);
   const manualBadges = buildManualBadges(row);
   if (row.status === "removed") {
     manualBadges.unshift("Archiwalna");
@@ -1475,13 +1497,19 @@ function mapListingSummary(
     street: resolvedStreet,
     addressText: resolvedAddressText,
     priceLabel: priceAmount ? formatCurrency(priceAmount) : "Brak ceny",
+    priceSource,
+    advertisedPriceLabel: advertisedPriceAmount ? formatCurrency(advertisedPriceAmount) : undefined,
     areaLabel: `${areaSqm.toFixed(1)} m2`,
     pricePerSqmLabel: pricePerSqm
       ? `${formatInteger(String(Math.round(pricePerSqm)))} PLN/m2`
       : undefined,
     roomsCount: row.rooms ? Number(row.rooms) : undefined,
-    floor: inferredBuildingDetails.floor ?? row.floor ?? undefined,
-    totalFloors: inferredBuildingDetails.totalFloors ?? row.total_floors ?? undefined,
+    floor: portalBuildingDetails.floor ?? inferredBuildingDetails.floor ?? row.floor ?? undefined,
+    totalFloors:
+      portalBuildingDetails.totalFloors ??
+      inferredBuildingDetails.totalFloors ??
+      row.total_floors ??
+      undefined,
     yearBuilt: inferredBuildingDetails.yearBuilt ?? row.year_built ?? undefined,
     hasGarage,
     hasOutdoorParking,
@@ -2733,10 +2761,14 @@ export function inferCommercialInfo(
       /biur(?:o|a)?\s+nieruchomosci|agencja nieruchomosci|posrednik|agent nieruchomosci|oferta\s+wys[lł]ana\s+z\s+programu\s+dla\s+biur\s+nieruchomosci|zapraszamy\s+do\s+kontaktu\s+z\s+hamilton\s+may[^.]{0,180}prezentacj\w*\s+(?:tej\s+)?nieruchomosci/.test(
         normalizedDescription,
       ));
-  const noCommission =
-    /bez prowizji|0% prowizji|kupujacy nie placi prowizji|kupujacy nie płaci prowizji|kupujący nie placi prowizji|kupujący nie płaci prowizji/.test(
-      normalizedDescription,
-    );
+  const noCommissionPattern =
+    /\b(?:bez|brak)\s+prowizji\b|\b(?:0(?:[.,]0+)?\s*%|zero)\s+prowizji\b|\bprowizja\s*:?\s*0(?:[.,]0+)?\s*%|\bzerowa\s+prowizja\b|\bkupujacy\s+nie\s+(?:placi|ponosi|pokrywa)(?:\s+kosztow)?\s+prowizji\b/g;
+  const noCommission = Array.from(normalizedDescription.matchAll(noCommissionPattern)).some(
+    (match) =>
+      !/\bnie\s+(?:jest\s+|ma\s+)?$/.test(
+        normalizedDescription.slice(Math.max(0, match.index! - 25), match.index),
+      ),
+  );
   const noCommissionStatement = /nie\s+pobieramy\s+prowizji/.test(normalizedDescription);
   const hasCommission =
     !noCommission &&
@@ -2933,11 +2965,11 @@ function buildListingOrderBy(sort?: ListingFilters["sort"]) {
   }
 
   if (sort === "price_desc") {
-    return `l.price_amount desc nulls last, ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc`;
+    return `${EFFECTIVE_PRICE_SQL} desc nulls last, ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc`;
   }
 
   if (sort === "price_asc") {
-    return `l.price_amount asc nulls last, ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc`;
+    return `${EFFECTIVE_PRICE_SQL} asc nulls last, ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc`;
   }
 
   if (sort === "area_desc") {

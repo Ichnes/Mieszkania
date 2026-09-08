@@ -362,6 +362,9 @@ export type ListingSummary = {
   street?: string;
   addressText?: string;
   priceLabel: string;
+  /** Effective personal price; public price history and market statistics remain advertised. */
+  priceSource?: "advertised" | "negotiated";
+  advertisedPriceLabel?: string;
   areaLabel: string;
   pricePerSqmLabel?: string;
   roomsCount?: number;
@@ -425,6 +428,8 @@ export type RcnComparableTransaction = {
   distanceMeters: number;
   marketType: "primary" | "secondary";
 };
+
+export { getDreamDescriptionFacts } from "./dream-description.js";
 
 export type ListingDetail = ListingSummary & {
   canonicalUrl?: string;

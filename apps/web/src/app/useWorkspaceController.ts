@@ -1,3 +1,4 @@
+import { apiFetch } from "../shared/lib/http";
 import { useStatisticsPreferences } from "../features/statistics/useStatisticsPreferences";
 import type {
   AlertsResponse,
@@ -244,12 +245,10 @@ export function useWorkspaceController() {
   useEffect(() => () => listingRequest.current?.controller.abort(), []);
 
   useEffect(() => {
-    void refreshQueueStatus();
     void refreshStaleListingStatus();
-    const staleStatusIntervalId = window.setInterval(
-      () => void refreshStaleListingStatus(),
-      60_000,
-    );
+    const staleStatusIntervalId = window.setInterval(() => {
+      if (!document.hidden) void refreshStaleListingStatus();
+    }, 60_000);
     return () => window.clearInterval(staleStatusIntervalId);
   }, []);
 
@@ -313,7 +312,7 @@ export function useWorkspaceController() {
     if (marketStatsFilters.garage) params.set("garage", "true");
     const controller = new AbortController();
     setMarketStatsError(null);
-    fetch(`${apiBaseUrl}/api/market-stats?${params}`, { signal: controller.signal })
+    apiFetch(`${apiBaseUrl}/api/market-stats?${params}`, { signal: controller.signal })
       .then((response) =>
         response.ok
           ? response.json()
@@ -341,7 +340,7 @@ export function useWorkspaceController() {
     if (activeTab !== "stats" || !Object.values(marketStatsFilters).some(Boolean)) return;
     const controller = new AbortController();
     setMarketStatsBaseline(null);
-    fetch(`${apiBaseUrl}/api/market-stats?period=${marketStatsPeriod}`, {
+    apiFetch(`${apiBaseUrl}/api/market-stats?period=${marketStatsPeriod}`, {
       signal: controller.signal,
     })
       .then((response) => (response.ok ? response.json() : null))
@@ -581,12 +580,12 @@ export function useWorkspaceController() {
         upcomingViewingsResponse,
         listingsResponse,
       ] = await Promise.all([
-        fetch(`${apiBaseUrl}/api/dashboard`),
-        fetch(`${apiBaseUrl}/api/alerts`),
-        fetch(`${apiBaseUrl}/api/region`),
-        fetch(`${apiBaseUrl}/api/settings/family`),
-        fetch(`${apiBaseUrl}/api/viewings/upcoming`),
-        fetch(
+        apiFetch(`${apiBaseUrl}/api/dashboard`),
+        apiFetch(`${apiBaseUrl}/api/alerts`),
+        apiFetch(`${apiBaseUrl}/api/region`),
+        apiFetch(`${apiBaseUrl}/api/settings/family`),
+        apiFetch(`${apiBaseUrl}/api/viewings/upcoming`),
+        apiFetch(
           `${apiBaseUrl}/api/listings?${createListingsQuery(filters, currentListingsPage, listingSort)}`,
         ),
       ]);
@@ -628,7 +627,7 @@ export function useWorkspaceController() {
   }
 
   async function refreshDashboard() {
-    const response = await fetch(`${apiBaseUrl}/api/dashboard`);
+    const response = await apiFetch(`${apiBaseUrl}/api/dashboard`);
     if (!response.ok) return;
     const dashboardResponse = (await response.json()) as DashboardResponse;
     setState((current) =>
@@ -637,7 +636,7 @@ export function useWorkspaceController() {
   }
 
   async function refreshAlerts() {
-    const response = await fetch(`${apiBaseUrl}/api/alerts`);
+    const response = await apiFetch(`${apiBaseUrl}/api/alerts`);
     if (!response.ok) return;
     const alertsResponse = (await response.json()) as AlertsResponse;
     setState((current) =>
@@ -646,7 +645,7 @@ export function useWorkspaceController() {
   }
 
   async function refreshUpcomingViewings() {
-    const response = await fetch(`${apiBaseUrl}/api/viewings/upcoming`);
+    const response = await apiFetch(`${apiBaseUrl}/api/viewings/upcoming`);
     if (!response.ok) return;
     const upcomingViewingsResponse = (await response.json()) as UpcomingViewingsResponse;
     setState((current) =>
@@ -664,7 +663,7 @@ export function useWorkspaceController() {
     const shouldScrollToListingTop = nextPage !== currentListingsPage;
     setIsLoadingListings(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/listings?${createListingsQuery(nextFilters, nextPage, nextSort)}`,
       );
       if (!response.ok) return;
@@ -687,7 +686,7 @@ export function useWorkspaceController() {
   async function loadMapListings() {
     setIsLoadingMapListings(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/map`);
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/map`);
       if (!response.ok) return;
       const data = (await response.json()) as ListingSummary[];
       setMapListings(data);
@@ -700,7 +699,7 @@ export function useWorkspaceController() {
     setIsLoadingDuplicateGroups(true);
     setDuplicateError(null);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/duplicates/groups?limit=${Math.max(limit, duplicateGroups.length)}&summary=true`,
       );
       if (!response.ok) throw new Error("Nie udało się pobrać grup duplikatów.");
@@ -725,7 +724,7 @@ export function useWorkspaceController() {
     setDuplicateAction(primaryListingId);
     setDuplicateError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/duplicates/unmerge`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/unmerge`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ primaryListingId, duplicateListingId }),
@@ -750,7 +749,7 @@ export function useWorkspaceController() {
     setDuplicateAction(primaryListingId);
     setDuplicateError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/duplicates/confirm`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/confirm`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ primaryListingId }),
@@ -802,9 +801,12 @@ export function useWorkspaceController() {
     setListingOpenError(null);
     if (updateUrl) void navigate(listingHref(listingId));
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}`, {
-        signal,
-      });
+      const response = await apiFetch(
+        `${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}`,
+        {
+          signal,
+        },
+      );
       if (!response.ok)
         throw new Error(
           response.status === 404
@@ -832,7 +834,7 @@ export function useWorkspaceController() {
   ) {
     setIsLoadingDuplicateCandidates(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/duplicates/candidates?limit=40&listingId=${encodeURIComponent(listingId)}`,
         { signal },
       );
@@ -853,7 +855,7 @@ export function useWorkspaceController() {
   ) {
     setIsLoadingListingInsights(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}/insights${force ? "?refresh=true" : ""}`,
         { signal },
       );
@@ -899,7 +901,7 @@ export function useWorkspaceController() {
   async function toggleShortlist(listingId: string, shortlisted: boolean) {
     setIsUpdatingShortlist(listingId);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}/shortlist`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/${listingId}/shortlist`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ shortlisted }),
@@ -936,7 +938,7 @@ export function useWorkspaceController() {
     setIsSavingSettings(true);
     setSettingsSaveError(null);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/settings/family`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/settings/family`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(nextSettings),
@@ -970,15 +972,24 @@ export function useWorkspaceController() {
     if (!selectedListing) return;
     setIsSavingListingManual(true);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${selectedListing.id}/manual`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/${selectedListing.id}/manual`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(manual),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.message ?? "Nie udało się zapisać ustaleń. Spróbuj ponownie.");
+      }
       const detail = (await response.json()) as ListingDetail;
       setSelectedListing(detail);
-      await Promise.all([refreshDashboard(), applyFilters()]);
+      setMapListings((current) =>
+        current.map((listing) => (listing.id === detail.id ? { ...listing, ...detail } : listing)),
+      );
+      setCompareSnapshots((current) =>
+        current.map((listing) => (listing.id === detail.id ? detail : listing)),
+      );
+      await applyFilters();
     } finally {
       setIsSavingListingManual(false);
     }
@@ -995,7 +1006,7 @@ export function useWorkspaceController() {
     if (!selectedListing) return;
     setIsSavingContactEvent(true);
     try {
-      const response = await fetch(
+      const response = await apiFetch(
         `${apiBaseUrl}/api/listings/${selectedListing.id}/contact-events`,
         {
           method: "POST",
@@ -1050,7 +1061,7 @@ export function useWorkspaceController() {
     scheduledAt: string;
     notes?: string;
   }) {
-    const response = await fetch(`${apiBaseUrl}/api/listings/${input.listingId}/viewing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/listings/${input.listingId}/viewing`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1070,7 +1081,7 @@ export function useWorkspaceController() {
   }
 
   async function deleteViewing(listingId: string) {
-    const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}/viewing`, {
+    const response = await apiFetch(`${apiBaseUrl}/api/listings/${listingId}/viewing`, {
       method: "DELETE",
     });
     if (!response.ok) return;
@@ -1086,7 +1097,7 @@ export function useWorkspaceController() {
   async function dismissListing(listingId: string) {
     setIsDismissingListing(listingId);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}/dismiss`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/${listingId}/dismiss`, {
         method: "POST",
       });
       if (!response.ok) throw new Error(`Dismiss listing failed with status ${response.status}`);
@@ -1101,7 +1112,7 @@ export function useWorkspaceController() {
   async function archiveListing(listingId: string) {
     setIsArchivingListing(listingId);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}/archive`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/${listingId}/archive`, {
         method: "POST",
       });
       if (!response.ok) throw new Error(`Archive listing failed with status ${response.status}`);
@@ -1116,7 +1127,7 @@ export function useWorkspaceController() {
   async function runListingMediaBackfill(listingId: string) {
     setIsBackfillingListingMedia(listingId);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/listings/${listingId}/media/backfill`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/listings/${listingId}/media/backfill`, {
         method: "POST",
       });
       if (!response.ok)
@@ -1145,7 +1156,7 @@ export function useWorkspaceController() {
     try {
       const refreshedAt = new Date();
       const endpoint = resolveCollectorEndpoint(listing.canonicalUrl);
-      const response = await fetch(endpoint, {
+      const response = await apiFetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1174,7 +1185,7 @@ export function useWorkspaceController() {
   ) {
     setIsReviewingDuplicatePair(pair.pairKey);
     try {
-      const response = await fetch(`${apiBaseUrl}/api/duplicates/review`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/review`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
