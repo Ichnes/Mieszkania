@@ -1,5 +1,16 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { inferBuildingDetails } from "./listing-description-facts";
+
+test("ground-floor commercial units do not make the apartment a ground-floor listing", () => {
+  assert.equal(inferBuildingDetails("Na parterze lokale usługowe.").floor, undefined);
+  assert.equal(
+    inferBuildingDetails("Na parterze znajdują się lokale usługowe. Mieszkanie na trzecim piętrze.")
+      .floor,
+    3,
+  );
+  assert.equal(inferBuildingDetails("Mieszkanie na parterze.").floor, 0);
+});
 import {
   enrichListingFromDescription,
   inferConstructionYear,

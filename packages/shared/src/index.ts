@@ -209,6 +209,8 @@ export type AmenityAnalysis = {
   checkedAt?: string;
   mapUrl?: string;
   partial?: boolean;
+  stale?: boolean;
+  message?: string;
   plannedFacilities: PlannedFacilitySummary[];
 };
 
@@ -945,3 +947,10 @@ export {
   getPriceDropPoints,
   getListingAgePoints,
 } from "./dream-score.js";
+export { getSunExposure, type ExposureDirection } from "./sun-exposure.js";
+export {
+  hasApartmentGroundFloor,
+  getBuildingYearPoints,
+  getFloorPoints,
+  getExposureEvaluation,
+} from "./dream-building.js";

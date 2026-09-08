@@ -1,6 +1,16 @@
+import {
+  getBuildingYearPoints,
+  getFloorPoints,
+  getExposureEvaluation,
+  hasApartmentGroundFloor,
+} from "./dream-building.js";
 import type { FamilySettings, ListingSummary } from "./index.js";
 import { defaultDownPayment, findNearestWarsawMetroStation } from "./index.js";
-import { getDreamDescriptionFacts, getUnfinishedPricePoints } from "./dream-description.js";
+import {
+  getDreamDescriptionFacts,
+  getUnfinishedPricePoints,
+  hasPositiveDescriptionFact,
+} from "./dream-description.js";
 
 export function computeDreamScore(
   listing: ListingSummary,
@@ -240,44 +250,40 @@ export function computeDreamEvaluation(
 
   record("Garaż i winda razem", "Oba udogodnienia +12; inaczej 0.");
 
-  // Known buildings from 2000 onward
-  // receive progressively more credit, without inventing data for older stock.
-  if (typeof listing.yearBuilt === "number") {
-    maxPoints += 12;
-    if (listing.yearBuilt >= 2000) {
-      const progress = Math.min(
-        1,
-        (listing.yearBuilt - 2000) / Math.max(1, now.getFullYear() - 2000),
-      );
-      points += 2 + Math.round(progress * 10);
-    }
-  }
-
-  if (typeof listing.yearBuilt !== "number") points -= 3;
+  if (typeof listing.yearBuilt === "number") maxPoints += 14;
+  points += getBuildingYearPoints(listing.yearBuilt, now.getFullYear());
   record(
     "Rok budowy",
-    "Brak roku −3; przed 2000: 0; od 2000: +2 do +12, rosnąco z rokiem budowy.",
+    "Do 1980: −4; 1981–1990: −2; 1991–2000: 0; 2001–2005: +4; 2006–2010: +6; 2011–2015: +8; 2016–2020: +10; po 2020: +12. Rok bieżący lub poprzedni: dodatkowe +2. Brak roku: −3.",
     String(listing.yearBuilt ?? "Brak danych"),
   );
 
-  if (typeof listing.floor === "number") {
+  const floor = listing.floor ?? (hasApartmentGroundFloor(text) ? 0 : undefined);
+  const topFloor =
+    (typeof floor === "number" &&
+      typeof listing.totalFloors === "number" &&
+      listing.totalFloors > 0 &&
+      floor >= listing.totalFloors) ||
+    descriptionFacts.topFloor;
+  if (typeof floor === "number") maxPoints += 12;
+  points += getFloorPoints(floor);
+  if (topFloor) {
+    points += 5;
     maxPoints += 5;
-    if (listing.floor <= 0) {
-      points -= 2;
-    } else if (typeof listing.totalFloors === "number" && listing.totalFloors > 0) {
-      points +=
-        listing.floor >= listing.totalFloors
-          ? 5
-          : Math.max(1, Math.round((listing.floor / listing.totalFloors) * 4));
-    } else {
-      points += Math.min(5, Math.max(1, listing.floor));
-    }
   }
-
   record(
     "Piętro",
-    "Parter i poniżej −2; wyższe +1–5, ostatnie +5; brak danych 0.",
-    `${listing.floor ?? "Brak danych"} / ${listing.totalFloors ?? "?"}`,
+    "Parter i poniżej −4; 1: +1; 2: −2; 3: +3; 4: +4; 5: +5; 6: +7; 7: +8; 8–12: +9; powyżej 12: +12. Ostatnie piętro: dodatkowe +5, tylko raz.",
+    `Piętro: ${floor ?? "brak danych"} / ${listing.totalFloors ?? "?"}${topFloor ? "; ostatnie piętro +5" : ""}`,
+  );
+
+  const exposure = getExposureEvaluation(listing.description ?? "");
+  points += exposure.points;
+  maxPoints += exposure.maxPoints;
+  record(
+    "Ekspozycja",
+    "Brak danych 0; jednostronne −5, ale S +2, W +4, N −15, E +2; dwustronne +10 i bonus: S/W +10, S/E +7, S/N +4, N/W +2, N/E +1, E/W +8; trójstronne +13 i bonus: S/E/W +5, S/W/N +4, S/E/N +3, N/W/E +1.",
+    `Strony: ${exposure.sides ?? "brak danych"}; kierunki: ${exposure.directions.join(", ") || "brak danych"}`,
   );
 
   if (profile.prefersBalcony) {
@@ -322,18 +328,24 @@ export function computeDreamEvaluation(
   );
   const premiumSignals: Array<[RegExp, number]> = [
     [/\barchitekt\w*\b/, 8],
-    [/\b(?:ogrzewan\w*\s+podlogow\w*|podlogow\w*\s+ogrzewan\w*)\b/, 3],
     [
-      /\b(?:po remoncie|swiezo wyremontowan\w*|odswiezon\w*)\b/,
-      mentions("po remoncie", "swiezo wyremontowane") ? 4 : 3,
+      /\b(?:ogrzewan\w*\s+podlogow\w*|podlogow\w*\s+ogrzewan\w*|podlogowk\w*|ogrzewan\w*\s+podlog\w*)\b/,
+      4,
+    ],
+    [
+      /\b(?:po\s+(?:(?:generaln\w*|gruntown\w*|kapitaln\w*|kompleksow\w*)\s+)?remoncie|(?:swiezo\s+)?wyremontowan\w*|odswiezon\w*)\b/,
+      /remoncie|wyremontowan/.test(text) ? 4 : 3,
     ],
     [/\bgarderob\w*\b/, 5],
-    [/\b(?:dwie|2) lazienki\b/, 4],
-    [/\bgabinet\w*\b/, 5],
-    [/\b(?:wysoki standard|wysokiej jakosci)\b/, 4],
-    [/\bzamkniete osiedle\b/, 3],
-    [/\bmonitoring\b/, 2],
-    [/\b(?:jasne|dobre naslonecznienie|sloneczne)\b/, 5],
+    [/\b(?:dwie|dwiema|dwoch|dwoma|2)\s+(?:osobn\w*\s+)?lazien\w*\b/, 4],
+    [/\b(?:gabinet\w*|pokoj\w*\s+do\s+pracy|domow\w*\s+biur\w*|biur\w*\s+domow\w*)\b/, 5],
+    [/\b(?:wysok\w*\s+standard\w*|wysok\w*\s+jakosc\w*|luksusow\w*\s+wykonczen\w*)\b/, 4],
+    [/\b(?:(?:zamkniet\w*|ogrodzon\w*)\s+osiedl\w*|osiedl\w*\s+(?:zamkniet\w*|ogrodzon\w*))\b/, 3],
+    [/\b(?:monitoring\w*|monitorowan\w*|nadzor\w*\s+kamer\w*)\b/, 2],
+    [
+      /\b(?:jasn\w*|dobr\w*\s+(?:nasloneczn\w*|doswietl\w*)|sloneczn\w*|duzo\s+(?:naturaln\w*\s+)?swiatla)\b/,
+      5,
+    ],
   ];
   if (listing.hasAirConditioning) {
     maxPoints += 5;
@@ -353,14 +365,14 @@ export function computeDreamEvaluation(
     "Jasne mieszkanie",
   ];
   for (const [index, [pattern, value]] of premiumSignals.entries()) {
-    if (pattern.test(text)) {
+    if (hasPositiveDescriptionFact(text, pattern)) {
       maxPoints += value;
       points += value;
     }
     record(
       premiumLabels[index],
       `Rozpoznana cecha +${value}; brak 0.`,
-      pattern.test(text) ? "Rozpoznano w opisie" : "Brak potwierdzenia",
+      hasPositiveDescriptionFact(text, pattern) ? "Rozpoznano w opisie" : "Brak potwierdzenia",
     );
   }
 
@@ -373,10 +385,6 @@ export function computeDreamEvaluation(
   }
 
   record("Układ mieszkania", "3 pokoje od 75 m² +4; 4 pokoje +8; więcej +6. Poniżej minimum 0.");
-
-  if (typeof listing.floor !== "number" && mentions("parter")) points -= 2;
-
-  record("Parter w opisie", "Przy braku liczbowego piętra wzmianka o parterze −2.");
 
   maxPoints += 7;
   points += getPriceDropPoints(listing.priceChangePercent);
@@ -467,21 +475,6 @@ export function computeDreamEvaluation(
     "Prysznic",
     "Prysznic, kabina prysznicowa lub natrysk +3; brak 0.",
     descriptionFacts.shower ? "Rozpoznano w opisie" : "Brak potwierdzenia",
-  );
-  const topFloor =
-    (typeof listing.floor === "number" &&
-      typeof listing.totalFloors === "number" &&
-      listing.totalFloors > 0 &&
-      listing.floor >= listing.totalFloors) ||
-    descriptionFacts.topFloor;
-  if (topFloor) {
-    points += 3;
-    maxPoints += 3;
-  }
-  record(
-    "Najwyższe piętro — premia",
-    "Najwyższe/ostatnie piętro z danych lub opisu +3, tylko raz.",
-    topFloor ? "Potwierdzone" : "Brak potwierdzenia",
   );
   const hasMaintenanceFee =
     descriptionFacts.maintenanceFee ||

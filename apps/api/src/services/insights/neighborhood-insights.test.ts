@@ -1,6 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { analyzeAmenityElements, buildOverpassQuery } from "./neighborhood-insights";
+import { fetchAmenitiesFromOverpass } from "./neighborhood-insights";
+import type { fetchExternalJson } from "../http/external-json";
+
+test("Overpass falls back on errors and incomplete responses", async () => {
+  const endpoints: string[] = [];
+  const fetchJson = (async (url: string) => {
+    endpoints.push(url);
+    if (endpoints.length === 1) return { elements: [], remark: "runtime error: timeout" };
+    return { elements: [{ id: 1, type: "node" }] };
+  }) as typeof fetchExternalJson;
+  assert.equal((await fetchAmenitiesFromOverpass("query", fetchJson))?.length, 1);
+  assert.equal(endpoints.length, 2);
+  assert.equal(
+    await fetchAmenitiesFromOverpass("query", (async () => {
+      throw new Error("EXTERNAL_HTTP_504");
+    }) as typeof fetchExternalJson),
+    null,
+  );
+});
 
 test("summarizes amenities into walking-distance bands and keeps nearest names", () => {
   const result = analyzeAmenityElements(

@@ -9,12 +9,14 @@ type ExternalJsonOptions = {
   body?: string | URLSearchParams;
   timeoutMs: number;
   maxBufferBytes?: number;
+  fallbackOnTimeout?: boolean;
 };
 
 export async function fetchExternalJson<T>(
   url: string | URL,
   options: ExternalJsonOptions,
 ): Promise<T> {
+  const startedAt = Date.now();
   const body = options.body instanceof URLSearchParams ? options.body.toString() : options.body;
   try {
     const response = await fetch(url, {
@@ -27,7 +29,20 @@ export async function fetchExternalJson<T>(
     return (await response.json()) as T;
   } catch (error) {
     if (error instanceof ExternalHttpError) throw error;
-    return JSON.parse(await fetchTextWithSystemCurl(url.toString(), { ...options, body })) as T;
+    if (
+      options.fallbackOnTimeout === false &&
+      error instanceof Error &&
+      ["TimeoutError", "AbortError"].includes(error.name)
+    )
+      throw error;
+    const timeoutMs =
+      options.fallbackOnTimeout === false
+        ? options.timeoutMs - (Date.now() - startedAt)
+        : options.timeoutMs;
+    if (timeoutMs <= 0) throw error;
+    return JSON.parse(
+      await fetchTextWithSystemCurl(url.toString(), { ...options, timeoutMs, body }),
+    ) as T;
   }
 }
 

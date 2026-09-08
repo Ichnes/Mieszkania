@@ -122,6 +122,8 @@ const amenityCategories: AmenityCategory[] = [
   },
 ];
 
+const insightsInFlight = new Map<string, Promise<NeighborhoodInsights>>();
+const amenitiesInFlight = new Map<string, ReturnType<typeof getAmenities>>();
 const insightsCache = new Map<string, { expiresAt: number; value: NeighborhoodInsights }>();
 
 export async function getNeighborhoodInsights(input: {
@@ -146,18 +148,31 @@ export async function getNeighborhoodInsights(input: {
   if (!input.force && memoryCached && memoryCached.expiresAt > Date.now())
     return memoryCached.value;
 
-  const [commutes, surroundings] = await Promise.all([
-    getCommutes(latitude, longitude, input.settings),
-    getCachedOrFreshAmenities(input.listingId, latitude, longitude, input.force ?? false),
-  ]);
-  const value = { commutes, ...surroundings };
-  insightsCache.set(cacheKey, {
-    expiresAt:
-      Date.now() +
-      (value.amenityAnalysis.status === "available" ? SUCCESS_CACHE_MS : FAILURE_CACHE_MS),
-    value,
-  });
-  return value;
+  const existing = insightsInFlight.get(cacheKey);
+  if (existing) return existing;
+  const pending = (async () => {
+    const [commutes, surroundings] = await Promise.all([
+      getCommutes(latitude, longitude, input.settings),
+      getCachedOrFreshAmenities(input.listingId, latitude, longitude, input.force ?? false),
+    ]);
+    const value = { commutes, ...surroundings };
+    insightsCache.set(cacheKey, {
+      expiresAt:
+        Date.now() +
+        (value.amenityAnalysis.status === "available" && !value.amenityAnalysis.stale
+          ? SUCCESS_CACHE_MS
+          : FAILURE_CACHE_MS),
+      value,
+    });
+    if (insightsCache.size > 500) insightsCache.delete(insightsCache.keys().next().value!);
+    return value;
+  })();
+  insightsInFlight.set(cacheKey, pending);
+  try {
+    return await pending;
+  } finally {
+    insightsInFlight.delete(cacheKey);
+  }
 }
 
 async function getCachedOrFreshAmenities(
@@ -169,7 +184,18 @@ async function getCachedOrFreshAmenities(
   const cached = await readCache(listingId, latitude, longitude);
   if (!force && cached) return cached;
 
-  const surroundings = await getAmenities(latitude, longitude);
+  const locationKey = `${latitude.toFixed(6)}:${longitude.toFixed(6)}`;
+  let request = amenitiesInFlight.get(locationKey);
+  if (!request) {
+    request = getAmenities(latitude, longitude);
+    amenitiesInFlight.set(locationKey, request);
+  }
+  let surroundings: Awaited<ReturnType<typeof getAmenities>>;
+  try {
+    surroundings = await request;
+  } finally {
+    if (amenitiesInFlight.get(locationKey) === request) amenitiesInFlight.delete(locationKey);
+  }
   if (
     surroundings.amenityAnalysis.status === "available" &&
     !surroundings.amenityAnalysis.partial
@@ -179,7 +205,15 @@ async function getCachedOrFreshAmenities(
     // A public Overpass instance can have a short outage. In that case an older,
     // successful analysis is still more useful than replacing it with an error.
     const stale = cached ?? (await readCache(listingId, latitude, longitude, true));
-    if (stale) return stale;
+    if (stale)
+      return {
+        ...stale,
+        amenityAnalysis: {
+          ...stale.amenityAnalysis,
+          stale: true,
+          message: "Serwery mapowe nie odpowiedziały. Pokazujemy ostatnią zapisaną analizę.",
+        },
+      };
   }
   return surroundings;
 }
@@ -189,25 +223,27 @@ async function getCommutes(
   longitude: number,
   settings: FamilySettings,
 ): Promise<CommuteSummary[]> {
-  const results: CommuteSummary[] = [];
-  for (const workplace of settings.workplaces) {
-    if (!isCoordinate(workplace.latitude) || !isCoordinate(workplace.longitude)) {
-      results.push({ key: workplace.key, label: workplace.label });
-      continue;
-    }
-    try {
-      const route = await fetchRoute(latitude, longitude, workplace.latitude, workplace.longitude);
-      results.push({
-        key: workplace.key,
-        label: workplace.label,
-        distanceKm: route ? Number((route.distance / 1_000).toFixed(1)) : undefined,
-        durationMinutes: route ? Math.round(route.duration / 60) : undefined,
-      });
-    } catch {
-      results.push({ key: workplace.key, label: workplace.label });
-    }
-  }
-  return results;
+  return Promise.all(
+    settings.workplaces.map(async (workplace): Promise<CommuteSummary> => {
+      const basic = { key: workplace.key, label: workplace.label };
+      if (!isCoordinate(workplace.latitude) || !isCoordinate(workplace.longitude)) return basic;
+      try {
+        const route = await fetchRoute(
+          latitude,
+          longitude,
+          workplace.latitude,
+          workplace.longitude,
+        );
+        return {
+          ...basic,
+          distanceKm: route ? Number((route.distance / 1000).toFixed(1)) : undefined,
+          durationMinutes: route ? Math.round(route.duration / 60) : undefined,
+        };
+      } catch {
+        return basic;
+      }
+    }),
+  );
 }
 
 async function fetchRoute(
@@ -226,7 +262,7 @@ async function fetchRoute(
         `${endpoint}/${fromLongitude},${fromLatitude};${toLongitude},${toLatitude}`,
       );
       url.searchParams.set("overview", "false");
-      const response = await fetch(url, { signal: AbortSignal.timeout(12_000) });
+      const response = await fetch(url, { signal: AbortSignal.timeout(5_000) });
       if (!response.ok) continue;
       const payload = (await response.json()) as {
         routes?: Array<{ distance: number; duration: number }>;
@@ -241,12 +277,16 @@ async function fetchRoute(
 
 async function getAmenities(latitude: number, longitude: number) {
   const results = await Promise.all(
-    buildOverpassQueries(latitude, longitude).map(fetchAmenitiesFromOverpass),
+    buildOverpassQueries(latitude, longitude).map((query) => fetchAmenitiesFromOverpass(query)),
   );
   if (results.every((elements) => elements === null)) {
     return {
       amenities: [buildMetroAmenity(latitude, longitude), ...emptyAmenitySummary()],
-      amenityAnalysis: unavailableAnalysis(),
+      amenityAnalysis: {
+        ...unavailableAnalysis(),
+        message:
+          "Nie udało się połączyć z serwerami mapowymi. Spróbuj ponownie później; brak odpowiedzi nie oznacza braku obiektów w okolicy.",
+      },
     };
   }
   const analysis = analyzeAmenityElements(
@@ -265,7 +305,7 @@ export function buildOverpassQuery(latitude: number, longitude: number) {
 function buildOverpassQueries(latitude: number, longitude: number) {
   const around = `(around:${RADIUS_METERS},${latitude},${longitude})`;
   return [
-    `[out:json][timeout:22];(
+    `[out:json][timeout:12];(
 nwr${around}["amenity"~"^(childcare|creche|kindergarten|school|pharmacy|hospital|clinic|doctors|bus_station|marketplace)$"];
 nwr${around}["shop"~"^(chemist|supermarket|convenience|grocery|greengrocer|bakery|deli)$"];
 nwr${around}["healthcare"~"^(hospital|clinic|doctor|doctors|physiotherapist|dentist)$"];
@@ -413,11 +453,17 @@ function emptyAmenitySummary(): NearbyAmenitySummary[] {
   }));
 }
 
-async function fetchAmenitiesFromOverpass(query: string) {
-  try {
-    const payload = await fetchExternalJson<{ elements?: OsmElement[] }>(
-      "https://overpass-api.de/api/interpreter",
-      {
+export async function fetchAmenitiesFromOverpass(
+  query: string,
+  fetchJson: typeof fetchExternalJson = fetchExternalJson,
+) {
+  const endpoints = [
+    "https://overpass.private.coffee/api/interpreter",
+    "https://overpass-api.de/api/interpreter",
+  ];
+  for (const endpoint of endpoints) {
+    try {
+      const payload = await fetchJson<{ elements?: OsmElement[]; remark?: string }>(endpoint, {
         method: "POST",
         headers: {
           Accept: "application/json",
@@ -425,13 +471,22 @@ async function fetchAmenitiesFromOverpass(query: string) {
           "User-Agent": "mieszkania-local/0.1 (neighborhood analysis)",
         },
         body: new URLSearchParams({ data: query }),
-        timeoutMs: 25_000,
-      },
-    );
-    return payload.elements ?? [];
-  } catch {
-    return null;
+        timeoutMs: 15_000,
+        fallbackOnTimeout: false,
+      });
+      if (!Array.isArray(payload.elements) || payload.remark)
+        throw new Error("OVERPASS_INCOMPLETE_RESPONSE");
+      return payload.elements;
+    } catch (error) {
+      const reason =
+        error instanceof Error
+          ? (error.message.match(/EXTERNAL_HTTP_\d+|OVERPASS_INCOMPLETE_RESPONSE/)?.[0] ??
+            error.name)
+          : "unknown";
+      console.warn("[neighborhood] " + new URL(endpoint).host + ": " + reason);
+    }
   }
+  return null;
 }
 
 function getElementPoint(element: OsmElement) {
@@ -477,10 +532,10 @@ async function readCache(
       `
       select insights_json
       from listing_neighborhood_context
-      where listing_id = $1
-        and abs(latitude - $2) < 0.000001
+      where abs(latitude - $2) < 0.000001
         and abs(longitude - $3) < 0.000001
         and ($4::boolean or fetched_at >= now() - make_interval(days => $5))
+      order by (listing_id = $1) desc, fetched_at desc
       limit 1
     `,
       [listingId, latitude, longitude, allowExpired, CACHE_TTL_DAYS],

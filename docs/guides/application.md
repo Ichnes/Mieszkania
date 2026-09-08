@@ -32,10 +32,22 @@ na telefonie szeroka tabela przewija się wewnątrz zakładki.
 
 Przy włączonej preferencji balkonu brak potwierdzonego balkonu oznacza −8 pkt
 (obecność nadal +10). Brak roku budowy daje −3 pkt. Prysznic, kabina prysznicowa
-lub natrysk dają +3 pkt; najwyższe/ostatnie piętro dodatkowe +3 pkt, także gdy
+lub natrysk dają +3 pkt; najwyższe/ostatnie piętro dodatkowe +5 pkt, także gdy
 wynika z opisu, np. „trzecim najwyższym i najcichszym piętrze”.
 Brak podanej kwoty czynszu daje −2 pkt. Kwota w polach portalu też się liczy;
 wyraźnie bezczynszowe mieszkanie nie dostaje tej kary.
+
+Rok budowy: do 1980 −4; 1981–1990 −2; 1991–2000 0; 2001–2005 +4;
+2006–2010 +6; 2011–2015 +8; 2016–2020 +10; po 2020 +12.
+Rok bieżący lub poprzedni daje dodatkowe +2.
+Piętro: parter i poniżej −4; pierwsze +1; drugie −2; trzecie +3; czwarte +4;
+piąte +5; szóste +7; siódme +8; 8–12 +9; powyżej 12 +12.
+Premia ostatniego piętra nalicza się tylko raz, w tym samym wierszu.
+
+Ekspozycja jednostronna daje −5, z wyjątkiem potwierdzonego S +2, W +4, N −15, E +2.
+Dwustronna daje +10 oraz bonus za parę: S/W +10, S/E +7, S/N +4, N/W +2,
+N/E +1, E/W +8. Trójstronna daje +13 oraz bonus: S/E/W +5, S/W/N +4,
+S/E/N +3, N/W/E +1. Brak rozpoznanej ekspozycji daje 0.
 
 Ocena raty korzysta z zapisanego wkładu własnego w **Finansowaniu zakupu**.
 Kwota kredytu to cena zakupu z rozpoznanymi dodatkowymi kosztami garażu i komórki,

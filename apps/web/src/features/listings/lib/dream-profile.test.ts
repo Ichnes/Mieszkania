@@ -99,23 +99,14 @@ test("breakdown sums exactly and includes balcony, year, shower, fee and top-flo
     assert.equal(row({ description }, "Informacja o czynszu").points, 0);
   assert.equal(row({ maintenanceFeeLabel: "950 PLN" }, "Informacja o czynszu").points, 0);
   assert.equal(
-    row(
-      { description: "Na trzecim najwyższym i najcichszym piętrze." },
-      "Najwyższe piętro — premia",
-    ).points,
-    3,
+    row({ description: "Na trzecim najwyższym i najcichszym piętrze." }, "Piętro").points,
+    5,
   );
   assert.equal(
-    row(
-      { floor: 3, totalFloors: 3, description: "Na ostatnim piętrze" },
-      "Najwyższe piętro — premia",
-    ).points,
-    3,
+    row({ floor: 3, totalFloors: 3, description: "Na ostatnim piętrze" }, "Piętro").points,
+    8,
   );
-  assert.equal(
-    row({ description: "Nie jest na ostatnim piętrze" }, "Najwyższe piętro — premia").points,
-    0,
-  );
+  assert.equal(row({ description: "Nie jest na ostatnim piętrze" }, "Piętro").points, 0);
   const evaluation = evaluate({
     description: "Blaty granitowe. Prysznic. Dwa miejsca parkingowe.",
   });

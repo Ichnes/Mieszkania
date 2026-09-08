@@ -1,5 +1,31 @@
 # Start lokalny
 
+## Docker Desktop
+
+Na Windows uruchom Docker Desktop z silnikiem WSL 2. Rozszerzenie do VS Code nie jest wymagane.
+W katalogu projektu wykonaj:
+
+```sh
+docker compose up -d --build
+docker compose ps
+```
+
+Otwórz `http://localhost:8080/oferty`. Pierwsze budowanie pobiera obrazy, zależności
+i Chromium. Compose uruchamia frontend, API oraz własny PostgreSQL; nie wymaga
+lokalnej instalacji Node.js ani PostgreSQL. Dane są przechowywane w osobnych
+wolumenach `database` i `storage`, bez kopiowania dotychczasowej lokalnej bazy.
+Port 8080 jest dostępny także przez `http://IP-KOMPUTERA:8080/oferty` w sieci
+domowej, jeśli zapora Windows pozwala na połączenia. Opcjonalne
+`DOCKER_BIND_ADDRESS=127.0.0.1` ogranicza dostęp do tego komputera.
+`-d` uruchamia kontenery w tle; zamknięcie terminala ich nie zatrzymuje.
+Po restarcie komputera uruchom Docker Desktop — kontenery mają automatyczny restart.
+Nie przekierowuj portu w routerze: aplikacja nie ma logowania, a dostęp z internetu
+wymaga dodatkowej ochrony.
+
+`docker compose logs --tail=100` pokazuje logi. `docker compose down` zatrzymuje
+aplikację i zachowuje dane; dodanie `--volumes` usuwa dane wolumenów.
+Po zmianie kodu ponów `docker compose up -d --build`.
+
 ## Wymagania
 
 - Node.js 22.14 lub nowszy i npm.

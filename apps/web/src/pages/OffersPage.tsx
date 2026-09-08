@@ -470,8 +470,6 @@ export function OffersPage({
                 onOpen={openListing}
                 onToggleShortlist={toggleShortlist}
                 downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}
-                compareIds={model.compareListingIds}
-                onToggleCompare={model.toggleCompareListing}
                 updatingShortlistId={isUpdatingShortlist}
                 isLoading={isLoadingListings}
               />

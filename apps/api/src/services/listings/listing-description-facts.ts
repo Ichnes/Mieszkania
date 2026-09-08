@@ -153,20 +153,7 @@ export function inferBuildingDetails(description: string) {
     ["dziewiat", 9],
     ["dziesiat", 10],
   ];
-  const groundFloor =
-    /\b(?:na\s+(?:(?:wysokim|niskim|podwyzszonym|slonecznym)\s+)?parterze|(?:wysoki|niski)\s+parter|pietro\s*[:=-]\s*parter|(?:mieszkanie|lokal)\s+parterow\w*)\b/g;
-  const hasGroundFloor = [...text.matchAll(groundFloor)].some((match) => {
-    const before = text.slice(Math.max(0, match.index! - 70), match.index);
-    const clause = before.split(/[.!?;]|\b(?:mieszkanie|apartament|lokal)\b/).at(-1) ?? "";
-    const after = text.slice(match.index! + match[0].length, match.index! + match[0].length + 45);
-    if (
-      /^\s+(?:(?:jest|sa|znajduj\w*\s+sie)\s+)?(?:sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(
-        after,
-      )
-    )
-      return false;
-    return !/\b(?:nie|bez|sklep\w*|uslug\w*|recepcj\w*|garaz\w*|komork\w*)\b/.test(clause);
-  });
+  const hasGroundFloor = hasApartmentGroundFloor(text);
   const floorFromOrdinal = ordinalFloors.find(([stem]) =>
     new RegExp(`\\b${stem}\\w*\\s+pietr(?:ze|o)\\b`).test(text),
   )?.[1];
@@ -210,3 +197,4 @@ function normalize(value: string) {
     .toLowerCase()
     .replace(/ł/g, "l");
 }
+import { hasApartmentGroundFloor } from "@mieszkania/shared";

@@ -1,5 +1,23 @@
 # Bieżące zadania
 
+## Kontrola po restarcie i push (2026-09-08)
+
+- [x] Zakres: sprawdzenie gotowości Dockera po restarcie oraz publikacja bieżących zmian kodu na prośbę użytkownika.
+- [x] WSL 2 i docker-desktop działają; Docker Engine 29.7.2 odpowiada, Compose 5.5.1 dostępny. `docker compose config --quiet` przechodzi. Rozszerzenia VS Code nie są wymagane.
+- [x] Poprawiono błędne separatory poleceń w Dockerfile; dodano instrukcję Compose i poprawiono README.
+- [x] Poprawiono brak `tsconfig.base.json` w obrazie, niepełne dane testu, regresję parteru po wzmiance o garażu oraz przekazywanie indeksu `map` jako funkcji zapytania Overpass.
+- [x] Weryfikacja: 110 testów API i 67 frontendu; build całego monorepo wewnątrz obrazu Linux. Trzy kontenery healthy, HTTP 200 dla strony/API, świeża baza bez ofert i adresów pracy.
+- [x] Osobny projekt `mieszkania-check`, port 18080, automatyczne importy wyłączone. Znaczniki w PostgreSQL i storage przetrwały `--force-recreate`. Lokalna baza Windows i lokalne storage nie są podpięte do Compose.
+- [x] Chromium 1440/1280/390 px: bez błędów JS i przepełnienia strony; obejrzany mobilny zrzut. Aktualizacja instrukcji startu i punktacji; przygotowany zakres commitu obejmuje bieżące zmiany aplikacji i Docker, bez danych lokalnych.
+- Dalszy temat: dostęp taty przez internet. Wyjaśniono darmowy Quick Tunnel bez domeny; aplikacja nie ma logowania, przed publikacją potrzebna ochrona dostępu. Tunelu nie uruchamiano.
+- [x] Na prośbę użytkownika dodano dostęp Compose po lokalnym IP (port 8080, konfigurowalny adres nasłuchu) i instrukcję działania w tle; uruchomienie używa osobnej bazy, bez migracji lokalnych ofert.
+
+## Diagnostyka startu Dockera (2026-09-08)
+
+- [x] Sprawdzono status poza sandboxem: WSL nie jest zainstalowany, HypervisorPresent=False. Użytkownik potwierdza włączoną wirtualizację w Menedżerze zadań.
+- [x] Przekazano instrukcję instalacji WSL bez dodatkowej dystrybucji i restartu; bez zmian BIOS ani konfiguracji systemowej przez agenta.
+- [x] Po restarcie uruchomiono Compose na osobnej bazie i wolumenach; wyniki w sekcji powyżej.
+
 ## Kategorie zasad punktacji i publikacja zmian (2026-09-08)
 
 - [x] Panel zasad podzielony na Koszty, Lokalizację, Układ, Budynek i Wykończenie; przełączniki z ikonami, karty kryteriów i oznaczenia punktów bieżącej oferty. Panel umieszczony nad tabelą.

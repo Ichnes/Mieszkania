@@ -35,6 +35,7 @@ const categories = [
     labels: [
       "Metraż",
       "Liczba pokoi",
+      "Ekspozycja",
       "Układ mieszkania",
       "Balkon",
       "Garderoba",
@@ -56,8 +57,6 @@ const categories = [
       "Garaż i winda razem",
       "Rok budowy",
       "Piętro",
-      "Parter w opisie",
-      "Najwyższe piętro — premia",
       "Co najmniej 2 miejsca parkingowe",
       "Zamknięte osiedle",
       "Monitoring",

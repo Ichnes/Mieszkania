@@ -5,7 +5,8 @@ statystyk i planowania oglądań. Dane oraz ustawienia użytkownika zostają na 
 
 ## Uruchomienie
 
-Wymagania: **Node.js 22.14+**, npm i uruchomiony **PostgreSQL 16+**. Docker nie jest używany.
+Wymagania uruchomienia bez kontenerów: **Node.js 22.14+**, npm i uruchomiony **PostgreSQL 16+**.
+Alternatywnie użyj [Docker Desktop i Compose](docs/guides/getting-started.md#docker-desktop).
 
 ```sh
 npm install

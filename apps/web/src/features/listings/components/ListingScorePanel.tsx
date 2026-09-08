@@ -63,7 +63,12 @@ export function ListingScorePanel({
             <tr>
               <th scope="col">Kryterium</th>
               <th scope="col">Punkty</th>
-              <th scope="col">Do mianownika</th>
+              <th
+                scope="col"
+                title="Punkty możliwe z aktywnych kryteriów, przez które dzielimy zdobytą sumę."
+              >
+                Punkty możliwe
+              </th>
               <th scope="col">Dane / powód</th>
             </tr>
           </thead>

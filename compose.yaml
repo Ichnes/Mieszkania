@@ -1,0 +1,61 @@
+name: mieszkania
+services:
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_DB: mieszkania
+      POSTGRES_USER: mieszkania
+      POSTGRES_PASSWORD: mieszkania-local
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mieszkania -d mieszkania"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+  api:
+    build:
+      context: .
+      target: api
+    init: true
+    shm_size: 1gb
+    environment:
+      DATABASE_URL: postgres://mieszkania:mieszkania-local@db:5432/mieszkania
+      AUTOMATION_ENABLED: "${AUTOMATION_ENABLED:-true}"
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3001/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+  web:
+    build:
+      context: .
+      target: web
+    ports:
+      - "${DOCKER_BIND_ADDRESS:-0.0.0.0}:${DOCKER_WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+volumes:
+  database:
+  storage:

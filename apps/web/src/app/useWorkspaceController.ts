@@ -857,7 +857,7 @@ export function useWorkspaceController() {
         `${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}/insights${force ? "?refresh=true" : ""}`,
         { signal },
       );
-      if (!response.ok) return;
+      if (!response.ok) throw new Error("INSIGHTS_HTTP_" + response.status);
       const insights = (await response.json()) as Pick<
         ListingDetail,
         "commutes" | "amenities" | "amenityAnalysis"
@@ -868,6 +868,29 @@ export function useWorkspaceController() {
       );
     } catch (error) {
       // Optional enrichment must never reopen a dismissed offer or reject globally.
+      if (!signal?.aborted)
+        setSelectedListing((current) =>
+          current?.id !== listingId
+            ? current
+            : {
+                ...current,
+                amenityAnalysis:
+                  current.amenityAnalysis?.status === "available"
+                    ? {
+                        ...current.amenityAnalysis,
+                        stale: true,
+                        message: "Odświeżenie nie powiodło się. Pokazujemy zapisaną analizę.",
+                      }
+                    : {
+                        status: "unavailable",
+                        source: "OpenStreetMap",
+                        radiusMeters: 2000,
+                        plannedFacilities: [],
+                        message:
+                          "Nie udało się pobrać analizy z API. Sprawdź połączenie z aplikacją i spróbuj ponownie.",
+                      },
+              },
+        );
     } finally {
       if (!signal?.aborted) setIsLoadingListingInsights(false);
     }

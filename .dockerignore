@@ -1,0 +1,16 @@
+node_modules
+**/node_modules
+**/dist
+**/*.tsbuildinfo
+.git
+.env*
+storage
+.local
+.agents
+.codex
+coverage
+test-results
+playwright-report
+*.log
+*.dump
+*.backup

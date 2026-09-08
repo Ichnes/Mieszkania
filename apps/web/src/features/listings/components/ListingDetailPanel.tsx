@@ -1270,7 +1270,15 @@ export function ListingDetailPanel(input: {
 
             <div className="result-box detail-sidebar-box">
               <strong>Okolica</strong>
-              {input.isLoadingInsights ? (
+              {input.listing.amenityAnalysis?.message && (
+                <p className="muted" role="status">
+                  {input.listing.amenityAnalysis.message}
+                </p>
+              )}
+              {input.isLoadingInsights && input.listing.amenityAnalysis?.status === "available" && (
+                <p className="muted">Odświeżam dane — poniżej ostatnia analiza.</p>
+              )}
+              {input.isLoadingInsights && input.listing.amenityAnalysis?.status !== "available" ? (
                 <p className="muted">Pobieram aktualne dane o okolicy...</p>
               ) : input.listing.amenityAnalysis?.status === "unavailable" ? (
                 <div className="amenity-unavailable">
