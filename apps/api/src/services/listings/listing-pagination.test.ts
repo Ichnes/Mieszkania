@@ -3,7 +3,7 @@ import test from "node:test";
 import { computeDreamScore, createDefaultFamilySettings } from "@mieszkania/shared";
 import { pool } from "../../db";
 import fs from "node:fs";
-import { getListingsPage } from "./listing-repository";
+import { getDashboardContext, getListingDetail, getListingsPage } from "./listing-repository";
 
 test("dream sorting enriches only the selected page and keeps stable global pagination", async (t) => {
   const rows = Array.from({ length: 3000 }, (_, i) => ({
@@ -30,7 +30,8 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     if (sql.includes("count(*)::text as total")) return { rows: [{ total: String(rows.length) }] };
     if (sql.includes("l.canonical_url")) return { rows };
     if (sql.includes("from price_events")) {
-      assert.equal((values[0] as string[]).length, rows.length);
+      if (sql.includes("select distinct on (pe.listing_id)"))
+        assert.equal((values[0] as string[]).length, rows.length);
       return { rows: priceEvents };
     }
     if (sql.includes("from transaction_rcn")) {
@@ -51,11 +52,10 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     expectedIds,
   );
   assert.deepEqual(imageRequests, [expectedIds]);
-  assert.ok(
-    rcnQueries > 0 && rcnQueries <= 90,
-    `Expected only page RCN lookups, got ${rcnQueries}`,
-  );
+  assert.equal(rcnQueries, 0, "Listing pages must not query RCN");
   assert.ok(result.items.every((item) => typeof item.dreamScore === "number"));
+  await Promise.all([getDashboardContext(), getListingDetail(expectedIds[0])]);
+  assert.equal(rcnQueries, 0, "Dashboard and listing detail must not query RCN either");
   const changed = rows.find((row) => row.id === expectedIds[0])!;
   changed.description = "Winda, garaż podziemny. Gotowe do wprowadzenia.";
   const updated = await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });

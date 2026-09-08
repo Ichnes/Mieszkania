@@ -25,6 +25,7 @@ Thumbs.db
 # Local configuration and secrets
 .env*
 !.env.example
+compose.override.yaml
 
 # Tool caches and logs
 .turbo/

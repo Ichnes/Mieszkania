@@ -10,7 +10,6 @@ import type {
   ListingFeature,
   ListingFilters,
   ListingSummary,
-  RcnComparableTransaction,
 } from "@mieszkania/shared";
 import { computeDreamScore, getListingAgePoints } from "@mieszkania/shared";
 import { withDb } from "../../db";
@@ -106,8 +105,6 @@ type PriceEventRow = {
 
 const MAX_VISIBLE_LISTING_PRICE = 2_200_000;
 const MIN_VISIBLE_LISTING_AREA_SQM = 56;
-const RCN_BENCHMARK_YEARS = 4;
-const RCN_COMPARABLE_RADIUS_METERS = 150;
 const EFFECTIVE_LISTING_DATE_SQL = buildEffectiveListingDateSql("l");
 
 type SnapshotPayloadRow = {
@@ -134,12 +131,6 @@ type DashboardContext = {
 type ListingsPage = {
   total: number;
   items: ListingSummary[];
-};
-
-type RcnBenchmark = {
-  avgPricePerSqm: number;
-  sampleCount: number;
-  scope: "street" | "neighborhood" | "district";
 };
 
 export async function getDashboardContext(): Promise<DashboardContext> {
@@ -535,7 +526,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       return null;
     }
 
-    const [images, priceHistoryResult, viewing, contactHistory, relatedListings, rcnTransactions] =
+    const [images, priceHistoryResult, viewing, contactHistory, relatedListings] =
       await Promise.all([
         getListingImages(row.id),
         db.query<PriceEventRow>(
@@ -550,9 +541,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         getListingViewing(listingId),
         listListingContactEvents(db, listingId),
         getRelatedListings(listingId),
-        getRcnComparableTransactions(db, row),
       ]);
-    const rcnBenchmark = await getRcnBenchmark(db, row);
 
     const resolvedImages = images
       .map((image) => ({
@@ -573,7 +562,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     const detail = mapListingSummary(
       { ...row, snapshot_payload_raw: snapshotPayload },
       undefined,
-      rcnBenchmark,
+      null,
       images.length,
       primaryImage?.resolvedUrl,
       imageUrls,
@@ -594,7 +583,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         addressText: row.address_text ?? undefined,
         snapshotPayload,
       }),
-      rcnTransactions,
+      rcnTransactions: [],
       priceHistory: priceHistoryResult.rows.map((event) => ({
         eventType: event.event_type,
         changedAt: event.changed_at,
@@ -997,7 +986,7 @@ async function getListingsPageByScope(
     );
 
     // Score all candidates before pagination, but enrich only the visible page.
-    // RCN and photos do not influence the matching score; fetching them for every
+    // Photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
     let pageRows = listingsResult.rows.map(decodeListingRow);
     // Price changes must be available before global scoring and pagination.
@@ -1028,10 +1017,9 @@ async function getListingsPageByScope(
         .slice(offset, offset + pageSize);
     }
     const listingIds = pageRows.map((row) => row.id);
-    const [relatedCounts, imagesByListingId, rcnBenchmarks] = await Promise.all([
+    const [relatedCounts, imagesByListingId] = await Promise.all([
       getRelatedCounts(listingIds),
       getListingImagesForListings(listingIds),
-      Promise.all(pageRows.map((row) => getRcnBenchmark(db, row))),
     ]);
 
     const items = pageRows.map((row, index) => {
@@ -1052,7 +1040,7 @@ async function getListingsPageByScope(
       const item = mapListingSummary(
         row,
         latestPriceEvents.get(row.id),
-        rcnBenchmarks[index],
+        null,
         images.length,
         thumbnailUrl,
         imageUrls,
@@ -1368,7 +1356,7 @@ function decodeListingRow(row: ListingRow): ListingRow {
 function mapListingSummary(
   row: ListingRow,
   latestEvent: PriceEventRow | undefined,
-  rcnBenchmark: RcnBenchmark | null,
+  _rcnBenchmark: null,
   imageCount: number,
   thumbnailUrl?: string,
   imageUrls: string[] = [],
@@ -1386,7 +1374,7 @@ function mapListingSummary(
       ? priceAmount / areaSqm
       : null;
   const priceChangePercent = getPriceChangePercent(latestEvent);
-  const rcnDeltaLabel = buildRcnDeltaLabel(pricePerSqm, rcnBenchmark);
+  const rcnDeltaLabel = "";
   const resolvedDistrict = resolveDistrict(row);
   const resolvedNeighborhood = resolveNeighborhood(row);
   const resolvedStreet = resolveStreet(row);
@@ -1517,7 +1505,7 @@ function mapListingSummary(
     rcnDeltaLabel,
     priceChangePercent,
     relisting,
-    summary: buildListingSummary(row, latestEvent, rcnDeltaLabel, imageCount, manualSummary),
+    summary: buildListingSummary(row, latestEvent, imageCount, manualSummary),
     thumbnailUrl,
     imageCount,
     imageUrls,
@@ -2019,7 +2007,6 @@ function isKnownApproximateWarsawPoint(latitude: number, longitude: number) {
 function buildListingSummary(
   row: ListingRow,
   latestEvent: PriceEventRow | undefined,
-  rcnDelta: string,
   imageCount: number,
   manualSummary?: string,
 ) {
@@ -2032,15 +2019,15 @@ function buildListingSummary(
   }
 
   if (!latestEvent) {
-    return `Nowa oferta ${row.rooms ?? "?"} pokojowa. Brak jeszcze historii zmian, porownanie: ${rcnDelta}.${imageFragment}${manualFragment}`;
+    return `Nowa oferta ${row.rooms ?? "?"} pokojowa. Brak jeszcze historii zmian.${imageFragment}${manualFragment}`;
   }
 
   if (latestEvent.event_type === "price_drop") {
-    return `Wykryto spadek ceny. Ostatnia zmiana oferty zostala zapisana w historii, porownanie: ${rcnDelta}.${imageFragment}${manualFragment}`;
+    return `Wykryto spadek ceny. Ostatnia zmiana oferty zostala zapisana w historii.${imageFragment}${manualFragment}`;
   }
 
   if (latestEvent.event_type === "price_increase") {
-    return `Cena wzrosla wzgledem poprzedniego snapshotu. Sprawdz relacje do transakcji: ${rcnDelta}.${imageFragment}${manualFragment}`;
+    return `Cena wzrosla wzgledem poprzedniego snapshotu.${imageFragment}${manualFragment}`;
   }
 
   return `Oferta aktywna i monitorowana. Ostatni znany status: ${latestEvent.event_type}.${imageFragment}${manualFragment}`;
@@ -2775,24 +2762,6 @@ export function inferCommercialInfo(
   return { badges };
 }
 
-function buildRcnDeltaLabel(pricePerSqm: number | null, benchmark: RcnBenchmark | null) {
-  if (!pricePerSqm || !benchmark) {
-    return "brak danych RCN";
-  }
-
-  const delta = ((pricePerSqm - benchmark.avgPricePerSqm) / benchmark.avgPricePerSqm) * 100;
-  const sign = delta >= 0 ? "+" : "";
-  const scopeLabel =
-    benchmark.scope === "street"
-      ? "ulica"
-      : benchmark.scope === "neighborhood"
-        ? "poddzielnica"
-        : benchmark.scope === "district"
-          ? "dzielnica"
-          : "dzielnica";
-  return `${sign}${delta.toFixed(1)}% vs RCN (${scopeLabel}, n=${benchmark.sampleCount})`;
-}
-
 function getPriceChangePercent(latestEvent: PriceEventRow | undefined) {
   if (!latestEvent?.previous_price_amount || !latestEvent.new_price_amount) {
     return 0;
@@ -2956,136 +2925,6 @@ async function listListingContactEvents(
 
 function escapeRegExp(value: string) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-async function getRcnBenchmark(
-  db: Parameters<typeof withDb>[0] extends (db: infer T) => Promise<unknown> ? T : never,
-  row: ListingRow,
-) {
-  const cityNormalized = normalizePolish(row.city);
-  const districtValue = resolveDistrict(row);
-  const districtNormalized =
-    districtValue && districtValue !== "Bez dzielnicy" ? normalizePolish(districtValue) : null;
-  const neighborhoodValue = resolveNeighborhood(row);
-  const neighborhoodNormalized = neighborhoodValue ? normalizePolish(neighborhoodValue) : null;
-  const streetNormalized = normalizeStreetName(
-    extractStreet(row.address_text ?? undefined, row.description ?? undefined),
-  );
-
-  const scopes: Array<{
-    scope: RcnBenchmark["scope"];
-    sql: string;
-    values: string[];
-    minSamples: number;
-  }> = [];
-
-  if (streetNormalized) {
-    scopes.push({
-      scope: "street",
-      sql: `city_normalized = $1 and street_normalized = $2`,
-      values: [cityNormalized, streetNormalized],
-      minSamples: 3,
-    });
-  }
-
-  if (neighborhoodNormalized) {
-    scopes.push({
-      scope: "neighborhood",
-      sql: `city_normalized = $1 and district_normalized = $2`,
-      values: [cityNormalized, neighborhoodNormalized],
-      minSamples: 4,
-    });
-  }
-
-  if (districtNormalized) {
-    scopes.push({
-      scope: "district",
-      sql: `city_normalized = $1 and district_normalized = $2`,
-      values: [cityNormalized, districtNormalized],
-      minSamples: 5,
-    });
-  }
-
-  for (const scope of scopes) {
-    const result = await db.query<{ avg_price_per_sqm: string | null; sample_count: string }>(
-      `
-        select
-          avg(price_per_sqm)::text as avg_price_per_sqm,
-          count(*)::text as sample_count
-        from transaction_rcn
-        where price_per_sqm is not null
-          and transaction_date >= current_date - make_interval(years => ${RCN_BENCHMARK_YEARS})
-          and ${scope.sql}
-      `,
-      scope.values,
-    );
-
-    const sampleCount = Number(result.rows[0]?.sample_count ?? "0");
-    const avgPricePerSqm = result.rows[0]?.avg_price_per_sqm
-      ? Number(result.rows[0].avg_price_per_sqm)
-      : null;
-
-    if (avgPricePerSqm && sampleCount >= scope.minSamples) {
-      return {
-        avgPricePerSqm,
-        sampleCount,
-        scope: scope.scope,
-      } satisfies RcnBenchmark;
-    }
-  }
-
-  return null;
-}
-
-async function getRcnComparableTransactions(
-  db: Parameters<typeof withDb>[0] extends (db: infer T) => Promise<unknown> ? T : never,
-  row: ListingRow,
-): Promise<RcnComparableTransaction[]> {
-  const streetNormalized = normalizeStreetName(
-    extractStreet(row.address_text ?? undefined, row.description ?? undefined),
-  );
-  if (!streetNormalized || !row.latitude || !row.longitude) return [];
-  const latitude = Number(row.latitude);
-  const longitude = Number(row.longitude);
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return [];
-  const result = await db.query<{
-    id: string;
-    transaction_date: string;
-    street: string | null;
-    area_sqm: string;
-    price_amount: string;
-    price_per_sqm: string;
-    market_type: "primary" | "secondary";
-    distance_meters: string;
-  }>(
-    `
-      select id, transaction_date::text, street, area_sqm::text, price_amount::text, price_per_sqm::text, market_type,
-        round((6371000 * acos(least(1, greatest(-1,
-          cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($1)) * sin(radians(latitude))
-        ))))::numeric)::text as distance_meters
-      from transaction_rcn
-      where street_normalized = $3
-        and latitude is not null and longitude is not null
-        and area_sqm is not null and price_per_sqm is not null
-        and transaction_date >= current_date - make_interval(years => ${RCN_BENCHMARK_YEARS})
-        and 6371000 * acos(least(1, greatest(-1,
-          cos(radians($1)) * cos(radians(latitude)) * cos(radians(longitude) - radians($2)) + sin(radians($1)) * sin(radians(latitude))
-        ))) <= ${RCN_COMPARABLE_RADIUS_METERS}
-      order by distance_meters asc, transaction_date desc
-      limit 25
-    `,
-    [latitude, longitude, streetNormalized],
-  );
-  return result.rows.map((transaction) => ({
-    id: transaction.id,
-    transactionDate: transaction.transaction_date,
-    street: transaction.street ?? undefined,
-    areaSqm: Number(transaction.area_sqm),
-    priceAmount: Number(transaction.price_amount),
-    pricePerSqm: Number(transaction.price_per_sqm),
-    distanceMeters: Number(transaction.distance_meters),
-    marketType: transaction.market_type,
-  }));
 }
 
 function buildListingOrderBy(sort?: ListingFilters["sort"]) {

@@ -1,5 +1,21 @@
 # Bieżące zadania
 
+## HTTP 500 dashboard po podłączeniu istniejącej bazy do Dockera (2026-09-08)
+
+- [x] Logi potwierdzają wyczerpanie puli połączeń przy równoległym pobieraniu RCN dla dashboardu i listy; błędy także w statusie kolejki.
+- [x] Zgodnie z doprecyzowaniem użytkownika usunięto automatyczne porównania RCN z dashboardu, listy i szczegółów ofert, zamiast ograniczać ich równoległość. Usunięto zapytania benchmarku i pobliskich transakcji oraz sekcję w szczegółach. Zapisane dane/import RCN pozostają.
+- [x] 110 testów API i build monorepo przechodzą. Rozszerzona regresja na 3000 ofertach potwierdza zero zapytań RCN także podczas pobierania dashboardu i szczegółów.
+- [x] Kontenery przebudowane i uruchomione. Równoległe dashboard/lista/ustawienia/alerty/region: HTTP 200. Szczegóły: HTTP 200, 10 zdjęć, brak porównania RCN. Pełne otwarcie strony w Chromium 1440/1280/390: 30 kart ofert, zero HTTP 500, błędów JS i przepełnienia; obejrzany zrzut laptopa.
+- Pozostały temat wydajności: pierwszy odczyt `dream_desc` w tej konfiguracji trwał około 24 s, dashboard około 8,7 s przy równoległym obciążeniu. Nie jest to już oczekiwanie na RCN. Naprawa zgłoszonego HTTP 500 zakończona.
+
+## Przywrócenie dostępu do dotychczasowych danych (2026-09-08)
+
+- [x] Zakres: wyjaśnienie pustego localhost po uruchomieniu osobnej kopii Docker i przywrócenie aplikacji z lokalnymi danymi.
+- [x] Odczyt PostgreSQL na localhost:5432: baza `mieszkania` zawiera 12 319 rekordów ofert. Porty 5173/3001 nie działały; 8080 odpowiadał z osobną bazą Docker.
+- [x] Na wyraźną prośbę użytkownika podłączono aplikację Docker na 8080 do istniejącego PostgreSQL Windows przez `host.docker.internal` i istniejącego katalogu `storage`. Lokalny `compose.override.yaml` jest ignorowany przez Git i automatycznie używany przy zwykłym `docker compose up`.
+- [x] Zatrzymano dodatkowy proces `npm run dev`, aby nie działały dwie automatyzacje. Bez kopiowania, kasowania ani migracji dotychczasowej bazy.
+- [x] HTTP 200 z `/api/listings`: 3077 ofert w bieżącym domyślnym zakresie, 30 na pierwszej stronie. Sprawdzono zdjęcie i odczyt ustawień przez port 8080. Brak dalszych prac w zakresie przywrócenia danych.
+
 ## Kontrola po restarcie i push (2026-09-08)
 
 - [x] Zakres: sprawdzenie gotowości Dockera po restarcie oraz publikacja bieżących zmian kodu na prośbę użytkownika.

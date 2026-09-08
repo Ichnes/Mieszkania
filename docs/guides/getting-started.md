@@ -26,6 +26,16 @@ wymaga dodatkowej ochrony.
 aplikację i zachowuje dane; dodanie `--volumes` usuwa dane wolumenów.
 Po zmianie kodu ponów `docker compose up -d --build`.
 
+### Istniejące dane na tym komputerze
+
+Nowa instalacja Compose ma osobną pustą bazę. Lokalny `compose.override.yaml`
+może podłączyć API do istniejącego PostgreSQL Windows przez `host.docker.internal`
+i zamontować dotychczasowy katalog `storage` w `/app/storage`. Compose automatycznie
+uwzględnia ten plik przy zwykłym uruchomieniu. Plik jest ignorowany przez Git,
+ponieważ zawiera lokalne ścieżki i dane połączenia; nie wysyłaj go znajomemu.
+W takim układzie PostgreSQL Windows musi nadal działać. Nie uruchamiaj równolegle
+drugiego API przez `npm run dev`, aby nie powielać automatycznych importów.
+
 ## Wymagania
 
 - Node.js 22.14 lub nowszy i npm.

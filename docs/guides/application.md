@@ -22,6 +22,10 @@ zapisanych ustawień (baza i lokalna kopia family-settings).
 
 ## Punktacja wymarzonego mieszkania
 
+Lista, ekran startowy i szczegóły nie porównują automatycznie ofert z RCN ani
+nie pobierają pobliskich transakcji. Import i zapisane dane RCN pozostają dostępne
+osobno; nie są potrzebne do przeglądania ani oceny mieszkań.
+
 W szczegółach oferty otwórz czwartą zakładkę **Ocena**. Tabela pokazuje każde
 kryterium, zdobyte punkty, jego udział w mianowniku oraz dane/powód oceny.
 Przycisk **Co ile daje punktów?** rozwija nad tabelą karty zasad w kategoriach

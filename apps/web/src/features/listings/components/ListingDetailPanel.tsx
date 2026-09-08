@@ -548,10 +548,6 @@ export function ListingDetailPanel(input: {
                     <td>{input.listing.rooms ?? "-"}</td>
                   </tr>
                   <tr>
-                    <th>RCN</th>
-                    <td colSpan={3}>{input.listing.rcnDeltaLabel}</td>
-                  </tr>
-                  <tr>
                     <th>Piętro</th>
                     <td>
                       {input.listing.floor === 0 ? "Parter" : (input.listing.floor ?? "-")} /{" "}
@@ -662,41 +658,6 @@ export function ListingDetailPanel(input: {
                 floor={input.listing.floor}
               />
               <ListingDescription value={input.listing.description} />
-              <section className="subsection rcn-transactions">
-                <div className="section-topline">
-                  <div>
-                    <h3>Transakcje RCN z tej ulicy · do 150 m</h3>
-                    <p className="muted">
-                      Rzeczywiste ceny transakcyjne z ostatnich 4 lat, sortowane od najbliższej
-                      lokalizacji.
-                    </p>
-                  </div>
-                </div>
-                {input.listing.rcnTransactions.length > 0 ? (
-                  <div className="rcn-transaction-list">
-                    {input.listing.rcnTransactions.map((transaction) => (
-                      <div className="rcn-transaction" key={transaction.id}>
-                        <strong>
-                          {transaction.areaSqm.toFixed(1)} m² · {formatPln(transaction.priceAmount)}
-                        </strong>
-                        <span>
-                          {Math.round(transaction.pricePerSqm).toLocaleString("pl-PL")} PLN/m² ·{" "}
-                          {transaction.distanceMeters} m ·{" "}
-                          {transaction.marketType === "primary" ? "pierwotny" : "wtórny"}
-                        </span>
-                        <small>
-                          {new Date(transaction.transactionDate).toLocaleDateString("pl-PL")}
-                        </small>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="muted">
-                    Brak transakcji z ostatnich 4 lat z tej samej ulicy w promieniu 150 m. Benchmark
-                    tej oferty: {input.listing.rcnDeltaLabel}.
-                  </p>
-                )}
-              </section>
             </div>
 
             <section
