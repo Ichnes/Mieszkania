@@ -16,7 +16,7 @@ export function getFloorPoints(floor?: number) {
   if (floor === undefined || !Number.isFinite(floor)) return 0;
   if (floor <= 0) return -4;
   if (floor > 12) return 12;
-  return ({ 1: 1, 2: -2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 8 } as Record<number, number>)[floor] ?? 9;
+  return ({ 1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 7, 7: 8 } as Record<number, number>)[floor] ?? 9;
 }
 
 export function hasApartmentGroundFloor(text: string) {
@@ -51,12 +51,12 @@ export function getExposureEvaluation(description: string) {
   if (sides === 1) {
     const direction = exposure.directions.length === 1 ? exposure.directions[0] : undefined;
     points = direction
-      ? (({ S: 2, W: 4, N: -15, E: 2 } as Record<string, number>)[direction] ?? -5)
+      ? (({ S: 4, W: 4, N: -15, E: 2 } as Record<string, number>)[direction] ?? -5)
       : -5;
   } else if (sides === 2) {
     points =
       10 +
-      (({ SW: 10, ES: 7, NS: 4, NW: 2, EN: 1, EW: 8 } as Record<string, number>)[cardinals] ?? 0);
+      (({ SW: 10, ES: 7, NS: 4, NW: 2, EN: 1, EW: 10 } as Record<string, number>)[cardinals] ?? 0);
   } else if (sides === 3) {
     points = 13 + (({ ESW: 5, NSW: 4, ENS: 3, ENW: 1 } as Record<string, number>)[cardinals] ?? 0);
   }

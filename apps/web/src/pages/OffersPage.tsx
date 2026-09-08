@@ -1,3 +1,4 @@
+import { ListingSelect } from "../features/listings/components/ListingSelect";
 import { defaultDownPayment } from "@mieszkania/shared";
 import {
   LoaderCircle,
@@ -197,24 +198,21 @@ export function OffersPage({
                   </label>
                   <label className="filter-field">
                     <span>Dzielnica</span>
-                    <select
-                      className="text-input"
+                    <ListingSelect
+                      label="Dzielnica"
                       value={filters.district ?? ""}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          district: event.target.value || undefined,
-                        }))
+                      onChange={(value) =>
+                        setFilters((current) => ({ ...current, district: value || undefined }))
                       }
-                    >
-                      <option value="">Wszystkie dzielnice</option>
-                      <option value="__none__">Bez dzielnicy</option>
-                      {warsawDreamDistrictCatalog.map((item) => (
-                        <option key={item.district} value={item.district}>
-                          {item.district}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: "", label: "Wszystkie dzielnice" },
+                        { value: "__none__", label: "Bez dzielnicy" },
+                        ...warsawDreamDistrictCatalog.map((item) => ({
+                          value: item.district,
+                          label: item.district,
+                        })),
+                      ]}
+                    />
                   </label>
                   <label className="filter-field">
                     <span>Cena od</span>
@@ -362,6 +360,7 @@ export function OffersPage({
                     <span>Szukaj w ofercie</span>
                     <input
                       className="text-input"
+                      placeholder="Opis, tytuł lub ulica, np. Okopowa"
                       value={filters.search ?? ""}
                       onChange={(event) =>
                         setFilters((current) => ({
@@ -373,35 +372,20 @@ export function OffersPage({
                   </label>
                   <label className="filter-field">
                     <span>Sortowanie</span>
-                    <select
-                      className="text-input listing-sort-select"
+                    <ListingSelect
+                      label="Sortowanie"
                       value={listingSort}
-                      onChange={(event) => {
-                        const nextSort = event.target.value as ListingSortKey;
-                        setListingSort(nextSort);
-                      }}
-                    >
-                      <option value="newest">Sortuj: najnowsze</option>
-                      <option value="oldest">Sortuj: najstarsze</option>
-                      <option value="price_desc">Sortuj: cena malejaco</option>
-                      <option value="price_asc">Sortuj: cena rosnaco</option>
-                      <option value="area_desc">Sortuj: metraz malejaco</option>
-                      <option value="area_asc">Sortuj: metraz rosnaco</option>
-                      <option value="dream_desc">Sortuj: wymarzone mieszkanie</option>
-                    </select>
-                  </label>
-                  <label className={filters.shortlistedOnly ? "check-row is-active" : "check-row"}>
-                    <input
-                      type="checkbox"
-                      checked={filters.shortlistedOnly ?? false}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          shortlistedOnly: event.target.checked || undefined,
-                        }))
-                      }
+                      onChange={(value) => setListingSort(value as ListingSortKey)}
+                      options={[
+                        { value: "newest", label: "Najnowsze" },
+                        { value: "oldest", label: "Najstarsze" },
+                        { value: "price_desc", label: "Cena: malejąco" },
+                        { value: "price_asc", label: "Cena: rosnąco" },
+                        { value: "area_desc", label: "Metraż: malejąco" },
+                        { value: "area_asc", label: "Metraż: rosnąco" },
+                        { value: "dream_desc", label: "Wymarzone mieszkanie" },
+                      ]}
                     />
-                    <span>Tylko ulubione</span>
                   </label>
                   <label className={filters.priceChangedOnly ? "check-row is-active" : "check-row"}>
                     <input

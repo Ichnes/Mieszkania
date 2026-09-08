@@ -171,9 +171,23 @@ Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżnion
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
 
-Sekcja **Co sprawdzić w tej ofercie** pojawia się, gdy opis daje konkretny powód
-np. do sprawdzenia własności, najmu, dodatkowych kosztów albo remontu. Pytanie zawiera
-cytat i uzasadnienie; brak przesłanek oznacza brak sekcji.
+W **Szczegółach oferty** telefon kontaktowy i cel negocjacji są w zakładce **Notatki**.
+Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano własnego.
+Na telefonie mapa znajduje się pod opisem, a **Działka i planowanie** na dole szczegółów.
+Pole **Szukaj w ofercie** przeszukuje także adres, dzielnicę i okolicę; np. Okopowa
+znajduje również Okopowej. Filtry dzielnicy i sortowania obsługują strzałki, Enter i Escape.
+Ocena nie uwzględnia gabinetu. Nieznany stan wykończenia daje 0 pkt.
+Przekroczenie budżetu do 7% oznacza −5 pkt, większe −15 pkt. Dla ceny za m²
+odpowiednio −5 i −10 pkt; przy limicie jest +10 pkt, przy cenie o 25% niższej +20 pkt,
+a pomiędzy tymi cenami premia rośnie proporcjonalnie.
+Metraż ponad 5 m² poza zakresem daje −3 pkt, a metro powyżej 150% limitu −3 pkt.
+Dojazd w linii prostej powyżej 18 km lub bez danych daje −5 pkt.
+Drugie piętro daje +2 pkt, jednostronne południe +4 pkt, a dwustronny wschód–zachód
+20 pkt (10 za dwustronność i 10 premii za kierunki).
+Tabela oceny pokazuje **Kryterium**, **Punkty** oraz **Dane / powód**.
+Zapis **+11 (18)** oznacza 11 zdobytych punktów z 18 możliwych. Powody pokazują wiek
+w dniach i osiągnięte zakresy dojazdu oraz raty. Parking zewnętrzny bez garażu daje
+osobne +8 pkt; kara za brak garażu nadal obowiązuje.
 Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
 Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
 Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.

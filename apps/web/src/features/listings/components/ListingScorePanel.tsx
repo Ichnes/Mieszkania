@@ -4,7 +4,6 @@ import {
   type FamilySettings,
   type ListingSummary,
 } from "@mieszkania/shared";
-import { formatPln } from "../../../shared/lib/format";
 import { ListingScoreRules } from "./ListingScoreRules";
 
 export function ListingScorePanel({
@@ -47,27 +46,14 @@ export function ListingScorePanel({
         Punkty nie są punktami procentowymi. Brak potwierdzenia cechy oznacza brak danych w
         ogłoszeniu, nie pewność, że mieszkanie jej nie ma.
       </p>
-      {evaluation.mortgage && (
-        <p>
-          Szacowana rata: <strong>{formatPln(evaluation.mortgage.payment)}</strong>. Wkład własny:{" "}
-          {formatPln(evaluation.mortgage.downPayment)}; kwota kredytu:{" "}
-          {formatPln(evaluation.mortgage.principal)}. Założenia podglądu ofert: 5,8% rocznie, 360
-          równych rat, bez dodatkowych opłat bankowych. Lokalne scenariusze kalkulatora nie
-          zmieniają tych założeń; zapisany wkład własny zmienia ocenę.
-        </p>
-      )}
       {showRules && <ListingScoreRules rows={evaluation.rows} />}
       <div className="listing-score-table-wrap" tabIndex={0} aria-label="Rozbicie punktacji">
         <table className="listing-score-table">
           <thead>
             <tr>
               <th scope="col">Kryterium</th>
-              <th scope="col">Punkty</th>
-              <th
-                scope="col"
-                title="Punkty możliwe z aktywnych kryteriów, przez które dzielimy zdobytą sumę."
-              >
-                Punkty możliwe
+              <th scope="col" title="Zdobyte punkty (punkty możliwe)">
+                Punkty
               </th>
               <th scope="col">Dane / powód</th>
             </tr>
@@ -82,9 +68,8 @@ export function ListingScorePanel({
                   }
                 >
                   {row.points > 0 ? "+" : ""}
-                  {row.points}
+                  {row.points} <span className="score-possible">({row.maxPoints})</span>
                 </td>
-                <td>{row.maxPoints}</td>
                 <td>{row.detail || row.rule}</td>
               </tr>
             ))}
@@ -92,8 +77,9 @@ export function ListingScorePanel({
           <tfoot>
             <tr>
               <th scope="row">Suma</th>
-              <td>{evaluation.points}</td>
-              <td>{evaluation.maxPoints}</td>
+              <td>
+                {evaluation.points} <span className="score-possible">({evaluation.maxPoints})</span>
+              </td>
               <td>{evaluation.score}%</td>
             </tr>
           </tfoot>

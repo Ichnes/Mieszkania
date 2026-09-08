@@ -4,6 +4,7 @@ import pg from "pg";
 import { normalizeMarketLocation, marketLocationJoinSql } from "./market-locations";
 import { priceSampleSql } from "./market-sample";
 import { inheritStableDuplicateFacts } from "../duplicates/listing-duplicates";
+import { buildListingSearch } from "../listings/listing-search";
 
 test(
   "PostgreSQL: alias percentiles use observations and duplicate inheritance preserves conflicts",
@@ -35,6 +36,20 @@ test(
       assert.equal(Number(result.rows[0].median_price), 10000);
       assert.equal(Number(result.rows[0].q1), 10000);
       assert.equal(Number(result.rows[0].q3), 20000);
+      // Search must work even when a street occurs only in the stored address.
+      await db.query("alter table listings add column title text, add column description text");
+      await db.query("update listings set address_text='Okopowej 13, Warszawa' where id='a'");
+      for (const query of ["Okopowa", "okopowej", "ul. Okopowa 13"]) {
+        const search = buildListingSearch(query, 1);
+        const matches = await db.query(
+          `select id from listings l where ${search.clause}`,
+          search.values,
+        );
+        assert.deepEqual(
+          matches.rows.map((row) => row.id),
+          ["a"],
+        );
+      }
       // The previous weighted average of alias medians was 12,000, which is not the median.
       await db.query(`truncate listings; insert into listings(id,price_amount) values ('target',1000000),('donor',900000),('other',950000);
       insert into listing_duplicate_group_members values ('target','group',true),('donor','group',false),('other','group',false);

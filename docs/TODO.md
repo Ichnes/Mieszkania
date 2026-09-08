@@ -1,5 +1,19 @@
 # Bieżące zadania
 
+## Uproszczenie szczegółów i wyszukiwania (2026-09-09)
+
+- [x] Szczegóły oferty: poprawna etykieta, działka na dole, telefon w notatkach, bez celu negocjacji w przeglądzie i bez sekcji przygotowania do rozmowy.
+- [x] Mapa pod opisem na telefonie, mniejsze odstępy opisu, bez powtórzenia raty w opisie oceny.
+- [x] Wyszukiwanie po ulicy i jej odmianach; estetyczne dropdowny filtrów/sortowania; usunięty powtórzony checkbox ulubionych.
+- [x] Gabinet usunięty z punktacji i zasad, z regresją dla synonimów.
+- [x] Punktacja: zakup do 7% ponad limit −5, ponad 7% −15; cena/m² przy limicie +10, proporcjonalnie do +20 przy 25% obniżce, przekroczenia −5/−10. Drugie piętro +2; nieznany stan wykończenia 0. Jasny opis prowizji.
+- [x] Metro powyżej 150% limitu −3, metraż ponad 5 m² poza zakresem −3, dojazd ponad 18 km lub bez danych −5 (stałe maksimum 12). Południe jednostronne +4; E/W dwustronne premia +10, łącznie 20. Parking +8 i osobna kara za brak garażu zachowane zgodnie z potwierdzeniem użytkownika.
+- [x] Tabela oceny: trzy kolumny, punkty z maksimum w nawiasie, krótkie powody, wiek w dniach, przedział dojazdu i raty. Bez słowa „dalej” w zasadach.
+- [x] Podświetlanie piętra: „Liczba pokoi: 3 Piętro: 1/7” zaznacza właściwe piętro, bez przechwytywania liczby pokoi. Regresje z dwukropkiem, bez niego i w dwóch liniach.
+- [x] Typecheck poprawny; 130 testów API, 75 testów frontendu oraz osobno integracja PostgreSQL na tabelach tymczasowych (wyszukiwanie ulic/odmian, statystyki, duplikaty). Standardowy zestaw pomija integrację bez TEST_DATABASE_URL.
+- [x] Chromium 1440/1280/390: szczegóły, notatki, trzy kolumny oceny, mapa pod opisem na telefonie, działka na dole, dropdowny/klawiatura i filtr ulicy. Zero błędów JS/HTTP 500 i przepełnienia panelu. Obejrzane zrzuty tabeli mobilnej i dropdownu desktopowego.
+- [x] Końcowy build i wdrożenie obejmują poprawkę podświetlania. API zdrowe, obecna baza zachowana; ponowna kontrola UI na 1440/1280/390 bez błędów. Zmiany przygotowane do synchronizacji z repozytorium.
+
 ## Kafelki i widoczność filtrów (2026-09-09)
 
 - [x] Parter jako 0 / liczba pięter, metraż dzielony z rokiem budowy; brak roku oznaczony kreską.

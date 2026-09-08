@@ -65,9 +65,9 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
   const neutral = [
     `czynsz${suffix}\\s+administracyjn${suffix}\\s*:?`,
     `(?:na\\s+)?\\d+\\.?\\s+(?:i|oraz|,)\\s+\\d+\\.?\\s*piętr${suffix}`,
-    `piętr${suffix}\\s+\\d+\\s*[/z]\\s*\\d+`,
+    `piętr${suffix}\\s*:?\\s*\\d+\\s*[/z]\\s*\\d+`,
     `\\d+\\s*[-–]?\\s*piętrow${suffix}`,
-    `(?:na\\s+)?\\d+\\.?\\s*piętr${suffix}`,
+    `(?:na\\s+)?\\d+\\.?\\s*piętr(?:ze|o|a|ach)(?![\\p{L}]|\\s*[:=]|\\s+\\d)`,
     `\\d+(?:[.,]\\d+)?\\s*[-–]?\\s*metrow${suffix}`,
     `(?:dwustronn${suffix}|(?:północn${suffix}|południow${suffix})\\s*[-–—]?\\s*(?:wsch(?:ó|o)d${suffix}|zach(?:ó|o)d${suffix}))`,
     `(?:(?:zachodni|wschodni|północn|południow)${suffix}(?=\\s+ekspozycj${suffix}))`,

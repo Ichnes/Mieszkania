@@ -2,6 +2,26 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { getDescriptionHighlightParts, getSunExposure } from "./listing-language";
 
+test("floor highlights do not consume the preceding room count", () => {
+  for (const text of [
+    "Liczba pokoi: 3 Piętro: 1/7",
+    "Liczba pokoi: 3\nPiętro: 1/7",
+    "Liczba pokoi: 3 Piętro 1/7",
+  ]) {
+    const parts = getDescriptionHighlightParts(text);
+    assert.equal(parts.map((part) => part.text).join(""), text);
+    assert.deepEqual(
+      parts.filter((part) => part.tone).map((part) => part.text),
+      [text.includes("Piętro:") ? "Piętro: 1/7" : "Piętro 1/7"],
+    );
+  }
+  assert.ok(
+    getDescriptionHighlightParts("Mieszkanie na 3. piętrze.").some(
+      (part) => part.text === "na 3. piętrze" && part.tone === "neutral",
+    ),
+  );
+});
+
 test("detects east-west exposure from the actual two-sided apartment description", () => {
   const result = getSunExposure(
     "Mieszkanie dwustronne - od wschodu ulica Mickiewicza i widok na plac Wilsona; od zachodu widok na park.",

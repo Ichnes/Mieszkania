@@ -16,7 +16,6 @@ import {
   GitCompareArrows,
   LayoutDashboard,
   NotebookPen,
-  Phone,
   RefreshCw,
   RotateCcw,
   Star,
@@ -45,7 +44,6 @@ import {
   toContactStatus,
   toDecisionStage,
 } from "../lib/contact";
-import { DescriptionReview } from "./AnalysisInsights";
 import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
@@ -105,6 +103,15 @@ export function ListingDetailPanel(input: {
   onRefreshInsights: () => void | Promise<void>;
   onAddToMortgage: (listing: ListingDetail) => void;
 }) {
+  const [isMobileDetail, setIsMobileDetail] = useState(
+    () => window.matchMedia("(max-width: 900px)").matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 900px)");
+    const update = () => setIsMobileDetail(media.matches);
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
   const [scheduledAt, setScheduledAt] = useState(
     toDatetimeInputValue(input.listing.viewing?.scheduledAt),
   );
@@ -225,6 +232,24 @@ export function ListingDetailPanel(input: {
     }
   }
 
+  const detailMap = (
+    <div className="map-block detail-sidebar-box">
+      {isValidMapPoint(input.listing.latitude, input.listing.longitude) ? (
+        <ListingTransitMap listing={input.listing} />
+      ) : (
+        <div className="map-placeholder">Brak geokodu, dostepny link do wyszukiwania OSM.</div>
+      )}
+      {input.listing.coordinateAccuracy === "approximate" ? (
+        <p className="muted">
+          Punkt orientacyjny: brak numeru budynku albo dokladnego geokodu z portalu.
+        </p>
+      ) : null}
+      <a className="map-link" href={mapHref} target="_blank" rel="noreferrer">
+        Otworz w OpenStreetMap
+      </a>
+    </div>
+  );
+
   return (
     <aside className="detail-overlay" onClick={input.onClose}>
       <section
@@ -245,7 +270,7 @@ export function ListingDetailPanel(input: {
         </div>
         <div className="panel-header detail-header">
           <div>
-            <p className="eyebrow">Szczegół oferty</p>
+            <p className="eyebrow">Szczegóły oferty</p>
             <h2>{input.listing.title}</h2>
             <div className="listing-id-row">
               <code className="listing-record-id">ID: {input.listing.id}</code>
@@ -583,37 +608,20 @@ export function ListingDetailPanel(input: {
                     <th>Czynsz</th>
                     <td>{maintenanceFee ?? "-"}</td>
                   </tr>
-                  {input.listing.additionalPurchaseCosts?.garage ? (
-                    <>
-                      <tr>
-                        <th>Rok budowy</th>
-                        <td>{input.listing.yearBuilt ?? "-"}</td>
-                        <th>Garaż / parking</th>
-                        <td>{formatPln(input.listing.additionalPurchaseCosts.garage)}</td>
-                      </tr>
-                      <tr>
-                        <th>Telefon</th>
-                        <td colSpan={3}>
-                          {manual.contactPhone ?? input.listing.sourceContactPhone ?? "Brak"}
-                        </td>
-                      </tr>
-                    </>
-                  ) : (
-                    <tr>
-                      <th>Rok budowy</th>
-                      <td>{input.listing.yearBuilt ?? "-"}</td>
-                      <th>Telefon</th>
-                      <td>{manual.contactPhone ?? input.listing.sourceContactPhone ?? "Brak"}</td>
-                    </tr>
-                  )}
+                  <tr>
+                    <th>Rok budowy</th>
+                    <td>{input.listing.yearBuilt ?? "—"}</td>
+                    <th>Garaż / parking</th>
+                    <td>
+                      {input.listing.additionalPurchaseCosts?.garage
+                        ? formatPln(input.listing.additionalPurchaseCosts.garage)
+                        : "—"}
+                    </td>
+                  </tr>
                   <tr>
                     <th>Po rozmowie</th>
-                    <td>
-                      {manual.askingPriceOverride ? formatPln(manual.askingPriceOverride) : "-"}
-                    </td>
-                    <th>Cel negocjacji</th>
-                    <td>
-                      {manual.negotiatedPriceAmount ? formatPln(manual.negotiatedPriceAmount) : "-"}
+                    <td colSpan={3}>
+                      {manual.askingPriceOverride ? formatPln(manual.askingPriceOverride) : "—"}
                     </td>
                   </tr>
                   <tr className="listing-portals-row">
@@ -644,50 +652,14 @@ export function ListingDetailPanel(input: {
                   </tr>
                 </tbody>
               </table>
-              <ListingParcelCard listing={input.listing} />
-              <div className="quick-contact-card">
-                <div>
-                  <Phone size={18} aria-hidden="true" />
-                  <span>
-                    <strong>Telefon do oferty</strong>
-                    <small>Możesz poprawić numer bez wchodzenia w osobny moduł kontaktu.</small>
-                  </span>
-                </div>
-                <label className="detail-field">
-                  <span>Numer telefonu</span>
-                  <input
-                    className="text-input"
-                    inputMode="tel"
-                    value={manual.contactPhone ?? input.listing.sourceContactPhone ?? ""}
-                    onChange={(event) =>
-                      setManual((current) => ({ ...current, contactPhone: event.target.value }))
-                    }
-                    placeholder="np. 600 000 000"
-                  />
-                </label>
-                <button
-                  className="action-button secondary-button"
-                  type="button"
-                  disabled={input.isSavingManual}
-                  onClick={() => void saveManual()}
-                >
-                  {input.isSavingManual ? "Zapisuję…" : "Zapisz numer"}
-                </button>
-                {manualFeedback ? (
-                  <p role={manualFeedback.error ? "alert" : "status"}>{manualFeedback.message}</p>
-                ) : null}
-              </div>
               {maintenanceFee ? (
                 <p className="muted listing-facts-hint">
                   Czynsz odczytano informacyjnie z opisu oferty (np. „czynsz administracyjny” z
                   zaliczkami). Podobne zapisy automatycznie uzupełniają tę wartość.
                 </p>
               ) : null}
-              <DescriptionReview
-                description={input.listing.description}
-                floor={input.listing.floor}
-              />
               <ListingDescription value={input.listing.description} />
+              {isMobileDetail && detailMap}
             </div>
 
             <section
@@ -848,7 +820,8 @@ export function ListingDetailPanel(input: {
                   <span>Telefon</span>
                   <input
                     className="text-input"
-                    value={manual.contactPhone ?? ""}
+                    inputMode="tel"
+                    value={manual.contactPhone ?? input.listing.sourceContactPhone ?? ""}
                     onChange={(event) =>
                       setManual((current) => ({ ...current, contactPhone: event.target.value }))
                     }
@@ -1365,24 +1338,11 @@ export function ListingDetailPanel(input: {
               )}
             </div>
 
-            <div className="map-block detail-sidebar-box">
-              {isValidMapPoint(input.listing.latitude, input.listing.longitude) ? (
-                <ListingTransitMap listing={input.listing} />
-              ) : (
-                <div className="map-placeholder">
-                  Brak geokodu, dostepny link do wyszukiwania OSM.
-                </div>
-              )}
-              {input.listing.coordinateAccuracy === "approximate" ? (
-                <p className="muted">
-                  Punkt orientacyjny: brak numeru budynku albo dokladnego geokodu z portalu.
-                </p>
-              ) : null}
-              <a className="map-link" href={mapHref} target="_blank" rel="noreferrer">
-                Otworz w OpenStreetMap
-              </a>
-            </div>
+            {!isMobileDetail && detailMap}
           </div>
+        </div>
+        <div className="detail-parcel-bottom">
+          <ListingParcelCard listing={input.listing} />
         </div>
         <div className="detail-footer">
           <button className="action-button secondary-button" type="button" onClick={input.onClose}>

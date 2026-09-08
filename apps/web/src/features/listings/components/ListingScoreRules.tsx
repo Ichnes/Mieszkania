@@ -40,7 +40,6 @@ const categories = [
       "Balkon",
       "Garderoba",
       "Dwie łazienki",
-      "Gabinet",
       "Prysznic",
     ],
   },

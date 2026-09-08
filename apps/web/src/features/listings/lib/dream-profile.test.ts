@@ -299,9 +299,9 @@ test("area tolerance checks both bounds and does not reward distant misses", () 
   const score = (area: number) =>
     evaluate({ areaLabel: String(area), roomsCount: 4 }, profile).points;
   assert.equal(score(70) - score(65), 10);
-  assert.equal(score(65) - score(64), 10);
+  assert.equal(score(65) - score(64), 13);
   assert.equal(score(110) - score(115), 10);
-  assert.equal(score(115) - score(116), 10);
+  assert.equal(score(115) - score(116), 13);
   assert.equal(score(30), score(200));
 });
 
@@ -325,8 +325,10 @@ test("synonyms cannot multiply a single descriptive amenity bonus", () => {
 test("scores stay within 0–100 and the frontend recomputes stale scores using shared rules", () => {
   const ideal = {
     ...base,
+    latitude: 52.23,
+    longitude: 21.01,
     yearBuilt: 2026,
-    description: "Czynsz: 0 zł.",
+    description: "Czynsz: 0 zł. Dwustronne, okna na południe i zachód.",
     roomsCount: 4,
     hasStorage: true,
     pricePerSqmLabel: "10 000 zł",
@@ -335,7 +337,13 @@ test("scores stay within 0–100 and the frontend recomputes stale scores using 
     firstSeenAt: now.toISOString(),
   };
   assert.equal(
-    computeDreamScore(ideal, settings.dreamProfile, [], now, { downPayment: 2000000 }),
+    computeDreamScore(
+      ideal,
+      settings.dreamProfile,
+      [{ key: "test", label: "Test", address: "", latitude: 52.23, longitude: 21.01 }],
+      now,
+      { downPayment: 2000000 },
+    ),
     100,
   );
   assert.equal(

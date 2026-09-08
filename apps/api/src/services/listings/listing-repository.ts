@@ -1,4 +1,5 @@
 import { decodeListingText } from "./listing-text";
+import { buildListingSearch } from "./listing-search";
 import type {
   DashboardStat,
   FamilySettings,
@@ -888,11 +889,10 @@ async function getListingsPageByScope(
     }
 
     if (filters.search) {
-      clauses.push(
-        `(l.title ilike $${paramIndex} or coalesce(l.description, '') ilike $${paramIndex})`,
-      );
-      values.push(`%${filters.search}%`);
-      paramIndex += 1;
+      const search = buildListingSearch(filters.search, paramIndex);
+      if (search.clause) clauses.push(`(${search.clause})`);
+      values.push(...search.values);
+      paramIndex += search.values.length;
     }
 
     if (filters.shortlistedOnly) {

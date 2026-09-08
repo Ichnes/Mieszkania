@@ -1,5 +1,5 @@
 import type { ImmediateSurroundingsFinding, MarketStatsResponse } from "@mieszkania/shared";
-import { analyzeDescription, groupSurroundings } from "../lib/analysis-insights";
+import { groupSurroundings } from "../lib/analysis-insights";
 
 export function SurroundingsSummary({ findings }: { findings: ImmediateSurroundingsFinding[] }) {
   const groups = groupSurroundings(findings);
@@ -39,37 +39,6 @@ export function SurroundingsSummary({ findings }: { findings: ImmediateSurroundi
         linię kolejową na wiele odcinków.
       </p>
     </div>
-  );
-}
-
-export function DescriptionReview({
-  description,
-  floor,
-}: {
-  description?: string;
-  floor?: number;
-}) {
-  const insights = analyzeDescription(description ?? "", floor);
-  if (!insights.length) return null;
-  return (
-    <section className="description-review">
-      <p className="eyebrow">Przygotuj się do rozmowy</p>
-      <h3>Co sprawdzić w tej ofercie</h3>
-      <p className="muted">Konkretne warunki z opisu, ich znaczenie i pytania do sprzedającego.</p>
-      <div className="insight-card-grid">
-        {insights.map((insight) => (
-          <article className="insight-category" key={insight.key}>
-            <h4>{insight.label}</h4>
-            <blockquote>{insight.evidence}</blockquote>
-            <p className="review-reason">{insight.reason}</p>
-            <p>
-              <strong>Zapytaj: </strong>
-              {insight.question}
-            </p>
-          </article>
-        ))}
-      </div>
-    </section>
   );
 }
 

@@ -123,13 +123,15 @@ export function computeDreamEvaluation(
         (profile.maxArea <= 0 || area <= profile.maxArea + 5)
       ) {
         points += 10;
+      } else {
+        points -= 3;
       }
     }
   }
 
   record(
     "Metraż",
-    "W zakresie +20; do 5 m² poza zakresem +10; dalej 0.",
+    "W zakresie +20; do 5 m² poza zakresem +10; ponad 5 m² poza zakresem −3. Brak danych lub wyłączony limit: 0.",
     `${listing.areaLabel}; zakres ${profile.minArea}–${profile.maxArea} m²`,
   );
 
@@ -158,14 +160,16 @@ export function computeDreamEvaluation(
       if (price <= profile.maxPrice) {
         points += 15;
       } else if (price <= profile.maxPrice * 1.07) {
-        points += 7;
+        points -= 5;
+      } else {
+        points -= 15;
       }
     }
   }
 
   record(
     "Cena zakupu",
-    "Do limitu +15; przekroczenie do 7% +7; dalej 0.",
+    "Cena nie przekracza limitu: +15 pkt. Cena powyżej limitu, maksymalnie o 7%: −5 pkt. Cena ponad 7% powyżej limitu: −15 pkt. Brak ceny lub wyłączony limit: 0 pkt.",
     `${listing.priceLabel}; limit ${profile.maxPrice} zł`,
   );
 
@@ -177,16 +181,18 @@ export function computeDreamEvaluation(
           1,
           Math.max(0, (profile.maxPricePerSqm - pricePerSqm) / (profile.maxPricePerSqm * 0.25)),
         );
-        points += Math.round(6 + discountRatio * 14);
+        points += Math.round(10 + discountRatio * 10);
       } else if (pricePerSqm <= profile.maxPricePerSqm * 1.07) {
-        points += 3;
+        points -= 5;
+      } else {
+        points -= 10;
       }
     }
   }
 
   record(
     "Cena za m²",
-    "Przy limicie +6, liniowo do +20 przy cenie 25% niższej; do 7% ponad limit +3; dalej 0.",
+    "Cena równa limitowi: +10 pkt. Im taniej, tym więcej punktów: 12,5% poniżej limitu daje +15, a 25% lub więcej poniżej daje +20. Wartości pomiędzy rosną proporcjonalnie i są zaokrąglane. Powyżej limitu, maksymalnie o 7%: −5 pkt; ponad 7%: −10 pkt. Brak ceny lub wyłączony limit: 0 pkt.",
     `${listing.pricePerSqmLabel ?? "Brak danych"}; limit ${profile.maxPricePerSqm} zł/m²`,
   );
 
@@ -195,18 +201,16 @@ export function computeDreamEvaluation(
     points += getUnfinishedPricePoints(pricePerSqm);
   } else if (listing.finishQuality === "ready") {
     points += 16;
-  } else if (listing.finishQuality === "unknown") {
-    points += 7;
-  } else {
-    // Developer standard requires a separate finishing budget, not merely
-    // cosmetic work.
-    points -= 10;
   }
 
   record(
     "Stan wykończenia",
-    "Gotowe +16; nieznane +7. Do wykończenia: <17 tys. +5; 17–18 tys. +1; >18–19 tys. −4; >19–20 tys. −8; >20–21 tys. −12; >21 tys. −18; brak ceny −10.",
-    listing.finishQuality ?? "Brak danych",
+    "Gotowe do zamieszkania: +16 pkt. Brak danych o stanie: 0 pkt. Wymaga wykończenia — punkty zależą od ceny za m²: poniżej 17 tys. +5; 17–18 tys. +1; powyżej 18–19 tys. −4; powyżej 19–20 tys. −8; powyżej 20–21 tys. −12; powyżej 21 tys. −18; brak ceny −10.",
+    descriptionFacts.unfinished || listing.finishQuality === "to_finish"
+      ? "Wymaga wykończenia"
+      : listing.finishQuality === "ready"
+        ? "Gotowe do zamieszkania"
+        : "Brak danych o stanie wykończenia",
   );
 
   // These are deliberately asymmetric: their absence is a real drawback for the
@@ -218,7 +222,7 @@ export function computeDreamEvaluation(
   record(
     "Garaż",
     "Wymagany: +24 / brak −36. Niewymagany: +16 / brak −10.",
-    listing.hasGarage ? "Jest" : "Brak potwierdzenia",
+    listing.hasGarage ? "Jest" : "brak danych",
   );
 
   if (!listing.hasGarage && listing.hasOutdoorParking) {
@@ -226,20 +230,28 @@ export function computeDreamEvaluation(
     points += 8;
   }
 
-  record("Parking zewnętrzny", "Bez garażu, z parkingiem zewnętrznym +8.");
+  record(
+    "Parking zewnętrzny",
+    "Bez garażu, z parkingiem zewnętrznym +8.",
+    listing.hasOutdoorParking
+      ? listing.hasGarage
+        ? "Jest; premia nie łączy się z garażem"
+        : "Jest, bez garażu"
+      : "brak",
+  );
 
   maxPoints += 9;
   if (listing.hasStorage) {
     points += 9;
   }
 
-  record("Komórka", "Jest +9; brak 0.", listing.hasStorage ? "Jest" : "Brak potwierdzenia");
+  record("Komórka", "Jest +9; brak 0.", listing.hasStorage ? "Jest" : "brak danych");
 
   const liftBonus = 21;
   maxPoints += liftBonus;
   points += listing.hasLift ? liftBonus : -20;
 
-  record("Winda", "Jest +21; brak −20.", listing.hasLift ? "Jest" : "Brak potwierdzenia");
+  record("Winda", "Jest +21; brak −20.", listing.hasLift ? "Jest" : "brak danych");
 
   // Having both makes day-to-day use with a family much easier, so it earns an
   // additional joint premium beyond the individual amenities.
@@ -273,7 +285,7 @@ export function computeDreamEvaluation(
   }
   record(
     "Piętro",
-    "Parter i poniżej −4; 1: +1; 2: −2; 3: +3; 4: +4; 5: +5; 6: +7; 7: +8; 8–12: +9; powyżej 12: +12. Ostatnie piętro: dodatkowe +5, tylko raz.",
+    "Parter i poniżej −4; 1: +1; 2: +2; 3: +3; 4: +4; 5: +5; 6: +7; 7: +8; 8–12: +9; powyżej 12: +12. Ostatnie piętro: dodatkowe +5, tylko raz.",
     `Piętro: ${floor ?? "brak danych"} / ${listing.totalFloors ?? "?"}${topFloor ? "; ostatnie piętro +5" : ""}`,
   );
 
@@ -282,7 +294,7 @@ export function computeDreamEvaluation(
   maxPoints += exposure.maxPoints;
   record(
     "Ekspozycja",
-    "Brak danych 0; jednostronne −5, ale S +2, W +4, N −15, E +2; dwustronne +10 i bonus: S/W +10, S/E +7, S/N +4, N/W +2, N/E +1, E/W +8; trójstronne +13 i bonus: S/E/W +5, S/W/N +4, S/E/N +3, N/W/E +1.",
+    "Brak danych: 0. Jednostronne: południe +4, zachód +4, północ −15, wschód +2, nieokreślony kierunek −5. Dwustronne: baza +10 i premia za kierunki: S/W +10, S/E +7, S/N +4, N/W +2, N/E +1, E/W +10 (łącznie 20). Trójstronne: baza +13 i premia: S/E/W +5, S/W/N +4, S/E/N +3, N/W/E +1. S = południe, W = zachód, N = północ, E = wschód.",
     `Strony: ${exposure.sides ?? "brak danych"}; kierunki: ${exposure.directions.join(", ") || "brak danych"}`,
   );
 
@@ -298,7 +310,7 @@ export function computeDreamEvaluation(
   record(
     "Balkon",
     "Przy włączonej preferencji: jest +10, brak −8; preferencja wyłączona 0.",
-    listing.hasBalcony ? "Jest" : "Brak potwierdzenia",
+    listing.hasBalcony ? "Jest" : "brak danych",
   );
 
   // Each group describes one amenity; synonyms cannot multiply its bonus.
@@ -311,7 +323,7 @@ export function computeDreamEvaluation(
     "Granit +8; konglomerat lub spiek +7; drewno (w tym naturalny dąb) +5. Najwyższa potwierdzona premia, tylko raz.",
     descriptionFacts.countertopPoints
       ? `Materiał potwierdzony w opisie: +${descriptionFacts.countertopPoints}`
-      : "Brak potwierdzonego materiału",
+      : "brak danych",
   );
   for (const [present, bonus, label] of [
     [descriptionFacts.woodenFloor, 6, "Drewniana podłoga"],
@@ -325,7 +337,7 @@ export function computeDreamEvaluation(
     record(
       label,
       `Potwierdzona cecha +${bonus}; brak 0.`,
-      present ? "Rozpoznano w opisie" : "Brak potwierdzenia",
+      present ? "Rozpoznano w opisie" : "brak danych",
     );
   }
   if (descriptionFacts.rentedMultipleParking) points -= 5;
@@ -334,7 +346,7 @@ export function computeDreamEvaluation(
     "Co najmniej dwa miejsca wynajmowane lub z miesięczną opłatą: dodatkowe −5 pkt. Premia +5 za liczbę miejsc pozostaje.",
     descriptionFacts.rentedMultipleParking
       ? "Rozpoznano wynajem / opłatę miesięczną za miejsca"
-      : "Brak potwierdzonego kosztu wynajmu co najmniej dwóch miejsc",
+      : "brak danych",
   );
   const premiumSignals: Array<[RegExp, number]> = [
     [/\barchitekt\w*\b/, 8],
@@ -348,7 +360,6 @@ export function computeDreamEvaluation(
     ],
     [/\bgarderob\w*\b/, 5],
     [/\b(?:dwie|dwiema|dwoch|dwoma|2)\s+(?:osobn\w*\s+)?lazien\w*\b/, 4],
-    [/\b(?:gabinet\w*|pokoj\w*\s+do\s+pracy|domow\w*\s+biur\w*|biur\w*\s+domow\w*)\b/, 5],
     [/\b(?:wysok\w*\s+standard\w*|wysok\w*\s+jakosc\w*|luksusow\w*\s+wykonczen\w*)\b/, 4],
     [/\b(?:(?:zamkniet\w*|ogrodzon\w*)\s+osiedl\w*|osiedl\w*\s+(?:zamkniet\w*|ogrodzon\w*))\b/, 3],
     [/\b(?:monitoring\w*|monitorowan\w*|nadzor\w*\s+kamer\w*)\b/, 2],
@@ -361,14 +372,17 @@ export function computeDreamEvaluation(
     maxPoints += 5;
     points += 5;
   }
-  record("Klimatyzacja", "Jest +5; brak 0.");
+  record(
+    "Klimatyzacja",
+    "Jest +5; brak danych 0.",
+    listing.hasAirConditioning ? "Jest" : "brak danych",
+  );
   const premiumLabels = [
     "Architekt",
     "Ogrzewanie podłogowe",
     "Remont / odświeżenie",
     "Garderoba",
     "Dwie łazienki",
-    "Gabinet",
     "Wysoki standard",
     "Zamknięte osiedle",
     "Monitoring",
@@ -382,7 +396,7 @@ export function computeDreamEvaluation(
     record(
       premiumLabels[index],
       `Rozpoznana cecha +${value}; brak 0.`,
-      hasPositiveDescriptionFact(text, pattern) ? "Rozpoznano w opisie" : "Brak potwierdzenia",
+      hasPositiveDescriptionFact(text, pattern) ? "Rozpoznano w opisie" : "brak danych",
     );
   }
 
@@ -394,7 +408,15 @@ export function computeDreamEvaluation(
     else if (rooms === 3 && area !== undefined && area >= 75) points += 4;
   }
 
-  record("Układ mieszkania", "3 pokoje od 75 m² +4; 4 pokoje +8; więcej +6. Poniżej minimum 0.");
+  record(
+    "Układ mieszkania",
+    "3 pokoje od 75 m² +4; 4 pokoje +8; więcej +6. Poniżej minimum 0.",
+    rooms !== undefined &&
+      rooms >= Math.max(3, profile.minRooms) &&
+      (rooms > 3 || (area !== undefined && area >= 75))
+      ? `${rooms} pokoje${rooms === 3 ? ", co najmniej 75 m²" : ""}`
+      : "nie spełnia",
+  );
 
   maxPoints += 7;
   points += getPriceDropPoints(listing.priceChangePercent);
@@ -404,13 +426,17 @@ export function computeDreamEvaluation(
     `${listing.priceChangePercent}%`,
   );
 
+  const firstSeen = listing.firstSeenAt ?? listing.publishedAt;
+  const ageDays = firstSeen ? (now.getTime() - Date.parse(firstSeen)) / 86_400_000 : NaN;
   maxPoints += 2;
   points += getListingAgePoints(listing.firstSeenAt ?? listing.publishedAt, now);
 
   record(
     "Wiek oferty",
     "Do 20 dni +2; >20–40 dni −1; >40 dni −2; brak daty 0.",
-    listing.firstSeenAt ?? listing.publishedAt ?? "Brak daty",
+    Number.isFinite(ageDays) && ageDays >= 0
+      ? `${Math.floor(ageDays)} ${Math.floor(ageDays) === 1 ? "dzień" : "dni"}`
+      : "brak danych",
   );
 
   if (profile.maxMetroDistanceMeters > 0) {
@@ -423,12 +449,14 @@ export function computeDreamEvaluation(
       nearestMetro.distanceMeters <= profile.maxMetroDistanceMeters * 1.5
     ) {
       points += 5;
+    } else if (nearestMetro) {
+      points -= 3;
     }
   }
 
   record(
     "Metro",
-    "Do limitu +10; do 150% limitu +5; dalej 0. Odległość w linii prostej.",
+    "Do limitu +10; powyżej limitu do 150% limitu +5; powyżej 150% limitu −3. Brak współrzędnych lub wyłączony limit: 0. Odległość w linii prostej.",
     `Limit: ${profile.maxMetroDistanceMeters} m`,
   );
 
@@ -442,23 +470,37 @@ export function computeDreamEvaluation(
       ),
     )
     .filter((distance): distance is number => typeof distance === "number");
-  if (commuteDistances.length > 0) {
-    maxPoints += 12;
-    const averageDistance =
-      commuteDistances.reduce((sum, distance) => sum + distance, 0) / commuteDistances.length;
+  const averageDistance =
+    commuteDistances.length > 0
+      ? commuteDistances.reduce((sum, distance) => sum + distance, 0) / commuteDistances.length
+      : undefined;
+  maxPoints += 12;
+  if (averageDistance !== undefined) {
     if (averageDistance <= 7) {
       points += 12;
     } else if (averageDistance <= 12) {
       points += 8;
     } else if (averageDistance <= 18) {
       points += 4;
+    } else {
+      points -= 5;
     }
+  } else {
+    points -= 5;
   }
 
   record(
     "Dojazd do pracy",
-    "Średnia odległość w linii prostej: do 7 km +12, do 12 km +8, do 18 km +4; dalej/brak danych 0.",
-    `${commuteDistances.length} miejsc pracy z koordynatami`,
+    "Średnia odległość w linii prostej: do 7 km +12; powyżej 7 do 12 km +8; powyżej 12 do 18 km +4; powyżej 18 km lub brak danych −5.",
+    averageDistance === undefined
+      ? "brak danych"
+      : averageDistance <= 7
+        ? "Do 7 km"
+        : averageDistance <= 12
+          ? "Powyżej 7 do 12 km"
+          : averageDistance <= 18
+            ? "Powyżej 12 do 18 km"
+            : "Powyżej 18 km",
   );
 
   // Commercial terms affect the real acquisition cost. A broker listing with
@@ -474,7 +516,7 @@ export function computeDreamEvaluation(
 
   record(
     "Sprzedający / prowizja",
-    "Oferta prywatna lub bezpośrednia +10; prowizja −15 (pierwszeństwo); inaczej 0.",
+    "Prowizja dla kupującego: −15 pkt. Oferta prywatna lub bezpośrednia bez oznaczenia prowizji: +10 pkt. Jeśli oferta ma oznaczenie prowizji, nie dostaje jednocześnie premii za sprzedaż bezpośrednią. Pozostałe oferty: 0 pkt.",
     listing.badges.join(", "),
   );
   if (descriptionFacts.shower) {
@@ -484,7 +526,7 @@ export function computeDreamEvaluation(
   record(
     "Prysznic",
     "Prysznic, kabina prysznicowa lub natrysk +3; brak 0.",
-    descriptionFacts.shower ? "Rozpoznano w opisie" : "Brak potwierdzenia",
+    descriptionFacts.shower ? "Rozpoznano w opisie" : "brak danych",
   );
   const hasMaintenanceFee =
     descriptionFacts.maintenanceFee ||
@@ -504,7 +546,9 @@ export function computeDreamEvaluation(
     "Szacowana rata",
     "Powyżej 7500 zł −10. Do 7500 zł: zaokrąglone 10 × (1 − rata / 7500), czyli 0–10 pkt. Brak ceny: 0.",
     mortgage
-      ? `Rata ${Math.round(mortgage.payment)} zł; zakup ${Math.round(mortgage.total)} zł; wkład ${mortgage.downPayment} zł; 5,8% rocznie; 360 rat.`
+      ? mortgage.payment > 7500
+        ? "Powyżej 7500 zł"
+        : "Do 7500 zł"
       : "Brak ceny do wyliczenia raty",
   );
   return {

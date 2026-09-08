@@ -34,8 +34,7 @@
   vertical-align: top;
   overflow-wrap: anywhere;
 }
-.listing-score-table td:nth-child(2),
-.listing-score-table td:nth-child(3) {
+.listing-score-table td:nth-child(2) {
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -44,6 +43,10 @@
 }
 .listing-score-table thead th:nth-child(3) {
   min-width: 90px;
+}
+.listing-score-table .score-possible {
+  color: var(--ink-soft);
+  font-weight: 400;
 }
 .listing-score-table .score-negative {
   color: #ba3535;
@@ -230,7 +233,7 @@
     box-sizing: border-box;
   }
   .listing-score-table {
-    min-width: 540px;
+    min-width: 0;
   }
   .listing-score-heading .action-button {
     width: 100%;

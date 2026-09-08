@@ -9,6 +9,21 @@ import {
   type ListingSummary,
 } from "@mieszkania/shared";
 const settings = createDefaultFamilySettings();
+
+test("home office and its synonyms never change points or the denominator", () => {
+  const baseline = evaluate("Mieszkanie");
+  for (const text of [
+    "Mieszkanie. Gabinet",
+    "Mieszkanie. Pokój do pracy",
+    "Mieszkanie. Domowe biuro",
+  ]) {
+    const actual = evaluate(text);
+    assert.equal(actual.points, baseline.points);
+    assert.equal(actual.maxPoints, baseline.maxPoints);
+    assert.equal(actual.score, baseline.score);
+    assert.ok(!actual.rows.some((row) => row.label === "Gabinet"));
+  }
+});
 const evaluate = (description: string) =>
   computeDreamEvaluation(
     {
@@ -58,7 +73,7 @@ test("year and floor point thresholds include exact upper bounds", () => {
     [-1, -4],
     [0, -4],
     [1, 1],
-    [2, -2],
+    [2, 2],
     [3, 3],
     [4, 4],
     [5, 5],
@@ -90,7 +105,7 @@ test("exposure scores sides and combinations without treating one diagonal as tw
   for (const [description, points] of [
     ["Brak informacji o oknach", 0],
     ["Mieszkanie jednostronne", -5],
-    ["Jednostronne, okna na południe", 2],
+    ["Jednostronne, okna na południe", 4],
     ["Jednostronne, okna na zachód", 4],
     ["Jednostronne, okna na północ", -15],
     ["Jednostronne, okna na wschód", 2],
@@ -100,7 +115,7 @@ test("exposure scores sides and combinations without treating one diagonal as tw
     ["Dwustronne, okna na południe i północ", 14],
     ["Dwustronne, okna na północ i zachód", 12],
     ["Dwustronne, okna na północ i wschód", 11],
-    ["Dwustronne, okna na wschód i zachód", 18],
+    ["Dwustronne, okna na wschód i zachód", 20],
     ["Trójstronne mieszkanie", 13],
     ["Trójstronne, okna na południe, wschód i zachód", 18],
     ["Trójstronne, okna na południe, zachód i północ", 17],
@@ -145,7 +160,6 @@ test("premium vocabulary covers inflections, reversed word order and negations",
     ["Dobrze doświetlone mieszkanie", "Jasne mieszkanie"],
     ["Osiedle ogrodzone", "Zamknięte osiedle"],
     ["Wysokim standardem wykończenia", "Wysoki standard"],
-    ["Domowe biuro", "Gabinet"],
   ])
     assert.ok(
       evaluate(description).rows.find((row) => row.label === label)!.points > 0,
