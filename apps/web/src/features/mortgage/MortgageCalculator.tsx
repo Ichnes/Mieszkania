@@ -1,3 +1,4 @@
+import { MortgageComparison } from "./MortgageComparison";
 import { useMortgageInput } from "./useMortgageInput";
 import { LoaderCircle } from "lucide-react";
 import { lazy, Suspense, useEffect, useState } from "react";
@@ -68,12 +69,11 @@ export function MortgageCalculator({
     "marketType",
     "secondary",
   );
-  const [firstHomeExemption, setFirstHomeExemption] = useMortgageInput("firstHomeExemption", false);
+  const [firstHomeExemption, setFirstHomeExemption] = useMortgageInput("firstHomeExemption", true);
   const [customCommission, setCustomCommission] = useMortgageInput("customCommission", 0);
   const [customValuation, setCustomValuation] = useMortgageInput("customValuation", 500);
   const [customLifeRate, setCustomLifeRate] = useMortgageInput("customLifeRate", 0.035);
   const [customPropertyRate, setCustomPropertyRate] = useMortgageInput("customPropertyRate", 0.01);
-  const [monthlyAccountFee, setMonthlyAccountFee] = useMortgageInput("monthlyAccountFee", 0);
 
   useEffect(() => {
     if (draft.propertyTotal > 0) {
@@ -103,9 +103,6 @@ export function MortgageCalculator({
     strategy,
     rateChange,
   );
-  const chartPoints = modified.rows.filter(
-    (row) => row.month === 1 || row.month % 12 === 0 || row.balance === 0,
-  );
   const customPreset: MortgageInsurancePreset = {
     key: "custom",
     label: "Własny bank",
@@ -133,9 +130,7 @@ export function MortgageCalculator({
     firstHomeExemption,
   });
   const cashAtStart = Math.min(downPayment, propertyTotal) + purchaseCosts.total + bankCosts.oneOff;
-  const accountCosts = principal > 0 ? monthlyAccountFee * modified.rows.length : 0;
-  const additionalCosts =
-    purchaseCosts.total + bankCosts.oneOff + bankCosts.insuranceTotal + accountCosts;
+  const additionalCosts = purchaseCosts.total + bankCosts.oneOff + bankCosts.insuranceTotal;
   const bankComparisons = mortgageInsurancePresets
     .map((preset) => {
       const selected = preset.key === "custom" ? customPreset : preset;
@@ -149,10 +144,9 @@ export function MortgageCalculator({
       return {
         key: preset.key,
         label: preset.label,
-        first:
-          base.basePayment + costs.firstInsuranceMonthly + (principal > 0 ? monthlyAccountFee : 0),
+        first: base.basePayment + costs.firstInsuranceMonthly,
         upfront: costs.oneOff,
-        total: modified.interest + costs.oneOff + costs.insuranceTotal + accountCosts,
+        total: modified.interest + costs.oneOff + costs.insuranceTotal,
       };
     })
     .sort((a, b) => a.total - b.total);
@@ -212,6 +206,100 @@ export function MortgageCalculator({
           </div>
         </article>
       </section>
+      <section className="panel mortgage-form mortgage-form-horizontal">
+        <h3>Podstawowe dane</h3>
+        <div className="mortgage-primary-inputs">
+          <MortgageInput
+            label="Cena całkowita zakupu"
+            value={propertyTotal}
+            onChange={setPropertyTotal}
+          />
+          <div>
+            <MortgageInput label="Wkład własny" value={downPayment} onChange={setDownPayment} />
+            <small>Domyślnie z Preferencji wyszukiwania.</small>
+            {downPayment !== defaultDownPayment && (
+              <button
+                type="button"
+                className="action-button secondary-button"
+                disabled={savingSettings}
+                onClick={() => void onSaveDownPayment(downPayment)}
+              >
+                {savingSettings ? "Zapisywanie…" : "Zapisz wkład w preferencjach"}
+              </button>
+            )}
+            {settingsError && (
+              <p role="alert" className="error-text">
+                {settingsError}
+              </p>
+            )}
+          </div>
+          <MortgageInput label="Oprocentowanie roczne (%)" value={rate} onChange={setRate} />
+          <MortgageInput label="Liczba rat" value={months} onChange={setMonths} integer />
+          <MortgageInput
+            label="Rata + miesięczna nadpłata"
+            value={monthlyTarget}
+            onChange={setMonthlyTarget}
+          />
+        </div>
+        <h3>Nadpłaty i zmiana oprocentowania</h3>
+        <div className="mortgage-extra-inputs">
+          <label className="detail-field">
+            <span>Efekt nadpłaty</span>
+            <select
+              className="text-input"
+              value={strategy}
+              onChange={(event) => setStrategy(event.target.value as "shorten" | "lower_payment")}
+            >
+              <option value="shorten">Skróć okres kredytu</option>
+              <option value="lower_payment">Obniż ratę (nadpłaty mogą skrócić okres)</option>
+            </select>
+          </label>
+
+          <MortgageInput label="Kwota" value={oneOffAmount} onChange={setOneOffAmount} />
+          <MortgageInput label="Miesiąc" value={oneOffMonth} onChange={setOneOffMonth} integer />
+        </div>
+        <fieldset className="rate-change-box">
+          <legend>
+            <label>
+              <input
+                type="checkbox"
+                checked={rateChangeEnabled}
+                onChange={(event) => setRateChangeEnabled(event.target.checked)}
+              />{" "}
+              Symuluj zmianę oprocentowania
+            </label>
+          </legend>
+          {rateChangeEnabled ? (
+            <>
+              <MortgageInput
+                label="Docelowe oprocentowanie (%)"
+                value={rateAfterChange}
+                onChange={setRateAfterChange}
+              />
+              <MortgageInput
+                label="Zmiana od miesiąca"
+                value={rateChangeMonth}
+                onChange={setRateChangeMonth}
+                integer
+              />
+              <MortgageInput
+                label="Okres płynnej zmiany (mies.)"
+                value={rateTransitionMonths}
+                onChange={setRateTransitionMonths}
+                integer
+              />
+            </>
+          ) : (
+            <p className="muted">Np. spadek z 5,8% do 4,8% rozłożony na 12 miesięcy.</p>
+          )}
+        </fieldset>
+      </section>
+      <MortgageComparison
+        principal={principal}
+        monthlyExtra={monthlyExtra}
+        base={base}
+        modified={modified}
+      />
       <section className="panel mortgage-full-costs">
         <div className="section-topline mortgage-full-costs-heading">
           <div>
@@ -306,26 +394,10 @@ export function MortgageCalculator({
             />
           </div>
         ) : null}
-        <MortgageInput
-          label="Konto i karta / miesiąc (zł, wspólne założenie porównania)"
-          value={monthlyAccountFee}
-          onChange={setMonthlyAccountFee}
-        />
         <div className="mortgage-total-cards">
-          <article>
-            <span>Rata bankowa</span>
-            <strong>{formatPln(base.basePayment)}</strong>
-            <small>bez dobrowolnych polis</small>
-          </article>
           <article className="is-highlight">
-            <span>Pierwszy miesiąc z polisami i kontem</span>
-            <strong>
-              {formatPln(
-                base.basePayment +
-                  bankCosts.firstInsuranceMonthly +
-                  (principal > 0 ? monthlyAccountFee : 0),
-              )}
-            </strong>
+            <span>Pierwszy miesiąc z polisami</span>
+            <strong>{formatPln(base.basePayment + bankCosts.firstInsuranceMonthly)}</strong>
             <small>polisy: ok. {formatPln(bankCosts.firstInsuranceMonthly)} / mies.</small>
           </article>
           <article>
@@ -365,10 +437,6 @@ export function MortgageCalculator({
           <div>
             <dt>Prowizja banku</dt>
             <dd>{formatPln(bankCosts.commission)}</dd>
-          </div>
-          <div>
-            <dt>Konto i karta przez okres spłaty</dt>
-            <dd>{formatPln(accountCosts)}</dd>
           </div>
           <div>
             <dt>Wycena bankowa</dt>
@@ -454,162 +522,6 @@ export function MortgageCalculator({
           ))}
         </div>
       </section>
-      <section className="panel mortgage-cost-structure">
-        <h3>Struktura kosztów</h3>
-        <div className="mortgage-donuts">
-          <MortgageDonut
-            label="Bez nadpłat"
-            principal={principal}
-            interest={base.interest}
-            extra={0}
-          />
-          <MortgageDonut
-            label="Po nadpłatach"
-            principal={principal}
-            interest={modified.interest}
-            extra={modified.rows.reduce((sum, row) => sum + row.extra, 0)}
-          />
-        </div>
-      </section>
-      <div className="mortgage-layout">
-        <section className="panel mortgage-form">
-          <h3>Podstawowe dane</h3>
-          <MortgageInput
-            label="Cena całkowita zakupu"
-            value={propertyTotal}
-            onChange={setPropertyTotal}
-          />
-          <div>
-            <MortgageInput label="Wkład własny" value={downPayment} onChange={setDownPayment} />
-            <small>Domyślnie z Preferencji wyszukiwania.</small>
-            {downPayment !== defaultDownPayment && (
-              <button
-                type="button"
-                className="action-button secondary-button"
-                disabled={savingSettings}
-                onClick={() => void onSaveDownPayment(downPayment)}
-              >
-                {savingSettings ? "Zapisywanie…" : "Zapisz wkład w preferencjach"}
-              </button>
-            )}
-            {settingsError && (
-              <p role="alert" className="error-text">
-                {settingsError}
-              </p>
-            )}
-          </div>
-          <MortgageInput label="Oprocentowanie roczne (%)" value={rate} onChange={setRate} />
-          <MortgageInput label="Liczba rat" value={months} onChange={setMonths} integer />
-          <MortgageInput
-            label="Rata + miesięczna nadpłata"
-            value={monthlyTarget}
-            onChange={setMonthlyTarget}
-          />
-          <hr />
-          <h3>Jednorazowa nadpłata</h3>
-          <label className="detail-field">
-            <span>Efekt nadpłaty</span>
-            <select
-              className="text-input"
-              value={strategy}
-              onChange={(event) => setStrategy(event.target.value as "shorten" | "lower_payment")}
-            >
-              <option value="shorten">Skróć okres kredytu</option>
-              <option value="lower_payment">Obniż ratę (nadpłaty mogą skrócić okres)</option>
-            </select>
-          </label>
-          <fieldset className="rate-change-box">
-            <legend>
-              <label>
-                <input
-                  type="checkbox"
-                  checked={rateChangeEnabled}
-                  onChange={(event) => setRateChangeEnabled(event.target.checked)}
-                />{" "}
-                Symuluj zmianę oprocentowania
-              </label>
-            </legend>
-            {rateChangeEnabled ? (
-              <>
-                <MortgageInput
-                  label="Docelowe oprocentowanie (%)"
-                  value={rateAfterChange}
-                  onChange={setRateAfterChange}
-                />
-                <MortgageInput
-                  label="Zmiana od miesiąca"
-                  value={rateChangeMonth}
-                  onChange={setRateChangeMonth}
-                  integer
-                />
-                <MortgageInput
-                  label="Okres płynnej zmiany (mies.)"
-                  value={rateTransitionMonths}
-                  onChange={setRateTransitionMonths}
-                  integer
-                />
-              </>
-            ) : (
-              <p className="muted">Np. spadek z 5,8% do 4,8% rozłożony na 12 miesięcy.</p>
-            )}
-          </fieldset>
-          <MortgageInput label="Kwota" value={oneOffAmount} onChange={setOneOffAmount} />
-          <MortgageInput label="Miesiąc" value={oneOffMonth} onChange={setOneOffMonth} integer />
-        </section>
-        <section className="mortgage-results">
-          <div className="mortgage-stat-grid">
-            <MortgageStat label="Kredyt" value={formatPln(principal)} />
-            <MortgageStat label="Pierwsza rata" value={formatPln(base.basePayment)} />
-            <MortgageStat
-              label="Nadpłata / mies."
-              value={formatPln(Math.max(0, monthlyTarget - base.basePayment))}
-            />
-            <MortgageStat label="Po nadpłatach" value={`${modified.rows.length} rat`} />
-          </div>
-          <div className="panel">
-            <h3>Kredyt wyjściowy vs po nadpłatach</h3>
-            <div className="mortgage-compare">
-              <p>
-                <span>Bez nadpłat</span>
-                <strong>{formatPln(base.totalPaid)}</strong>
-                <small>odsetki: {formatPln(base.interest)}</small>
-              </p>
-              <p>
-                <span>Po nadpłatach</span>
-                <strong>{formatPln(modified.totalPaid)}</strong>
-                <small>odsetki: {formatPln(modified.interest)}</small>
-              </p>
-              <p>
-                <span>Oszczędność</span>
-                <strong>{formatPln(Math.max(0, base.interest - modified.interest))}</strong>
-                <small>{Math.max(0, months - modified.rows.length)} rat krócej</small>
-              </p>
-            </div>
-          </div>
-          <div className="panel">
-            <h3>Spadek kapitału</h3>
-            <svg
-              className="mortgage-chart"
-              viewBox="0 0 600 160"
-              role="img"
-              aria-label="Wykres pozostałego kapitału po nadpłatach"
-            >
-              <polyline
-                fill="none"
-                stroke="#1f6f5f"
-                strokeWidth="4"
-                points={chartPoints
-                  .map(
-                    (row, index) =>
-                      `${(index / Math.max(1, chartPoints.length - 1)) * 580 + 10},${145 - (row.balance / Math.max(1, principal)) * 130}`,
-                  )
-                  .join(" ")}
-              />
-            </svg>
-          </div>
-        </section>
-      </div>
-      <MortgageSavings base={base} modified={modified} months={months} strategy={strategy} />
       <Suspense
         fallback={
           <section className="panel mortgage-chart-loading">
@@ -692,89 +604,6 @@ export function MortgageCalculator({
   );
 }
 
-export function MortgageSavings({
-  base,
-  modified,
-  months,
-  strategy,
-}: {
-  base: ReturnType<typeof calculateMortgage>;
-  modified: ReturnType<typeof calculateMortgage>;
-  months: number;
-  strategy: "shorten" | "lower_payment";
-}) {
-  const savedInterest = Math.max(0, base.interest - modified.interest);
-  const savedMonths = Math.max(0, months - modified.rows.length);
-  const loweredPayment = Math.max(
-    0,
-    base.basePayment - (modified.rows[1]?.payment ?? modified.basePayment),
-  );
-  return (
-    <section className="mortgage-savings">
-      <article>
-        <span>Oszczędność na odsetkach</span>
-        <strong>{formatPln(savedInterest)}</strong>
-        <small>mniej pieniędzy dla banku</small>
-      </article>
-      <article>
-        <span>
-          {strategy === "lower_payment" ? "Rata po pierwszej nadpłacie" : "Krótszy okres"}
-        </span>
-        <strong>
-          {strategy === "lower_payment"
-            ? formatPln(modified.rows[1]?.payment ?? modified.basePayment)
-            : `${savedMonths} mies.`}
-        </strong>
-        <small>
-          {strategy === "lower_payment"
-            ? `${formatPln(loweredPayment)} mniej niż rata wyjściowa`
-            : "przy stałej racie i nadpłacie"}
-        </small>
-      </article>
-      <article>
-        <span>Łączny koszt po zmianach</span>
-        <strong>{formatPln(modified.totalPaid)}</strong>
-        <small>kapitał, odsetki i wszystkie nadpłaty</small>
-      </article>
-    </section>
-  );
-}
-
-export function MortgageDonut({
-  label,
-  principal,
-  interest,
-  extra,
-}: {
-  label: string;
-  principal: number;
-  interest: number;
-  extra: number;
-}) {
-  const total = Math.max(1, principal + interest);
-  const capitalSlice = (principal / total) * 100;
-  return (
-    <div className="mortgage-donut-card">
-      <div
-        className="mortgage-donut"
-        style={{
-          background: `conic-gradient(#1f6f5f 0 ${capitalSlice}%, #d8954c ${capitalSlice}% 100%)`,
-        }}
-      >
-        <span>{formatPln(total)}</span>
-      </div>
-      <strong>{label}</strong>
-      <small>
-        <i className="legend-capital" /> Kapitał: {formatPln(principal)}
-      </small>
-      <small>
-        <i className="legend-interest" /> Odsetki: {formatPln(interest)}
-      </small>
-      {extra > 0 ? <small>Nadpłaty: {formatPln(extra)}</small> : null}
-    </div>
-  );
-}
-
 export function MortgageInput({
   label,
   value,
@@ -805,14 +634,5 @@ export function MortgageInput({
         }
       />
     </label>
-  );
-}
-
-export function MortgageStat({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="mortgage-stat">
-      <span>{label}</span>
-      <strong>{value}</strong>
-    </div>
   );
 }

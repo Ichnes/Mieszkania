@@ -447,7 +447,8 @@
   }
   .detail-section-tabs {
     position: sticky;
-    top: -14px;
+    top: 0;
+    padding-right: 54px;
     z-index: 14;
     overflow-x: auto;
   }

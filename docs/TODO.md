@@ -1,5 +1,29 @@
 # Bieżące zadania
 
+## Mobilne zamykanie oferty i układ Kredytu (2026-09-09)
+
+- Zakres: usunięcie szerokiego tła przy X i kolizji z zakładkami, formularz kredytu na górze w poziomie, domyślne zwolnienie PCC, jedno podsumowanie spłaty i usunięcie opłaty konta/karty.
+- [x] X ma przezroczystą otoczkę 44 px; zakładki rezerwują miejsce po prawej. Formularz kredytu przeniesiono nad koszty, z poziomymi polami na desktopie i siatką mobilną. Jedno porównanie spłaty zastąpiło powtarzające się podsumowania; usunięto opłatę konta/karty również z obliczeń.
+- [x] Zwolnienie PCC domyślnie aktywne dla nowych ustawień, zapisane decyzje zachowane. Instrukcja obsługi zaktualizowana.
+- [x] Testy frontendu i kompilacja poprawne. Chromium 1440/1280/390: formularz na górze, domyślne PCC i zmiana jego wartości, zapamiętanie decyzji, brak przepełnienia; X i cztery zakładki klikalne bez nakładania. Obejrzane zrzuty desktop/mobile.
+
+## Brakujący moduł po wdrożeniu (2026-09-09)
+
+- [x] Zidentyfikowano fallback Nginx zwracający index.html dla brakujących plików assets. Dodano 404 dla brakujących zasobów i rewalidację cache.
+- [x] Globalna obsługa błędów renderowania: przy błędzie modułu jedna automatyczna próba odświeżenia z blokadą pętli przez 60 sekund. Przy braku sieci, blokadzie storage lub kolejnym błędzie widoczny przycisk ponowienia zamiast pustego widoku.
+- [x] 78 testów frontendu, w tym regresje błędów importu Chromium/WebKit, limitu odświeżeń, offline i niedostępnego storage.
+- [x] Docker wdrożony na 8080. Chromium: celowo zwrócony HTML za moduł SettingsDialog powoduje jedno odświeżenie; ponowna awaria pokazuje przycisk bez pętli; ręczne ponowienie po przywróceniu modułu otwiera ustawienia. Brakujący asset zwraca 404, HTML ma no-cache. Obejrzano widok błędu na telefonie.
+- [x] Końcowa kontrola kalkulatora i przycisku X na 640/390 px: domyślne PCC, zapis wyboru, komplet klikalnych zakładek i brak przepełnienia.
+- Zakres synchronizacji z GitHub: komplet powyższych zmian oraz wcześniejsza regresja tarasu; bez plików lokalnych i danych użytkownika.
+- Pozostała praca funkcjonalna w tym zakresie: brak. Stare karty sprzed wdrożenia ochrony wymagają jednego ręcznego odświeżenia, aby pobrać tę poprawkę.
+
+## Podświetlanie „mieszkanie posiada taras” (2026-09-09)
+
+- [x] Przyczyna: wzorzec negacji dopasowywał końcówkę „nie” w słowie „mieszkanie”, tworząc fragment „nie posiada taras”. Dodano granicę słowa do negacji udogodnień i miejsc postojowych.
+- [x] Dodano regresje dla tarasu, balkonu, garażu i miejsca postojowego oraz prawdziwych negacji, wielkich liter i zachowania pełnego tekstu.
+- [x] 76 testów frontendu przeszło, build Docker i wdrożenie na 8080 poprawne. Chromium 1440/1280/390 z kontrolowanym opisem: taras pozytywny, prawdziwe „nie posiada garażu” negatywne, brak przepełnienia. Bez zmian danych ofert.
+- Pozostała praca w tym zakresie: brak.
+
 ## Synchronizacja kodu z GitHub (2026-09-09)
 
 - Zakres: commit i push bieżących poprawek na `origin/main`.

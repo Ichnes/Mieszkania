@@ -42,8 +42,8 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
   const negative = [
     `(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix})?\\s*(?:(?:jest\\s+)?(?:oddan${suffix}|oferowan${suffix}|sprzedawan${suffix})\\s+)?(?:w\\s+)?stanie\\s+dewelopersk${suffix}`,
     `stan\\s+dewelopersk${suffix}`,
-    `(?:nie\\s+ma|nie\\s+posiada|brak|bez)\\s+(?:wind${suffix}|garaż${suffix}|balkon${suffix}|taras${suffix}|ogr(?:ó|o)d(?:ek|ka|kiem|ku|ki|ków|kach)|parking${suffix}|komórk${suffix}|piwnic${suffix}|ogrzewani${suffix})`,
-    `(?:nie\\s+ma|brak|bez)\\s+(?:własnego\\s+)?miejsc${suffix}\\s+(?:postojow${suffix}|parkingow${suffix})`,
+    `(?<![\\p{L}\\p{N}_])(?:nie\\s+ma|nie\\s+posiada|brak|bez)\\s+(?:wind${suffix}|garaż${suffix}|balkon${suffix}|taras${suffix}|ogr(?:ó|o)d(?:ek|ka|kiem|ku|ki|ków|kach)|parking${suffix}|komórk${suffix}|piwnic${suffix}|ogrzewani${suffix})`,
+    `(?<![\\p{L}\\p{N}_])(?:nie\\s+ma|brak|bez)\\s+(?:własnego\\s+)?miejsc${suffix}\\s+(?:postojow${suffix}|parkingow${suffix})`,
     `(?:wymaga|do|przed)\\s+(?:(?:generaln${suffix}|kapitaln${suffix})\\s+)?remont${suffix}`,
     `stan\\s+do\\s+remont${suffix}`,
     `(?:do\\s+odświeżenia|do\\s+wymiany|okn${suffix}\\s+do\\s+wymiany|instalacj${suffix}\\s+do\\s+wymiany|dach${suffix}\\s+do\\s+wymiany)`,

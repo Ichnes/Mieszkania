@@ -1,4 +1,111 @@
 /* Complete acquisition cost simulation. */
+.mortgage-page .mortgage-form-horizontal {
+  position: static;
+  display: grid;
+  gap: 16px;
+}
+.mortgage-primary-inputs,
+.mortgage-extra-inputs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 14px;
+  align-items: start;
+}
+.mortgage-extra-inputs {
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr));
+}
+.mortgage-form-horizontal .detail-field {
+  min-width: 0;
+  margin: 0;
+}
+.mortgage-primary-inputs > div {
+  min-width: 0;
+}
+.mortgage-primary-inputs small {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-soft);
+}
+.mortgage-comparison-inputs,
+.mortgage-comparison-savings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 16px 0;
+}
+.mortgage-comparison-inputs > div,
+.mortgage-comparison-savings > div {
+  display: grid;
+  gap: 6px;
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--brand-soft);
+}
+.mortgage-comparison-inputs dd {
+  margin: 0;
+  font-weight: 800;
+}
+.mortgage-comparison-savings strong {
+  font-size: 1.2rem;
+}
+.mortgage-comparison-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+.mortgage-comparison table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-variant-numeric: tabular-nums;
+}
+.mortgage-comparison th,
+.mortgage-comparison td {
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+.mortgage-comparison th:first-child {
+  text-align: left;
+}
+.mortgage-comparison th small {
+  display: block;
+  margin-top: 4px;
+  font-weight: 400;
+  color: var(--ink-soft);
+}
+@media (max-width: 1100px) {
+  .mortgage-primary-inputs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  .mortgage-primary-inputs,
+  .mortgage-extra-inputs {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .mortgage-extra-inputs > :first-child {
+    grid-column: 1 / -1;
+  }
+  .mortgage-comparison th,
+  .mortgage-comparison td {
+    padding: 10px 5px;
+    font-size: 0.76rem;
+  }
+  .mortgage-comparison-inputs > div,
+  .mortgage-comparison-savings > div {
+    padding: 10px;
+    font-size: 0.8rem;
+  }
+  .mortgage-comparison-savings strong {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 380px) {
+  .mortgage-primary-inputs {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .mortgage-page,
 .mortgage-page > *,
 .mortgage-layout,
@@ -88,7 +195,7 @@
 }
 .mortgage-total-cards {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
 .mortgage-total-cards article {

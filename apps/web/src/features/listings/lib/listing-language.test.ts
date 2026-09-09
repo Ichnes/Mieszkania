@@ -294,6 +294,40 @@ test("noise field names, moderately quiet ratings and speakers are not loudness 
   );
 });
 
+test("amenity negations do not start inside mieszkanie", () => {
+  for (const text of [
+    "mieszkanie posiada taras",
+    "MIESZKANIE POSIADA TARAS.",
+    "Mieszkanie ma balkon.",
+    "Mieszkanie ma własne miejsce postojowe.",
+    "Mieszkanie posiada garaż.",
+  ]) {
+    const parts = getDescriptionHighlightParts(text);
+    assert.equal(parts.map((part) => part.text).join(""), text);
+    assert.equal(
+      parts.some((part) => part.tone === "negative"),
+      false,
+      text,
+    );
+    assert.ok(
+      parts.some((part) => part.tone === "positive"),
+      text,
+    );
+  }
+  for (const text of [
+    "Mieszkanie nie posiada tarasu.",
+    "Nie ma balkonu.",
+    "Mieszkanie nie ma własnego miejsca postojowego.",
+    "Lokal: brak tarasu.",
+    "Mieszkanie bez tarasu.",
+  ]) {
+    assert.ok(
+      getDescriptionHighlightParts(text).some((part) => part.tone === "negative"),
+      text,
+    );
+  }
+});
+
 test("recognizes abbreviated north-east exposure regardless of letter case", () => {
   assert.deepEqual(getSunExposure("Ekspozycja NE").directions, ["NE"]);
   assert.deepEqual(getSunExposure("Okna: ne").directions, ["NE"]);

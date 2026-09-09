@@ -163,7 +163,17 @@ przyciskiem **Zapisz wkład w preferencjach**. Te preferencje są wspólne dla l
 przechowywane w bazie i lokalnej kopii `storage/settings/family-settings.json`, pomijanej przez Git.
 Pozostałe parametry symulacji kredytu zapamiętuje przeglądarka na danym urządzeniu.
 
+W zakładce **Kredyt** formularz **Podstawowe dane** znajduje się przed kosztami transakcji.
+Sekcja **Kredyt i efekt nadpłat** porównuje łączną spłatę, odsetki, liczbę rat i ratę bankową
+w jednej tabeli. Zwolnienie PCC dla pierwszego mieszkania jest domyślnie zaznaczone
+w nowej symulacji; wcześniej zapisany wybór pozostaje zachowany. Opłata za konto i kartę
+nie jest uwzględniana w kalkulatorze.
+
 ## Czytanie i otwieranie ofert
+
+Jeżeli po aktualizacji serwera otwarta karta odwołuje się do starego modułu widoku,
+aplikacja próbuje raz automatycznie się odświeżyć. Przy utrzymującym się błędzie
+wyświetla przycisk **Odśwież aplikację** zamiast pustego ekranu.
 
 Kafelek **Pokoje / Piętro** na karcie pokazuje oba parametry. Parter ma numer **0** (np. **0 / 5**),
 a brak piętra kreskę. Obok metrażu znajduje się **Rok budowy**; kreska oznacza brak roku.
