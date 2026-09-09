@@ -1,3 +1,5 @@
+import { wkdLines } from "./wkd";
+import { plannedMetroLines } from "./planned-metro";
 import { warsawMetroStations } from "@mieszkania/shared";
 import { MapCoordinate, MetroMapLine } from "../types";
 
@@ -52,72 +54,7 @@ export const warsawMetroLines: MetroMapLine[] = [
       { name: "Gocław", latitude: 52.224858, longitude: 21.092423 },
     ],
   },
-  {
-    code: "M4",
-    planned: true,
-    stations: [
-      { name: "Myśliborska", latitude: 52.3132324, longitude: 20.9643612 },
-      { name: "Obrazkowa", latitude: 52.3130295, longitude: 20.967339 },
-      { name: "Płochocińska", latitude: 52.3135506, longitude: 21.0018842 },
-      { name: "Ruda", latitude: 52.2835019, longitude: 20.9767459 },
-      { name: "Marymont", latitude: 52.2715768, longitude: 20.9719399 },
-      { name: "Rydygiera", latitude: 52.2582766, longitude: 20.9704965 },
-      { name: "Rondo Radosława", latitude: 52.2548555, longitude: 20.9832393 },
-      { name: "Cmentarz Żydowski", latitude: 52.2478236, longitude: 20.9744027 },
-      { name: "Okopowa", latitude: 52.239102, longitude: 20.9796764 },
-      { name: "Rondo Daszyńskiego", latitude: 52.2300827, longitude: 20.9828946 },
-      { name: "Plac Zawiszy", latitude: 52.2247888, longitude: 20.9886965 },
-      { name: "Plac Narutowicza", latitude: 52.2190384, longitude: 20.985049 },
-      { name: "Bitwy Warszawskiej 1920", latitude: 52.2160552, longitude: 20.9623309 },
-      { name: "Wiślicka", latitude: 52.2035987, longitude: 20.9775282 },
-      { name: "Żwirki i Wigury", latitude: 52.2155423, longitude: 20.9882034 },
-      { name: "Służewiec", latitude: 52.1805647, longitude: 20.9937829 },
-      { name: "Rondo Unii Europejskiej", latitude: 52.1781621, longitude: 21.001861 },
-      { name: "Smoluchowskiego", latitude: 52.1791432, longitude: 21.0111472 },
-      { name: "Wilanowska", latitude: 52.1818168, longitude: 21.0231452 },
-      { name: "Dolina Służewiecka", latitude: 52.167642, longitude: 21.0357124 },
-      { name: "Patkowskiego", latitude: 52.1726949, longitude: 21.0545545 },
-      { name: "Sobieskiego", latitude: 52.1767, longitude: 21.0605 },
-      { name: "Wilanów", latitude: 52.1661431, longitude: 21.0902262 },
-    ],
-  },
-  {
-    code: "M2",
-    planned: true,
-    stations: [
-      { name: "Bemowo", latitude: 52.2372, longitude: 20.9131 },
-      { name: "Lazurowa", latitude: 52.2270021, longitude: 20.8967806 },
-      { name: "Chrzanów", latitude: 52.2166113, longitude: 20.8955248 },
-      { name: "Karolin", latitude: 52.212901, longitude: 20.8862282 },
-    ],
-  },
-  {
-    code: "M2",
-    planned: true,
-    stations: [
-      { name: "Karolin (kierunek Ursus)", latitude: 52.212901, longitude: 20.8862282 },
-      { name: "Ursus Północny", latitude: 52.2057501, longitude: 20.889622 },
-      { name: "Posag 7 Panien", latitude: 52.2062959, longitude: 20.8863659 },
-      { name: "Ursus-Niedźwiadek", latitude: 52.1951289, longitude: 20.8698961 },
-    ],
-  },
-  {
-    code: "M5",
-    planned: true,
-    stations: [
-      { name: "Ursus-Niedźwiadek (korytarz)", latitude: 52.1951289, longitude: 20.8698961 },
-      { name: "Szamoty (korytarz)", latitude: 52.2020867, longitude: 20.8868026 },
-      { name: "Skorosze (korytarz)", latitude: 52.192016, longitude: 20.899866 },
-      { name: "Wiktoryn (korytarz)", latitude: 52.1964511, longitude: 20.9349821 },
-      { name: "Aleje Jerozolimskie (korytarz)", latitude: 52.1879322, longitude: 20.9121723 },
-      { name: "Śmigłowca (korytarz)", latitude: 52.209226, longitude: 20.9494832 },
-      { name: "Plac Narutowicza (korytarz)", latitude: 52.2190384, longitude: 20.985049 },
-      { name: "Plac Konstytucji (korytarz)", latitude: 52.2216901, longitude: 21.0164613 },
-      { name: "Saska Kępa (korytarz)", latitude: 52.2329941, longitude: 21.0571754 },
-      { name: "Ostrobramska (korytarz)", latitude: 52.2332018, longitude: 21.1125727 },
-      { name: "Gocławek (korytarz)", latitude: 52.2383574, longitude: 21.1265486 },
-    ],
-  },
+  ...plannedMetroLines,
 ];
 
 export const warsawRailLines: Array<{ name: string; stations: MapCoordinate[] }> = [
@@ -145,17 +82,5 @@ export const warsawRailLines: Array<{ name: string; stations: MapCoordinate[] }>
       { name: "Warszawa Służewiec", latitude: 52.1749, longitude: 20.997 },
     ],
   },
-  {
-    name: "WKD",
-    stations: [
-      { name: "Warszawa Śródmieście WKD", latitude: 52.2263, longitude: 21.0018 },
-      { name: "Warszawa Ochota WKD", latitude: 52.2205, longitude: 20.9812 },
-      { name: "Warszawa Reduta Ordona WKD", latitude: 52.213, longitude: 20.9612 },
-      { name: "Warszawa Aleje Jerozolimskie WKD", latitude: 52.205, longitude: 20.946 },
-      { name: "Warszawa Raków WKD", latitude: 52.1988, longitude: 20.932 },
-      { name: "Warszawa Salomea WKD", latitude: 52.1913, longitude: 20.9143 },
-      { name: "Opacz WKD", latitude: 52.1827, longitude: 20.893 },
-      { name: "Michałowice WKD", latitude: 52.1687, longitude: 20.8822 },
-    ],
-  },
+  ...wkdLines,
 ];

@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { escapeHtml } from "../../shared/lib/text";
-import { warsawMetroLines, warsawRailLines } from "./data/transit";
+import { metroLineColors, warsawMetroLines, warsawRailLines } from "./data/transit";
 import { ensureLeafletLoaded, mapLocationIconHtml } from "./lib/leaflet";
+import { metroStationPopup } from "./lib/metro-popup";
+import { mapRailStations } from "./lib/rail-stations";
 import { MapCoordinate } from "./types";
 
 export function ListingTransitMap(input: {
@@ -100,7 +102,7 @@ export function ListingTransitMap(input: {
       warsawRailLines.map((line) =>
         line.stations.map((station) => [station.latitude, station.longitude] as [number, number]),
       );
-    const railStations = railwayMap?.stations ?? warsawRailLines.flatMap((line) => line.stations);
+    const railStations = mapRailStations(railwayMap?.stations);
     for (const line of railLines)
       window.L.polyline(line, { color: "#17202a", weight: 2.5, opacity: 0.76 }).addTo(
         layerRef.current,
@@ -125,19 +127,41 @@ export function ListingTransitMap(input: {
 
     const metroStations = new Map<
       string,
-      { latitude: number; longitude: number; codes: string[]; names: string[] }
+      {
+        latitude: number;
+        longitude: number;
+        codes: string[];
+        names: string[];
+        popups: string[];
+        planned: boolean;
+      }
     >();
     for (const line of warsawMetroLines) {
+      window.L.polyline(
+        line.stations.map((station) => [station.latitude, station.longitude]),
+        {
+          color: metroLineColors[line.code],
+          weight: line.planned ? 3 : 4,
+          opacity: 0.8,
+          dashArray: line.planned ? "7 6" : undefined,
+          interactive: false,
+        },
+      ).addTo(layerRef.current);
       for (const station of line.stations) {
+        if (station.connectionOnly) continue;
         const key = `${station.latitude.toFixed(6)}:${station.longitude.toFixed(6)}`;
         const group = metroStations.get(key) ?? {
           latitude: station.latitude,
           longitude: station.longitude,
           codes: [],
           names: [],
+          popups: [],
+          planned: true,
         };
         group.codes.push(line.code);
         group.names.push(station.name);
+        group.popups.push(metroStationPopup(line, station));
+        group.planned = group.planned && Boolean(line.planned);
         metroStations.set(key, group);
       }
     }
@@ -146,18 +170,14 @@ export function ListingTransitMap(input: {
       const marker = window.L.marker([station.latitude, station.longitude], {
         zIndexOffset: 500,
         icon: window.L.divIcon({
-          className: `leaflet-metro-marker leaflet-metro-${codes[0].toLowerCase()}${codes.length > 1 ? " is-interchange" : ""}`,
+          className: `leaflet-metro-marker leaflet-metro-${codes[0].toLowerCase()}${codes.length > 1 ? " is-interchange" : ""}${station.planned ? " is-planned" : ""}`,
           html: `<span>${codes.join("/")}</span>`,
           iconSize: [codes.length > 1 ? 43 : 27, 27],
           iconAnchor: [codes.length > 1 ? 21 : 13, 13],
           popupAnchor: [0, -15],
         }),
       });
-      marker
-        .bindPopup(
-          `<strong>Metro ${codes.join("/")}</strong><br/>${station.names.map(escapeHtml).join("<br/>")}`,
-        )
-        .addTo(layerRef.current);
+      marker.bindPopup(station.popups.join("<hr/>")).addTo(layerRef.current);
     }
 
     for (const stop of tramStops) {

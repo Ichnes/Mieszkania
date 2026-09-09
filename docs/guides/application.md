@@ -243,6 +243,20 @@ Po odświeżeniu wracają zarówno zastosowane kryteria, jak i rozpoczęte zmian
 **Pokaż wyniki** zatwierdza zmiany, a **Wyczyść** usuwa kryteria.
 
 Mapa w szczegółach oferty obsługuje kółko myszy oraz powiększanie dwoma palcami.
+
+Na mapie głównej wybierz przynajmniej jeden filtr ofert. Przycisk **Pokaż filtry /
+Ukryj filtry** działa również na komputerze. Liczby w zielonych kółkach oznaczają
+grupy ofert: kliknięcie przybliża mapę, a przy maksymalnym powiększeniu pozwala
+wybrać spośród ofert w tym samym miejscu. Lista obok mapy ma strony po 50 ofert;
+zmiana strony listy nie usuwa pozostałych wyników z mapy. Podgląd zdjęcia używa
+małej miniatury, a szczegóły oferty zachowują oryginalne zdjęcia.
+
+Współrzędne metra są dołączone do aplikacji. Po kliknięciu planowanej stacji
+możesz sprawdzić jej etap i źródło planu. M4, M5 i przedłużenie M2 do Ursusa
+pokazują orientacyjne lokalizacje; połączenia punktów nie wyznaczają dokładnych
+osi tuneli. [Źródła danych metra](../reference/metro-map-sources.md).
+Tramwaje pobierają dane z sieci i zapisują ostatni poprawny wynik na dysku.
+Jeżeli pierwsze pobranie się nie powiedzie, mapa pokaże przycisk ponowienia.
 W pełnoekranowym podglądzie zdjęć rozsuń palce, aby powiększyć, i zsuń, aby pomniejszyć.
 Powiększone zdjęcie można przesuwać; przy podstawowym powiększeniu przesunięcie w bok
 zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje zdjęcie do
@@ -268,3 +282,5 @@ Identyczne pierwsze 25 słów opisu pozwala automatycznie połączyć aktywne of
 w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielkość
 liter i interpunkcję. Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.
+
+Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).

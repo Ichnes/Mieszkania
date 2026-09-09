@@ -14,8 +14,11 @@ import {
   warsawRailLines,
 } from "./data/transit";
 import { isValidMapPoint } from "./lib/geometry";
-import { ensureLeafletLoaded, mapOfferIconHtml } from "./lib/leaflet";
-import { buildMapListingPreview, listingPriceAmount } from "./lib/previews";
+import { ensureLeafletLoaded } from "./lib/leaflet";
+import { listingPriceAmount } from "./lib/previews";
+import { attachOfferLayer } from "./lib/offer-layer";
+import { metroStationPopup } from "./lib/metro-popup";
+import { mapRailStations } from "./lib/rail-stations";
 import { MapCoordinate, MetroMapLine } from "./types";
 
 export function MapView(input: {
@@ -41,7 +44,8 @@ export function MapView(input: {
   const [minimumArea, setMinimumArea] = useState("");
   const [maximumArea, setMaximumArea] = useState("");
   const [offerSearch, setOfferSearch] = useState("");
-  const [mapFiltersOpen, setMapFiltersOpen] = useState(false);
+  const [mapFiltersOpen, setMapFiltersOpen] = useState(() => window.innerWidth > 700);
+  const [listPage, setListPage] = useState(1);
   const [railwayMap, setRailwayMap] = useState<{
     stations: Array<MapCoordinate & { kind?: string }>;
     lines: Array<Array<[number, number]>>;
@@ -61,6 +65,9 @@ export function MapView(input: {
     railway: true,
     tramway: true,
   });
+  const [tramError, setTramError] = useState(false);
+  const [tramLoading, setTramLoading] = useState(true);
+  const [tramAttempt, setTramAttempt] = useState(0);
   const [selectedTramRoute, setSelectedTramRoute] = useState<string | null>(null);
   onOpenRef.current = input.onOpen;
   const hasListingFilters = Boolean(
@@ -166,13 +173,28 @@ export function MapView(input: {
         if (data) setRailwayMap(data);
       })
       .catch(() => undefined);
-    void apiFetch(`${apiBaseUrl}/api/map/tramway`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (data) setTramwayMap(data);
-      })
-      .catch(() => undefined);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    setTramLoading(true);
+    setTramError(false);
+    void apiFetch(`${apiBaseUrl}/api/map/tramway`)
+      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("tramway"))))
+      .then((data) => {
+        if (!cancelled && data?.routes?.length) setTramwayMap(data);
+        else if (!cancelled) setTramError(true);
+      })
+      .catch(() => {
+        if (!cancelled) setTramError(true);
+      })
+      .finally(() => {
+        if (!cancelled) setTramLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [tramAttempt]);
 
   useEffect(() => {
     if (!mapReady || !window.L || !mapRef.current || !layerRef.current) return;
@@ -197,9 +219,10 @@ export function MapView(input: {
         warsawRailLines.map((line) =>
           line.stations.map((station) => [station.latitude, station.longitude] as [number, number]),
         );
-      const railStations = railwayMap?.stations ?? warsawRailLines.flatMap((line) => line.stations);
+      const railStations = mapRailStations(railwayMap?.stations);
       for (const line of railLines)
         window.L.polyline(line, {
+          interactive: false,
           className: "rail-line",
           color: "#34404d",
           weight: 3,
@@ -230,15 +253,20 @@ export function MapView(input: {
       const visibleTramRoutes = selectedTramRoute
         ? (tramwayMap?.routes ?? []).filter((route) => route.ref === selectedTramRoute)
         : (tramwayMap?.routes ?? []);
-      for (const route of visibleTramRoutes) {
-        for (const line of route.lines)
-          window.L.polyline(line, {
-            className: selectedTramRoute ? "tram-line is-selected" : "tram-line",
-            color: selectedTramRoute ? "#c8248d" : "#279bc7",
-            weight: selectedTramRoute ? 5 : 3,
-            opacity: selectedTramRoute ? 0.96 : 0.76,
-          }).addTo(layerRef.current);
-      }
+      const segments = new Map<string, Array<[number, number]>>();
+      for (const route of visibleTramRoutes)
+        for (const line of route.lines) {
+          const forward = JSON.stringify(line);
+          const reverse = JSON.stringify([...line].reverse());
+          segments.set(forward < reverse ? forward : reverse, line);
+        }
+      window.L.polyline([...segments.values()], {
+        interactive: false,
+        className: selectedTramRoute ? "tram-line is-selected" : "tram-line",
+        color: selectedTramRoute ? "#c8248d" : "#279bc7",
+        weight: selectedTramRoute ? 5 : 3,
+        opacity: selectedTramRoute ? 0.96 : 0.76,
+      }).addTo(layerRef.current);
       for (const stop of tramwayMap?.stops ?? [])
         tramStops.set(`${stop.latitude.toFixed(5)}:${stop.longitude.toFixed(5)}`, stop);
       for (const stop of tramStops.values()) {
@@ -281,7 +309,12 @@ export function MapView(input: {
         {
           latitude: number;
           longitude: number;
-          stations: Array<{ code: MetroMapLine["code"]; name: string; planned: boolean }>;
+          stations: Array<{
+            code: MetroMapLine["code"];
+            name: string;
+            planned: boolean;
+            popup: string;
+          }>;
         }
       >();
       for (const line of warsawMetroLines) {
@@ -294,6 +327,7 @@ export function MapView(input: {
           dashArray: line.planned ? "7 6" : undefined,
         }).addTo(layerRef.current);
         for (const station of line.stations) {
+          if (station.connectionOnly) continue;
           const key = `${station.latitude.toFixed(6)}:${station.longitude.toFixed(6)}`;
           const marker = metroMarkers.get(key) ?? {
             latitude: station.latitude,
@@ -304,6 +338,7 @@ export function MapView(input: {
             code: line.code,
             name: station.name,
             planned: Boolean(line.planned),
+            popup: metroStationPopup(line, station),
           });
           metroMarkers.set(key, marker);
         }
@@ -321,54 +356,10 @@ export function MapView(input: {
             popupAnchor: [0, -15],
           }),
         });
-        marker.bindPopup(
-          stationGroup.stations
-            .map(
-              (station) =>
-                `<strong>${station.code}${station.planned ? " (planowana)" : ""}</strong><br/>${escapeHtml(station.name)}`,
-            )
-            .join("<hr/>"),
-        );
+        marker.bindPopup(stationGroup.stations.map((station) => station.popup).join("<hr/>"));
         marker.addTo(layerRef.current);
       }
     }
-    for (const listing of geoListings) {
-      const markerClass =
-        listing.priceChangePercent < 0
-          ? "leaflet-price-down-marker"
-          : listing.priceChangePercent > 0
-            ? "leaflet-price-up-marker"
-            : "leaflet-default-marker";
-      const marker = window.L.marker([listing.latitude, listing.longitude], {
-        icon: window.L.divIcon({
-          className: `${markerClass}${listing.isShortlisted ? " is-shortlisted" : ""}`,
-          html: listing.isShortlisted ? mapOfferIconHtml.shortlisted : mapOfferIconHtml.regular,
-          iconSize: [30, 38],
-          iconAnchor: [15, 38],
-          popupAnchor: [0, -24],
-        }),
-      });
-      marker.on("click", () => {
-        void onOpenRef.current(listing.id);
-      });
-      const preview = buildMapListingPreview(listing);
-      marker.bindPopup(preview, {
-        className: "listing-map-popup",
-        minWidth: 350,
-        maxWidth: 390,
-        keepInView: true,
-      });
-      marker.bindTooltip(preview, {
-        className: "listing-map-tooltip",
-        direction: "top",
-        offset: [0, -28],
-        opacity: 1,
-        sticky: true,
-      });
-      marker.addTo(layerRef.current);
-      bounds.push([listing.latitude!, listing.longitude!]);
-    }
-
     for (const workplace of geoWorkplaces) {
       const label =
         workplace.key === "user-office"
@@ -401,23 +392,56 @@ export function MapView(input: {
     } else if (bounds.length === 0 && !hasFittedInitialBoundsRef.current) {
       mapRef.current.setView([52.2297, 21.0122], 11);
     }
-  }, [
-    geoListings,
-    geoWorkplaces,
-    mapReady,
-    railwayMap,
-    tramwayMap,
-    transitLayerVisibility,
-    selectedTramRoute,
-  ]);
+  }, [geoWorkplaces, mapReady, railwayMap, tramwayMap, transitLayerVisibility, selectedTramRoute]);
+
+  useEffect(() => {
+    if (!mapReady || !mapRef.current) return;
+    if (geoListings.length && !hasFittedInitialBoundsRef.current) {
+      mapRef.current.fitBounds(
+        geoListings.map((item) => [item.latitude, item.longitude]),
+        { padding: [36, 36] },
+      );
+      hasFittedInitialBoundsRef.current = true;
+    }
+    return attachOfferLayer(
+      mapRef.current,
+      geoListings,
+      (id) => {
+        void onOpenRef.current(id);
+      },
+      apiBaseUrl,
+    );
+  }, [mapReady, geoListings]);
+
+  useEffect(() => {
+    setListPage(1);
+  }, [geoListings]);
+  const listPages = Math.max(1, Math.ceil(geoListings.length / 50));
+  const currentListPage = Math.min(listPage, listPages);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => mapRef.current?.invalidateSize(), 180);
     return () => window.clearTimeout(timeout);
-  }, [geoListings.length, geoWorkplaces.length, input.selectedListingId]);
+  }, [geoListings.length, geoWorkplaces.length, input.selectedListingId, mapFiltersOpen]);
 
   return (
     <>
+      {transitLayerVisibility.tramway && tramLoading && (
+        <p className="muted" role="status">
+          Ładowanie tras tramwajowych…
+        </p>
+      )}
+      {transitLayerVisibility.tramway && tramError && (
+        <p role="alert">
+          Nie udało się pobrać tramwajów.{" "}
+          <button
+            className="action-button secondary-button"
+            onClick={() => setTramAttempt((value) => value + 1)}
+          >
+            Spróbuj ponownie
+          </button>
+        </p>
+      )}
       <section className="map-filter-shell">
         <div className="map-filter-heading">
           <div>
@@ -431,6 +455,8 @@ export function MapView(input: {
               className="action-button secondary-button map-filter-toggle"
               type="button"
               onClick={() => setMapFiltersOpen((current) => !current)}
+              aria-expanded={mapFiltersOpen}
+              aria-controls="map-offer-filters"
             >
               <SlidersHorizontal size={17} aria-hidden="true" />{" "}
               {mapFiltersOpen ? "Ukryj filtry" : "Pokaż filtry"}
@@ -438,6 +464,8 @@ export function MapView(input: {
           </div>
         </div>
         <div
+          id="map-offer-filters"
+          hidden={!mapFiltersOpen}
           className={mapFiltersOpen ? "map-filter-panel is-open" : "map-filter-panel"}
           aria-label="Filtry ofert na mapie"
         >
@@ -633,7 +661,8 @@ export function MapView(input: {
                 </span>
               ))}
               <span>
-                <i className="map-legend-planned-line" /> Linia przerywana: plan / budowa
+                <i className="map-legend-planned-line" /> Linia przerywana: plan / budowa;
+                połączenia orientacyjne
               </span>
               <span>
                 <i className="rail-legend-line" /> PKP / SKM / KM / WKD
@@ -681,7 +710,7 @@ export function MapView(input: {
               </article>
             );
           })}
-          {geoListings.map((listing) => (
+          {geoListings.slice((currentListPage - 1) * 50, currentListPage * 50).map((listing) => (
             <article
               key={listing.id}
               className={listing.id === input.selectedListingId ? "map-card active" : "map-card"}
@@ -703,6 +732,27 @@ export function MapView(input: {
               <ListingBadgeRow badges={(listing.badges ?? []).slice(0, 3)} />
             </article>
           ))}
+          {geoListings.length > 50 && (
+            <div className="map-list-pagination">
+              <button
+                className="action-button secondary-button"
+                disabled={listPage <= 1}
+                onClick={() => setListPage((page) => Math.max(1, page - 1))}
+              >
+                Poprzednie
+              </button>
+              <span>
+                Strona {Math.min(listPage, listPages)} z {listPages}
+              </span>
+              <button
+                className="action-button secondary-button"
+                disabled={listPage >= listPages}
+                onClick={() => setListPage((page) => page + 1)}
+              >
+                Następne
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

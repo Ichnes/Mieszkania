@@ -1,14 +1,14 @@
 import type { ListingSummary } from "@mieszkania/shared";
 import { escapeHtml } from "../../../shared/lib/text";
 
-export function buildMapListingPreview(listing: ListingSummary) {
+export function buildMapListingPreview(listing: ListingSummary, apiBaseUrl = "") {
   const location =
     [listing.district, listing.neighborhood].filter(Boolean).join(" · ") || listing.city;
   const details = [listing.areaLabel, listing.roomsCount ? `${listing.roomsCount} pok.` : undefined]
     .filter(Boolean)
     .join(" · ");
   const image = listing.thumbnailUrl
-    ? `<img class="map-offer-preview-image" src="${escapeHtml(listing.thumbnailUrl)}" alt="" loading="lazy" />`
+    ? `<img class="map-offer-preview-image" src="${escapeHtml(mapThumbnailUrl(listing.thumbnailUrl, listing.id, apiBaseUrl))}" alt="" width="384" height="240" loading="lazy" decoding="async" />`
     : `<div class="map-offer-preview-image map-offer-preview-empty">Brak zdjęcia</div>`;
   const accuracy =
     listing.coordinateAccuracy === "approximate"
@@ -27,6 +27,14 @@ export function buildMapListingPreview(listing: ListingSummary) {
       ${accuracy}<span class="map-offer-preview-hint">Kliknij, żeby otworzyć ofertę</span>
     </div>
   </article>`;
+}
+
+export function mapThumbnailUrl(url: string, listingId?: string, apiBaseUrl = "") {
+  if (!url.includes("/api/media/"))
+    return listingId
+      ? `${apiBaseUrl}/api/listings/${encodeURIComponent(listingId)}/map-thumbnail`
+      : url;
+  return `${url}${url.includes("?") ? "&" : "?"}variant=map`;
 }
 
 export function listingPriceAmount(priceLabel: string) {

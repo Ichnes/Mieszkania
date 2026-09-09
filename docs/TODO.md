@@ -1,5 +1,17 @@
 # Bieżące zadania
 
+## Wydajność mapy i transport (2026-09-09)
+
+- Zakres: przyspieszenie mapy przy wielu ofertach, lżejsze podglądy, naprawa tramwajów i przełącznika filtrów; korekta nowych stacji M2 oraz przebiegów M4/M5 według źródeł internetowych.
+- [x] Diagnoza: wszystkie warstwy są przebudowywane przy zmianie filtrów ofert; tramwajowy Overpass pobiera tylko przystanki, bez relacji i geometrii tras; CSS filtrów nadpisuje stan zamknięty.
+- [x] Oddzielono warstwę ofert od transportu, dodano grupowanie według widoku mapy, podglądy tworzone przy najechaniu, miniatury WebP 384×240 z cache i listę po 50 ofert. Naprawiono przełącznik filtrów na desktopie/mobile.
+- [x] Tramwaje: zapytanie o relacje i geometrię, zapasowy serwer, cache dyskowy i współdzielenie pobrania, komunikat błędu/ponowienie. Wspólne odcinki torów są rysowane tylko raz. Potwierdzono pełną odpowiedź zapasowego Overpass (5,6 MB); główny serwer miał timeout połączenia.
+- [x] Współrzędne trzech budowanych stacji M2 z obiektów OSM; orientacyjne punkty kolejnych trzech stacji M2, 23 stacji M4 i 20 M5 na podstawie plansz. Dane dołączone do repozytorium, wspólne dla mapy głównej i oferty; źródła oraz oznaczenie niepewności w dymkach i dokumentacji. M1/M3 zachowane.
+- [x] Wstępne testy: 141 API + 80 frontend, typecheck; Chromium 1440/390 px: przełącznik działa, brak błędów JS i overflow, zamiast tysięcy znaczników 270/203 łącznie z transportem.
+- [x] Dane metra M1/M2/M3 i 28 stacji WKD z odgałęzieniem do Milanówka są częścią aplikacji, niezależnie od bazy ofert. WKD ma zweryfikowane współrzędne OSM i nie znika przy częściowej odpowiedzi warstwy kolejowej.
+- [x] Końcowe sprawdzenie: typecheck i build Docker poprawne; 142 testy API oraz 85 frontendu przechodzą (2 testy API pominięte). Chromium 1440/1280/390 px, 3038 ofert: 280/271/110 grup, filtr 45/47/34 ms, brak błędów JS i przepełnienia. Przełącznik filtrów i dymki źródeł metra działają; miniatura WebP 384×240 ma 7920 B w sprawdzonym przykładzie. Endpoint tramwajów: 64 relacje tras, 662 przystanki, cache 50 ms. Obejrzano zrzuty desktop/mobile.
+- [x] Wdrożono API i frontend w lokalnym Dockerze. Zakres gotowy do commita i autoryzowanego push na main.
+
 ## Sortowanie za m² i wyrównanie filtrów (2026-09-09)
 
 - [x] Dodano cenę za m² rosnąco/malejąco w formularzu, zapisie sesji, walidacji API i sortowaniu całego zbioru przed paginacją. Obliczenie z aktualnej ceny i metrażu, braki na końcu, stabilne rozstrzyganie remisów.

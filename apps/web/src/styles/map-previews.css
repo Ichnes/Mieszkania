@@ -138,3 +138,41 @@
   font-size: 0.64rem;
   font-weight: 750;
 }
+.map-filter-panel[hidden] {
+  display: none !important;
+}
+.map-filter-heading .map-filter-toggle {
+  display: inline-flex;
+}
+.map-list-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+}
+.leaflet-marker-icon.leaflet-offer-cluster {
+  display: grid;
+  place-items: center;
+  border: 2px solid white;
+  border-radius: 50%;
+  background: #17695b;
+  color: white;
+  font: 700 13px system-ui;
+  box-shadow: 0 1px 5px #0005;
+}
+.map-cluster-offers {
+  display: grid;
+  gap: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.map-cluster-offers button {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #d4dedb;
+  border-radius: 6px;
+  background: white;
+  color: #17382f;
+  cursor: pointer;
+}
