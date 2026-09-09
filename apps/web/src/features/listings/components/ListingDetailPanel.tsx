@@ -1,3 +1,4 @@
+import { Select } from "../../../components/Select";
 import { ZoomablePhoto } from "./ZoomablePhoto";
 import { copyText } from "../../../shared/lib/clipboard";
 import type {
@@ -754,13 +755,13 @@ export function ListingDetailPanel(input: {
                 </fieldset>
                 <label className="detail-field">
                   <span>Etap decyzji</span>
-                  <select
-                    className="text-input"
+                  <Select
+                    label="Etap decyzji"
                     value={manual.decisionStage ?? ""}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setManual((current) => ({
                         ...current,
-                        decisionStage: toDecisionStage(event.target.value),
+                        decisionStage: toDecisionStage(value),
                       }))
                     }
                   >
@@ -773,17 +774,17 @@ export function ListingDetailPanel(input: {
                     <option value="to_offer">Do oferty</option>
                     <option value="rejected">Odrzucona</option>
                     <option value="bought">Kupiona</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="detail-field">
                   <span>Status kontaktu</span>
-                  <select
-                    className="text-input"
+                  <Select
+                    label="Status kontaktu"
                     value={manual.contactStatus ?? ""}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setManual((current) => ({
                         ...current,
-                        contactStatus: toContactStatus(event.target.value),
+                        contactStatus: toContactStatus(value),
                       }))
                     }
                   >
@@ -794,7 +795,7 @@ export function ListingDetailPanel(input: {
                     <option value="viewing_scheduled">Oglądanie umówione</option>
                     <option value="rejected">Odrzucone</option>
                     <option value="closed">Zamkniete</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="detail-field">
                   <span>Osoba kontaktowa</span>
@@ -929,13 +930,13 @@ export function ListingDetailPanel(input: {
               <div className="ops-form">
                 <label className="detail-field">
                   <span>Rodzaj zdarzenia</span>
-                  <select
-                    className="text-input"
+                  <Select
+                    label="Rodzaj zdarzenia"
                     value={contactEvent.eventType}
-                    onChange={(event) =>
+                    onChange={(value) =>
                       setContactEvent((current) => ({
                         ...current,
-                        eventType: event.target.value as ListingContactEventType,
+                        eventType: value as ListingContactEventType,
                       }))
                     }
                   >
@@ -947,7 +948,7 @@ export function ListingDetailPanel(input: {
                     <option value="negotiation">Negocjacje</option>
                     <option value="status_change">Zmiana statusu</option>
                     <option value="other">Inne</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className="detail-field">
                   <span>Data i godzina</span>

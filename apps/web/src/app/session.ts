@@ -114,8 +114,16 @@ export function isAppTab(value: unknown): value is AppTab {
 export function isListingSortKey(value: unknown): value is ListingSortKey {
   return (
     typeof value === "string" &&
-    ["newest", "oldest", "price_desc", "price_asc", "area_desc", "area_asc", "dream_desc"].includes(
-      value,
-    )
+    [
+      "newest",
+      "oldest",
+      "price_desc",
+      "price_asc",
+      "price_per_sqm_desc",
+      "price_per_sqm_asc",
+      "area_desc",
+      "area_asc",
+      "dream_desc",
+    ].includes(value)
   );
 }

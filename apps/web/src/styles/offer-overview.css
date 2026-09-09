@@ -154,8 +154,24 @@
   width: 100%;
   text-align: left;
   cursor: pointer;
+  min-height: 42px;
+  font-family: Inter, Aptos, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
-.listing-select-trigger span {
+.listing-select-trigger:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.listing-select-option[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.text-input.listing-select-trigger > span {
+  font: inherit;
+  text-transform: none;
+  letter-spacing: normal;
+  color: inherit;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -168,6 +184,7 @@
   outline-offset: 1px;
 }
 .listing-select-menu {
+  font-family: Inter, Aptos, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
   position: fixed;
   z-index: 30000;
   overflow-y: auto;
@@ -180,6 +197,7 @@
   box-shadow: 0 12px 32px #0003;
 }
 .listing-select-option {
+  overflow-wrap: anywhere;
   display: flex;
   align-items: center;
   justify-content: space-between;

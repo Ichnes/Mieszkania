@@ -717,7 +717,16 @@ export type ListingFilters = {
   includeAllCities?: boolean;
   page?: number;
   pageSize?: number;
-  sort?: "newest" | "oldest" | "price_desc" | "price_asc" | "area_desc" | "area_asc" | "dream_desc";
+  sort?:
+    | "newest"
+    | "oldest"
+    | "price_desc"
+    | "price_asc"
+    | "price_per_sqm_desc"
+    | "price_per_sqm_asc"
+    | "area_desc"
+    | "area_asc"
+    | "dream_desc";
 };
 
 export const evaluationDimensions: EvaluationDimension[] = [

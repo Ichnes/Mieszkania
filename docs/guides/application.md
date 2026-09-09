@@ -158,6 +158,8 @@ Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe
 na wszystkich ośmiu portalach używają wybranego miasta.
 
 Miasto zmienia się w preferencjach; dashboard nie ma osobnego pola miasta w filtrach.
+Sortowanie ofert obejmuje cenę za m² rosnąco i malejąco. Jest liczone z aktualnej ceny
+i metrażu dla wszystkich wyników przed podziałem na strony; brakujące wartości są na końcu.
 W **Zakresie pobieranych ofert** ustaw cenę od/do, minimalny metraż, liczbę pokoi
 i dowolną liczbę dzielnic Warszawy. Pusty wybór dzielnic oznacza całe miasto.
 Wyszukiwanie korzysta z zapisanych wartości; lista, mapa i liczniki korzystają też

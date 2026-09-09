@@ -396,6 +396,17 @@ textarea.text-input {
 .filters-panel .panel-header {
   gap: 10px;
 }
+@media (min-width: 901px) {
+  .listings-main > .panel:first-of-type {
+    margin-top: 0;
+  }
+  .listings-workspace .filters-panel {
+    top: 0;
+    max-height: calc(100dvh - 64px);
+    margin-bottom: 32px;
+    padding-bottom: 32px;
+  }
+}
 .filters-panel .panel-header h2 {
   margin-bottom: 8px;
   font-size: 1.35rem;

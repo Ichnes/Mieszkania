@@ -1,3 +1,4 @@
+import { Select } from "../../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";
 import type { FamilySettings } from "@mieszkania/shared";
 import {
@@ -369,11 +370,11 @@ export function SettingsPanel(input: {
                 <small className="field-hint">
                   Wybierasz bazową dzielnicę Warszawy do dodania do profilu.
                 </small>
-                <select
-                  className="text-input"
+                <Select
+                  label="Dzielnica"
                   value={selectedDreamDistrict}
-                  onChange={(event) => {
-                    setSelectedDreamDistrict(event.target.value);
+                  onChange={(value) => {
+                    setSelectedDreamDistrict(value);
                     setSelectedDreamSubdivision("__district__");
                   }}
                 >
@@ -385,18 +386,18 @@ export function SettingsPanel(input: {
                       {item.district}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label className="field-label">
                 <span>Poddzielnica / osiedle</span>
                 <small className="field-hint">
                   Możesz dodać całą dzielnicę albo konkretną poddzielnicę, np. Gocław.
                 </small>
-                <select
-                  className="text-input"
+                <Select
+                  label="Poddzielnica / osiedle"
                   value={selectedDreamSubdivision}
                   disabled={!selectedDreamDistrict}
-                  onChange={(event) => setSelectedDreamSubdivision(event.target.value)}
+                  onChange={(value) => setSelectedDreamSubdivision(value)}
                 >
                   <option value="__district__">
                     {selectedDreamDistrict
@@ -408,7 +409,7 @@ export function SettingsPanel(input: {
                       {item}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             </div>
             <div className="panel-inline-actions">

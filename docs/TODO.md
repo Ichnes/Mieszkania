@@ -1,5 +1,19 @@
 # Bieżące zadania
 
+## Sortowanie za m² i wyrównanie filtrów (2026-09-09)
+
+- [x] Dodano cenę za m² rosnąco/malejąco w formularzu, zapisie sesji, walidacji API i sortowaniu całego zbioru przed paginacją. Obliczenie z aktualnej ceny i metrażu, braki na końcu, stabilne rozstrzyganie remisów.
+- [x] Usunięto desktopowe przesunięcie panelu filtrów `top: 82px`; dodano 32 px marginesu i paddingu na dole oraz ograniczenie wysokości pozostawiające miejsce pod panelem.
+- [x] Wszystkie 12 dropdownów korzysta ze wspólnego komponentu Select: filtry, kredyt, ustawienia, mapa, duplikaty i szczegóły ofert. Wspólne menu, klawiatura, pozycjonowanie na małych ekranach oraz obsługa pól/opcji nieaktywnych.
+- [x] Typecheck, build Docker i testy bez błędów: 138 API + 78 frontend, 2 testy zależne od środowiska pominięte. API: po 60 ofert na dwóch stronach dla obu kierunków ceny/m², prawidłowa kolejność i brak powtórzeń.
+- [x] Chromium 1440/1280/390 px: różnica górnych krawędzi paneli 0 px, margines/padding filtra po 32 px, oba sortowania w menu. Dropdowny kredytu i ustawień działają z klawiaturą i mieszczą się w ekranie; dodatkowo mapa, duplikaty oraz notatki oferty na mobile. Obejrzano zrzuty scenariusza banku i ciemnego menu szczegółów. Brak natywnych selectów i błędów JS w sprawdzonych widokach.
+- [x] Wdrożono lokalnie na 8080; końcowe zmiany przygotowane do publikacji na main.
+
+### Różnica liczników ofert i statystyk
+
+- [x] Potwierdzono różne zakresy: statystyki wymagają dolnego limitu ceny i minimalnej liczby pokoi, dashboard zachowuje tańsze oraz niepełne oferty. Bieżący odczyt: 2935 ofert w statystykach, dodatkowo 104 poniżej minimum ceny i 4 bez liczby pokoi. Dane zmienia automat.
+- [x] Doprecyzowano podpis KPI statystyk, bez zmiany zakresu lub usuwania ofert.
+
 ## Dostępność przycisku Filtruj (2026-09-09)
 
 - [x] Usunięto pole miasta z filtrów ofert i przywracanie starego miasta z zapisanych filtrów. Miasto nadal pochodzi z preferencji pobierania.

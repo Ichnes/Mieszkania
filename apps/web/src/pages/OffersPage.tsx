@@ -1,4 +1,4 @@
-import { ListingSelect } from "../features/listings/components/ListingSelect";
+import { Select } from "../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";
 import {
   LoaderCircle,
@@ -185,7 +185,7 @@ export function OffersPage({
                 >
                   <label className="filter-field">
                     <span>Dzielnica</span>
-                    <ListingSelect
+                    <Select
                       label="Dzielnica"
                       value={filters.district ?? ""}
                       onChange={(value) =>
@@ -359,7 +359,7 @@ export function OffersPage({
                   </label>
                   <label className="filter-field">
                     <span>Sortowanie</span>
-                    <ListingSelect
+                    <Select
                       label="Sortowanie"
                       value={listingSort}
                       onChange={(value) => setListingSort(value as ListingSortKey)}
@@ -368,6 +368,8 @@ export function OffersPage({
                         { value: "oldest", label: "Najstarsze" },
                         { value: "price_desc", label: "Cena: malejąco" },
                         { value: "price_asc", label: "Cena: rosnąco" },
+                        { value: "price_per_sqm_desc", label: "Cena za m²: malejąco" },
+                        { value: "price_per_sqm_asc", label: "Cena za m²: rosnąco" },
                         { value: "area_desc", label: "Metraż: malejąco" },
                         { value: "area_asc", label: "Metraż: rosnąco" },
                         { value: "dream_desc", label: "Wymarzone mieszkanie" },

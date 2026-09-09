@@ -1,3 +1,4 @@
+import { Select } from "../../components/Select";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { normalizeListingText } from "../listings/lib/listing-language";
@@ -114,11 +115,11 @@ export function DuplicateGroupsPanel({
           </label>
           <label>
             <span>Portal w grupie</span>
-            <select
-              className="text-input"
+            <Select
+              label="Portal w grupie"
               value={source}
-              onChange={(event) => {
-                setSource(event.target.value);
+              onChange={(value) => {
+                setSource(value);
                 setPage(1);
               }}
             >
@@ -132,7 +133,7 @@ export function DuplicateGroupsPanel({
                 .map((label) => (
                   <option key={label}>{label}</option>
                 ))}
-            </select>
+            </Select>
           </label>
         </div>
         <p className="muted">

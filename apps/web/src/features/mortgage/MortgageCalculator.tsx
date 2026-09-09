@@ -1,3 +1,4 @@
+import { Select } from "../../components/Select";
 import { MortgageComparison } from "./MortgageComparison";
 import { useMortgageInput } from "./useMortgageInput";
 import { LoaderCircle } from "lucide-react";
@@ -245,14 +246,14 @@ export function MortgageCalculator({
         <div className="mortgage-extra-inputs">
           <label className="detail-field">
             <span>Efekt nadpłaty</span>
-            <select
-              className="text-input"
+            <Select
+              label="Efekt nadpłaty"
               value={strategy}
-              onChange={(event) => setStrategy(event.target.value as "shorten" | "lower_payment")}
+              onChange={(value) => setStrategy(value as "shorten" | "lower_payment")}
             >
               <option value="shorten">Skróć okres kredytu</option>
               <option value="lower_payment">Obniż ratę (nadpłaty mogą skrócić okres)</option>
-            </select>
+            </Select>
           </label>
 
           <MortgageInput label="Kwota" value={oneOffAmount} onChange={setOneOffAmount} />
@@ -315,31 +316,29 @@ export function MortgageCalculator({
         <div className="mortgage-cost-options">
           <label className="detail-field">
             <span>Scenariusz banku</span>
-            <select
-              className="text-input"
+            <Select
+              label="Scenariusz banku"
               value={insurancePresetKey}
-              onChange={(event) =>
-                setInsurancePresetKey(event.target.value as MortgageInsurancePreset["key"])
-              }
+              onChange={(value) => setInsurancePresetKey(value as MortgageInsurancePreset["key"])}
             >
               {mortgageInsurancePresets.map((preset) => (
                 <option key={preset.key} value={preset.key}>
                   {preset.label}
                 </option>
               ))}
-            </select>
+            </Select>
             <small>{insurancePreset.description}</small>
           </label>
           <label className="detail-field">
             <span>Rynek</span>
-            <select
-              className="text-input"
+            <Select
+              label="Rynek"
               value={marketType}
-              onChange={(event) => setMarketType(event.target.value as "primary" | "secondary")}
+              onChange={(value) => setMarketType(value as "primary" | "secondary")}
             >
               <option value="secondary">Wtórny</option>
               <option value="primary">Pierwotny</option>
-            </select>
+            </Select>
             <small>PCC 2% dotyczy zasadniczo rynku wtórnego.</small>
           </label>
           <div className="mortgage-cost-toggles">

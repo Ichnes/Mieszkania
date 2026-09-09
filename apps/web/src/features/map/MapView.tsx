@@ -1,3 +1,4 @@
+import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import type { FamilySettings, ListingSummary } from "@mieszkania/shared";
 import { SlidersHorizontal } from "lucide-react";
@@ -490,17 +491,17 @@ export function MapView(input: {
           </fieldset>
           <label>
             <span>Nowe dane</span>
-            <select
-              className="text-input"
+            <Select
+              label="Nowe dane"
               value={maximumAgeDays}
-              onChange={(event) => setMaximumAgeDays(event.target.value)}
+              onChange={(value) => setMaximumAgeDays(value)}
             >
               <option value="">Dowolnie</option>
               <option value="1">do 1 dnia</option>
               <option value="5">do 5 dni</option>
               <option value="14">do 14 dni</option>
               <option value="30">do 30 dni</option>
-            </select>
+            </Select>
           </label>
           <label>
             <span>Metraż od</span>

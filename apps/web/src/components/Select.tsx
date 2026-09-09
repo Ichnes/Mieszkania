@@ -1,18 +1,40 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState, type KeyboardEvent } from "react";
+import {
+  Children,
+  isValidElement,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
 import { Check, ChevronDown } from "lucide-react";
 
-export function ListingSelect({
+export function Select({
   label,
   value,
-  options,
+  options: suppliedOptions,
+  children,
+  disabled = false,
   onChange,
 }: {
   label: string;
   value: string;
-  options: Array<{ value: string; label: string }>;
+  options?: Array<{ value: string; label: string; disabled?: boolean }>;
+  children?: ReactNode;
+  disabled?: boolean;
   onChange: (value: string) => void;
 }) {
+  const options =
+    suppliedOptions ??
+    Children.toArray(children).flatMap((child) => {
+      if (!isValidElement<{ value?: string; children?: ReactNode; disabled?: boolean }>(child))
+        return [];
+      const label = Children.toArray(child.props.children).join("");
+      return [{ value: child.props.value ?? label, label, disabled: child.props.disabled }];
+    });
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
@@ -26,6 +48,7 @@ export function ListingSelect({
   const [position, setPosition] = useState({ top: 0, left: 0, width: 0, maxHeight: 280 });
   const close = () => setOpen(false);
   const choose = (index: number) => {
+    if (!options[index] || options[index].disabled || disabled) return;
     onChange(options[index].value);
     close();
     trigger.current?.focus();
@@ -76,6 +99,7 @@ export function ListingSelect({
   }, [open]);
 
   function keyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    if (disabled || !options.length) return;
     if (event.key === "Tab") {
       close();
       return;
@@ -131,6 +155,7 @@ export function ListingSelect({
         ref={trigger}
         type="button"
         className="text-input listing-select-trigger"
+        disabled={disabled}
         role="combobox"
         aria-label={label}
         aria-haspopup="listbox"
@@ -163,6 +188,7 @@ export function ListingSelect({
                 data-index={index}
                 role="option"
                 aria-selected={option.value === value}
+                aria-disabled={option.disabled || undefined}
                 className={`listing-select-option${index === active ? " is-focused" : ""}${option.value === value ? " is-selected" : ""}`}
                 onPointerMove={() => setActive(index)}
                 onMouseDown={(event) => event.preventDefault()}

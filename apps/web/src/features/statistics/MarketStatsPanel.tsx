@@ -146,7 +146,7 @@ export function MarketStatsPanel({
         <div className="stats-kpi">
           <span>Aktywne teraz</span>
           <strong>{stats.totals.active.toLocaleString("pl-PL")}</strong>
-          <small>bez ukrytych duplikatów</small>
+          <small>w zakresie pobierania i filtrów statystyk, bez duplikatów</small>
         </div>
         <div className="stats-kpi">
           <span>Mediana aktywnych</span>

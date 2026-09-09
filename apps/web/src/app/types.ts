@@ -22,6 +22,8 @@ export type ListingSortKey =
   | "oldest"
   | "price_desc"
   | "price_asc"
+  | "price_per_sqm_desc"
+  | "price_per_sqm_asc"
   | "area_desc"
   | "area_asc"
   | "dream_desc";

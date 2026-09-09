@@ -2966,6 +2966,11 @@ function escapeRegExp(value: string) {
 }
 
 function buildListingOrderBy(sort?: ListingFilters["sort"]) {
+  if (sort === "price_per_sqm_asc" || sort === "price_per_sqm_desc") {
+    const direction = sort === "price_per_sqm_asc" ? "asc" : "desc";
+    return `${EFFECTIVE_UNIT_PRICE_SQL} ${direction} nulls last, ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc, l.id asc`;
+  }
+
   if (sort === "oldest") {
     return `${EFFECTIVE_LISTING_DATE_SQL} asc nulls last, l.created_at asc`;
   }
