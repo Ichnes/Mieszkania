@@ -1,3 +1,4 @@
+import { useScrollSession } from "./useScrollSession";
 import { apiFetch } from "../shared/lib/http";
 import { useStatisticsPreferences } from "../features/statistics/useStatisticsPreferences";
 import type {
@@ -204,26 +205,7 @@ export function useWorkspaceController() {
   useEffect(() => {
     writeListingsSession({ activeTab, filters, listingSort, currentListingsPage });
   }, [activeTab, filters, listingSort, currentListingsPage]);
-  useEffect(() => {
-    const key = "mieszkania-scroll-y";
-    const restore = () => {
-      const value = Number(sessionStorage.getItem(key) ?? 0);
-      if (value > 0)
-        requestAnimationFrame(() =>
-          window.scrollTo({ top: value, behavior: "instant" as ScrollBehavior }),
-        );
-    };
-    restore();
-    const save = () => sessionStorage.setItem(key, String(window.scrollY));
-    window.addEventListener("scroll", save, { passive: true });
-    window.addEventListener("pageshow", restore);
-    return () => {
-      save();
-      window.removeEventListener("scroll", save);
-      window.removeEventListener("pageshow", restore);
-    };
-  }, []);
-
+  useScrollSession(state.status === "ready", location.pathname);
   useEffect(() => {
     void loadInitial();
   }, []);

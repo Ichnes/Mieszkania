@@ -4,7 +4,7 @@ import { LoaderCircle, X } from "lucide-react";
 export function ListingLoadingDialog({ onClose }: { onClose: () => void }) {
   const closeButton = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    closeButton.current?.focus();
+    closeButton.current?.focus({ preventScroll: true });
   }, []);
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {

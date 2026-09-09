@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { AppTab } from "./types";
 
@@ -24,7 +24,10 @@ export function tabFromPath(pathname: string): AppTab {
 export function useAppRoute() {
   const location = useLocation();
   const navigate = useNavigate();
+  const previousPath = useRef(location.pathname);
   useEffect(() => {
+    if (previousPath.current === location.pathname) return;
+    previousPath.current = location.pathname;
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [location.pathname]);
   const setActiveTab = useCallback(

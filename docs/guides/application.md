@@ -225,3 +225,10 @@ Wyczyszczenie aktualnej ceny po rozmowie i zapis przywraca kwotę portalową.
 Aktualizacja portalu nie nadpisuje ustaleń po rozmowie. Historia cen, procenty zmian
 z portalu i statystyki rynku nadal dotyczą cen ogłoszeniowych: prywatne negocjacje
 nie są rejestrowane jako obniżki na całym rynku.
+
+# Automatyczne łączenie opisów
+
+Identyczne pierwsze 25 słów opisu pozwala automatycznie połączyć aktywne oferty
+w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielkość
+liter i interpunkcję. Pary oznaczone jako różne oferty pozostają rozdzielone.
+Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.

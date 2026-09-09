@@ -184,12 +184,6 @@ export function UpdatesPage({
             </div>
           </div>
 
-          <div className="sync-connection" role="status">
-            {queueStatusError ??
-              (queueStatusCheckedAt
-                ? `Status portali odczytany: ${queueStatusCheckedAt.toLocaleTimeString("pl-PL")}`
-                : "Odczytuję status portali…")}
-          </div>
           <section
             className="panel stale-refresh-summary"
             aria-label="Automatyczne odświeżanie ofert po 24 godzinach"
@@ -206,6 +200,12 @@ export function UpdatesPage({
               </span>
               <div>
                 <strong>Automatyczne odświeżanie co 24 godziny</strong>
+                <small className="sync-connection" role="status">
+                  {queueStatusError ??
+                    (queueStatusCheckedAt
+                      ? `Status portali odczytany: ${queueStatusCheckedAt.toLocaleTimeString("pl-PL")}`
+                      : "Odczytuję status portali…")}
+                </small>
                 <small>
                   {staleListingRefresh?.running
                     ? "Trwa sprawdzanie starszych ofert"
@@ -616,7 +616,10 @@ export function UpdatesPage({
                 <GitCompareArrows size={20} aria-hidden="true" />
                 <div>
                   <h3>Połącz duplikaty</h3>
-                  <p>Szybko grupuje te same oferty z różnych portali.</p>
+                  <p>
+                    Łączy oferty z identycznymi pierwszymi 25 słowami opisu, także z jednego
+                    portalu.
+                  </p>
                 </div>
                 <button
                   className="action-button secondary-button"

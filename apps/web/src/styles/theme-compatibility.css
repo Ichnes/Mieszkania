@@ -270,11 +270,11 @@
     width: 100%;
   }
   .sync-connector {
-    min-height: 24px;
+    min-height: 10px;
   }
   .sync-connector span {
     width: 2px;
-    height: 24px;
+    height: 10px;
   }
   .sync-connector span::after {
     top: auto;
@@ -399,7 +399,7 @@
     justify-content: center;
   }
   .stale-refresh-summary {
-    padding: 16px;
+    padding: 12px;
   }
   .stale-refresh-heading {
     min-width: 0;
@@ -412,7 +412,7 @@
     min-height: 54px;
   }
   .sync-step {
-    padding: 18px;
+    padding: 14px;
   }
   .sync-metrics > div {
     padding: 10px 5px;

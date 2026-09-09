@@ -71,7 +71,7 @@ type AutoMergeCandidateRow = AutoMergeListingRow & {
 };
 
 const automaticDescriptionSimilarityThreshold = 0.8;
-const exactDescriptionPrefixWordCount = 30;
+const exactDescriptionPrefixWordCount = 25;
 const sourcePriority = [
   "otodom",
   "gratka",
@@ -434,11 +434,7 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
         and other.status = 'active'
         and other.hidden_duplicate_of_id is null
         and other.city = $2
-        and other.source_id <> (select source_id from listings where id = $1::uuid)
-        and other.area_sqm between $3::numeric - 5 and $3::numeric + 5
-        -- Once a group already contains an offer from a portal, comparing the
-        -- same group to another offer from that portal is wasted work. This is
-        -- especially common after Otodom and Gratka have already been merged.
+        -- Skip members of the same group, but allow repeated ads on one portal.
         and not exists (
           select 1
           from listing_duplicate_group_members self_member
@@ -446,12 +442,14 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
             on grouped_member.group_id = self_member.group_id
           join listings grouped_listing on grouped_listing.id = grouped_member.listing_id
           where self_member.listing_id = $1::uuid
-            and grouped_listing.source_id = other.source_id
+            and grouped_listing.id = other.id
         )
         and coalesce(r.status, 'pending') <> 'different_listing'
         and (
           ${exactDescriptionPrefix}
           or (
+            other.source_id <> (select source_id from listings where id = $1::uuid)
+            and
             abs(other.area_sqm - $3::numeric) <= 1.0
             and nullif(${normalizedStreetKeySql("coalesce(other.address_text, '')")}, '') = $4
           )
@@ -574,7 +572,7 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
 
     // The old implementation issued two or more SQL queries for every listing.
     // Ten thousand offers therefore meant tens of thousands of database round
-    // trips. The automatic rule is an identical 30-word prefix, so fetch once,
+    // trips. The automatic rule is an identical 25-word prefix, so fetch once,
     // normalize once and compare only records that share the same signature.
     const signatureGroups = new Map<string, AutoMergeListingRow[]>();
     for (const listing of result.rows) {
@@ -589,9 +587,7 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
       else signatureGroups.set(signature, [listing]);
     }
 
-    const candidateGroups = [...signatureGroups.values()].filter(
-      (group) => new Set(group.map((listing) => listing.source_key)).size > 1,
-    );
+    const candidateGroups = [...signatureGroups.values()].filter((group) => group.length > 1);
     const rejectedPairsResult = await db.query<{ pair_key: string }>(
       `select pair_key from listing_duplicate_reviews where status = 'different_listing'`,
     );
@@ -612,11 +608,10 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
           });
           const primary =
             ordered.find((listing) => listing.existing_primary_id === listing.id) ?? ordered[0];
-          const seenSources = new Set([primary.source_key]);
           let groupMerged = 0;
 
-          for (const duplicate of ordered.slice(1)) {
-            if (duplicate.id === primary.id || seenSources.has(duplicate.source_key)) continue;
+          for (const duplicate of ordered) {
+            if (duplicate.id === primary.id) continue;
             const leftId = primary.id < duplicate.id ? primary.id : duplicate.id;
             const rightId = primary.id < duplicate.id ? duplicate.id : primary.id;
             const pairKey = buildDuplicatePairKey(leftId, rightId);
@@ -635,7 +630,6 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
             );
             await mergeDuplicateGroup(db, primary.id, duplicate.id);
             await markDuplicateHidden(db, primary.id, duplicate.id);
-            seenSources.add(duplicate.source_key);
             groupMerged += 1;
           }
           return groupMerged;

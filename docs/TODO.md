@@ -1,5 +1,29 @@
 # Bieżące zadania
 
+## Synchronizacja kodu z GitHub (2026-09-09)
+
+- Zakres: commit i push bieżących poprawek na `origin/main`.
+- [x] Zweryfikowano zakres: interfejs Aktualizacji, przywracanie przewinięcia, reguła duplikatów, regresja PostgreSQL oraz dokumentacja i zasady pracy.
+- [x] Weryfikacja funkcjonalna opisana poniżej: testy API/frontendu, PostgreSQL, build i kontrola UI. Pliki lokalne, konfiguracja prywatna i dane nie są częścią commita.
+- Pozostałe prace funkcjonalne: wyłącznie wskazana poniżej obserwacja Safari.
+
+## Wyjaśnienie trwałości rozłączenia duplikatów (2026-09-09)
+
+- [x] Sprawdzono rozłączanie i oba automaty łączenia: rozłączenie zapisuje `different_listing` względem wszystkich pozostałych członków grupy; import i skan pomijają odrzucone pary, również przy progu 25 słów.
+- Weryfikacja: odczyt implementacji, bez zmian danych. Wykluczenie dotyczy konkretnych identyfikatorów ofert; nowy rekord ogłoszenia nie dziedziczy go automatycznie. Pozostała praca w zakresie odpowiedzi: brak.
+
+## Aktualizacja, powrót do karty i duplikaty (2026-09-09)
+
+- Zakres: ciaśniejszy ekran Aktualizacji, weryfikacja utraty ogłoszenia/przewinięcia po powrocie do Safari, wskazana para duplikatów i próg 25 słów.
+- [x] Dodano do AGENTS zasadę krótkich, celowanych odczytów i ograniczania logów narzędzi.
+- [x] Aktualizacja: status portali w automatycznym odświeżaniu, usunięte odziedziczone marginesy paneli 32 px, odstępy między sekcjami 10 px, ciaśniejsze kroki i nagłówek kolejki na desktopie i telefonie.
+- [x] Odtworzono utratę przewinięcia po przeładowaniu karty (1800 → 0). Przywracanie czeka na dane i lazy widok; fokus okna ładowania nie przewija strony. Po poprawce 1800 → 1800.
+- [x] Chromium: powrót z innej karty i przeładowanie z otwartą ofertą na drugiej stronie zachowują ofertę, stronę i przewinięcie. Nie potwierdzono samoczynnego zamknięcia ogłoszenia; fizyczny iPhone/Safari niedostępny.
+- [x] Para 3755419e-b80f-4fae-84be-7ac9bf8b3ff3 / 8d807881-8f0d-4665-972a-4a3896a81577: wspólne 65 słów, oba Otodom. Przyczyną była blokada jednego portalu. Połączono transakcyjnie wskazaną parę; usunięto blokadę dla reguły prefiksu w imporcie i skanowaniu, próg 25 słów. Odrzucone pary nadal pomijane.
+- [x] Weryfikacja: 130 testów API i 75 frontendu, typecheck/build; dodatkowa regresja PostgreSQL na tabelach tymczasowych: 24 słowa nie łączą, 25 łączy ten sam portal, ponowienie nie dubluje grupy.
+- [x] Chromium 1440/1280/390: odstępy przed i po krokach 10 px, status we wspólnej sekcji, brak przepełnienia i błędów JS; obejrzane zrzuty desktop/mobile. Wdrożono Docker na 8080, istniejąca baza zachowana.
+- Pozostałe: potwierdzenie zgłoszonego zamykania ogłoszenia na fizycznym Safari; nie odtworzono w dostępnej przeglądarce. Nie uruchamiano masowego łączenia całej bazy.
+
 ## Uproszczenie szczegółów i wyszukiwania (2026-09-09)
 
 - [x] Szczegóły oferty: poprawna etykieta, działka na dole, telefon w notatkach, bez celu negocjacji w przeglądzie i bez sekcji przygotowania do rozmowy.
@@ -234,3 +258,10 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Dekodowanie popularnych encji HTML, polskich liter, odwołań liczbowych i podwójnego kodowania w tekście ofert. Import i odczyt istniejących ofert; tekst pozostaje tekstem w React.
 - [x] Frazy o PCC, VAT i prowizji odrzucane jako kandydaci ulic. Oferta `ec1c9812-60a0-466a-b79f-c89650c3741f` pokazuje `Błonia Wilanowskie, Warszawa`, bez ulicy `bez Pcc`; opis zawiera poprawne `osób` i `Wilanów`.
 - [x] Potwierdzono rzeczywistą odpowiedź lokalnego API. Korekta przy odczycie, bez masowego przepisywania bazy ani uruchamiania importów.
+
+## Wyjaśnienie uruchamiania — 2026-09-09
+
+- [x] Zakres: ustalenie komendy codziennego startu i roli Docker Desktop.
+- [x] Sprawdzono skrypty npm, pliki Compose i instrukcję startu. Lokalny override korzysta z PostgreSQL Windows i istniejącego storage.
+- [x] Przygotowano instrukcję startu w tle oraz wariant obserwowania zmian kodu; bez uruchamiania usług i zmiany konfiguracji.
+- Weryfikacja: odczyt konfiguracji; testy nie dotyczą tej odpowiedzi. Pozostała praca: brak.

@@ -1,5 +1,7 @@
 # Project Rules
 
+- Keep tool output concise: search narrowly, read only relevant file ranges, and cap output. Save verbose test/build logs in `.local/` and report the result plus actionable failures. Avoid dumping whole files, broad directory inventories, or long command chains. Give the user brief findings instead of repeating commands and raw logs.
+
 - Keep TODO lists and session handoff notes in `docs/` alongside the other Markdown documentation. The task list is `docs/TODO.md`.
 - Update `docs/TODO.md` during each task: record the current scope, completed changes, verification results, and remaining work.
 
