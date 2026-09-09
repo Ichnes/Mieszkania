@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Wygląd podsumowania kredytu (2026-09-09)
+
+- Zakres: dopasowanie sekcji „Kredyt i efekt nadpłat” do pozostałych paneli, bez zmiany obliczeń.
+- [x] Nagłówek i kompaktowe dane wejściowe, tabela z wyróżnioną kolumną po nadpłatach i łączną spłatą, wspólny panel oszczędności oraz dyskretna stopka.
+- [x] Build Docker poprawny, wdrożono na 8080. Chromium 1440/1280/390/320 px w jasnym i ciemnym motywie: bez przepełnienia strony i komórek kwot, wartości zachowane, pojedyncze podsumowanie oszczędności. Obejrzano zrzuty desktop/mobile.
+- Pozostała praca w tym zakresie: brak. Zmiana wyłącznie prezentacji; obliczenia bez zmian.
+
 ## Mobilne zamykanie oferty i układ Kredytu (2026-09-09)
 
 - Zakres: usunięcie szerokiego tła przy X i kolizji z zakładkami, formularz kredytu na górze w poziomie, domyślne zwolnienie PCC, jedno podsumowanie spłaty i usunięcie opłaty konta/karty.
