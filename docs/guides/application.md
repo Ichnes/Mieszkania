@@ -157,6 +157,7 @@ Miasto w **Aktualizacji** pochodzi z **Preferencji wyszukiwania → Zakres pobie
 Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe wyszukiwania
 na wszystkich ośmiu portalach używają wybranego miasta.
 
+Miasto zmienia się w preferencjach; dashboard nie ma osobnego pola miasta w filtrach.
 W **Zakresie pobieranych ofert** ustaw cenę od/do, minimalny metraż, liczbę pokoi
 i dowolną liczbę dzielnic Warszawy. Pusty wybór dzielnic oznacza całe miasto.
 Wyszukiwanie korzysta z zapisanych wartości; lista, mapa i liczniki korzystają też

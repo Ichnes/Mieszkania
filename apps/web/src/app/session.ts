@@ -62,7 +62,7 @@ export function sanitizeListingFilters(value: unknown): ListingFilters {
   if (!value || typeof value !== "object" || Array.isArray(value)) return defaultFilters;
   const input = value as Record<string, unknown>;
   const output: ListingFilters = {};
-  const stringKeys = ["city", "district", "search"] as const;
+  const stringKeys = ["district", "search"] as const;
   const numberKeys = [
     "minPrice",
     "maxPrice",

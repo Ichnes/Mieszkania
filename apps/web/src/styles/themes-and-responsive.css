@@ -400,13 +400,13 @@ body {
 
   .listings-workspace .filters-panel .filters-actions {
     position: sticky;
-    bottom: -14px;
+    bottom: 0;
     z-index: 4;
     display: grid;
     grid-template-columns: 1.25fr 0.75fr;
     gap: 8px;
-    margin: 4px -14px -14px;
-    padding: 12px 14px max(14px, env(safe-area-inset-bottom));
+    margin: 4px -14px 0;
+    padding: 12px 14px calc(28px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
     background: color-mix(in srgb, var(--surface) 96%, transparent);
     box-shadow: 0 -10px 24px rgba(0, 0, 0, 0.08);

@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Dostępność przycisku Filtruj (2026-09-09)
+
+- [x] Usunięto pole miasta z filtrów ofert i przywracanie starego miasta z zapisanych filtrów. Miasto nadal pochodzi z preferencji pobierania.
+- [x] Dodano dolny odstęp pod przyciskami: desktop 24 px, mobilnie 28 px plus bezpieczny obszar ekranu; usunięto ujemne przesunięcie mobilnej stopki.
+- [x] Build Docker i 78 testów frontendu poprawne, wdrożono na 8080. Chromium 1440×900, 1280×720, 390×844 i 320×568: brak pola miasta, przycisk klikalny, zapas 43–45 px pod przyciskiem. Obejrzano zrzut mobilny; kod przygotowany do publikacji na main.
+
 ## Brak ofert po obniżeniu metrażu do 53 m² (2026-09-09)
 
 - [x] Sprawdzono import-failures.ndjson, zapisane kryteria i kolejki. Zakres pobierania ma 53 m², automat działa; próba jednej strony ośmiu portali dała odpowiedzi HTTP 200 i dwie nowe pozycje kolejki.

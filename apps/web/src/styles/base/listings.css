@@ -672,7 +672,7 @@
   .filters-panel .filters-actions {
     position: sticky;
     bottom: 0;
-    padding: 10px 0 2px;
+    padding: 10px 0 24px;
     background: #fff;
   }
 }

@@ -184,19 +184,6 @@ export function OffersPage({
                   }}
                 >
                   <label className="filter-field">
-                    <span>Miasto</span>
-                    <input
-                      className="text-input"
-                      value={filters.city ?? ""}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          city: event.target.value || undefined,
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
                     <span>Dzielnica</span>
                     <ListingSelect
                       label="Dzielnica"
