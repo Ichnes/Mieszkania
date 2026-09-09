@@ -105,8 +105,6 @@ type PriceEventRow = {
   changed_at: string;
 };
 
-const MAX_VISIBLE_LISTING_PRICE = 2_200_000;
-const MIN_VISIBLE_LISTING_AREA_SQM = 56;
 const EFFECTIVE_LISTING_DATE_SQL = buildEffectiveListingDateSql("l");
 
 type SnapshotPayloadRow = {
@@ -160,6 +158,9 @@ export async function getListingsPage(filters: ListingFilters = {}): Promise<Lis
 }
 
 export async function getMapListings() {
+  const settings = await getFamilySettings();
+  const minimumVisibleArea = settings.searchContract.minArea;
+  const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
     const result = await db.query<{
       id: string;
@@ -230,11 +231,11 @@ export async function getMapListings() {
         and l.hidden_duplicate_of_id is null
         and coalesce(l.rooms, 0) <> 2
         and l.city = any($1::text[])
-        and (${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${MAX_VISIBLE_LISTING_PRICE})
-        and (l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
+        and (${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${maximumVisiblePrice})
+        and (l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})
       order by ${EFFECTIVE_LISTING_DATE_SQL} desc nulls last, l.created_at desc
     `,
-      [activeRegion.supportedCities],
+      [[settings.searchContract.city]],
     );
 
     return result.rows.map((row) => ({
@@ -782,6 +783,9 @@ async function getListingsPageByScope(
   scope: "region" | "all",
   filters: ListingFilters,
 ): Promise<ListingsPage> {
+  const settings = await getFamilySettings();
+  const minimumVisibleArea = settings.searchContract.minArea;
+  const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
     const clauses = [
       "1=1",
@@ -796,17 +800,17 @@ async function getListingsPageByScope(
           : "coalesce(l.rooms, 0) <> 2",
       filters.archivedOnly
         ? `coalesce(${EFFECTIVE_PRICE_SQL}, 0) > 0`
-        : `(${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${MAX_VISIBLE_LISTING_PRICE})`,
+        : `(${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${maximumVisiblePrice})`,
       filters.archivedOnly
         ? "coalesce(l.area_sqm, 0) > 0"
-        : `(l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})`,
+        : `(l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})`,
     ];
     const values: Array<string | number | string[]> = [];
     let paramIndex = 1;
 
     if (scope === "region" && !filters.includeAllCities) {
       clauses.push(`l.city = any($${paramIndex}::text[])`);
-      values.push(activeRegion.supportedCities);
+      values.push([filters.city || settings.searchContract.city]);
       paramIndex += 1;
     }
 
@@ -1021,7 +1025,6 @@ async function getListingsPageByScope(
     const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
     const dreamScores = new Map<string, number>();
     if (isDreamSort) {
-      const settings = await getFamilySettings();
       for (const row of pageRows) {
         dreamScores.set(row.id, getCachedDreamScore(row, settings, latestPriceEvents.get(row.id)));
       }
@@ -1076,6 +1079,9 @@ async function getListingsPageByScope(
 }
 
 async function getDashboardStats(): Promise<DashboardStat[]> {
+  const settings = await getFamilySettings();
+  const minimumVisibleArea = settings.searchContract.minArea;
+  const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
     const [
       activeListingsResult,
@@ -1092,10 +1098,10 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             and city = any($1::text[])
             and hidden_duplicate_of_id is null
             and coalesce(rooms, 0) <> 2
-            and (price_amount is null or price_amount <= ${MAX_VISIBLE_LISTING_PRICE})
-            and (area_sqm is null or area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
+            and (price_amount is null or price_amount <= ${maximumVisiblePrice})
+            and (area_sqm is null or area_sqm >= ${minimumVisibleArea})
         `,
-        [activeRegion.supportedCities],
+        [[settings.searchContract.city]],
       ),
       db.query<{ count: string }>(
         `
@@ -1105,11 +1111,11 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             and l.city = any($1::text[])
             and l.hidden_duplicate_of_id is null
             and coalesce(l.rooms, 0) <> 2
-            and (l.price_amount is null or l.price_amount <= ${MAX_VISIBLE_LISTING_PRICE})
-            and (l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
+            and (l.price_amount is null or l.price_amount <= ${maximumVisiblePrice})
+            and (l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})
             and l.first_seen_at >= now() - interval '7 days'
         `,
-        [activeRegion.supportedCities],
+        [[settings.searchContract.city]],
       ),
       db.query<{ count: string }>(
         `
@@ -1121,11 +1127,11 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             and l.city = any($1::text[])
             and l.hidden_duplicate_of_id is null
             and coalesce(l.rooms, 0) <> 2
-            and (l.price_amount is null or l.price_amount <= ${MAX_VISIBLE_LISTING_PRICE})
-            and (l.area_sqm is null or l.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
+            and (l.price_amount is null or l.price_amount <= ${maximumVisiblePrice})
+            and (l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})
             and pe.changed_at >= now() - interval '7 days'
         `,
-        [activeRegion.supportedCities],
+        [[settings.searchContract.city]],
       ),
       db.query<{ average: string | null }>(
         `
@@ -1136,8 +1142,8 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             and hidden_duplicate_of_id is null
             and coalesce(rooms, 0) <> 2
             and price_amount > 0
-            and price_amount <= ${MAX_VISIBLE_LISTING_PRICE}
-            and area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM}
+            and price_amount <= ${maximumVisiblePrice}
+            and area_sqm >= ${minimumVisibleArea}
         `,
       ),
       db.query<{ active_count: string; average: string | null; has_history: boolean }>(
@@ -1168,20 +1174,20 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             count(*) filter (
               where history.city = any($1::text[])
                 and coalesce(history.rooms, 0) <> 2
-                and (history.historical_price is null or history.historical_price <= ${MAX_VISIBLE_LISTING_PRICE})
-                and (history.area_sqm is null or history.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM})
+                and (history.historical_price is null or history.historical_price <= ${maximumVisiblePrice})
+                and (history.area_sqm is null or history.area_sqm >= ${minimumVisibleArea})
             )::text as active_count,
             round(avg(history.historical_price / nullif(history.area_sqm, 0)) filter (
               where lower(history.city) = 'warszawa'
                 and coalesce(history.rooms, 0) <> 2
                 and history.historical_price > 0
-                and history.historical_price <= ${MAX_VISIBLE_LISTING_PRICE}
-                and history.area_sqm >= ${MIN_VISIBLE_LISTING_AREA_SQM}
+                and history.historical_price <= ${maximumVisiblePrice}
+                and history.area_sqm >= ${minimumVisibleArea}
             ))::text as average,
             exists (select 1 from historical) as has_history
           from historical history
         `,
-        [activeRegion.supportedCities],
+        [[settings.searchContract.city]],
       ),
     ]);
 

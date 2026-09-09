@@ -1,5 +1,20 @@
 # Bieżące zadania
 
+## Brak ofert po obniżeniu metrażu do 53 m² (2026-09-09)
+
+- [x] Sprawdzono import-failures.ndjson, zapisane kryteria i kolejki. Zakres pobierania ma 53 m², automat działa; próba jednej strony ośmiu portali dała odpowiedzi HTTP 200 i dwie nowe pozycje kolejki.
+- [x] Przyczyna ukrywania: stały limit 56 m² w liście, mapie i licznikach. W bazie 112 aktywnych niescalonych ofert 53–56 m² spełnia pozostałe warunki widoczności.
+- [x] Lista, mapa i liczniki korzystają z zapisanego miasta, minimalnego metrażu oraz maksymalnej ceny. Usunięto dawne stałe 56 m² i 2,2 mln zł. Zapis preferencji odświeża też aktywną mapę.
+- [x] Poprawiono stałe kryteria w adresach portali (metraż, cena, pokoje), normalizację minimum 0 oraz zgłaszanie HTTP błędów zamiast pozornego zera wyników. Gratka nie otrzymuje błędnego `page=1`; próba wszystkich 8 portali po poprawce dała m.in. 14 nowych pozycji kolejki Gratki.
+- [x] Wielokrotny wybór dzielnic Warszawy i zapis w ustawieniach. Otodom/Adresowo/Domiporta/Maxon zbiorczo, Morizon/Gratka po 3, OLX/Nieruchomości-online po jednej, osobna paginacja grup, deduplikacja kolejki i kontynuacja po błędzie grupy.
+- [x] Zweryfikowano na portalach katalogi Morizon, OLX, Nieruchomości-online i Adresowo. Otodom wymaga podwójnego myślnika w nazwach obu Prag. Domiporta obsługuje Id i pełne Name, Ochota ma Id 70026.
+- [x] 139 testów API i 78 frontendu, typecheck i build Docker poprawne. Formularz: 320/390/1280/1440 px, 18 opcji, zapis 4 dzielnic przechwycony testowo bez zmiany preferencji użytkownika, brak przepełnienia i błędów JS. Obejrzano zrzuty desktop/mobile.
+- [x] Lokalna aplikacja: zakres 53–55,99 m² zwraca HTTP 200 i 117 ofert przy zapisanym maksimum 2 mln zł. Ustawienia nadal: minimum 53 m², cena 895 tys.–2 mln zł, 3 pokoje, brak wybranych dzielnic.
+- [x] Sprawdzono rzeczywiste wygenerowane adresy: 6 portali HTTP 200 w końcowej kontroli; Otodom i OLX blokowały klienta Playwright HTTP 403, wcześniejsze odczyty właściwymi fetcherami potwierdziły działanie lokalizacji. Te błędy są raportowane, nie zamieniane na zero ofert.
+- [x] Naprawiono również format paginacji Nieruchomości-online oraz użycie dedykowanego statycznego fetchera Gratki (obsługa jej błędów TLS na Windows).
+- [x] Końcowy kod przygotowany do publikacji na `main`; build Docker uruchomiony lokalnie na 8080, kontrola zmian bez błędów whitespace.
+- Ograniczenia opisane w instrukcji: Adresowo nie udostępnia Wesołej w katalogu Warszawy; lokalne przedziały ceny/pokoi portali mogą być szersze niż zadane minimum. Istniejące oferty nie są usuwane po wyborze dzielnic.
+
 ## Wygląd podsumowania kredytu (2026-09-09)
 
 - Zakres: dopasowanie sekcji „Kredyt i efekt nadpłat” do pozostałych paneli, bez zmiany obliczeń.

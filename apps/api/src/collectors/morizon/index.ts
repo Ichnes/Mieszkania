@@ -1,4 +1,5 @@
 import { request as httpsRequest } from "node:https";
+import { discoverLocationGroups } from "../grouped-discovery";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
@@ -13,7 +14,6 @@ import { geocodeListing } from "../../services/geography/geocoding";
 import { downloadListingMedia } from "../../services/media/media-downloader";
 import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomStorage } from "../otodom/otodom-storage";
-import type { SourceListingReference } from "../types";
 import {
   buildMorizonSearchUrl,
   externalIdFromMorizonUrl,
@@ -45,46 +45,18 @@ export class MorizonCollector {
     const city = input.city.trim().toLowerCase() || settings.searchContract.city.toLowerCase();
     const startPage = Math.max(1, input.startPage ?? 1);
     const maxPages = Math.max(1, Math.min(500, input.maxPages ?? 250));
-    const batchPages = Math.max(1, Math.min(20, input.batchPages ?? 5));
-    let queued = 0;
-    let discovered = 0;
-    let scannedPages = 0;
-    let currentPage = startPage;
-    let emptyBatches = 0;
-    let error: string | undefined;
-
-    while (scannedPages < maxPages) {
-      const pages = Math.min(batchPages, maxPages - scannedPages);
-      try {
-        const resultPage = await this.discover(city, currentPage, pages);
-        const references = resultPage.references;
-        const result = await enqueueListingImports({
-          sourceKey,
-          city,
-          priority: input.priority ?? 100,
-          items: references,
-        });
-        queued += result.queued;
-        discovered += references.length;
-        scannedPages += resultPage.scannedPages;
-        currentPage += resultPage.scannedPages;
-        emptyBatches = references.length === 0 ? emptyBatches + 1 : 0;
-        if (resultPage.reachedEnd || emptyBatches >= 2) break;
-      } catch (cause) {
-        error = cause instanceof Error ? cause.message : "Morizon discovery failed";
-        break;
-      }
-    }
-
-    return {
+    return discoverLocationGroups({
       city,
+      contract: settings.searchContract,
       startPage,
-      scannedPages,
-      discovered,
-      queued,
-      stoppedBecause: error ? "error" : scannedPages >= maxPages ? "max_pages" : "empty_batches",
-      error,
-    };
+      maxPages,
+      fetchReferences: async (page, contract) =>
+        extractMorizonReferences(
+          await fetchMorizonHtml(buildMorizonSearchUrl(city, page, contract)),
+        ),
+      enqueue: (items) =>
+        enqueueListingImports({ sourceKey, city, priority: input.priority ?? 100, items }),
+    });
   }
 
   async processQueue(input?: {
@@ -153,34 +125,6 @@ export class MorizonCollector {
   }
   async retryFailed(limit?: number) {
     return retryFailedListingImportsNow({ sourceKey, limit });
-  }
-
-  private async discover(city: string, startPage: number, pages: number) {
-    const references: SourceListingReference[] = [];
-    let scannedPages = 0;
-    let reachedEnd = false;
-    for (let offset = 0; offset < pages; offset += 1) {
-      try {
-        const html = await fetchMorizonHtml(buildMorizonSearchUrl(city, startPage + offset));
-        references.push(...extractMorizonReferences(html));
-        scannedPages += 1;
-      } catch (error) {
-        // Morizon returns 404 when pagination goes past the last result page.
-        // This is a normal end-of-results condition, not a failed portal run.
-        if (isMorizonNotFound(error) && startPage + offset > 1) {
-          reachedEnd = true;
-          break;
-        }
-        throw error;
-      }
-    }
-    return {
-      references: Array.from(
-        new Map(references.map((reference) => [reference.externalId, reference])).values(),
-      ),
-      scannedPages,
-      reachedEnd,
-    };
   }
 
   private async collect(

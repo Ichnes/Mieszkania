@@ -1,3 +1,5 @@
+import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
+import { adresowoWarsawDistrictIds } from "../location-groups";
 import { createHash } from "node:crypto";
 import { request as httpsRequest } from "node:https";
 import { withDb } from "../../db";
@@ -18,8 +20,6 @@ import { OtodomStorage } from "../otodom/otodom-storage";
 import type { ParsedListing, SourceListingReference } from "../types";
 
 const sourceKey = "adresowo";
-const searchPathPrefix = "a56-231_fp3p4p5uz";
-const searchPathSuffix = "p90-200";
 
 export class AdresowoCollector {
   private readonly storage = new OtodomStorage();
@@ -167,7 +167,9 @@ export class AdresowoCollector {
   private async discover(city: string, startPage: number, pages: number) {
     const items: SourceListingReference[] = [];
     for (let offset = 0; offset < pages; offset += 1) {
-      const html = await fetchHtml(buildSearchUrl(city, startPage + offset));
+      const html = await fetchHtml(
+        buildSearchUrl(city, startPage + offset, (await getFamilySettings()).searchContract),
+      );
       for (const match of html.matchAll(
         /href=["'](\/o\/mieszkanie-[^"'?#]+-([a-z]\d[a-z]\d[a-z]\d))["']/gi,
       )) {
@@ -240,7 +242,11 @@ export class AdresowoCollector {
   }
 }
 
-function buildSearchUrl(city: string, page: number) {
+export function buildSearchUrl(
+  city: string,
+  page: number,
+  contract: SearchContract = createDefaultSearchContract(),
+) {
   const normalized = city
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
@@ -248,7 +254,20 @@ function buildSearchUrl(city: string, page: number) {
   // Adresowo encodes result pages in the filter path: lod (page 1), l2od,
   // l3od, … rather than in a query string.
   const pageSegment = page === 1 ? "lod" : `l${page}od`;
-  return `https://adresowo.pl/f/mieszkania/${normalized === "warszawa" ? "warszawa" : normalized}/${searchPathPrefix}_${pageSegment}_${searchPathSuffix}`;
+  const roomCodes = Array.from(
+    { length: Math.max(0, 7 - contract.roomsMin) },
+    (_, index) => `p${contract.roomsMin + index}`,
+  ).join("");
+  const searchPathPrefix = `a${contract.minArea}_f${roomCodes}uz`;
+  const searchPathSuffix = `p${Math.floor(contract.minPrice / 10000)}-${Math.ceil(contract.maxPrice / 10000)}`;
+  const ids = [...new Set(contract.districts ?? [])].map((district) => {
+    if (normalized !== "warszawa" || !adresowoWarsawDistrictIds[district])
+      throw new Error(`Brak identyfikatora dzielnicy Adresowo: ${district}`);
+    return adresowoWarsawDistrictIds[district];
+  });
+  // Gocław is a separate search location on Adresowo, inside Praga-Południe.
+  if (contract.districts?.includes("Praga-Południe")) ids.push("430518");
+  return `https://adresowo.pl/f/mieszkania/${normalized}/${ids.length ? `${ids.join("_")}/` : ""}${searchPathPrefix}_${pageSegment}_${searchPathSuffix}`;
 }
 
 function externalIdFromUrl(url: string) {

@@ -1,8 +1,14 @@
+import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import type { ParsedListing, SourceListingReference } from "../types";
+import { gratkaMorizonWarsawDistrictIds } from "../location-groups";
 
 type JsonRecord = Record<string, unknown>;
 
-export function buildMorizonSearchUrl(city: string, page: number) {
+export function buildMorizonSearchUrl(
+  city: string,
+  page: number,
+  contract: SearchContract = createDefaultSearchContract(),
+) {
   const normalizedCity =
     city
       .normalize("NFD")
@@ -10,11 +16,21 @@ export function buildMorizonSearchUrl(city: string, page: number) {
       .trim()
       .toLowerCase() || "warszawa";
   const url = new URL(`https://www.morizon.pl/mieszkania/najnowsze/${normalizedCity}/`);
-  url.searchParams.set("ps[living_area_from]", "56");
+  const districts = [...new Set(contract.districts ?? [])];
+  if (districts.length > 3) throw new Error("Morizon: maksymalnie 3 dzielnice w jednym zapytaniu.");
+  if (districts.length && normalizedCity !== "warszawa")
+    throw new Error("Filtr dzielnic Morizona jest obecnie dostępny dla Warszawy.");
+  districts.forEach((district, index) => {
+    const id = gratkaMorizonWarsawDistrictIds[district];
+    if (!id) throw new Error(`Nieznana dzielnica Morizona: ${district}`);
+    url.searchParams.set(`ps[location][identifiers][${index}][id]`, id);
+    url.searchParams.set(`ps[location][identifiers][${index}][name]`, district);
+  });
+  url.searchParams.set("ps[living_area_from]", String(contract.minArea));
   url.searchParams.set("ps[market_type]", "2");
-  url.searchParams.set("ps[number_of_rooms_from]", "3");
-  url.searchParams.set("ps[price_from]", "900000");
-  url.searchParams.set("ps[price_to]", "2000000");
+  url.searchParams.set("ps[number_of_rooms_from]", String(contract.roomsMin));
+  url.searchParams.set("ps[price_from]", String(contract.minPrice));
+  url.searchParams.set("ps[price_to]", String(contract.maxPrice));
   if (page > 1) url.searchParams.set("page", String(page));
   return url.toString();
 }

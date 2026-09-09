@@ -43,6 +43,9 @@ export class OtodomDiscovery implements SourceDiscovery {
     for (const url of urls) {
       try {
         const document = await this.fetcher.fetchListing(url);
+        if (document.statusCode >= 400) {
+          throw new Error(`Otodom search returned HTTP ${document.statusCode}: ${url}`);
+        }
         const links = extractOfferLinks(document.html);
 
         if (links.length > 0) {
@@ -60,14 +63,14 @@ export class OtodomDiscovery implements SourceDiscovery {
   }
 }
 
-function buildSearchUrls(citySlug: string, page: number, contract?: SearchContract) {
+export function buildSearchUrls(citySlug: string, page: number, contract?: SearchContract) {
   const query = new URLSearchParams({
-    page: String(page),
     limit: "36",
     ownerTypeSingleSelect: "ALL",
     by: "LATEST",
     direction: "DESC",
   });
+  if (page > 1) query.set("page", String(page));
 
   if (contract?.minArea) {
     query.set("areaMin", String(contract.minArea));
@@ -83,7 +86,26 @@ function buildSearchUrls(citySlug: string, page: number, contract?: SearchContra
 
   const roomOptions = toOtodomRooms(contract?.roomsMin);
   if (roomOptions.length > 0) {
-    query.set("roomsNumber", JSON.stringify(roomOptions));
+    query.set("roomsNumber", `[${roomOptions.join(",")}]`);
+  }
+
+  if (contract?.districts?.length) {
+    if (citySlug !== "warszawa")
+      throw new Error("Filtr dzielnic Otodom jest obecnie dostępny dla Warszawy.");
+    const locations = contract.districts.map(
+      (district) =>
+        `mazowieckie/warszawa/warszawa/warszawa/${district
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replaceAll("ł", "l")
+          .replaceAll("-", "--")
+          .replace(/\s+/g, "-")}`,
+    );
+    query.set("locations", `[${locations.join(",")}]`);
+    return [
+      `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/wiele-lokalizacji?${query}`,
+    ];
   }
 
   const queryString = query.toString();

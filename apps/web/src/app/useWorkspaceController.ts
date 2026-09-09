@@ -939,7 +939,12 @@ export function useWorkspaceController() {
       setState((current) =>
         current.status === "ready" ? { ...current, settings: saved } : current,
       );
-      await Promise.all([refreshDashboard(), refreshAlerts(), applyFilters()]);
+      await Promise.all([
+        refreshDashboard(),
+        refreshAlerts(),
+        applyFilters(),
+        ...(activeTab === "map" ? [loadMapListings()] : []),
+      ]);
       setSettingsOpen(false);
     } catch (error) {
       setSettingsSaveError(

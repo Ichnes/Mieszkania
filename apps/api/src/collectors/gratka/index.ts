@@ -1,3 +1,4 @@
+import { discoverLocationGroups } from "../grouped-discovery";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
@@ -16,15 +17,16 @@ import {
 } from "../../services/listings/listing-archive";
 import { downloadListingMedia } from "../../services/media/media-downloader";
 import { getFamilySettings } from "../../services/settings/family-settings";
-import { OtodomFetcher } from "../otodom/otodom-fetcher";
 import { OtodomStorage } from "../otodom/otodom-storage";
 import { GratkaDiscovery } from "./gratka-discovery";
 import { GratkaFetcher } from "./gratka-fetcher";
 import { GratkaParser } from "./gratka-parser";
 
 export class GratkaCollector {
-  private readonly discovery = new GratkaDiscovery(new OtodomFetcher());
   private readonly fetcher = new GratkaFetcher();
+  private readonly discovery = new GratkaDiscovery({
+    fetchListing: (url) => this.fetcher.fetchListing(url, { preferStaticHtml: true }),
+  });
   private readonly parser = new GratkaParser();
   private readonly storage = new OtodomStorage();
 
@@ -219,61 +221,28 @@ export class GratkaCollector {
     const city = input.city.trim().toLowerCase() || settings.searchContract.city.toLowerCase();
     const startPage = Math.max(1, input.startPage ?? 1);
     const maxPages = Math.max(1, Math.min(5000, input.maxPages ?? 250));
-    const batchPages = Math.max(1, Math.min(25, input.batchPages ?? 5));
-    let queued = 0;
-    let discovered = 0;
-    let scannedPages = 0;
-    let currentPage = startPage;
-    let error: string | undefined;
-
-    while (scannedPages < maxPages) {
-      const pagesInBatch = Math.min(batchPages, maxPages - scannedPages);
-      let links;
-
-      try {
-        links = await this.discovery.discoverListingUrls({
-          city,
-          startPage: currentPage,
-          pages: pagesInBatch,
-          contract: settings.searchContract,
-        });
-      } catch (cause) {
-        error = cause instanceof Error ? cause.message : "Gratka discovery failed";
-        break;
-      }
-
-      const imageRefreshExternalIds = await getListingExternalIdsWithFewImages({
-        sourceKey: "gratka",
-        externalIds: links.map((item) => item.externalId),
-        maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT,
-      });
-      const batchResult = await enqueueListingImports({
-        sourceKey: "gratka",
-        city,
-        priority: input.priority ?? 110,
-        items: links,
-        forceRefreshExternalIds: imageRefreshExternalIds,
-      });
-
-      queued += batchResult.queued;
-      discovered += links.length;
-      scannedPages += pagesInBatch;
-      currentPage += pagesInBatch;
-
-      if (links.length === 0) {
-        break;
-      }
-    }
-
-    return {
+    return discoverLocationGroups({
       city,
+      contract: settings.searchContract,
       startPage,
-      scannedPages,
-      discovered,
-      queued,
-      stoppedBecause: error ? "error" : scannedPages >= maxPages ? "max_pages" : "empty_batches",
-      error,
-    };
+      maxPages,
+      fetchReferences: (page, contract) =>
+        this.discovery.discoverListingUrls({ city, page, pages: 1, contract }),
+      enqueue: async (items) => {
+        const imageRefreshExternalIds = await getListingExternalIdsWithFewImages({
+          sourceKey: "gratka",
+          externalIds: items.map((item) => item.externalId),
+          maximumImageCount: GALLERY_PREVIEW_IMAGE_COUNT,
+        });
+        return enqueueListingImports({
+          sourceKey: "gratka",
+          city,
+          priority: input.priority ?? 110,
+          items,
+          forceRefreshExternalIds: imageRefreshExternalIds,
+        });
+      },
+    });
   }
 
   async processQueue(input?: {

@@ -1,5 +1,7 @@
 import type { SourceListingReference } from "../types";
 import { OlxFetcher } from "./olx-fetcher";
+import type { SearchContract } from "@mieszkania/shared";
+import { olxWarsawDistrictIds, splitLocationGroups } from "../location-groups";
 
 export class OlxDiscovery {
   constructor(private readonly fetcher = new OlxFetcher()) {}
@@ -13,31 +15,41 @@ export class OlxDiscovery {
       minPrice?: number;
       maxPrice?: number;
       minArea?: number;
-      rooms?: number[];
+      roomsMin?: number;
+      districts?: string[];
     };
   }): Promise<SourceListingReference[]> {
     const startPage = Math.max(1, input.startPage ?? input.page ?? 1);
     const pages = Math.max(1, Math.min(50, input.pages ?? 1));
     const results: SourceListingReference[] = [];
 
-    for (let offset = 0; offset < pages; offset += 1) {
-      const page = startPage + offset;
-      const url = buildSearchUrl(input.city, page, input.contract);
-      const document = await this.fetcher.fetchListing(url);
-      results.push(...extractListingReferences(document.html));
+    for (const districts of splitLocationGroups(input.contract?.districts, 1)) {
+      for (let offset = 0; offset < pages; offset += 1) {
+        const page = startPage + offset;
+        const url = buildSearchUrl(input.city, page, { ...input.contract, districts });
+        const document = await this.fetcher.fetchListing(url);
+        if (document.statusCode >= 400) {
+          throw new Error(`HTTP ${document.statusCode}: ${url}`);
+        }
+        results.push(...extractListingReferences(document.html));
+      }
     }
 
     return dedupeReferences(results);
   }
 }
 
-function buildSearchUrl(
-  city: string,
-  page: number,
-  contract?: { minPrice?: number; maxPrice?: number; minArea?: number; rooms?: number[] },
-) {
+export function buildSearchUrl(city: string, page: number, contract?: Partial<SearchContract>) {
   const normalizedCity = normalizeCitySlug(city);
   const url = new URL(`https://www.olx.pl/nieruchomosci/mieszkania/sprzedaz/${normalizedCity}/`);
+  if ((contract?.districts?.length ?? 0) > 1)
+    throw new Error("OLX: tylko jedna dzielnica w zapytaniu.");
+  const district = contract?.districts?.[0];
+  if (district) {
+    if (normalizedCity !== "warszawa" || !olxWarsawDistrictIds[district])
+      throw new Error(`Nieobsługiwana dzielnica OLX: ${district}`);
+    url.searchParams.set("search[district_id]", olxWarsawDistrictIds[district]);
+  }
 
   if (page > 1) {
     url.searchParams.set("page", String(page));
@@ -56,15 +68,20 @@ function buildSearchUrl(
   }
 
   let roomIndex = 0;
-  for (const rooms of contract?.rooms ?? []) {
-    const value = rooms === 3 ? "three" : rooms === 4 ? "four" : null;
+  for (const [rooms, value] of [
+    [1, "one"],
+    [2, "two"],
+    [3, "three"],
+    [4, "four"],
+  ] as const) {
+    if (rooms < Math.min(contract?.roomsMin ?? 1, 4)) continue;
     if (value) {
       url.searchParams.set(`search[filter_enum_rooms][${roomIndex}]`, value);
       roomIndex += 1;
     }
   }
 
-  url.searchParams.append("search[filter_enum_market][]", "secondary");
+  url.searchParams.append("search[filter_enum_market][0]", "secondary");
   return url.toString();
 }
 

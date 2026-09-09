@@ -182,7 +182,8 @@ export function SettingsPanel(input: {
             <div>
               <h3>Zakres pobieranych ofert</h3>
               <p>
-                Te zasady sterują wyszukiwaniem na portalach; filtrów na liście nie ograniczają.
+                Te zasady sterują wyszukiwaniem na portalach. Miasto, minimalny metraż i maksymalna
+                cena wyznaczają też podstawowy zakres listy i mapy.
               </p>
             </div>
           </div>
@@ -198,12 +199,55 @@ export function SettingsPanel(input: {
                 onChange={(event) =>
                   setLocal((current) => ({
                     ...current,
-                    searchContract: { ...current.searchContract, city: event.target.value },
+                    searchContract: {
+                      ...current.searchContract,
+                      city: event.target.value,
+                      districts: [],
+                    },
                   }))
                 }
                 placeholder="Miasto"
               />
             </label>
+            <fieldset className="import-districts">
+              <legend>Dzielnice</legend>
+              <p className="field-hint">
+                Brak wyboru oznacza całe miasto. Dzielnice Warszawy dotyczą wszystkich portali.
+                Morizon i Gratka są przeszukiwane po 3 dzielnice, OLX i Nieruchomości-online po
+                jednej. Adresowo nie udostępnia Wesołej w katalogu dzielnic Warszawy.
+              </p>
+              <div className="import-district-options">
+                {[
+                  ...warsawDreamDistrictCatalog.map((item) => item.district),
+                  "Rembertów",
+                  "Targówek",
+                ]
+                  .sort((a, b) => a.localeCompare(b, "pl"))
+                  .map((district) => (
+                    <label key={district}>
+                      <input
+                        type="checkbox"
+                        disabled={local.searchContract.city.trim().toLowerCase() !== "warszawa"}
+                        checked={(local.searchContract.districts ?? []).includes(district)}
+                        onChange={(event) =>
+                          setLocal((current) => ({
+                            ...current,
+                            searchContract: {
+                              ...current.searchContract,
+                              districts: event.target.checked
+                                ? [...(current.searchContract.districts ?? []), district]
+                                : (current.searchContract.districts ?? []).filter(
+                                    (item) => item !== district,
+                                  ),
+                            },
+                          }))
+                        }
+                      />
+                      {district}
+                    </label>
+                  ))}
+              </div>
+            </fieldset>
             <label className="field-label">
               <span>Min metraż</span>
               <small className="field-hint">

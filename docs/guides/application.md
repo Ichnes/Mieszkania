@@ -157,6 +157,29 @@ Miasto w **Aktualizacji** pochodzi z **Preferencji wyszukiwania → Zakres pobie
 Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe wyszukiwania
 na wszystkich ośmiu portalach używają wybranego miasta.
 
+W **Zakresie pobieranych ofert** ustaw cenę od/do, minimalny metraż, liczbę pokoi
+i dowolną liczbę dzielnic Warszawy. Pusty wybór dzielnic oznacza całe miasto.
+Wyszukiwanie korzysta z zapisanych wartości; lista, mapa i liczniki korzystają też
+z zapisanego miasta, minimalnego metrażu i maksymalnej ceny (bez dawnych stałych
+56 m² i 2,2 mln zł). Dzielnice ograniczają nowe wyszukiwania, nie usuwają wcześniej
+pobranych ofert. Preferowane dzielnice w profilu wymarzonego mieszkania pozostają
+osobnym ustawieniem oceny dopasowania.
+
+Otodom, Adresowo, Domiporta i Maxon wyszukują wybrane lokalizacje wspólnie.
+Morizon i Gratka przeszukują kolejno grupy do 3 dzielnic; OLX i Nieruchomości-online
+po jednej. Każda grupa zaczyna od wskazanej strony, ma własny limit stron i koniec
+paginacji. Powtórzone adresy ofert trafiają do kolejki tylko raz w danym przebiegu.
+Błąd jednej grupy jest raportowany, a pozostałe grupy są przeszukiwane dalej.
+Adresowo rozdziela Gocław od Pragi-Południe, dlatego wybór Pragi-Południe obejmuje
+obie lokalizacje. Katalog Adresowo nie zawiera Wesołej; jej wybór jest zgłaszany
+jako nieobsługiwany zamiast rozszerzać wyszukiwanie na całe miasto.
+
+Portale stosują własne przedziały: OLX ma kategorię 4+ pokoi, a Adresowo koduje
+ceny w dziesiątkach tysięcy złotych. W tych przypadkach adres wyszukiwania obejmuje
+najbliższy szerszy przedział. Początkowe wartości nowej instalacji są tylko domyślne
+— zapisane ustawienia mają pierwszeństwo. Obecne integracje lokalizacji są
+przygotowane dla Warszawy/województwa mazowieckiego.
+
 W sekcji **Finansowanie zakupu** zapisz planowany wkład własny. Korzystają z niego
 szacunki na kartach, szczegóły oferty i kalkulator. Kwotę można też zapisać z kalkulatora
 przyciskiem **Zapisz wkład w preferencjach**. Te preferencje są wspólne dla lokalnej instalacji,

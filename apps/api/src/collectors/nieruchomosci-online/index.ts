@@ -1,3 +1,6 @@
+import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
+import { discoverLocationGroups } from "../grouped-discovery";
+import { nieruchomosciOnlineWarsawDistrictIds, splitLocationGroups } from "../location-groups";
 import { request as httpsRequest } from "node:https";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
@@ -56,53 +59,30 @@ export class NieruchomosciOnlineCollector {
     const city = input.city.trim().toLowerCase() || settings.searchContract.city.toLowerCase();
     const startPage = Math.max(1, input.startPage ?? 1);
     const maxPages = Math.max(1, Math.min(500, input.maxPages ?? 250));
-    const batchPages = Math.max(1, Math.min(20, input.batchPages ?? 5));
-    let queued = 0;
-    let discovered = 0;
-    let scannedPages = 0;
-    let currentPage = startPage;
-    let error: string | undefined;
-
-    while (scannedPages < maxPages) {
-      const pages = Math.min(batchPages, maxPages - scannedPages);
-      try {
-        const links = await this.discover({ city, startPage: currentPage, pages });
-        const result = await enqueueListingImports({
-          sourceKey,
-          city,
-          priority: input.priority ?? 100,
-          items: links,
-        });
-        queued += result.queued;
-        discovered += links.length;
-        scannedPages += pages;
-        currentPage += pages;
-        if (links.length === 0) break;
-      } catch (cause) {
-        error = cause instanceof Error ? cause.message : "Nieruchomosci-online discovery failed";
-        break;
-      }
-    }
-
-    return {
+    return discoverLocationGroups({
       city,
+      contract: settings.searchContract,
       startPage,
-      scannedPages,
-      discovered,
-      queued,
-      stoppedBecause: error ? "error" : scannedPages >= maxPages ? "max_pages" : "empty_batches",
-      error,
-    };
+      maxPages,
+      groupSize: 1,
+      fetchReferences: async (page, contract) =>
+        extractReferences(await fetchHtml(buildSearchUrl(city, page, contract))),
+      enqueue: (items) =>
+        enqueueListingImports({ sourceKey, city, priority: input.priority ?? 100, items }),
+    });
   }
 
   async discover(input: { city: string; startPage?: number; pages?: number }) {
+    const contract = (await getFamilySettings()).searchContract;
     const results: SourceListingReference[] = [];
     const pages = Math.max(1, Math.min(20, input.pages ?? 1));
     const startPage = Math.max(1, input.startPage ?? 1);
-    for (let offset = 0; offset < pages; offset += 1) {
-      const url = buildSearchUrl(input.city, startPage + offset);
-      const html = await fetchHtml(url);
-      results.push(...extractReferences(html));
+    for (const districts of splitLocationGroups(contract.districts, 1)) {
+      for (let offset = 0; offset < pages; offset += 1) {
+        const url = buildSearchUrl(input.city, startPage + offset, { ...contract, districts });
+        const html = await fetchHtml(url);
+        results.push(...extractReferences(html));
+      }
     }
     return dedupe(results);
   }
@@ -331,7 +311,11 @@ export class NieruchomosciOnlineCollector {
   }
 }
 
-function buildSearchUrl(city: string, page: number) {
+export function buildSearchUrl(
+  city: string,
+  page: number,
+  contract: SearchContract = createDefaultSearchContract(),
+) {
   const slug =
     city
       .normalize("NFD")
@@ -339,14 +323,21 @@ function buildSearchUrl(city: string, page: number) {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-+|-+$/g, "") || "warszawa";
+  if ((contract.districts?.length ?? 0) > 1)
+    throw new Error("Nieruchomości-online: tylko jedna dzielnica w zapytaniu.");
+  const district = contract.districts?.[0];
+  if (district && (slug !== "warszawa" || !nieruchomosciOnlineWarsawDistrictIds[district]))
+    throw new Error(`Nieobsługiwana dzielnica Nieruchomości-online: ${district}`);
+  const quarter = district ? `${district}:${nieruchomosciOnlineWarsawDistrictIds[district]}` : "";
   const url =
     slug === "warszawa"
       ? new URL(
-          "https://www.nieruchomosci-online.pl/szukaj.html?3,mieszkanie,sprzedaz,,Warszawa:20571,,,,900000-2000000,56,,,,,,3,,,,,,,,,,,,,,,,,,,,,,,1",
+          `https://www.nieruchomosci-online.pl/szukaj.html?3,mieszkanie,sprzedaz,,Warszawa:20571,${quarter},,,${contract.minPrice}-${contract.maxPrice},${contract.minArea},,,,,,${contract.roomsMin},,,,,,,,,,,,,,,,,,,,,,,1`,
         )
       : new URL(`https://${slug}.nieruchomosci-online.pl/mieszkania,sprzedaz/`);
-  if (page > 1) url.searchParams.set("p", String(page));
-  return url.toString();
+  // The legacy search query is positional, not a key/value parameter.
+  // URLSearchParams would turn the entire search expression into an encoded key.
+  return `${url}${page > 1 ? `${url.search ? "&" : "?"}p=${page}` : ""}`;
 }
 
 function externalIdFromUrl(url: string) {
@@ -360,7 +351,7 @@ function isUnavailableNieruchomosciOnlineListing(visibleText: string) {
   );
 }
 
-async function fetchHtml(url: string, timeoutMs = 60_000, attempts = 3) {
+export async function fetchHtml(url: string, timeoutMs = 60_000, attempts = 3) {
   let lastError: unknown;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
     try {

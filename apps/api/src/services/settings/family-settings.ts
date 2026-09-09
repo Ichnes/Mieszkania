@@ -91,19 +91,27 @@ function normalizeSearchContract(
   defaults = createDefaultSearchContract(),
 ): FamilySettings["searchContract"] {
   const city = stored?.city?.trim() || defaults.city;
-  const minPrice = Math.max(0, Number(stored?.minPrice ?? defaults.minPrice) || defaults.minPrice);
-  const maxPrice = Math.max(
-    minPrice,
-    Number(stored?.maxPrice ?? defaults.maxPrice) || defaults.maxPrice,
-  );
-  const minArea = Math.max(0, Number(stored?.minArea ?? defaults.minArea) || defaults.minArea);
-  const roomsMin = Math.max(
-    1,
-    Math.floor(Number(stored?.roomsMin ?? defaults.roomsMin) || defaults.roomsMin),
-  );
+  const finite = (value: unknown, fallback: number) =>
+    value !== undefined && value !== null && Number.isFinite(Number(value))
+      ? Number(value)
+      : fallback;
+  const minPrice = Math.max(0, finite(stored?.minPrice, defaults.minPrice));
+  const maxPrice = Math.max(minPrice, finite(stored?.maxPrice, defaults.maxPrice));
+  const minArea = Math.max(0, finite(stored?.minArea, defaults.minArea));
+  const roomsMin = Math.max(1, Math.floor(finite(stored?.roomsMin, defaults.roomsMin)));
 
   return {
     city,
+    districts: Array.isArray(stored?.districts)
+      ? [
+          ...new Set(
+            stored.districts
+              .filter((item) => typeof item === "string")
+              .map((item) => item.trim())
+              .filter(Boolean),
+          ),
+        ]
+      : [],
     minPrice,
     maxPrice,
     minArea,

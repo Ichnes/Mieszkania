@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { createDefaultSearchContract } from "@mieszkania/shared";
 import {
   buildMorizonSearchUrl,
   externalIdFromMorizonUrl,
@@ -16,7 +17,10 @@ test("builds filtered Morizon result pages and discovers unique offer URLs", () 
   assert.equal(page.searchParams.get("ps[market_type]"), "2");
   assert.equal(page.searchParams.get("ps[number_of_rooms_from]"), "3");
   assert.equal(page.searchParams.get("ps[price_from]"), "900000");
-  assert.equal(page.searchParams.get("ps[price_to]"), "2000000");
+  assert.equal(
+    page.searchParams.get("ps[price_to]"),
+    String(createDefaultSearchContract().maxPrice),
+  );
   assert.equal(page.searchParams.get("page"), "2");
   assert.equal(externalIdFromMorizonUrl(offerUrl), "morizon-2047781128");
   assert.deepEqual(

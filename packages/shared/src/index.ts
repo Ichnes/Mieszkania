@@ -294,6 +294,7 @@ export type ListingContactEventType =
 
 export type SearchContract = {
   city: string;
+  districts?: string[];
   minPrice: number;
   maxPrice: number;
   minArea: number;

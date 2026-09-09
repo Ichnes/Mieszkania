@@ -1,6 +1,7 @@
 import { request as httpsRequest } from "node:https";
 
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
+import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import {
   claimListingImportBatch,
   completeListingImport,
@@ -152,18 +153,10 @@ export class DomiportaCollector {
   }
 
   private async discover(city: string, startPage: number, pages: number) {
+    const contract = (await getFamilySettings()).searchContract;
     const all: SourceListingReference[] = [];
     for (let offset = 0; offset < pages; offset += 1) {
-      const url = new URL(`https://www.domiporta.pl/mieszkanie/sprzedam/mazowieckie/${city}`);
-      url.searchParams.set("Price.From", "900000");
-      url.searchParams.set("Price.To", "2000000");
-      url.searchParams.set("Rooms.From", "3");
-      url.searchParams.set("Rynek", "Wtorny");
-      if (startPage + offset > 1) {
-        const page = String(startPage + offset);
-        url.searchParams.set("PageNumber", page);
-      }
-      const html = await fetchHtml(url.toString());
+      const html = await fetchHtml(buildSearchUrl(city, startPage + offset, contract));
       for (const match of html.matchAll(
         /(?:href|data-href)=["']([^"']*\/(?:nieruchomosci|mieszkanie)\/[^"']*\/(\d+)(?:[?#][^"']*)?)["']/gi,
       )) {
@@ -237,7 +230,45 @@ export class DomiportaCollector {
   }
 }
 
-async function fetchHtml(url: string) {
+export function buildSearchUrl(
+  city: string,
+  page: number,
+  contract: SearchContract = createDefaultSearchContract(),
+) {
+  const ids: Record<string, string> = {
+    "Praga-Południe": "70027",
+    Śródmieście: "70032",
+    Mokotów: "70024",
+    Wola: "70040",
+    Wilanów: "70038",
+    Żoliborz: "70041",
+    Ochota: "70026",
+  };
+  const districts = [...new Set(contract.districts ?? [])];
+  if (districts.length && city.toLowerCase() !== "warszawa")
+    throw new Error("Filtr dzielnic Domiporty jest obecnie dostępny dla Warszawy.");
+  const url = new URL(
+    districts.length
+      ? "https://www.domiporta.pl/mieszkanie/sprzedam"
+      : `https://www.domiporta.pl/mieszkanie/sprzedam/mazowieckie/${city}`,
+  );
+  districts.forEach((district, index) => {
+    url.searchParams.set(
+      `Localizations[${index}].${ids[district] ? "Id" : "Name"}`,
+      ids[district] ?? `${district}, Warszawa, mazowieckie`,
+    );
+  });
+  url.searchParams.set("Price.From", String(contract.minPrice));
+  url.searchParams.set("Price.To", String(contract.maxPrice));
+  url.searchParams.set("Rooms.From", String(contract.roomsMin));
+  url.searchParams.set("Surface.From", String(contract.minArea));
+  url.searchParams.set("Rynek", "Wtorny");
+  url.searchParams.set("SortingOrder", "InsertionDate");
+  if (page > 1) url.searchParams.set("PageNumber", String(page));
+  return url.toString();
+}
+
+export async function fetchHtml(url: string) {
   try {
     const response = await fetch(url, {
       headers: requestHeaders,

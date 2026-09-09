@@ -4,6 +4,25 @@ import { createDefaultFamilySettings } from "@mieszkania/shared";
 import { mergeSettings, normalizeDreamProfile } from "./family-settings";
 import { createDefaultDreamListingProfile } from "@mieszkania/shared";
 
+test("search settings preserve zero minimums and multiple districts, and reject non-finite numeric limits", () => {
+  const defaults = createDefaultFamilySettings();
+  const settings = mergeSettings({
+    ...defaults,
+    searchContract: {
+      ...defaults.searchContract,
+      minArea: 0,
+      minPrice: 0,
+      maxPrice: Infinity,
+      districts: [" Ochota ", "Bielany", "Ochota", ""],
+    },
+  });
+  assert.equal(settings.searchContract.minArea, 0);
+  assert.equal(settings.searchContract.minPrice, 0);
+  assert.equal(settings.searchContract.maxPrice, defaults.searchContract.maxPrice);
+  assert.deepEqual(settings.searchContract.districts, ["Ochota", "Bielany"]);
+  assert.deepEqual(mergeSettings(defaults).searchContract.districts, []);
+});
+
 test("legacy weights are discarded while current preferences survive normalization", () => {
   const defaults = createDefaultFamilySettings();
   const legacy = {

@@ -1,4 +1,36 @@
 /* Action alignment, monitored imports and the redesigned preferences modal. */
+.import-districts {
+  grid-column: 1 / -1;
+  min-width: 0;
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--border-color, #d9e2df);
+  border-radius: 12px;
+}
+.import-districts legend {
+  font-family: Inter, Aptos, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.import-districts .field-hint {
+  margin: 0 0 8px;
+}
+.import-district-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 4px 12px;
+}
+.import-district-options label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 13px;
+}
+.import-district-options input {
+  flex: 0 0 auto;
+}
+
 .action-button {
   display: inline-flex;
   align-items: center;

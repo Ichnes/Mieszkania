@@ -1,3 +1,4 @@
+import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { createHash } from "node:crypto";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
@@ -133,7 +134,9 @@ export class MaxonCollector {
   private async discover(city: string, startPage: number, pages: number) {
     const references: SourceListingReference[] = [];
     for (let offset = 0; offset < pages; offset += 1) {
-      const html = await fetchHtml(buildSearchUrl(city, startPage + offset));
+      const html = await fetchHtml(
+        buildSearchUrl(city, startPage + offset, (await getFamilySettings()).searchContract),
+      );
       references.push(...extractReferences(html));
     }
     return Array.from(new Map(references.map((item) => [item.externalId, item])).values());
@@ -202,15 +205,24 @@ export class MaxonCollector {
   }
 }
 
-function buildSearchUrl(city: string, page: number) {
+export function buildSearchUrl(
+  city: string,
+  page: number,
+  contract: SearchContract = createDefaultSearchContract(),
+) {
   const url = new URL("https://www.maxon.pl/mieszkania/oferty/mieszkania/sprzedaz");
-  url.searchParams.set("Location", `MAZOWIECKIE|${city === "warszawa" ? "Warszawa" : city}`);
-  url.searchParams.set("PriceTotalPLNFrom", "900000");
-  url.searchParams.set("PriceTotalPLNTo", "2000000");
-  url.searchParams.set("AreaFrom", "56");
+  const cityName = city.toLowerCase() === "warszawa" ? "Warszawa" : city;
+  if (contract.districts?.length) {
+    for (const district of new Set(contract.districts))
+      url.searchParams.append("Location", `MAZOWIECKIE|${cityName}|${district}`);
+  } else url.searchParams.set("Location", `MAZOWIECKIE|${cityName}`);
+  url.searchParams.set("PriceTotalPLNFrom", String(contract.minPrice));
+  url.searchParams.set("PriceTotalPLNTo", String(contract.maxPrice));
+  url.searchParams.set("AreaFrom", String(contract.minArea));
   url.searchParams.set("PrimaryMarket", "2");
-  url.searchParams.set("RoomsCountFrom", "3");
+  url.searchParams.set("RoomsCountFrom", String(contract.roomsMin));
   url.searchParams.set("Page", String(page));
+  url.searchParams.set("Sort", "0");
   return url.toString();
 }
 

@@ -1,3 +1,4 @@
+import { discoverLocationGroups } from "../grouped-discovery";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
@@ -162,55 +163,17 @@ export class OlxCollector {
     const city = input.city.trim().toLowerCase() || settings.searchContract.city.toLowerCase();
     const startPage = Math.max(1, input.startPage ?? 1);
     const maxPages = Math.max(1, Math.min(5000, input.maxPages ?? 250));
-    const batchPages = Math.max(1, Math.min(25, input.batchPages ?? 5));
-    let queued = 0;
-    let discovered = 0;
-    let scannedPages = 0;
-    let currentPage = startPage;
-    let error: string | undefined;
-
-    while (scannedPages < maxPages) {
-      const pagesInBatch = Math.min(batchPages, maxPages - scannedPages);
-      let links;
-
-      try {
-        links = await this.discovery.discoverListingUrls({
-          city,
-          startPage: currentPage,
-          pages: pagesInBatch,
-          contract: settings.searchContract,
-        });
-      } catch (cause) {
-        error = cause instanceof Error ? cause.message : "OLX discovery failed";
-        break;
-      }
-
-      const batchResult = await enqueueListingImports({
-        sourceKey: "olx",
-        city,
-        priority: input.priority ?? 100,
-        items: links,
-      });
-
-      queued += batchResult.queued;
-      discovered += links.length;
-      scannedPages += pagesInBatch;
-      currentPage += pagesInBatch;
-
-      if (links.length === 0) {
-        break;
-      }
-    }
-
-    return {
+    return discoverLocationGroups({
       city,
+      contract: settings.searchContract,
       startPage,
-      scannedPages,
-      discovered,
-      queued,
-      stoppedBecause: error ? "error" : scannedPages >= maxPages ? "max_pages" : "empty_batches",
-      error,
-    };
+      maxPages,
+      groupSize: 1,
+      fetchReferences: (page, contract) =>
+        this.discovery.discoverListingUrls({ city, page, pages: 1, contract }),
+      enqueue: (items) =>
+        enqueueListingImports({ sourceKey: "olx", city, priority: input.priority ?? 100, items }),
+    });
   }
 
   async processQueue(input?: {
