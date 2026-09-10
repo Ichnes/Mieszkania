@@ -35,12 +35,17 @@ export async function geocodeListing(input: {
     neighborhood: input.neighborhood,
   });
   const cached = await readGeocodeCache(cacheKey);
-  if (cached) return cached;
-  const localStreet = normalizedStreet ? await findWarsawStreet(normalizedStreet) : null;
+  if (cached && cached.precision === "exact_address") return cached;
+  const localStreet =
+    normalizedStreet && input.city.toLowerCase() === "warszawa"
+      ? await findWarsawStreet(normalizedStreet, input.district)
+      : null;
   if (localStreet) {
     await writeGeocodeCache(cacheKey, normalizedStreet ?? input.city, localStreet);
     return localStreet;
   }
+  if (cached && (cached.precision !== "street" || input.city.toLowerCase() !== "warszawa"))
+    return cached;
 
   const candidates: Array<{ url: URL | null; precision: LocationPrecision }> = [
     {
@@ -241,17 +246,23 @@ async function writeGeocodeCache(cacheKey: string, queryText: string, result: Ge
     .catch(() => undefined);
 }
 
-async function findWarsawStreet(street: string): Promise<GeocodeResult | null> {
-  const result = await pool
+export async function findWarsawStreet(
+  street: string,
+  district?: string,
+  db: Pick<typeof pool, "query"> = pool,
+): Promise<GeocodeResult | null> {
+  const result = await db
     .query<{
       center_lat: string;
       center_lng: string;
     }>(
-      `select center_lat::text, center_lng::text from streets where city = 'Warszawa' and normalized_name = $1 limit 1`,
-      [normalizeStreetName(street)],
+      `select avg(center_lat)::text center_lat, avg(center_lng)::text center_lng from streets
+       where city = 'Warszawa' and normalized_name = $1 and ($2::text is null or district = $2)
+       group by district order by district`,
+      [normalizeStreetName(street), normalizeWarsawDistrict(district) ?? district ?? null],
     )
     .catch(() => null);
-  const row = result?.rows[0];
+  const row = result?.rows.length === 1 ? result.rows[0] : undefined;
   return row
     ? {
         latitude: Number(row.center_lat),

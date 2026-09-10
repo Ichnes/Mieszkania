@@ -38,6 +38,7 @@ export type ParsedListing = {
 };
 
 export type FetchedListingDocument = {
+  responseHeaders?: Record<string, string>;
   url: string;
   html: string;
   statusCode: number;

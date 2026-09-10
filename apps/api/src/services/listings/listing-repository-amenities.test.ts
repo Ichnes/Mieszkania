@@ -479,3 +479,14 @@ test("optional turnkey finishing means developer standard, not an already finish
     }).some((feature) => feature.key === "developer_standard"),
   );
 });
+test("negated platform keeps an ordinary underground garage", () => {
+  for (const description of [
+    "Miejsce postojowe w garażu podziemnym nie na platformie.",
+    "Miejsce w garażu podziemnym, bez platformy.",
+    "Miejsce w garażu podziemnym, nie jest na platformie.",
+  ]) {
+    const features = extractFeatures({ description });
+    assert.equal(features.find((feature) => feature.key === "garage")?.value, "yes");
+    assert.equal(buildAmenityBadges(features).includes("Miejsce na platformie"), false);
+  }
+});

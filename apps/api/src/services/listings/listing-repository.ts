@@ -2456,7 +2456,20 @@ function inferAmenities(description: string) {
     );
     return /(?:na\s+wynajem|do\s+wynajecia|wynajem|mozliwosc\s+wynaj)/.test(context);
   });
-  const isPlatform = /(?:platform(?:a|ie|y)|miejsce\s+zalezne|parking\s+zalezny)/.test(text);
+  const isPlatform = [
+    ...text.matchAll(/(?:platform(?:a|ie|y)|miejsce\s+zalezne|parking\s+zalezny)/g),
+  ].some((match) => {
+    const before = text.slice(Math.max(0, (match.index ?? 0) - 60), match.index);
+    const after = text.slice(
+      (match.index ?? 0) + match[0].length,
+      (match.index ?? 0) + match[0].length + 35,
+    );
+    return (
+      !isNegatedAmenity(text, match.index ?? 0) &&
+      !/\b(?:nie(?:\s+jest|\s+sa)?\s+na|bez|zamiast|nie\s+na\s+zadnej)\s*$/.test(before) &&
+      !/^\s*(?:nie\s+(?:ma|wystepuje)|brak)/.test(after)
+    );
+  });
   const hasActualGarage =
     garageMatches.some(
       (match) =>

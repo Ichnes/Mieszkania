@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Negacja platformy, Chodkiewicza i logi skanowania Otodom (2026-09-10)
+
+- [x] Parser rozróżnia „nie na platformie” / „bez platformy” od rzeczywistej platformy. Zwykły garaż podziemny pozostaje garażem.
+- [x] Geokoder dobiera lokalną ulicę według dzielnicy; nie bierze dowolnego pierwszego rekordu z dwóch dzielnic. Koryguje stare przybliżenia z cache. Oferta `da65caf7-c21a-4dc2-8872-b50e007e4198` przeniesiona na Mokotów na podstawie lokalnego katalogu ulic i sprawdzona z granicą dzielnicy.
+- [x] Błędne odpowiedzi wyszukiwarki: pełny HTML w gzipie, status, dozwolone nagłówki diagnostyczne, URL wejściowy/końcowy, checksum, liczba bajtów, strona, wariant adresu, identyfikator skanowania i limit stron. Podsumowanie błędu zawiera liczbę stron/ofert już zapisanych. Pierwotny błąd nie jest nadpisywany błędem adresu zapasowego.
+- [x] Skan 600 stron przechodzi stronami kolejno, zapisując każdą od razu; błąd dalszej strony nie traci wyników poprawnych stron paczki. Usunięty potwierdzony niedziałający skrót adresu wyszukiwarki.
+- [x] Weryfikacja: 155 testów API i 87 frontend poprawnych, 4 środowiskowe pominięte; regresja dwóch ulic o identycznej nazwie wykonana osobno na PostgreSQL. Test gzip odtwarza pełną odpowiedź i nagłówki; test skanu z limitem 600 zachowuje 6 poprawnych stron po błędzie strony 7. Typecheck i build poprawne.
+- [x] API potwierdza Mokotów i poprawione współrzędne wskazanej oferty. Trzy istniejące oferty z frazą „nie na platformie” zwracają zwykły garaż. Zaktualizowana instrukcja diagnostyki; lokalne dane i logi nie trafiają do Git.
+- Pozostała praca funkcjonalna: brak. Nie odtwarzano pełnego 600-stronicowego pobierania z portalu; obsługa przerwania sprawdzona kontrolowanym testem.
+
 ## Diagnoza HTTP 405 wyszukiwarki Otodom (2026-09-10)
 
 - [x] Sprawdzono `storage/logs/import-failures.ndjson`, kod pobierania i wyszukiwania. Żądanie używa GET; błąd powstał przy wyszukiwaniu nowych adresów ofert. Log błędów importu nie zawiera treści tej odpowiedzi wyszukiwarki, więc przyczyna historycznego 405 pozostaje niepotwierdzona.

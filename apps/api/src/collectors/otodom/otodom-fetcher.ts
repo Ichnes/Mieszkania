@@ -18,6 +18,7 @@ export class OtodomFetcher implements ListingFetcher {
           url,
           html: await response.text(),
           statusCode: response.status,
+          responseHeaders: diagnosticHeaders(response.headers),
           finalUrl: response.url,
         };
       } catch (error) {
@@ -100,6 +101,7 @@ function fetchTrustedOtodomPage(
             url,
             html: Buffer.concat(chunks).toString("utf8"),
             statusCode,
+            responseHeaders: diagnosticHeaders(response.headers),
             finalUrl: url,
           }),
         );
@@ -114,4 +116,22 @@ function fetchTrustedOtodomPage(
 function isOtodomHost(hostname: string) {
   const normalized = hostname.toLowerCase();
   return normalized === "otodom.pl" || normalized.endsWith(".otodom.pl");
+}
+
+function diagnosticHeaders(headers: Headers | Record<string, string | string[] | undefined>) {
+  const result: Record<string, string> = {};
+  for (const name of [
+    "content-type",
+    "server",
+    "retry-after",
+    "allow",
+    "x-amzn-waf-action",
+    "x-amzn-requestid",
+    "x-cache",
+    "date",
+  ]) {
+    const value = headers instanceof Headers ? headers.get(name) : headers[name];
+    if (value) result[name] = Array.isArray(value) ? value.join(", ") : value;
+  }
+  return result;
 }

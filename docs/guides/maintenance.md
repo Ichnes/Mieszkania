@@ -36,3 +36,16 @@ Przed użyciem przeczytaj kod i zapisz lokalną kopię bazy.
 ten wynik, w transakcji, po utworzeniu backupu NDJSON w `storage/maintenance`.
 Nie zmienia ceny, metrażu, dat ani historii. Cena po rozmowie jest nakładana przy odczycie,
 więc nie jest zapisywana tym narzędziem do kolumny portalowej.
+
+## Błędy wyszukiwarki Otodom
+
+Wpisy `phase: discovery` wskazują konkretną stronę, pełny URL, status HTTP,
+wariant adresu oraz `runId`. `maxPages` określa limit uruchomienia, np. 600 stron.
+`responseStorageKey` prowadzi do pełnej odpowiedzi HTML zapisanej w gzipie pod
+`storage/logs/otodom-responses/`. Zapisywane są również checksum, rozmiar odpowiedzi,
+URL po przekierowaniu i wybrane nagłówki diagnostyczne (bez cookies).
+
+Wpis `phase: discovery-run` podaje stronę przerwania oraz liczbę wcześniej
+odczytanych stron, wykrytych ofert i pozycji dodanych do kolejki. Strony są pobierane
+kolejno i zapisywane do kolejki osobno. Błąd dalszej strony nie odrzuca wcześniejszych
+wyników paczki. Nie należy interpretować HTTP 405 jako pustego wyniku wyszukiwania.

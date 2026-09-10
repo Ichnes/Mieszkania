@@ -1,3 +1,5 @@
+import { scanOtodomPages } from "./otodom-scan";
+import { randomUUID } from "node:crypto";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import { appendImportFailureLog } from "../../services/collecting/import-failure-log";
 import {
@@ -183,58 +185,38 @@ export class OtodomCollector {
     const maxPages = Math.max(1, Math.min(5000, input.maxPages ?? 700));
     const batchPages = Math.max(1, Math.min(25, input.batchPages ?? 5));
     const stopAfterEmptyBatches = Math.max(1, Math.min(10, input.stopAfterEmptyBatches ?? 2));
-    let queued = 0;
-    let discovered = 0;
-    let scannedPages = 0;
-    let currentPage = startPage;
-    let emptyBatches = 0;
-    let error: string | undefined;
-
-    while (scannedPages < maxPages && emptyBatches < stopAfterEmptyBatches) {
-      const pagesInBatch = Math.min(batchPages, maxPages - scannedPages);
-      let links;
-      try {
-        links = await this.discovery.discoverListingUrls({
-          city,
-          startPage: currentPage,
-          pages: pagesInBatch,
-          contract: settings.searchContract,
-        });
-      } catch (cause) {
-        error =
-          cause instanceof Error
-            ? cause.message || cause.name || "Otodom discovery failed"
-            : "Otodom discovery failed";
-        break;
-      }
-      const batchResult = await enqueueListingImports({
-        sourceKey: "otodom",
-        city,
-        priority: input.priority ?? 100,
-        items: links,
-      });
-
-      queued += batchResult.queued;
-      discovered += links.length;
-      scannedPages += pagesInBatch;
-      currentPage += pagesInBatch;
-      emptyBatches = links.length === 0 ? emptyBatches + 1 : 0;
-    }
-
-    return {
-      city,
+    const runId = randomUUID();
+    const result = await scanOtodomPages({
       startPage,
-      scannedPages,
-      discovered,
-      queued,
-      stoppedBecause:
-        error !== undefined
-          ? "error"
-          : emptyBatches >= stopAfterEmptyBatches
-            ? "empty_batches"
-            : "max_pages",
-      error,
-    };
+      maxPages,
+      batchPages,
+      stopAfterEmptyBatches,
+      fetchPage: (page) =>
+        this.discovery.discoverListingUrls({
+          city,
+          startPage: page,
+          pages: 1,
+          contract: settings.searchContract,
+          context: { runId, startPage, maxPages, batchPages },
+        }),
+      enqueue: (items) =>
+        enqueueListingImports({
+          sourceKey: "otodom",
+          city,
+          priority: input.priority ?? 100,
+          items,
+        }),
+      onError: (error, progress) =>
+        appendImportFailureLog({
+          sourceKey: "otodom",
+          externalId: `search-run-${runId}`,
+          canonicalUrl: "https://www.otodom.pl/pl/wyniki",
+          error,
+          attempts: 1,
+          context: { phase: "discovery-run", runId, startPage, maxPages, batchPages, ...progress },
+        }).catch((logError) => console.error("Otodom discovery log failed", logError)),
+    });
+    return { city, ...result };
   }
 
   async collectPage(input: {

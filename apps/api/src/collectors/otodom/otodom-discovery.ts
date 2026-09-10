@@ -1,10 +1,14 @@
 import type { SearchContract } from "@mieszkania/shared";
-import type { SourceDiscovery, SourceListingReference } from "../types";
+import type { SourceDiscovery, SourceListingReference, ListingFetcher } from "../types";
 import { OtodomFetcher } from "./otodom-fetcher";
 import { extractOtodomExternalId } from "./otodom-url";
+import { logOtodomSearchFailure } from "./otodom-diagnostics";
 
 export class OtodomDiscovery implements SourceDiscovery {
-  private readonly fetcher = new OtodomFetcher();
+  constructor(
+    private readonly fetcher: ListingFetcher = new OtodomFetcher(),
+    private readonly logFailure = logOtodomSearchFailure,
+  ) {}
 
   async discoverListingUrls(input: {
     city: string;
@@ -12,6 +16,7 @@ export class OtodomDiscovery implements SourceDiscovery {
     pages?: number;
     startPage?: number;
     contract?: SearchContract;
+    context?: Record<string, unknown>;
   }): Promise<SourceListingReference[]> {
     const startPage = input.startPage ?? input.page ?? 1;
     const pages = Math.max(1, Math.min(50, input.pages ?? 1));
@@ -19,7 +24,7 @@ export class OtodomDiscovery implements SourceDiscovery {
     const deduped = new Map<string, SourceListingReference>();
     const pageResults = await Promise.all(
       Array.from({ length: pages }, (_value, offset) =>
-        this.discoverSinglePage(citySlug, startPage + offset, input.contract),
+        this.discoverSinglePage(citySlug, startPage + offset, input.contract, input.context),
       ),
     );
 
@@ -36,15 +41,17 @@ export class OtodomDiscovery implements SourceDiscovery {
     citySlug: string,
     page: number,
     contract?: SearchContract,
+    context?: Record<string, unknown>,
   ): Promise<SourceListingReference[]> {
     const urls = buildSearchUrls(citySlug, page, contract);
     let lastError: unknown;
 
-    for (const url of urls) {
+    for (const [index, url] of urls.entries()) {
+      let document: Awaited<ReturnType<OtodomFetcher["fetchListing"]>> | undefined;
       try {
-        const document = await this.fetcher.fetchListing(url);
+        document = await this.fetcher.fetchListing(url);
         if (document.statusCode >= 400) {
-          throw new Error(`Otodom search returned HTTP ${document.statusCode}: ${url}`);
+          throw new Error(`Otodom: strona ${page}, HTTP ${document.statusCode}: ${url}`);
         }
         const links = extractOfferLinks(document.html);
 
@@ -52,7 +59,19 @@ export class OtodomDiscovery implements SourceDiscovery {
           return links;
         }
       } catch (error) {
-        lastError = error;
+        lastError ??= error;
+        try {
+          await this.logFailure({
+            url,
+            page,
+            attempt: index + 1,
+            document,
+            context,
+            error: error instanceof Error ? error.message || error.name : String(error),
+          });
+        } catch (logError) {
+          console.error("Nie udało się zapisać diagnostyki wyszukiwarki Otodom", logError);
+        }
       }
     }
 
@@ -113,7 +132,6 @@ export function buildSearchUrls(citySlug: string, page: number, contract?: Searc
   return [
     `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}/${citySlug}?${queryString}`,
     `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}?${queryString}`,
-    `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/${citySlug}?${queryString}`,
   ];
 }
 
