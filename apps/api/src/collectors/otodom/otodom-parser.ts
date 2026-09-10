@@ -1,3 +1,4 @@
+import { extractOtodomFloorPlans, imageIdentity } from "./otodom-floor-plans";
 import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
 import { extractOtodomExternalId } from "./otodom-url";
@@ -106,7 +107,14 @@ export class OtodomParser implements ListingParser {
     );
     const sourceContactPhone = extractSourceContactPhone(adNode, productNode);
     const addressText = compactAddress(street, district, city);
-    const imageUrls = collectListingImages(adNode, productNode, document.html);
+    const floorPlans = extractOtodomFloorPlans(document.html, adNode);
+    const floorPlanIds = new Set(floorPlans.map(imageIdentity));
+    const imageUrls = dedupe([
+      ...collectListingImages(adNode, productNode, document.html).filter(
+        (url) => !floorPlanIds.has(imageIdentity(url)),
+      ),
+      ...floorPlans,
+    ]);
     const publishedAt = extractPublishedAt(
       adNode,
       productNode,
@@ -142,6 +150,7 @@ export class OtodomParser implements ListingParser {
         : "active",
       images: imageUrls.map((sourceUrl, index) => ({
         sourceUrl,
+        caption: floorPlanIds.has(imageIdentity(sourceUrl)) ? "Rzut" : undefined,
         position: index,
         isPrimary: index === 0,
       })),

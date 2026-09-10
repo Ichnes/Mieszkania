@@ -2,13 +2,13 @@
 .mortgage-page .mortgage-form-horizontal {
   position: static;
   display: grid;
-  gap: 16px;
+  gap: 10px;
 }
 .mortgage-primary-inputs,
 .mortgage-extra-inputs {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 14px;
+  gap: 10px;
   align-items: start;
 }
 .mortgage-extra-inputs {
@@ -34,8 +34,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  margin-bottom: 22px;
+  gap: 12px;
+  margin-bottom: 12px;
 }
 .mortgage-comparison-heading .eyebrow {
   margin: 0 0 7px;
@@ -49,7 +49,7 @@
 .mortgage-comparison-inputs {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px;
+  gap: 12px;
   margin: 0;
 }
 .mortgage-comparison-inputs > div {
@@ -58,7 +58,7 @@
 }
 .mortgage-comparison-inputs > div + div {
   border-left: 1px solid var(--line);
-  padding-left: 22px;
+  padding-left: 12px;
 }
 .mortgage-comparison-inputs dt {
   color: var(--ink-soft);
@@ -76,7 +76,7 @@
 .mortgage-comparison-body {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(220px, 0.32fr);
-  gap: 16px;
+  gap: 10px;
   align-items: stretch;
 }
 .mortgage-comparison-table-wrap {
@@ -94,7 +94,7 @@
 }
 .mortgage-comparison th,
 .mortgage-comparison td {
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--line);
   text-align: right;
   font-size: 0.84rem;
@@ -196,7 +196,7 @@
   }
   .mortgage-comparison-savings {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 14px;
+    gap: 10px;
     padding: 16px;
   }
   .mortgage-comparison-savings > div + div {
@@ -240,7 +240,7 @@
     font-size: 1.28rem;
   }
   .mortgage-comparison-inputs {
-    gap: 14px;
+    gap: 10px;
   }
   .mortgage-comparison-inputs > div + div {
     padding-left: 14px;
@@ -489,4 +489,12 @@
   .mortgage-total-cards article {
     min-height: 0;
   }
+}
+
+.mortgage-page {
+  gap: 12px;
+}
+.mortgage-page .panel {
+  margin-block: 0;
+  padding: clamp(12px, 1.5vw, 20px);
 }

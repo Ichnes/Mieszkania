@@ -53,7 +53,7 @@ export function ListingSection(input: {
           return (
             <article
               key={listing.id}
-              className="listing-card clickable-card"
+              className={`listing-card clickable-card${listing.isShortlisted ? " is-shortlisted" : ""}`}
               onClick={() => void input.onOpen(listing.id)}
             >
               <button

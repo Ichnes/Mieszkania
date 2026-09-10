@@ -83,8 +83,8 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
               Dotyczy {number(signals.discounted)} aktywnych ofert ({share(signals.discounted)}%).
             </p>
             <small>
-              Porównujemy kolejne ceny tego samego ogłoszenia, więc wyniku nie zmienia sam napływ
-              droższych mieszkań.
+              Porównujemy kolejne ceny ofert. Dla połączonych duplikatów śledzimy najniższą dostępną
+              cenę w grupie portali.
             </small>
           </article>
           <article className="insight-category">

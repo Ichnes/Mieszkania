@@ -8,6 +8,7 @@ import type {
 import type { Pool, PoolClient } from "pg";
 import { withDb } from "../../db";
 import { getMediaResponsePath } from "../media/image-repository";
+import { syncDuplicateGroupPrice, restoreSourcePrice } from "./group-prices";
 
 type QueryableDb = Pick<Pool | PoolClient, "query">;
 
@@ -290,14 +291,15 @@ export async function reviewDuplicateCandidate(input: {
   status: Exclude<DuplicateReviewStatus, "pending">;
   notes?: string;
 }) {
-  return withDb(async (db) => {
+  return withDb(async (pool) => {
+    const db = await pool.connect();
     const leftId = input.leftId < input.rightId ? input.leftId : input.rightId;
     const rightId = input.leftId < input.rightId ? input.rightId : input.leftId;
     const pairKey = buildDuplicatePairKey(leftId, rightId);
 
-    await db.query("begin");
-
     try {
+      await db.query("begin");
+      await db.query("select pg_advisory_xact_lock(735189241)");
       await db.query(
         `
           insert into listing_duplicate_reviews (
@@ -330,7 +332,7 @@ export async function reviewDuplicateCandidate(input: {
       }
 
       if (input.status === "different_listing") {
-        await db.query(
+        const detached = await db.query<{ listing_id: string; group_id: string }>(
           `
             delete from listing_duplicate_group_members
             where listing_id in ($1, $2)
@@ -341,9 +343,14 @@ export async function reviewDuplicateCandidate(input: {
                 group by group_id
                 having count(*) = 2
               )
+            returning listing_id, group_id
           `,
           [leftId, rightId],
         );
+        for (const member of detached.rows) await restoreSourcePrice(db, member.listing_id);
+        for (const groupId of new Set(detached.rows.map((member) => member.group_id))) {
+          await syncDuplicateGroupPrice(db, groupId);
+        }
         await db.query(
           `
             update listings
@@ -362,6 +369,8 @@ export async function reviewDuplicateCandidate(input: {
     } catch (error) {
       await db.query("rollback");
       throw error;
+    } finally {
+      db.release();
     }
   });
 }
@@ -762,6 +771,7 @@ export async function unmergeDuplicateListing(
     const db = await pool.connect();
     try {
       await db.query("begin");
+      await db.query("select pg_advisory_xact_lock(735189241)");
       const member = await db.query<{ group_id: string; is_primary: boolean }>(
         `select group_id::text, is_primary from listing_duplicate_group_members where listing_id = $1`,
         [duplicateListingId],
@@ -792,6 +802,13 @@ export async function unmergeDuplicateListing(
         `update listings set hidden_duplicate_of_id = null, hidden_at = null, updated_at = now() where id = $1::uuid`,
         [duplicateListingId],
       );
+      await restoreSourcePrice(db, duplicateListingId);
+      const remaining = await db.query<{ listing_id: string }>(
+        "select listing_id from listing_duplicate_group_members where group_id=$1",
+        [group.group_id],
+      );
+      if (remaining.rows.length === 1) await restoreSourcePrice(db, remaining.rows[0].listing_id);
+      else await syncDuplicateGroupPrice(db, group.group_id);
       await db.query(
         `delete from listing_duplicate_groups g where g.id = $1::uuid and (select count(*) from listing_duplicate_group_members m where m.group_id = g.id) < 2`,
         [group.group_id],
@@ -1078,6 +1095,7 @@ async function mergeDuplicateGroup(
   primaryListingId: string,
   duplicateListingId: string,
 ) {
+  await db.query("select pg_advisory_xact_lock(735189241)");
   const existingGroups = await db.query<{ listing_id: string; group_id: string }>(
     `
       select listing_id, group_id
@@ -1146,6 +1164,7 @@ async function mergeDuplicateGroup(
   );
 
   await inheritStableDuplicateFacts(db, targetGroupId);
+  await syncDuplicateGroupPrice(db, targetGroupId);
 }
 
 export async function inheritStableDuplicateFacts(db: QueryableDb, groupId: string) {

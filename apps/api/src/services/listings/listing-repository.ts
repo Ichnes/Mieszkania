@@ -98,6 +98,8 @@ type ListingRow = {
 };
 
 type PriceEventRow = {
+  source_label?: string | null;
+  source_url?: string | null;
   listing_id: string;
   event_type: string;
   previous_price_amount: string | null;
@@ -549,7 +551,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         getListingImages(row.id),
         db.query<PriceEventRow>(
           `
-          select listing_id, event_type, previous_price_amount::text, new_price_amount::text, changed_at::text
+          select listing_id, event_type, previous_price_amount::text, new_price_amount::text, changed_at::text, source_label, source_url
           from price_events
           where listing_id = $1
           order by changed_at asc
@@ -579,7 +581,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       undefined;
     const detail = mapListingSummary(
       { ...row, snapshot_payload_raw: snapshotPayload },
-      undefined,
+      priceHistoryResult.rows.at(-1),
       null,
       images.length,
       primaryImage?.resolvedUrl,
@@ -590,6 +592,9 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       ...detail,
       canonicalUrl: row.canonical_url,
       sourceContactPhone,
+      floorPlanImageUrls: resolvedImages
+        .filter((image) => image.caption === "Rzut")
+        .map((image) => image.resolvedUrl),
       sourceLabel: row.source_name ?? undefined,
       description: row.description ?? undefined,
       rooms: row.rooms ? Number(row.rooms) : undefined,
@@ -604,6 +609,8 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       rcnTransactions: [],
       priceHistory: priceHistoryResult.rows.map((event) => ({
         eventType: event.event_type,
+        sourceLabel: event.source_label ?? undefined,
+        sourceUrl: event.source_url ?? undefined,
         changedAt: event.changed_at,
         previousPriceAmount: event.previous_price_amount
           ? Number(event.previous_price_amount)
@@ -1510,11 +1517,11 @@ function mapListingSummary(
       ? `${formatInteger(String(Math.round(pricePerSqm)))} PLN/m2`
       : undefined,
     roomsCount: row.rooms ? Number(row.rooms) : undefined,
-    floor: portalBuildingDetails.floor ?? inferredBuildingDetails.floor ?? row.floor ?? undefined,
+    floor: portalBuildingDetails.floor ?? row.floor ?? inferredBuildingDetails.floor ?? undefined,
     totalFloors:
       portalBuildingDetails.totalFloors ??
-      inferredBuildingDetails.totalFloors ??
       row.total_floors ??
+      inferredBuildingDetails.totalFloors ??
       undefined,
     yearBuilt: inferredBuildingDetails.yearBuilt ?? row.year_built ?? undefined,
     hasGarage,

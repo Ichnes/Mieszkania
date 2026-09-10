@@ -26,7 +26,15 @@ od zwykłego uruchomienia.
 
 ## Cena portalowa i cena po rozmowie
 
-`listings.price_amount` oraz `price_events` opisują portal. `listing_manual_overrides.asking_price_override`
+`listings.source_price_amount` zachowuje cenę konkretnego portalu. `listings.price_amount`
+jest ceną ogłoszeniową używaną w aplikacji: w grupie duplikatów jest to wspólne minimum
+aktywnych, nieodrzuconych źródeł (przy braku aktywnych — minimum zapisanych źródeł).
+Snapshoty zachowują ceny źródłowe. `price_events` zapisują zmiany ceny używanej w aplikacji;
+`source_label` i `source_url` wskazują portal ustalający nową cenę grupy, a `changed_at`
+oznacza moment wykrycia. Migracja inicjalizuje ceny źródłowe tylko raz. Przeliczenia grup
+odbywają się w transakcji, pod wspólną blokadą doradczą z kolektorem.
+
+`listing_manual_overrides.asking_price_override`
 przechowuje aktualną cenę po rozmowie; dodatnia kwota ma pierwszeństwo w osobistych obliczeniach
 i filtrach. `negotiated_price_amount` pozostaje celem negocjacji, zgodnie z dotychczasową logiką alertów.
 API zwraca `priceSource` i `advertisedPriceLabel`, aby UI nie mieszał źródeł.

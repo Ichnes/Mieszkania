@@ -2,6 +2,7 @@ import type { Pool, PoolClient } from "pg";
 import type { FetchedListingDocument } from "../../collectors/types";
 import { withDb } from "../../db";
 import { ensureSource } from "../collecting/source-registry";
+import { syncListingGroupPrice } from "../duplicates/group-prices";
 
 export async function markListingArchived(input: {
   sourceKey: string;
@@ -9,8 +10,21 @@ export async function markListingArchived(input: {
   canonicalUrl?: string;
   reason?: string;
 }) {
-  return withDb(async (db) => {
-    return markListingArchivedWithDb(db, input);
+  return withDb(async (pool) => {
+    const db = await pool.connect();
+    try {
+      await db.query("begin");
+      await db.query("select pg_advisory_xact_lock(735189241)");
+      const result = await markListingArchivedWithDb(db, input);
+      if (result) await syncListingGroupPrice(db, result.listingId);
+      await db.query("commit");
+      return result;
+    } catch (error) {
+      await db.query("rollback");
+      throw error;
+    } finally {
+      db.release();
+    }
   });
 }
 

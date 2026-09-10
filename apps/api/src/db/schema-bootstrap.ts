@@ -1,7 +1,16 @@
 import { withDb } from "./index";
+import { syncAllDuplicateGroupPrices } from "../services/duplicates/group-prices";
 
 export async function ensureRuntimeSchema() {
   await withDb(async (db) => {
+    await db.query(`do $$ begin
+      if not exists(select 1 from information_schema.columns where table_schema=current_schema() and table_name='listings' and column_name='source_price_amount') then
+        alter table listings add column source_price_amount numeric(14,2);
+        update listings set source_price_amount=price_amount;
+      end if;
+    end $$;
+    alter table price_events add column if not exists source_label text;
+    alter table price_events add column if not exists source_url text;`);
     await db.query(`
       do $$
       begin
@@ -450,5 +459,6 @@ export async function ensureRuntimeSchema() {
       create index if not exists idx_transaction_rcn_city_scope
       on transaction_rcn(city_normalized, district_normalized, street_normalized, transaction_date desc);
     `);
+    await syncAllDuplicateGroupPrices(db);
   });
 }

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import type { PoolClient } from "pg";
 import { pool } from "../../db";
+import { syncListingGroupPrice } from "../../services/duplicates/group-prices";
 import {
   compactArchivePayload,
   createListingArchiveChecksum,
@@ -27,6 +28,7 @@ import { enrichListingFromDescription } from "../../services/listings/listing-de
 import type { CollectorStorage } from "../types";
 
 type ExistingListingRow = {
+  duplicate_group_id?: string | null;
   id: string;
   price_amount: string | null;
   title: string;
@@ -175,7 +177,8 @@ export class OtodomStorage implements CollectorStorage {
             : parsedListing;
           const existingListing = await db.query<ExistingListingRow>(
             `
-                select id, price_amount::text, title, description, status::text, content_checksum
+                select id, price_amount::text, title, description, status::text, content_checksum,
+                  (select group_id from listing_duplicate_group_members where listing_id=listings.id) duplicate_group_id
                 from listings
                 where source_id = $1 and external_id = $2
                 limit 1
@@ -205,6 +208,7 @@ export class OtodomStorage implements CollectorStorage {
                   market_type,
                   status,
                   price_amount,
+                  source_price_amount,
                   price_per_sqm,
                   area_sqm,
                   rooms,
@@ -224,7 +228,7 @@ export class OtodomStorage implements CollectorStorage {
                   last_seen_at
                 )
                 values (
-                  $1,$2,$3,$4,$5,$6,$7,$8::listing_status,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,
+                  $1,$2,$3,$4,$5,$6,$7,$8::listing_status,$9,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,
                   $23,$24,
                   case when $8::listing_status = 'removed'::listing_status then now() else null end,
                   now()
@@ -240,8 +244,9 @@ export class OtodomStorage implements CollectorStorage {
                     when excluded.status = 'active' then null
                     else listings.exclusion_reason
                   end,
-                  price_amount = case when $25 then coalesce(excluded.price_amount, listings.price_amount) else excluded.price_amount end,
-                  price_per_sqm = case when $25 then
+                  source_price_amount = case when $25 then coalesce(excluded.source_price_amount,listings.source_price_amount) else excluded.source_price_amount end,
+                  price_amount = case when $26 then listings.price_amount when $25 then coalesce(excluded.price_amount, listings.price_amount) else excluded.price_amount end,
+                  price_per_sqm = case when $26 then listings.price_amount / nullif(coalesce(listings.area_sqm,excluded.area_sqm),0) when $25 then
                     coalesce(excluded.price_amount, listings.price_amount) / nullif(coalesce(listings.area_sqm, excluded.area_sqm), 0)
                     else excluded.price_per_sqm end,
                   area_sqm = case when $25 then coalesce(listings.area_sqm, excluded.area_sqm) else excluded.area_sqm end,
@@ -301,6 +306,7 @@ export class OtodomStorage implements CollectorStorage {
               listing.publishedAt ?? null,
               contentChecksum,
               preserveExistingData,
+              Boolean(existing?.duplicate_group_id),
             ],
           );
 
@@ -367,7 +373,11 @@ export class OtodomStorage implements CollectorStorage {
             existing,
             listingId,
             snapshotId,
-            nextPriceAmount: listing.priceAmount ?? null,
+            nextPriceAmount: existing?.duplicate_group_id
+              ? existing.price_amount == null
+                ? null
+                : Number(existing.price_amount)
+              : (listing.priceAmount ?? null),
             nextStatus: listing.status,
             contentChanged,
           });
@@ -375,6 +385,7 @@ export class OtodomStorage implements CollectorStorage {
           if (action === "created") {
             await autoMergeDuplicateByDescription(db, listingId);
           }
+          await syncListingGroupPrice(db, listingId);
           // A portal can reveal a missing fact long after the offers were merged.
           if (contentChanged) {
             const groups = await db.query<{ group_id: string }>(

@@ -97,11 +97,11 @@ export function formatPriceEvent(event: ListingDetail["priceHistory"][number]) {
   }
 
   if (event.eventType === "price_drop") {
-    return `${dateLabel}: spadek ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}`;
+    return `${dateLabel}: obniżka ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}${event.sourceLabel ? ` · portal: ${event.sourceLabel}` : ""}`;
   }
 
   if (event.eventType === "price_increase") {
-    return `${dateLabel}: wzrost ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}`;
+    return `${dateLabel}: wzrost ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}${event.sourceLabel ? ` · portal: ${event.sourceLabel}` : ""}`;
   }
 
   if (event.eventType === "relisted") {

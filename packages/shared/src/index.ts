@@ -447,6 +447,7 @@ export type RcnComparableTransaction = {
 export { getDreamDescriptionFacts } from "./dream-description.js";
 
 export type ListingDetail = ListingSummary & {
+  floorPlanImageUrls?: string[];
   canonicalUrl?: string;
   sourceContactPhone?: string;
   description?: string;
@@ -457,6 +458,8 @@ export type ListingDetail = ListingSummary & {
   features: ListingFeature[];
   rcnTransactions: RcnComparableTransaction[];
   priceHistory: Array<{
+    sourceLabel?: string;
+    sourceUrl?: string;
     eventType: string;
     changedAt: string;
     previousPriceAmount?: number;

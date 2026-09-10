@@ -109,4 +109,13 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   const restored = await getListingDetail(target.id);
   assert.equal(restored?.priceSource, "advertised");
   assert.equal(restored?.priceLabel.replace(/\D/g, ""), "1000000");
+  Object.assign(target, {
+    floor: 3,
+    total_floors: 5,
+    description: "Komórka lokatorska na parterze w cenie mieszkania.",
+  });
+  const correctFloor = await getListingDetail(target.id);
+  assert.equal(correctFloor?.floor, 3);
+  assert.equal(correctFloor?.totalFloors, 5);
+  assert.ok(correctFloor!.priceChangePercent < 0);
 });

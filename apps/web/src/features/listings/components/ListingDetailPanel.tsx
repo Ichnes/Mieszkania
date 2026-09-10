@@ -456,6 +456,23 @@ export function ListingDetailPanel(input: {
                 </div>
               ) : null}
               <SunExposureCompass description={input.listing.description} />
+              {input.listing.floorPlanImageUrls?.map((url, index) => {
+                const imageIndex = input.listing.imageUrls.indexOf(url);
+                return imageIndex < 0 ? null : (
+                  <button
+                    className="detail-floor-plan action-button secondary-button"
+                    type="button"
+                    key={url}
+                    style={{ top: `${12 + index * 48}px` }}
+                    onClick={() => {
+                      setActiveImageIndex(imageIndex);
+                      setLightboxImageIndex(imageIndex);
+                    }}
+                  >
+                    Rzut{index > 0 ? ` ${index + 1}` : ""}
+                  </button>
+                );
+              })}
               {input.listing.imageUrls.length > 1 ? (
                 <>
                   <button
@@ -1047,8 +1064,11 @@ export function ListingDetailPanel(input: {
           </div>
 
           <div>
-            <div className="result-box detail-sidebar-box">
-              <strong>Oglądanie mieszkania</strong>
+            <details
+              key={input.listing.id}
+              className="result-box detail-sidebar-box viewing-disclosure"
+            >
+              <summary>Umów oglądanie mieszkania</summary>
               {input.listing.viewing?.scheduledAt ? (
                 <p className="viewing-line">
                   Aktualny termin: {formatViewingDate(input.listing.viewing.scheduledAt)}
@@ -1098,44 +1118,7 @@ export function ListingDetailPanel(input: {
                   </button>
                 ) : null}
               </div>
-            </div>
-
-            {input.listing.relatedListings.length > 0 ? (
-              <div className="result-box detail-sidebar-box">
-                <strong>Powiązane oferty z innych portali</strong>
-                <ul className="result-list">
-                  {input.listing.relatedListings.map((related) => (
-                    <li key={related.id}>
-                      <button
-                        className="map-card-title"
-                        onClick={() => void input.onOpenRelatedListing(related.id)}
-                      >
-                        {related.sourceLabel ?? "Inny portal"}: {related.title}
-                      </button>
-                      {related.canonicalUrl ? (
-                        <div>
-                          <a
-                            href={related.canonicalUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            Otworz link zrodlowy
-                          </a>
-                        </div>
-                      ) : null}
-                      {related.relationNote ? (
-                        <div className="muted">{related.relationNote}</div>
-                      ) : null}
-                      <div className="muted">
-                        {related.priceLabel}
-                        {related.areaLabel ? ` / ${related.areaLabel}` : ""}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+            </details>
 
             <div className="result-box detail-sidebar-box">
               <strong>Potencjalne duplikaty</strong>

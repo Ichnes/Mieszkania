@@ -711,3 +711,26 @@
     transform-origin: top center;
   }
 }
+
+.market-pulse {
+  margin-block: 12px;
+  padding: clamp(12px, 1.5vw, 20px);
+}
+.market-pulse .insight-card-grid {
+  gap: 10px;
+  margin: 10px 0;
+}
+.market-pulse .market-signal-grid .insight-category {
+  padding: 12px;
+}
+.market-pulse .insight-category p {
+  margin: 6px 0;
+  line-height: 1.4;
+}
+.market-pulse .insight-number {
+  margin: 6px 0;
+}
+.description-review {
+  margin: 14px 0;
+  padding: 12px 0;
+}

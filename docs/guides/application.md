@@ -297,6 +297,24 @@ nie są rejestrowane jako obniżki na całym rynku.
 
 # Automatyczne łączenie opisów
 
+Połączone oferty mają wspólną cenę ogłoszeniową: najniższą znaną cenę aktywnego,
+nieodrzuconego duplikatu. Wybór portalu głównego nie zmienia tej kwoty. Gdy wszystkie
+oferty są nieaktywne, pozostaje minimum z zapisanych cen. Ceny źródłowe są zachowane
+osobno; po rozłączeniu oferta odzyskuje własną cenę. Historia każdej oferty w grupie
+pokazuje zmianę wspólnej ceny, datę wykrycia oraz portal, z którego pochodzi nowa cena.
+Pierwsze przeliczenie istniejących grup zapisuje obniżkę z datą przeliczenia — nie
+przypisuje jej nieznanej historycznej daty publikacji. Cena po negocjacjach zachowuje
+pierwszeństwo przed ceną portalową.
+
+W szczegółach formularz **Umów oglądanie mieszkania** jest początkowo zwinięty;
+kliknij nagłówek, aby ustawić lub zmienić termin. Portale połączonych ofert znajdziesz
+w tabeli **Przegląd**. Złota ramka karty oznacza ofertę dodaną do ulubionych.
+
+Jeśli pobrane dane Otodomu zawierają zdjęcie planu lokalu, na galerii pojawia się
+przycisk **Rzut**, otwierający go w powiększeniu. Rzuty pobierane są razem ze zdjęciami
+i korzystają z lokalnego cache. Starsze oferty wymagają ponownego pełnego pobrania
+danych, jeśli zapisano je przed rozpoznawaniem rzutów.
+
 Identyczne pierwsze 25 słów opisu pozwala automatycznie połączyć aktywne oferty
 w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielkość
 liter i interpunkcję. Pary oznaczone jako różne oferty pozostają rozdzielone.

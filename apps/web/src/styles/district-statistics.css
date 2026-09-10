@@ -6,7 +6,7 @@
 .stats-panel .stats-layout {
   grid-template-columns: minmax(330px, 0.82fr) minmax(620px, 1.65fr);
   align-items: start;
-  gap: 18px;
+  gap: 12px;
 }
 
 .stats-panel .stats-map,
@@ -714,8 +714,8 @@
 .stats-analysis-grid {
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(300px, 0.75fr);
-  gap: 18px;
-  margin-top: 18px;
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .stats-activity,
@@ -788,11 +788,11 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
-  margin-top: 18px;
+  margin-top: 12px;
 }
 .stats-segment-card {
   min-width: 0;
-  padding: 15px;
+  padding: 12px;
   border: 1px solid var(--line);
   border-radius: 16px;
 }
@@ -1240,4 +1240,8 @@
   .stats-panel .district-svg {
     max-height: none;
   }
+}
+.stats-panel .panel {
+  margin-block: 0;
+  padding: clamp(12px, 1.5vw, 20px);
 }

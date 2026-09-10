@@ -568,3 +568,25 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.listing-card.is-shortlisted {
+  border-color: #bd9026;
+  outline: 2px solid #d4a62f;
+  outline-offset: -2px;
+}
+.viewing-disclosure > summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  font-weight: 700;
+}
+.viewing-disclosure:not([open]) {
+  padding-block: 6px;
+}
+.detail-floor-plan {
+  position: absolute;
+  z-index: 3;
+  left: 12px;
+  min-height: 44px;
+  box-shadow: 0 2px 8px #0003;
+}

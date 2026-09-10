@@ -1,5 +1,17 @@
 # Bieżące zadania
 
+## Ceny duplikatów, piętro, rzuty i ciaśniejszy interfejs (2026-09-10)
+
+- Zakres: wspólna najniższa cena grupy z historią obniżki i portalem; błędny parter oferty `3ef5c045-4e87-4375-81c0-42a16ac4c35d`; usunięcie powtórzonych portali, zwinięte umawianie oglądania, złota ramka ulubionych, mniejsze odstępy kredytu/statystyk/analizy historii.
+- [x] Osobna cena źródłowa portalu i wspólne minimum grupy; atomowe przeliczenie przy pobieraniu, łączeniu, rozłączaniu i archiwizacji. Historia zawiera datę wykrycia i portal. Migracja przelicza istniejące grupy bez powielania zdarzeń.
+- [x] Dane strukturalne piętra mają pierwszeństwo przed opisem komórki na parterze. Wskazana oferta: piętro 3, cena grupy 1 394 000 zł; obniżka z 1 440 000 zł pochodzi z Adresowo.
+- [x] Usunięty dodatkowy blok portali; zwinięte „Umów oglądanie mieszkania”; złota ramka ulubionych; mniejsze odstępy kart, sekcji kredytu, statystyk i historii rynku.
+- [x] Otodom: rozpoznawanie zdjęcia rzutu po semantycznych oznaczeniach galerii lub danych zdjęcia, wybór dużej wersji, zapis podpisu i pobieranie przez istniejący cache mediów. Przycisk „Rzut” otwiera właściwe zdjęcie w pełnym ekranie. Starsze oferty uzupełnią oznaczenie po pełnym odświeżeniu danych.
+- [x] Pełne testy: 150 API i 85 frontend poprawne, 3 testy środowiskowe pominięte. Osobno wykonana regresja PostgreSQL z rzeczywistym typem enum: wspólna cena, źródło obniżki, idempotencja, zmiana tańszego portalu, archiwizacja i przywrócenie ceny własnej. Regresje piętra, procentu w szczegółach i parsera rzutów poprawne. Typecheck, build i wdrożenie Docker poprawne.
+- [x] Playwright: 1440, 1280, 390 i 320 px, bez poziomego przepełnienia; ulubione, zwijanie formularza, kredyt i statystyki. Przycisk rzutu sprawdzony na kontrolowanej odpowiedzi API bez zmieniania danych użytkownika.
+- [x] Końcowy przegląd: ręczne łączenie używa jednej transakcji i tej samej blokady co kolektor. Ponowny start nie powiela obniżki; wszystkie cztery duplikaty wskazanej oferty mają wspólną cenę i −3,2%.
+- Pozostała praca funkcjonalna: brak. Zmiany przygotowane do publikacji na bieżącym `main`.
+
 ## Spójne segmenty, wykończenie i czynsz (2026-09-10)
 
 - Zakres: usunięcie dolnej „Próby”, połączenie nazwy, paska i cen we wspólnym bloku; nowe przekroje wykończenia oraz miesięcznego czynszu.
