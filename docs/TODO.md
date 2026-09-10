@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Diagnoza HTTP 405 wyszukiwarki Otodom (2026-09-10)
+
+- [x] Sprawdzono `storage/logs/import-failures.ndjson`, kod pobierania i wyszukiwania. Żądanie używa GET; błąd powstał przy wyszukiwaniu nowych adresów ofert. Log błędów importu nie zawiera treści tej odpowiedzi wyszukiwarki, więc przyczyna historycznego 405 pozostaje niepotwierdzona.
+- [x] Aktualna próba z hosta i kontenera API: główny adres Warszawy zwraca HTTP 200 oraz 36 adresów ofert. Drugi wariant adresu też działa z hosta; najkrótszy zapasowy adres zwraca 404. Discovery pokazuje ostatni napotkany błąd, który może zasłaniać problem pierwszego adresu.
+- Wynik: błąd obecnie nie odtwarza się; zapisane oferty pozostają zachowane. Nie uruchamiano pełnego importu ani nie zmieniano kolektora w ramach diagnozy.
+
 ## Wiele dzielnic w filtrze ofert (2026-09-10)
 
 - Zakres: lista dzielnic z checkboxami, wybór wielu naraz (lub wszystkich), filtrowanie wyników ofert, zachowanie wyboru w sesji i zgodność ze starszym filtrem jednej dzielnicy.
