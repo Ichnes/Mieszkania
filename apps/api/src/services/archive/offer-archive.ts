@@ -167,7 +167,7 @@ function objectStorageKey(kind: "html" | "json", checksum: string, extension: st
   return `offers/objects/${kind}/${checksum.slice(0, 2)}/${checksum}.${extension}`;
 }
 
-function buildManifestPath(sourceKey: string, externalId: string) {
+export function buildManifestPath(sourceKey: string, externalId: string) {
   const safeSource = safeSegment(sourceKey);
   const safeExternal = `${safeSegment(externalId).slice(0, 80)}-${createHash("sha1").update(externalId).digest("hex").slice(0, 10)}`;
   return resolve(storageRoot, "offers", "manifests", safeSource, `${safeExternal}.json`);

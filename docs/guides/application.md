@@ -312,8 +312,21 @@ w tabeli **Przegląd**. Złota ramka karty oznacza ofertę dodaną do ulubionych
 
 Jeśli pobrane dane Otodomu zawierają zdjęcie planu lokalu, na galerii pojawia się
 przycisk **Rzut**, otwierający go w powiększeniu. Rzuty pobierane są razem ze zdjęciami
-i korzystają z lokalnego cache. Starsze oferty wymagają ponownego pełnego pobrania
-danych, jeśli zapisano je przed rozpoznawaniem rzutów.
+i korzystają z lokalnego cache. Rzuty są dostępne również z połączonych duplikatów,
+nawet gdy główna galeria pochodzi z innego portalu. Starsze dane można uzupełnić
+z lokalnych archiwów bez ponownego pobierania ogłoszeń:
+
+```powershell
+node --import tsx apps/api/src/scripts/maintenance/backfill-otodom-floor-plans.ts --apply --download
+```
+
+Bez `--apply` skrypt tylko podaje liczbę wykrytych rzutów. `--download` pobiera brakujące
+pliki obrazów do cache; ponowne uruchomienie nie dubluje zdjęć. Przy braku lokalnego
+archiwum należy wykonać pełne pobranie danych oferty.
+
+Gdy część usług mapowych nie odpowie, **Okolica** nadal pokazuje znane obiekty,
+odległości i dojazdy. Informacja o częściowych danych dotyczy brakujących wyników;
+puste wartości z błędnej odpowiedzi nie są potwierdzeniem braku obiektów.
 
 Identyczne pierwsze 25 słów opisu pozwala automatycznie połączyć aktywne oferty
 w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielkość

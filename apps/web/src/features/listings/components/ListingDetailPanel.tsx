@@ -1,3 +1,4 @@
+import { availableAmenities } from "../lib/available-amenities";
 import { Select } from "../../../components/Select";
 import { ZoomablePhoto } from "./ZoomablePhoto";
 import { copyText } from "../../../shared/lib/clipboard";
@@ -195,6 +196,9 @@ export function ListingDetailPanel(input: {
       ? `https://www.openstreetmap.org/?mlat=${input.listing.latitude}&mlon=${input.listing.longitude}#map=16/${input.listing.latitude}/${input.listing.longitude}`
       : buildOsmSearchHref(input.listing, mapQuery);
   const activeImageUrl = input.listing.imageUrls[activeImageIndex] ?? input.listing.imageUrls[0];
+  const knownAmenities = availableAmenities(input.listing.amenities, input.listing.amenityAnalysis);
+  const hasKnownSurroundings =
+    knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
   const duplicateCandidates = input.duplicateCandidates.filter(
     (candidate) =>
       candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
@@ -1223,20 +1227,19 @@ export function ListingDetailPanel(input: {
               <strong>Okolica</strong>
               {input.listing.amenityAnalysis?.message && (
                 <p className="muted" role="status">
-                  {input.listing.amenityAnalysis.message}
+                  {hasKnownSurroundings && input.listing.amenityAnalysis.status === "unavailable"
+                    ? "Dane częściowe — pokazujemy dostępne wyniki. Nie udało się pobrać pozostałych obiektów w okolicy."
+                    : input.listing.amenityAnalysis.message}
                 </p>
               )}
               {input.isLoadingInsights && input.listing.amenityAnalysis?.status === "available" && (
                 <p className="muted">Odświeżam dane — poniżej ostatnia analiza.</p>
               )}
-              {input.isLoadingInsights && input.listing.amenityAnalysis?.status !== "available" ? (
+              {input.isLoadingInsights && !hasKnownSurroundings ? (
                 <p className="muted">Pobieram aktualne dane o okolicy...</p>
-              ) : input.listing.amenityAnalysis?.status === "unavailable" ? (
+              ) : input.listing.amenityAnalysis?.status === "unavailable" &&
+                !hasKnownSurroundings ? (
                 <div className="amenity-unavailable">
-                  <p className="muted">
-                    Publiczne serwery OpenStreetMap chwilowo nie odpowiedziały. To nie oznacza, że w
-                    okolicy niczego nie ma.
-                  </p>
                   <button
                     className="action-button secondary-button"
                     type="button"
@@ -1263,15 +1266,15 @@ export function ListingDetailPanel(input: {
               ) : (
                 <>
                   <div className="amenity-analysis-list">
-                    {input.listing.amenities.map((amenity) => (
+                    {knownAmenities.map((amenity) => (
                       <div className="amenity-analysis-row" key={amenity.key}>
                         <div>
                           <span>{amenity.label}</span>
                           <strong>{amenity.count}</strong>
                         </div>
                         <div className="amenity-distance-bands">
-                          <small>≤ 500 m: {amenity.within500m ?? 0}</small>
-                          <small>≤ 1 km: {amenity.within1000m ?? 0}</small>
+                          <small>≤ 500 m: {amenity.within500m ?? "brak danych"}</small>
+                          <small>≤ 1 km: {amenity.within1000m ?? "brak danych"}</small>
                         </div>
                         {amenity.nearestPlaces?.[0] ? (
                           <p>
@@ -1318,6 +1321,19 @@ export function ListingDetailPanel(input: {
                   <p className="amenity-attribution">
                     Promień 2 km · dane © OpenStreetMap contributors
                   </p>
+                  {input.listing.amenityAnalysis?.status === "unavailable" && (
+                    <button
+                      className="action-button secondary-button"
+                      type="button"
+                      disabled={input.isLoadingInsights}
+                      onClick={() => void input.onRefreshInsights()}
+                    >
+                      <RefreshCw size={15} aria-hidden="true" />{" "}
+                      {input.isLoadingInsights
+                        ? "Pobieram pozostałe dane…"
+                        : "Ponów pobranie brakujących danych"}
+                    </button>
+                  )}
                 </>
               )}
             </div>

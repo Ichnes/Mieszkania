@@ -1,9 +1,19 @@
 # Bieżące zadania
 
+## Naprawa rzutów i częściowych danych okolicy (2026-09-10)
+
+- [x] Rozpoznana przyczyna: rzeczywiste dane Otodomu mają osobne `ad.floorPlans`, bez HTML galerii i bez flagi w zwykłych zdjęciach. Parser obsługuje to pole; rzuty duplikatów są dostępne także przy głównym portalu innym niż Otodom.
+- [x] Przygotowany idempotentny skrypt naprawy mediów z nowych manifestów i starszych archiwów. Próba bez zapisu: 4580 odczytanych ofert, 2662 z rzutami, 3041 rzutów; 4 oferty bez archiwum.
+- [x] Okolica: zachowanie znanych odległości/liczników przy błędzie lub odświeżaniu; odfiltrowanie pustych zer zastępczych, jeden komunikat o częściowych danych, ponowienie pobrania braków.
+- [x] Uzupełniono 3041 rzutów w 2662 istniejących ofertach i pobrano 686 brakujących plików, bez błędów. Pozostałe obrazy już były w cache. Ponowne wykonanie skryptu zachowuje te same zdjęcia. Bieżący import rozpoznaje również rzuty nowych ofert.
+- [x] Testy: 151 API i 86 frontend poprawne, 3 testy środowiskowe pominięte; typecheck i build Docker poprawne. Sprawdzone rzeczywiste dane grupy z Gratką jako ofertą główną i rzutem Otodomu.
+- [x] Playwright 1440/1280/390/320 px: rzeczywisty rzut otwiera właściwy lokalny plik i poprawnie dekoduje obraz; brak przepełnienia. Częściowa odpowiedź podana przez użytkownika zachowuje Metro Bemowo i dojazdy, ukrywa nieznane zera i utrzymuje wyniki podczas odświeżania. Zrzuty sprawdzone wizualnie.
+- Pozostała praca funkcjonalna: brak. Cztery oferty bez lokalnego archiwum wymagają pełnego odświeżenia, jeżeli portal udostępnia dla nich rzut.
+
 ## Widoczność przycisku „Rzut” — diagnoza (2026-09-10)
 
 - [x] Sprawdzono warunek renderowania i bazę: przycisk znajduje się w lewym górnym rogu galerii szczegółów, ale pojawia się tylko dla zdjęcia z podpisem `Rzut`. Obecnie 0 z 199 951 zapisanych zdjęć ma takie oznaczenie, więc przycisk nie jest widoczny.
-- Pozostała praca: uzupełnić rozpoznawanie rzutów w istniejących ofertach i potwierdzić działanie na rzeczywistej ofercie Otodomu; dotychczasowy test UI korzystał z kontrolowanej odpowiedzi API.
+- [x] Rozwiązane w zadaniu powyżej: uzupełnione archiwa i test rzeczywistego rzutu z lokalnego cache.
 
 ## Ceny duplikatów, piętro, rzuty i ciaśniejszy interfejs (2026-09-10)
 

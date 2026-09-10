@@ -75,15 +75,15 @@ export async function getListingImagesForListings(
           li.id,
           li.source_url,
           li.position,
-          li.is_primary,
+          (li.is_primary and ranked_sources.source_rank = 1) as is_primary,
           li.caption,
           lma.storage_key,
           lma.download_status::text
         from ranked_sources
         join listing_images li on li.listing_id = ranked_sources.source_listing_id
         left join listing_media_assets lma on lma.id = li.asset_id
-        where ranked_sources.source_rank = 1
-        order by ranked_sources.target_listing_id, li.position asc, li.created_at asc
+        where ranked_sources.source_rank = 1 or li.caption = 'Rzut'
+        order by ranked_sources.target_listing_id, ranked_sources.source_rank, li.position asc, li.created_at asc
       `,
       [listingIds],
     );
@@ -96,6 +96,11 @@ export async function getListingImagesForListings(
   );
   for (const [index, row] of rows.entries()) {
     const images = imagesByListingId.get(row.listing_id) ?? [];
+    const existing = images.find((image) => image.sourceUrl === row.source_url);
+    if (existing) {
+      if (row.caption === "Rzut") existing.caption = "Rzut";
+      continue;
+    }
     images.push({
       id: row.id,
       sourceUrl: row.source_url,

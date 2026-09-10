@@ -25,3 +25,17 @@ test("Otodom does not invent a floor plan from the chip or an unrelated picture"
   });
   assert.equal(parsed.images.filter((image) => image.caption === "Rzut").length, 0);
 });
+test("Otodom initial data has floorPlans separately, without rendered gallery markup", async () => {
+  const parsed = await new OtodomParser().parse({
+    url: "https://www.otodom.pl/pl/oferta/test-IDfloorplan",
+    statusCode: 200,
+    html: `<script id="__NEXT_DATA__">${JSON.stringify({ props: { pageProps: { ad: { title: "Mieszkanie", images: [{ large: "https://example.com/photo.jpg" }], floorPlans: ["https://example.com/plan.jpg"], plans: null } } } })}</script>`,
+  });
+  assert.deepEqual(
+    parsed.images.map((image) => [image.sourceUrl, image.caption, image.isPrimary]),
+    [
+      ["https://example.com/photo.jpg", undefined, true],
+      ["https://example.com/plan.jpg", "Rzut", false],
+    ],
+  );
+});
