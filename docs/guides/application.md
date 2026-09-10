@@ -234,6 +234,11 @@ Dzielnice i poddzielnice są normalizowane przed liczeniem statystyk, dzięki cz
 Gocław i Praga-Południe trafiają do jednej dzielnicy. Mediany powstają z pojedynczych ofert.
 Segmenty pokazują medianę i kwartyle cen za m² (środkowe 50%) przy co najmniej 10 ofertach
 z ceną. Mniejsze próby są oznaczone; kwartyle nie są prognozą ani przedziałem ufności.
+Przedziały metrażu uwzględniają dokładną powierzchnię bez zaokrąglania: `40–<60 m²`
+oznacza od 40 m² włącznie do mniej niż 60 m². Zarówno 59,4, jak i 59,9 m² należy
+do tej grupy; 60 m² zaczyna kolejną. W podsumowaniu segmentu wyróżniono medianę,
+poniżej zakres środkowych 50% oraz liczbę ofert z ceną w próbie.
+
 Segmenty i mediana dzielnicy dotyczą ofert wykrytych w wybranym okresie, natomiast
 liczba aktywnych i główna mediana aktywnych opisują bieżący stan. Ceny są aktualnymi cenami
 ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.

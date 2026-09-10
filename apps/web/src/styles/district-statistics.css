@@ -799,6 +799,56 @@
 .stats-segment-card:last-child {
   grid-column: span 2;
 }
+.stats-segment-hint {
+  max-width: 36ch;
+  margin: 7px 0 0;
+  color: var(--ink-soft);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+.stats-segment-sample {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 9px;
+  min-width: 0;
+  margin: 0 0 8px;
+  padding: 11px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-muted);
+  font-variant-numeric: tabular-nums;
+}
+.stats-segment-sample dt {
+  color: var(--ink-soft);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1.5;
+}
+.stats-segment-sample dd {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.stats-segment-median dd {
+  color: var(--brand);
+  font-size: 0.95rem;
+  font-weight: 750;
+}
+.stats-segment-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 8px;
+  padding-top: 7px;
+  border-top: 1px solid var(--line);
+}
+.stats-segment-count dd {
+  color: var(--ink-soft);
+  font-size: 0.68rem;
+}
 .stats-segment-list {
   display: grid;
   gap: 9px;

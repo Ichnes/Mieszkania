@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Przedziały metrażu i podsumowanie segmentów (2026-09-10)
+
+- Zakres: wyjaśnienie granic metrażu i poprawa wyglądu mediany, kwartylów oraz liczby ofert.
+- [x] Potwierdzono warunki SQL `< 40`, `< 60`, `< 80`, `< 100`: 59,4 i 59,9 należą do grupy od 40 do poniżej 60, bez zaokrągleń i luk.
+- [x] Podsumowanie segmentów ma wyróżnioną medianę, osobny zakres środkowych 50% oraz oddzieloną próbę; semantyczne etykiety i responsywne zawijanie.
+- [x] Etykiety `40–<60`, `60–<80`, `80–<100 m²` i wyjaśnienie granic w UI oraz instrukcji. Faktyczny fragment SQL sprawdzony w PostgreSQL na 11 wartościach, w tym 59,4/59,5/59,99/60 oraz null; wszystkie poprawne, bez zmiany danych.
+- [x] Build i wdrożenie Docker poprawne. Chromium 1440/1280/390/320 px: 23 podsumowania bez overflow i błędów JS; etykiety poprawne. Obejrzano desktop, mobile i ciemny motyw.
+- Pozostałe prace funkcjonalne: brak; zmiana przygotowana do commita i push na bieżący branch.
+
 ## Czytelny wzrost ceny (2026-09-10)
 
 - Zakres: znak plus przed procentem podwyżki i wyraźnie czerwone oznaczenie.

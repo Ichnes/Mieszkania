@@ -121,14 +121,6 @@
   outline: 3px solid var(--ink);
   outline-offset: 2px;
 }
-.stats-segment-list .stats-segment-sample {
-  grid-column: 1 / -1;
-  margin: 0.2rem 0 0.5rem;
-  font-size: 0.8rem;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-  min-width: 0;
-}
 .listing-description {
   gap: 4px;
   margin-top: 12px;

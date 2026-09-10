@@ -456,6 +456,11 @@ export function MarketStatsPanel({
               <div>
                 <p className="eyebrow">Struktura wykrytych · {stats.periodDays} dni</p>
                 <h3>{segment.title}</h3>
+                {segment.title === "Metraż" && (
+                  <p className="stats-segment-hint">
+                    Dolna granica włącznie, górna wyłącznie. Bez zaokrąglania metrażu.
+                  </p>
+                )}
               </div>
             </div>
             <div className="stats-segment-list">
@@ -469,21 +474,33 @@ export function MarketStatsPanel({
                     {item.count.toLocaleString("pl-PL")}{" "}
                     <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
                   </strong>
-                  <p className="stats-segment-sample">
+                  <dl className="stats-segment-sample">
                     {item.sufficientSample && item.medianPricePerSqm != null ? (
                       <>
-                        Mediana: <b>{formatPrice(item.medianPricePerSqm)}</b>
-                        <br />
-                        Środkowe 50%:{" "}
-                        {Math.round(item.lowerQuartilePricePerSqm!).toLocaleString("pl-PL")}–
-                        {Math.round(item.upperQuartilePricePerSqm!).toLocaleString("pl-PL")} zł/m²
+                        <div className="stats-segment-median">
+                          <dt>Mediana</dt>
+                          <dd>{formatPrice(item.medianPricePerSqm)}</dd>
+                        </div>
+                        <div className="stats-segment-range">
+                          <dt>Środkowe 50%</dt>
+                          <dd>
+                            {Math.round(item.lowerQuartilePricePerSqm!).toLocaleString("pl-PL")}–
+                            {Math.round(item.upperQuartilePricePerSqm!).toLocaleString("pl-PL")}{" "}
+                            zł/m²
+                          </dd>
+                        </div>
                       </>
                     ) : (
-                      <>Mała próba — potrzeba {stats.minimumSampleSize ?? 10} ofert z ceną</>
+                      <div className="stats-segment-range">
+                        <dt>Za mało danych</dt>
+                        <dd>Potrzeba co najmniej {stats.minimumSampleSize ?? 10} ofert z ceną</dd>
+                      </div>
                     )}
-                    <br />
-                    Próba: {item.pricedListings ?? 0} ofert z ceną
-                  </p>
+                    <div className="stats-segment-count">
+                      <dt>Próba</dt>
+                      <dd>{(item.pricedListings ?? 0).toLocaleString("pl-PL")} ofert z ceną</dd>
+                    </div>
+                  </dl>
                 </div>
               ))}
             </div>
