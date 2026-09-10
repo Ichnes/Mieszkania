@@ -361,7 +361,7 @@
 }
 
 .listing-price-update-chip.price-up {
-  background: #b42318;
+  background: #dc2626;
 }
 
 .alert-card {
@@ -491,9 +491,18 @@
 }
 
 .badge-drop,
+.badge-rise,
 .badge-flat {
   padding: 6px 10px;
   border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.badge-rise {
+  background: #fee2e2;
+  color: #b91c1c;
+  font-weight: 700;
 }
 
 .badge-drop {

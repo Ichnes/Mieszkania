@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Czytelny wzrost ceny (2026-09-10)
+
+- Zakres: znak plus przed procentem podwyżki i wyraźnie czerwone oznaczenie.
+- [x] Dodatnie zmiany ceny pokazują `+X%` w czerwonym znaczniku; „Nowa cena” przy podwyżce ma mocniejszą czerwień. Procent nie zawija się na małych ekranach.
+- [x] Build i wdrożenie Docker poprawne; Chromium 1440/1280/390 px potwierdza `+5.2%`, `-3.1%` i `0%`, czerwony kolor wzrostu, brak zawijania procentu, overflow i błędów JS. Obejrzano widok mobilny. Dane testowe podstawione tylko w odpowiedzi przeglądarki, bez zmian bazy.
+- Pozostałe prace funkcjonalne: brak; zmiana przygotowana do commita i push na bieżący branch.
+
 ## Automatyczny commit i push po poprawkach (2026-09-10)
 
 - Zakres: stała zasada publikowania ukończonych zmian na bieżącej gałęzi oraz publikacja ostatniej poprawki przystanków.

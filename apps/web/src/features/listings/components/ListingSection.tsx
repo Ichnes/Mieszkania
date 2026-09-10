@@ -146,7 +146,16 @@ export function ListingSection(input: {
               <div className="listing-card-content">
                 <div className="listing-topline">
                   <span>{listing.city}</span>
-                  <span className={listing.priceChangePercent < 0 ? "badge-drop" : "badge-flat"}>
+                  <span
+                    className={
+                      listing.priceChangePercent > 0
+                        ? "badge-rise"
+                        : listing.priceChangePercent < 0
+                          ? "badge-drop"
+                          : "badge-flat"
+                    }
+                  >
+                    {listing.priceChangePercent > 0 ? "+" : ""}
                     {listing.priceChangePercent}%
                   </span>
                 </div>
