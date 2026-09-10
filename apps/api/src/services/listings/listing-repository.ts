@@ -1,3 +1,4 @@
+import { extractAdditionalPurchaseCosts } from "./purchase-costs";
 import { decodeListingText } from "./listing-text";
 import { buildListingSearch } from "./listing-search";
 import type {
@@ -1467,15 +1468,26 @@ function mapListingSummary(
   if (row.manual_has_lift_override === false && !amenityBadges.includes("Brak windy"))
     amenityBadges.push("Brak windy");
   const detectedCosts = extractAdditionalPurchaseCosts(row.description ?? "");
-  const garageCost = row.manual_garage_cost_override
+  const hasGarageOverride = row.manual_garage_cost_override != null;
+  const hasStorageOverride = row.manual_storage_cost_override != null;
+  const garageCost = hasGarageOverride
     ? Number(row.manual_garage_cost_override)
     : detectedCosts.garage;
-  const storageCost = row.manual_storage_cost_override
+  const storageCost = hasStorageOverride
     ? Number(row.manual_storage_cost_override)
     : detectedCosts.storage;
+  const bundle =
+    hasGarageOverride || hasStorageOverride ? undefined : detectedCosts.garageAndStorage;
   const additionalPurchaseCosts =
-    garageCost || storageCost
-      ? { garage: garageCost, storage: storageCost, total: (garageCost ?? 0) + (storageCost ?? 0) }
+    Object.keys(detectedCosts).length || hasGarageOverride || hasStorageOverride
+      ? {
+          garage: garageCost,
+          storage: storageCost,
+          garageAndStorage: bundle,
+          garageIncluded: hasGarageOverride ? garageCost === 0 : detectedCosts.garageIncluded,
+          storageIncluded: hasStorageOverride ? storageCost === 0 : detectedCosts.storageIncluded,
+          total: bundle ?? (garageCost ?? 0) + (storageCost ?? 0),
+        }
       : undefined;
   const previousRelistingPrice = row.relisting_previous_price_amount
     ? Number(row.relisting_previous_price_amount)
@@ -2532,42 +2544,6 @@ function inferMentionCount(text: string, matches: RegExpMatchArray[]) {
     if (count && (!best || count > best)) best = count;
   }
   return best;
-}
-
-function extractAdditionalPurchaseCosts(description: string) {
-  const text = normalizePolish(description);
-  const extract = (keywords: string[]) => {
-    for (const keyword of keywords) {
-      const number = `(\\d{1,3}(?:[\\s.]\\d{3})+|\\d{1,6})(?:,(\\d{1,2}))?\\s*(tys(?:iecy|iÄ™cy)?|pln|zl|zĹ‚)`;
-      const afterLabel = new RegExp(
-        `${escapeRegExp(keyword)}[\\s\\S]{0,180}?(?:dodatkowo\\s+platn\\w*|za\\s+dodatkow\\w*\\s+oplata)\\s*[:,-]?\\s*${number}`,
-        "i",
-      );
-      // Some portals phrase this as "55 000 PLN (obligatoryjny zakup)".
-      // The price comes before the qualifier, so accept it only when that
-      // qualifier appears in the same short offer fragment.
-      const obligatory = new RegExp(
-        `${escapeRegExp(keyword)}[\\s\\S]{0,120}?[:,-]?\\s*${number}[\\s\\S]{0,100}?obligatoryjn\\w*\\s+(?:zakup|nabyci\\w*)`,
-        "i",
-      );
-      const match = text.match(afterLabel) ?? text.match(obligatory);
-      if (!match?.[1]) continue;
-      const numeric = Number(`${match[1].replace(/[\\s.]/g, "")}.${match[2] ?? "0"}`);
-      if (Number.isFinite(numeric)) return /tys/i.test(match[3] ?? "") ? numeric * 1000 : numeric;
-    }
-    return undefined;
-  };
-
-  return {
-    garage: extract([
-      "garaz",
-      "garaż",
-      "miejsce postojowe",
-      "miejsce w garazu",
-      "miejsce w garażu",
-    ]),
-    storage: extract(["komorka lokatorska", "komórka lokatorska", "box lokatorski"]),
-  };
 }
 
 function isNegatedAmenity(text: string, index: number) {

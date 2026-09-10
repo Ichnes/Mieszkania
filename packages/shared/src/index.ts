@@ -394,7 +394,14 @@ export type ListingSummary = {
   hasAirConditioning?: boolean;
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
-  additionalPurchaseCosts?: { garage?: number; storage?: number; total: number };
+  additionalPurchaseCosts?: {
+    garage?: number;
+    storage?: number;
+    garageAndStorage?: number;
+    garageIncluded?: boolean;
+    storageIncluded?: boolean;
+    total: number;
+  };
   totalAcquisitionPrice?: number;
   rcnDeltaLabel: string;
   priceChangePercent: number;

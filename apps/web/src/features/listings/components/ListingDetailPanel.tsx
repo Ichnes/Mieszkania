@@ -583,11 +583,15 @@ export function ListingDetailPanel(input: {
                     <th>Metraż</th>
                     <td>{input.listing.areaLabel ?? "-"}</td>
                   </tr>
-                  {input.listing.additionalPurchaseCosts ? (
+                  {input.listing.additionalPurchaseCosts &&
+                  input.listing.additionalPurchaseCosts.total > 0 ? (
                     <tr>
                       <th>Dodatki do zakupu</th>
                       <td>
                         {formatPln(input.listing.additionalPurchaseCosts.total)}
+                        {input.listing.additionalPurchaseCosts.garageAndStorage
+                          ? " (garaż i komórka — razem)"
+                          : ""}
                         {input.listing.additionalPurchaseCosts.garage
                           ? ` (garaż: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
                           : ""}
@@ -603,7 +607,8 @@ export function ListingDetailPanel(input: {
                       </td>
                     </tr>
                   ) : null}
-                  {input.listing.additionalPurchaseCosts ? (
+                  {input.listing.additionalPurchaseCosts &&
+                  input.listing.additionalPurchaseCosts.total > 0 ? (
                     <tr>
                       <th>Cena całkowita</th>
                       <td className="fact-price">
@@ -633,13 +638,34 @@ export function ListingDetailPanel(input: {
                   <tr>
                     <th>Rok budowy</th>
                     <td>{input.listing.yearBuilt ?? "—"}</td>
-                    <th>Garaż / parking</th>
+                    <th>
+                      {input.listing.additionalPurchaseCosts?.garageAndStorage
+                        ? "Garaż i komórka"
+                        : "Garaż / parking"}
+                    </th>
                     <td>
-                      {input.listing.additionalPurchaseCosts?.garage
-                        ? formatPln(input.listing.additionalPurchaseCosts.garage)
-                        : "—"}
+                      {input.listing.additionalPurchaseCosts?.garageAndStorage
+                        ? `${formatPln(input.listing.additionalPurchaseCosts.garageAndStorage)} łącznie`
+                        : input.listing.additionalPurchaseCosts?.garageIncluded
+                          ? "W cenie mieszkania"
+                          : input.listing.additionalPurchaseCosts?.garage
+                            ? formatPln(input.listing.additionalPurchaseCosts.garage)
+                            : "—"}
                     </td>
                   </tr>
+                  {input.listing.additionalPurchaseCosts &&
+                  (input.listing.additionalPurchaseCosts.storage !== undefined ||
+                    input.listing.additionalPurchaseCosts.storageIncluded) &&
+                  !input.listing.additionalPurchaseCosts.garageAndStorage ? (
+                    <tr>
+                      <th>Komórka lokatorska</th>
+                      <td colSpan={3}>
+                        {input.listing.additionalPurchaseCosts.storageIncluded
+                          ? "W cenie mieszkania"
+                          : formatPln(input.listing.additionalPurchaseCosts.storage!)}
+                      </td>
+                    </tr>
+                  ) : null}
                   <tr>
                     <th>Po rozmowie</th>
                     <td colSpan={3}>

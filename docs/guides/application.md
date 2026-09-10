@@ -153,6 +153,11 @@ Wybór obowiązuje w bieżącej sesji aplikacji; odświeżenie całej strony go 
 
 ## Preferencje i finansowanie
 
+W szczegółach oferty **Garaż / parking** pokazuje rozpoznaną dopłatę lub **W cenie
+mieszkania**. Komórka z osobną ceną ma własny wiersz. Gdy opis podaje jedną kwotę
+za oba dodatki, widzisz **Garaż i komórka — … łącznie**; suma zakupu dolicza tę
+kwotę tylko raz. Reguły obejmują istniejące opisy bez ponownego pobierania ofert.
+
 ### Dojazdy do pracy
 
 W ustawieniach wybierz **Dodaj miejsce pracy** (maksymalnie 6). Wpisz nazwę oraz

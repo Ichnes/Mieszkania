@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Ceny garażu i komórki w szczegółach (2026-09-10)
+
+- Zakres: wszystkie przykłady dopłat użytkownika, rozdzielne ceny, pakiet garaż + komórka liczony raz oraz oznaczenie „W cenie mieszkania”.
+- [x] Osobny parser kosztów zamiast szukania kwoty za dowolnym słowem w odległym fragmencie. Wspólna cena pakietu ma osobne pole; ręczna cena 0 nie jest pomijana.
+- [x] „Garaż / parking” pokazuje cenę lub wliczenie; pakiet ma etykietę „Garaż i komórka”, a osobna cena komórki własny wiersz. Suma zakupu uwzględnia pakiet jednokrotnie.
+- [x] 52 testy parserów i cech ofert poprawne (14 kosztów: przykłady użytkownika, tysiące/kropki, zakup obligatoryjny, negacja wliczenia i wynajem). Typecheck i build poprawne.
+- [x] Przegląd 150 istniejących opisów oraz API/UI dla osobnego garażu, pakietu, dwóch oddzielnych cen i wliczenia obu dodatków. Suma pakietu sprawdzona z ceną mieszkania. Playwright 1440/1280/390/320 bez przepełnienia; widoki obejrzane.
+- [x] Instrukcja zaktualizowana; lokalne API/web/DB healthy. Dane są przeliczane przy odczycie, bez ponownego scrapowania i modyfikowania opisów w bazie.
+
 ## Miejsca pracy na świeżym koncie i wybór punktu (2026-09-10)
 
 - Przyczyna: pusta lista miejsc pracy nie miała przycisku dodania; edycja adresu nie usuwała starych współrzędnych.
