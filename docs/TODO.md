@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Wznawianie przerwanego skanu Otodomu (2026-09-10)
+
+- Zakres: trwały zapis pierwszej niepobranej strony i końca zakresu, osobny przycisk wznowienia tylko Otodomu, powiązanie zapisu z filtrami wyszukiwarki.
+- [x] Zapis w bazie po każdej zakolejkowanej stronie; przy błędzie pozostaje strona do ponowienia, przy ukończeniu zapis jest usuwany. Wznowienie zachowuje pierwotny koniec zakresu; blokada równoległych skanów Otodomu.
+- [x] Panel Aktualizacji odczytuje zapis po odświeżeniu, pokazuje datę oraz stronę i pozwala ręcznie wznowić. Osobno pozostaje sprawdzanie od początku. Układ zawija się na telefonach.
+- [x] Sześć testów checkpoint/discovery/skanu poprawnych; PostgreSQL: zapis, odczyt, aktualizacja i usunięcie sprawdzone. Typecheck i build poprawne, trzy kontenery healthy.
+- [x] Playwright 1440/1280/390/320 px: zapis po odświeżeniu, kliknięcie wysyła wyłącznie wznowienie Otodomu, komunikat ukończenia i usunięcie przycisku; brak przepełnienia. Widoki PC i telefonu sprawdzone wizualnie.
+- [x] Odzyskano 53–600 z istniejącego logu po porównaniu parametrów wyszukiwania. Rzeczywiste API oraz przycisk w lokalnej aplikacji potwierdzają ten zapis. Nie wykonywano kolejnego skanu portalu.
+- Ograniczenie: CAPTCHA może ponownie zatrzymać skan; zmiany kolejności ofert między uruchomieniami wymagają okresowego sprawdzenia od początku.
+
 ## CAPTCHA Otodomu na stronie 53 (2026-09-10)
 
 - [x] Log potwierdza `x-amzn-waf-action: captcha` przy HTTP 405. Skan zachował 52 strony, 1847 znalezionych adresów i 1 nową pozycję dodaną do kolejki.

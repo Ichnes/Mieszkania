@@ -6,6 +6,10 @@ import { resetProcessingListingImportsNow } from "../../../services/collecting/l
 
 export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors: Collectors) {
   const { otodomCollector } = collectors;
+  app.get("/api/collectors/otodom/discovery-checkpoint", async (request) => {
+    const { city } = request.query as { city?: string };
+    return otodomCollector.discoveryCheckpoint(city ?? activeRegion.primaryCity.toLowerCase());
+  });
   app.get("/api/collectors/otodom/discover", async (request) => {
     const query = request.query as {
       city?: string;
@@ -29,6 +33,8 @@ export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors:
       batchPages?: number;
       stopAfterEmptyBatches?: number;
       priority?: number;
+      resume?: boolean;
+      resumeKey?: string;
     };
 
     return otodomCollector.discoverAll({
@@ -38,6 +44,8 @@ export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors:
       batchPages: body.batchPages,
       stopAfterEmptyBatches: body.stopAfterEmptyBatches,
       priority: body.priority,
+      resume: body.resume === true,
+      resumeKey: body.resumeKey,
     });
   });
 

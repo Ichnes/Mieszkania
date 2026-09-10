@@ -1,4 +1,5 @@
 import { scanOtodomPages } from "./otodom-scan";
+import { checkpointKey, readCheckpoint, saveCheckpoint } from "./otodom-checkpoint";
 import { randomUUID } from "node:crypto";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import { appendImportFailureLog } from "../../services/collecting/import-failure-log";
@@ -26,6 +27,16 @@ import { OtodomParser } from "./otodom-parser";
 import { OtodomStorage } from "./otodom-storage";
 
 export class OtodomCollector {
+  private discoveryRunning = false;
+
+  async discoveryCheckpoint(city: string) {
+    const settings = await getFamilySettings();
+    return {
+      key: checkpointKey(city, settings.searchContract),
+      checkpoint: await readCheckpoint(checkpointKey(city, settings.searchContract)),
+      running: this.discoveryRunning,
+    };
+  }
   private readonly discovery = new OtodomDiscovery();
   private readonly fetcher = new OtodomFetcher();
   private readonly parser = new OtodomParser();
@@ -173,50 +184,92 @@ export class OtodomCollector {
 
   async discoverAll(input: {
     city: string;
+    resume?: boolean;
+    resumeKey?: string;
     startPage?: number;
     maxPages?: number;
     batchPages?: number;
     stopAfterEmptyBatches?: number;
     priority?: number;
   }) {
-    const settings = await getFamilySettings();
-    const city = input.city.toLowerCase();
-    const startPage = Math.max(1, input.startPage ?? 1);
-    const maxPages = Math.max(1, Math.min(5000, input.maxPages ?? 700));
-    const batchPages = Math.max(1, Math.min(25, input.batchPages ?? 5));
-    const stopAfterEmptyBatches = Math.max(1, Math.min(10, input.stopAfterEmptyBatches ?? 2));
-    const runId = randomUUID();
-    const result = await scanOtodomPages({
-      startPage,
-      maxPages,
-      batchPages,
-      stopAfterEmptyBatches,
-      fetchPage: (page) =>
-        this.discovery.discoverListingUrls({
-          city,
-          startPage: page,
-          pages: 1,
-          contract: settings.searchContract,
-          context: { runId, startPage, maxPages, batchPages },
-        }),
-      enqueue: (items) =>
-        enqueueListingImports({
-          sourceKey: "otodom",
-          city,
-          priority: input.priority ?? 100,
-          items,
-        }),
-      onError: (error, progress) =>
-        appendImportFailureLog({
-          sourceKey: "otodom",
-          externalId: `search-run-${runId}`,
-          canonicalUrl: "https://www.otodom.pl/pl/wyniki",
-          error,
-          attempts: 1,
-          context: { phase: "discovery-run", runId, startPage, maxPages, batchPages, ...progress },
-        }).catch((logError) => console.error("Otodom discovery log failed", logError)),
-    });
-    return { city, ...result };
+    if (this.discoveryRunning)
+      throw new Error("Skan Otodomu już trwa. Poczekaj na jego zakończenie.");
+    this.discoveryRunning = true;
+    try {
+      const settings = await getFamilySettings();
+      const city = input.city.trim().toLowerCase();
+      const key = checkpointKey(city, settings.searchContract);
+      if (input.resume && input.resumeKey && input.resumeKey !== key) {
+        throw new Error(
+          "Filtry zmieniły się od wyświetlenia zapisu. Odśwież stronę przed wznowieniem.",
+        );
+      }
+      const saved = input.resume ? await readCheckpoint(key) : null;
+      if (input.resume && !saved)
+        throw new Error(
+          "Brak przerwanego skanu dla obecnych filtrów. Uruchom sprawdzanie od początku.",
+        );
+      const startPage = saved?.nextPage ?? Math.max(1, input.startPage ?? 1);
+      const maxPages = saved
+        ? saved.endPage - startPage + 1
+        : Math.max(1, Math.min(5000, input.maxPages ?? 700));
+      const endPage = startPage + maxPages - 1;
+      const persist = (nextPage: number, error?: string) =>
+        saveCheckpoint(
+          key,
+          nextPage > endPage
+            ? null
+            : { nextPage, endPage, updatedAt: new Date().toISOString(), error },
+        );
+      await persist(startPage);
+      const batchPages = Math.max(1, Math.min(25, input.batchPages ?? 5));
+      const stopAfterEmptyBatches = Math.max(1, Math.min(10, input.stopAfterEmptyBatches ?? 2));
+      const runId = randomUUID();
+      const result = await scanOtodomPages({
+        startPage,
+        maxPages,
+        batchPages,
+        stopAfterEmptyBatches,
+        onProgress: (nextPage) => persist(nextPage),
+        fetchPage: (page) =>
+          this.discovery.discoverListingUrls({
+            city,
+            startPage: page,
+            pages: 1,
+            contract: settings.searchContract,
+            context: { runId, startPage, maxPages, batchPages },
+          }),
+        enqueue: (items) =>
+          enqueueListingImports({
+            sourceKey: "otodom",
+            city,
+            priority: input.priority ?? 100,
+            items,
+          }),
+        onError: (error, progress) =>
+          appendImportFailureLog({
+            sourceKey: "otodom",
+            externalId: `search-run-${runId}`,
+            canonicalUrl: "https://www.otodom.pl/pl/wyniki",
+            error,
+            attempts: 1,
+            context: {
+              phase: "discovery-run",
+              runId,
+              startPage,
+              maxPages,
+              batchPages,
+              ...progress,
+            },
+          }).catch((logError) => console.error("Otodom discovery log failed", logError)),
+      });
+      if (result.stoppedBecause === "error")
+        await persist(startPage + result.scannedPages, result.error);
+      else await saveCheckpoint(key, null);
+      return { city, ...result };
+    } finally {
+      this.discoveryRunning = false;
+    }
   }
 
   async collectPage(input: {

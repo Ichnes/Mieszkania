@@ -1,4 +1,32 @@
 /* Import failures must be impossible to miss and immediately actionable. */
+.otodom-resume {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px;
+  margin: 12px 0;
+  border: 1px solid var(--ink);
+  border-radius: 16px;
+}
+.otodom-resume > div {
+  flex: 1 1 340px;
+  min-width: 0;
+}
+.otodom-resume p {
+  margin: 6px 0 0;
+  overflow-wrap: anywhere;
+}
+.otodom-resume .action-button {
+  white-space: normal;
+  max-width: 100%;
+}
+@media (max-width: 600px) {
+  .otodom-resume .action-button {
+    width: 100%;
+  }
+}
+
 .sync-error-banner {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;

@@ -12,6 +12,7 @@ import {
   X,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { OtodomResume } from "../features/imports/OtodomResume";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatQueueAttemptTime, formatStaleRefreshTime } from "../features/imports/lib/queue";
 import { formatOptionalPln, formatPln } from "../shared/lib/format";
@@ -410,6 +411,12 @@ export function UpdatesPage({
             </section>
           ) : null}
 
+          <OtodomResume
+            city={discoverAllCity}
+            discovering={isDiscoveringAllPortals}
+            onComplete={() => refreshQueueStatus("manual")}
+          />
+
           {queueError ? (
             <section className="sync-error-banner" role="alert" aria-live="assertive">
               <CircleAlert size={22} aria-hidden="true" />
@@ -428,7 +435,8 @@ export function UpdatesPage({
                   }
                   disabled={isDiscoveringAllPortals || isProcessingAllPortals}
                 >
-                  <RotateCcw size={16} aria-hidden="true" /> Spróbuj ponownie
+                  <RotateCcw size={16} aria-hidden="true" />{" "}
+                  {queueErrorAction === "discover" ? "Sprawdź od początku" : "Spróbuj ponownie"}
                 </button>
                 <button
                   className="action-button secondary-button"

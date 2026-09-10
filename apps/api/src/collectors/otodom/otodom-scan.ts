@@ -7,6 +7,7 @@ export async function scanOtodomPages(input: {
   stopAfterEmptyBatches: number;
   fetchPage: (page: number) => Promise<SourceListingReference[]>;
   enqueue: (links: SourceListingReference[]) => Promise<{ queued: number }>;
+  onProgress?: (nextPage: number) => Promise<void>;
   onError: (
     error: string,
     progress: { failedPage: number; scannedPages: number; discovered: number; queued: number },
@@ -35,6 +36,7 @@ export async function scanOtodomPages(input: {
       discovered += links.length;
       batchDiscovered += links.length;
       scannedPages++;
+      await input.onProgress?.(page + 1);
     }
     emptyBatches = batchDiscovered === 0 ? emptyBatches + 1 : 0;
   }
