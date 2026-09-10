@@ -1,5 +1,9 @@
 # Bieżące zadania
 
+## Pozostawienie zakresu przepływu ofert (2026-09-10)
+
+- Użytkownik wycofał prośbę o skrócenie osi czasu. Cofnięto rozpoczęte zmiany komponentu i instrukcji; zakres nadal wynika z wybranej liczby dni. Przywrócenie dotychczasowego frontendu lokalnie.
+
 ## Przyspieszenie statystyk (2026-09-10)
 
 - Pomiar przed zmianą: 5,24 s dla 90 dni bez filtrów, 8,18 s dla windy i garażu. Pełne payloady przy filtrowaniu oraz analiza wszystkich cech opisów do samego wykończenia/czynszu były kosztowne; brak ponownego użycia wyniku.
