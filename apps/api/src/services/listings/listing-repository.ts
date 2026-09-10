@@ -2568,7 +2568,7 @@ function isNegatedAmenity(text: string, index: number) {
   );
 }
 
-function extractFeaturesFromPayload(payload?: Record<string, unknown>): ListingFeature[] {
+export function extractFeaturesFromPayload(payload?: Record<string, unknown>): ListingFeature[] {
   if (!payload) {
     return [];
   }

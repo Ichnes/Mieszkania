@@ -1,5 +1,6 @@
 import type { Pool } from "pg";
 import { extractFeatures, resolveListingAmenities } from "../listings/listing-repository";
+import { marketSnapshotPayloadSql } from "./market-snapshot";
 
 export async function getMarketAmenityFilter(
   db: Pool,
@@ -18,7 +19,7 @@ export async function getMarketAmenityFilter(
     from listings l
     left join listing_manual_overrides manual on manual.listing_id=l.id
     left join lateral (
-      select payload_raw from listing_snapshots where listing_id=l.id order by captured_at desc limit 1
+      select ${marketSnapshotPayloadSql} payload_raw from listing_snapshots where listing_id=l.id order by captured_at desc limit 1
     ) snapshot on true
     where lower(l.city)='warszawa' and ${baseFilter}
   `);

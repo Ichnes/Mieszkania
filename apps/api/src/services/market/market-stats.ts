@@ -16,6 +16,10 @@ import { getFamilySettings } from "../settings/family-settings";
 import { getMarketAmenityFilter } from "./market-amenities";
 import { getMarketSignals } from "./market-signals";
 import { getMarketPropertySegments } from "./market-property-segments";
+import { createStatsCache } from "./stats-cache";
+import type { SearchContract } from "@mieszkania/shared";
+
+const cachedStats = createStatsCache<MarketStatsResponse>();
 
 export type MarketStatsQuery = {
   minYear?: string;
@@ -27,8 +31,24 @@ export type MarketStatsQuery = {
 };
 
 export async function getMarketStats(query: MarketStatsQuery): Promise<MarketStatsResponse> {
+  const { searchContract } = await getFamilySettings();
+  const key = JSON.stringify([
+    searchContract,
+    query.period ?? "90",
+    query.minYear ?? "",
+    query.minArea ?? "",
+    query.maxArea ?? "",
+    query.elevator === "true",
+    query.garage === "true",
+  ]);
+  return cachedStats(key, () => computeMarketStats(query, searchContract));
+}
+
+async function computeMarketStats(
+  query: MarketStatsQuery,
+  searchContract: SearchContract,
+): Promise<MarketStatsResponse> {
   return withDb(async (db) => {
-    const { searchContract } = await getFamilySettings();
     const minYear = Number(query.minYear);
     const minArea = Math.max(searchContract.minArea, Number(query.minArea) || 0);
     const maxArea = Number(query.maxArea);

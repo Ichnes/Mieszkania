@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Przyspieszenie statystyk (2026-09-10)
+
+- Pomiar przed zmianą: 5,24 s dla 90 dni bez filtrów, 8,18 s dla windy i garażu. Pełne payloady przy filtrowaniu oraz analiza wszystkich cech opisów do samego wykończenia/czynszu były kosztowne; brak ponownego użycia wyniku.
+- [x] Ograniczona projekcja danych źródłowych, analiza tylko potrzebnych pól dla segmentów czynszu/wykończenia. Cache 30 s rozdzielony według filtrów i ustawień wyszukiwania; wspólna obietnica dla równoczesnych zapytań, limit 12 wyników, błędy nie są cache'owane.
+- [x] Po zmianie: 3,19 s bez filtrów i 5,75 s z windą/garażem przy pierwszym obliczeniu; odczyt cache 1–2 ms w serwisie. Pełny widok w dwóch pomiarach przeglądarki po wdrożeniu: 1,52 i 2,33 s (z nawigacją/ładowaniem aplikacji).
+- [x] Porównanie 4820 ofert: identyczne pola wykończenia/czynszu używane do klasyfikacji. Porównanie pełnego i ograniczonego payloadu dla 150 ofert: identyczne udogodnienia. Osiem testów cache, próbek, segmentów i PostgreSQL poprawnych; typecheck/build poprawne.
+- [x] Lokalna aplikacja wdrożona, API/web/DB healthy. Instrukcja opisuje 30-sekundowy cache; dane mogą pozostawać niezmienione do wygaśnięcia tego zapisu.
+
 - Weryfikacja całego zestawu zmian 2026-09-10: 179 testów API poprawnych, 5 środowiskowych pominiętych (regresja dzielnic wykonana dodatkowo na PostgreSQL), 89 testów frontend poprawnych. Typecheck/build i lokalne wdrożenie poprawne.
 
 ## Klikanie numerów tramwajów (2026-09-10)

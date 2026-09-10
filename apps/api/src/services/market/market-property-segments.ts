@@ -1,6 +1,7 @@
 import type { Pool } from "pg";
 import type { MarketSegment } from "@mieszkania/shared";
-import { extractFeatures, inferFinishQuality } from "../listings/listing-repository";
+import { extractFeaturesFromPayload, inferFinishQuality } from "../listings/listing-repository";
+import { marketSnapshotPayloadSql } from "./market-snapshot";
 import { mapPriceSample } from "./market-sample";
 
 export type PropertySegmentRow = {
@@ -43,7 +44,7 @@ export function readMonthlyFee(structured: string | undefined, description: stri
 
 export function classifyProperty(row: PropertySegmentRow) {
   const description = row.description ?? "";
-  const features = extractFeatures({ description, snapshotPayload: row.payload_raw ?? undefined });
+  const features = extractFeaturesFromPayload(row.payload_raw ?? undefined);
   const finish = normalize(features.find((f) => f.key === "finish_quality")?.value ?? "");
   const quality =
     /do wykonczenia|dewelopersk|to_finish|to_completion|do remontu|to_renovation/.test(finish)
@@ -129,10 +130,7 @@ export async function getMarketPropertySegments(db: Pool, filters: string, perio
   const result = await db.query<PropertySegmentRow>(`
     select l.description,l.price_amount,l.area_sqm,snapshot.payload_raw
     from listings l left join lateral (
-      select jsonb_build_object('portalFeatures',payload_raw->'portalFeatures',
-        'jsonLd',payload_raw->'jsonLd',
-        'nextData',jsonb_build_object('props',jsonb_build_object('pageProps',jsonb_build_object('ad',
-          jsonb_build_object('attributes',payload_raw #> '{nextData,props,pageProps,ad,attributes}'))))) payload_raw
+      select ${marketSnapshotPayloadSql} payload_raw
       from listing_snapshots where listing_id=l.id order by captured_at desc limit 1
     ) snapshot on true
     where lower(l.city)='warszawa' and l.first_seen_at >= now()-make_interval(days => ${periodDays}) and ${filters}

@@ -241,6 +241,10 @@ W preferencjach lokalizacji każda dzielnica zawiera pełną listę obszarów MS
 z mapy statystyk — łącznie 143 obszary, w tym wszystkie 5 obszarów Ursusa.
 Wybór obszaru na mapie statystyk obramowuje jego kartę w rozwiniętej tabeli.
 Wybranie innego obszaru przenosi obramowanie, a zmiana dzielnicy je czyści.
+Obliczone statystyki są przechowywane przez 30 sekund dla danego zestawu filtrów
+i ustawień wyszukiwania. Powrót do tego samego widoku korzysta z gotowego wyniku;
+zmiany w ofertach mogą być widoczne z opóźnieniem do 30 sekund. Równoczesne
+odczyty tych samych statystyk współdzielą obliczenia.
 
 Na głównej mapie i mapie szczegółów oferty kliknij przystanek, a następnie numer
 tramwaju w okienku. Wybrana trasa i jej przystanki zostaną wyróżnione. Przycisk
