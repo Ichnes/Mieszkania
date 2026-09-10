@@ -3,6 +3,38 @@ import test from "node:test";
 import { OtodomDiscovery } from "./otodom-discovery";
 import type { logOtodomSearchFailure } from "./otodom-diagnostics";
 
+for (const statusCode of [405, 202]) {
+  test(`CAPTCHA with HTTP ${statusCode} is logged and stops without trying another URL`, async () => {
+    const records: Parameters<typeof logOtodomSearchFailure>[0][] = [];
+    let calls = 0;
+    const discovery = new OtodomDiscovery(
+      {
+        fetchListing: async (url) => {
+          calls++;
+          return {
+            url,
+            html: "captcha-body",
+            statusCode,
+            responseHeaders: { "x-amzn-waf-action": "captcha" },
+          };
+        },
+      },
+      async (record) => {
+        records.push(record);
+      },
+    );
+    await assert.rejects(
+      discovery.discoverListingUrls({ city: "warszawa", startPage: 53 }),
+      /Strona 53: Otodom wymaga CAPTCHA/,
+    );
+    assert.equal(calls, 1);
+    assert.equal(records.length, 1);
+    assert.equal(records[0].document?.html, "captcha-body");
+    assert.equal(records[0].document?.statusCode, statusCode);
+    assert.equal(records[0].page, 53);
+  });
+}
+
 test("discovery captures failed bodies, exact page and run context, and preserves the first error", async () => {
   const records: Parameters<typeof logOtodomSearchFailure>[0][] = [];
   let calls = 0;

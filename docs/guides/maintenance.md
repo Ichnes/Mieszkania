@@ -49,3 +49,9 @@ Wpis `phase: discovery-run` podaje stronę przerwania oraz liczbę wcześniej
 odczytanych stron, wykrytych ofert i pozycji dodanych do kolejki. Strony są pobierane
 kolejno i zapisywane do kolejki osobno. Błąd dalszej strony nie odrzuca wcześniejszych
 wyników paczki. Nie należy interpretować HTTP 405 jako pustego wyniku wyszukiwania.
+
+Nagłówek `x-amzn-waf-action: captcha` potwierdza żądanie CAPTCHA przez zabezpieczenie
+Otodomu. Aplikacja pokazuje wtedy komunikat „Otodom wymaga CAPTCHA” z numerem strony,
+zapisuje odpowiedź i zatrzymuje skan bez próbowania kolejnego wariantu URL.
+Wcześniejsze wyniki pozostają zachowane. Sam status 405 bez tego nagłówka nie wystarcza
+do takiej diagnozy. Ponowienie skanu nie gwarantuje ustąpienia blokady portalu.

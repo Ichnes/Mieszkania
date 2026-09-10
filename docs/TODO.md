@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## CAPTCHA Otodomu na stronie 53 (2026-09-10)
+
+- [x] Log potwierdza `x-amzn-waf-action: captcha` przy HTTP 405. Skan zachował 52 strony, 1847 znalezionych adresów i 1 nową pozycję dodaną do kolejki.
+- [x] Jawne CAPTCHA daje krótki komunikat z numerem strony; po zapisaniu diagnostyki kolektor zatrzymuje się bez próbowania zapasowego adresu. Sam HTTP 405 bez tego nagłówka nadal nie jest uznawany za CAPTCHA.
+- [x] Pięć testów discovery/skanu/diagnostyki poprawnych, w tym CAPTCHA z HTTP 405 i 202 oraz zwykły 405 z zachowaniem zapasowego adresu. Typecheck i build poprawne; lokalne kontenery API, web i DB healthy.
+- Ograniczenie: zmiana nie usuwa zabezpieczenia po stronie Otodomu; nie ponawiamy pełnego skanu podczas blokady.
+
 ## Negacja platformy, Chodkiewicza i logi skanowania Otodom (2026-09-10)
 
 - [x] Parser rozróżnia „nie na platformie” / „bez platformy” od rzeczywistej platformy. Zwykły garaż podziemny pozostaje garażem.

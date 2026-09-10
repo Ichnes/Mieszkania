@@ -4,6 +4,15 @@ import { OtodomFetcher } from "./otodom-fetcher";
 import { extractOtodomExternalId } from "./otodom-url";
 import { logOtodomSearchFailure } from "./otodom-diagnostics";
 
+class OtodomCaptchaError extends Error {
+  constructor(page: number, statusCode: number) {
+    super(
+      `Strona ${page}: Otodom wymaga CAPTCHA (HTTP ${statusCode}). Skan zatrzymany; wcześniejsze wyniki zachowane.`,
+    );
+    this.name = "OtodomCaptchaError";
+  }
+}
+
 export class OtodomDiscovery implements SourceDiscovery {
   constructor(
     private readonly fetcher: ListingFetcher = new OtodomFetcher(),
@@ -50,6 +59,9 @@ export class OtodomDiscovery implements SourceDiscovery {
       let document: Awaited<ReturnType<OtodomFetcher["fetchListing"]>> | undefined;
       try {
         document = await this.fetcher.fetchListing(url);
+        if (document.responseHeaders?.["x-amzn-waf-action"]?.toLowerCase() === "captcha") {
+          throw new OtodomCaptchaError(page, document.statusCode);
+        }
         if (document.statusCode >= 400) {
           throw new Error(`Otodom: strona ${page}, HTTP ${document.statusCode}: ${url}`);
         }
@@ -72,6 +84,7 @@ export class OtodomDiscovery implements SourceDiscovery {
         } catch (logError) {
           console.error("Nie udało się zapisać diagnostyki wyszukiwarki Otodom", logError);
         }
+        if (error instanceof OtodomCaptchaError) throw error;
       }
     }
 
