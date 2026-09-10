@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Miejsca pracy na świeżym koncie i wybór punktu (2026-09-10)
+
+- Przyczyna: pusta lista miejsc pracy nie miała przycisku dodania; edycja adresu nie usuwała starych współrzędnych.
+- [x] Dodawanie/usuwanie maksymalnie sześciu miejsc, instrukcja adresu, wyszukiwanie na żądanie z wyborem wyniku, mapa z korektą kliknięciem i edycja współrzędnych. Zmiana adresu usuwa stary punkt i unieważnia spóźnione wyniki.
+- [x] Zapis wymaga adresu oraz prawidłowego punktu; API również to sprawdza. Wyszukiwanie korzysta z istniejącego Nominatim, wspólnego limitu, timeoutu i cache w bazie, bez podpowiedzi po każdym znaku.
+- [x] Siedem testów ustawień poprawnych, typecheck i build poprawne. Test wyszukiwarki z lokalnym serwerem potwierdza odczyt odpowiedzi, cache PostgreSQL oraz walidację. Rzeczywisty przykładowy adres zwrócił HTTP 200 i 5 kandydatów.
+- [x] Playwright 1440/1280/390/320: świeże konto, dodawanie, wybór wyniku, usunięcie starego punktu po zmianie adresu, kliknięcie mapy i zapis współrzędnych. Brak przepełnienia; mapy obejrzane na PC i telefonie. Test powtórzony z dostępem do sieci po blokadzie kafelków przez sandbox.
+- [x] Wdrożenie lokalne: API/web/DB healthy. Instrukcja uzupełniona. Prywatne miejsca pracy nie zostały zmienione — zapisy UI podczas testów były przechwycone.
+
 ## Wznawianie przerwanego skanu Otodomu (2026-09-10)
 
 - Zakres: trwały zapis pierwszej niepobranej strony i końca zakresu, osobny przycisk wznowienia tylko Otodomu, powiązanie zapisu z filtrami wyszukiwarki.

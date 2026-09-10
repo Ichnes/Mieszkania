@@ -1,8 +1,32 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createDefaultFamilySettings } from "@mieszkania/shared";
-import { mergeSettings, normalizeDreamProfile } from "./family-settings";
+import { mergeSettings, normalizeDreamProfile, validateWorkplacePoints } from "./family-settings";
 import { createDefaultDreamListingProfile } from "@mieszkania/shared";
+
+test("workplaces require a complete valid point while an empty list is allowed", () => {
+  const workplace = {
+    key: "test",
+    label: "Praca",
+    address: "Przykładowa 1, Warszawa",
+    latitude: 52.2,
+    longitude: 21.0,
+  };
+  assert.doesNotThrow(() => validateWorkplacePoints([]));
+  assert.doesNotThrow(() => validateWorkplacePoints([workplace]));
+  for (const patch of [
+    { address: " " },
+    { latitude: undefined },
+    { longitude: NaN },
+    { latitude: 91 },
+    { longitude: 181 },
+  ]) {
+    assert.throws(
+      () => validateWorkplacePoints([{ ...workplace, ...patch }]),
+      /wymaga adresu i punktu/,
+    );
+  }
+});
 
 test("search settings preserve zero minimums and multiple districts, and reject non-finite numeric limits", () => {
   const defaults = createDefaultFamilySettings();

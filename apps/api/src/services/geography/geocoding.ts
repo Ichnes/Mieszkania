@@ -208,10 +208,10 @@ async function fetchGeocodeResult(
   };
 }
 
-async function waitForNominatimSlot() {
+export async function waitForNominatimSlot() {
   const delay = Math.max(0, nextNominatimRequestAt - Date.now());
+  nextNominatimRequestAt = Date.now() + delay + 1_000;
   if (delay > 0) await new Promise((resolve) => setTimeout(resolve, delay));
-  nextNominatimRequestAt = Date.now() + 1_000;
 }
 
 async function readGeocodeCache(cacheKey: string): Promise<GeocodeResult | null> {

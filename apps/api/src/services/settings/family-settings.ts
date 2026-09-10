@@ -44,9 +44,24 @@ export async function getFamilySettings(): Promise<FamilySettings> {
 
 export async function updateFamilySettings(input: FamilySettings): Promise<FamilySettings> {
   const validated = validateAndNormalizeSettings(input);
+  validateWorkplacePoints(validated.workplaces);
   const geocoded = await geocodeWorkplaces(validated);
   await persistFamilySettings(geocoded);
   return geocoded;
+}
+
+export function validateWorkplacePoints(workplaces: FamilySettings["workplaces"]) {
+  for (const workplace of workplaces) {
+    if (
+      !workplace.address?.trim() ||
+      !Number.isFinite(workplace.latitude) ||
+      !Number.isFinite(workplace.longitude) ||
+      Math.abs(workplace.latitude!) > 90 ||
+      Math.abs(workplace.longitude!) > 180
+    ) {
+      throw new Error("Każde miejsce pracy wymaga adresu i punktu wybranego na mapie.");
+    }
+  }
 }
 
 export function mergeSettings(stored?: Partial<FamilySettings>) {

@@ -153,6 +153,22 @@ Wybór obowiązuje w bieżącej sesji aplikacji; odświeżenie całej strony go 
 
 ## Preferencje i finansowanie
 
+### Dojazdy do pracy
+
+W ustawieniach wybierz **Dodaj miejsce pracy** (maksymalnie 6). Wpisz nazwę oraz
+ulicę, numer budynku i miejscowość, np. „Marszałkowska 1, Warszawa”. Numer lokalu
+nie jest potrzebny; przy niejednoznacznej ulicy dopisz dzielnicę.
+Kliknij **Znajdź adres na mapie**, wybierz pasujący wynik i sprawdź zaznaczony punkt.
+Możesz poprawić go kliknięciem na mapie, np. wskazując wejście do biura, albo wpisać
+szerokość i długość geograficzną. Na końcu kliknij **Zapisz ustawienia**.
+Zmiana tekstu adresu usuwa poprzedni punkt, aby nie liczyć dojazdu do starego miejsca.
+Jeśli wyszukiwarka nie odpowiada, nadal można wskazać punkt ręcznie.
+
+Wyszukiwanie adresów korzysta z Nominatim/OpenStreetMap wyłącznie na żądanie,
+z limitem 1 zapytania na sekundę dla aplikacji i cache wyników w bazie.
+Obowiązuje [polityka Nominatim](https://operations.osmfoundation.org/policies/nominatim/).
+Serwer można zmienić przez `NOMINATIM_BASE_URL` (adres z końcowym `/`).
+
 Miasto w **Aktualizacji** pochodzi z **Preferencji wyszukiwania → Zakres pobieranych ofert**.
 Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe wyszukiwania
 na wszystkich ośmiu portalach używają wybranego miasta.

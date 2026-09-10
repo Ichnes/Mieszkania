@@ -1,3 +1,4 @@
+import { WorkplaceEditor } from "./WorkplaceEditor";
 import { Select } from "../../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";
 import type { FamilySettings } from "@mieszkania/shared";
@@ -137,42 +138,61 @@ export function SettingsPanel(input: {
             </div>
           </div>
           <div className="settings-workplaces-grid">
-            {local.workplaces.map((workplace, index) => (
-              <div key={workplace.key} className="settings-workplace-card">
-                <span className="settings-card-index">{index + 1}</span>
-                <label className="field-label">
-                  <span>Nazwa miejsca</span>
-                  <input
-                    className="text-input"
-                    value={workplace.label}
-                    onChange={(event) =>
-                      setLocal((current) => ({
-                        ...current,
-                        workplaces: current.workplaces.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, label: event.target.value } : item,
-                        ),
-                      }))
-                    }
-                  />
-                </label>
-                <label className="field-label settings-address-field">
-                  <span>Adres</span>
-                  <input
-                    className="text-input"
-                    value={workplace.address}
-                    onChange={(event) =>
-                      setLocal((current) => ({
-                        ...current,
-                        workplaces: current.workplaces.map((item, itemIndex) =>
-                          itemIndex === index ? { ...item, address: event.target.value } : item,
-                        ),
-                      }))
-                    }
-                  />
-                </label>
-              </div>
+            {local.workplaces.map((workplace) => (
+              <WorkplaceEditor
+                key={workplace.key}
+                value={workplace}
+                onChange={(next) =>
+                  setLocal((current) => ({
+                    ...current,
+                    workplaces: current.workplaces.map((item) =>
+                      item.key === workplace.key ? next : item,
+                    ),
+                  }))
+                }
+                onRemove={() =>
+                  setLocal((current) => ({
+                    ...current,
+                    workplaces: current.workplaces.filter((item) => item.key !== workplace.key),
+                  }))
+                }
+              />
             ))}
           </div>
+          <p>
+            Podaj ulicę, numer budynku i miejscowość, bez numeru lokalu. Przy niejednoznacznym
+            adresie dopisz dzielnicę. Wybierz wynik i sprawdź punkt na mapie.
+          </p>
+          <button
+            type="button"
+            className="action-button secondary-button"
+            disabled={local.workplaces.length >= 6}
+            onClick={() =>
+              setLocal((current) => ({
+                ...current,
+                workplaces: [
+                  ...current.workplaces,
+                  {
+                    key: `workplace-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+                    label: `Praca ${current.workplaces.length + 1}`,
+                    address: "",
+                  },
+                ],
+              }))
+            }
+          >
+            Dodaj miejsce pracy
+          </button>
+          {local.workplaces.some(
+            (item) =>
+              !item.address.trim() ||
+              !Number.isFinite(item.latitude) ||
+              !Number.isFinite(item.longitude),
+          ) && (
+            <p role="status">
+              Uzupełnij adres i wybierz punkt dla każdego miejsca pracy albo usuń niepotrzebny wpis.
+            </p>
+          )}
         </section>
 
         <section className="settings-section">
@@ -616,7 +636,17 @@ export function SettingsPanel(input: {
             </button>
             <button
               className="action-button"
-              disabled={input.isSaving}
+              disabled={
+                input.isSaving ||
+                local.workplaces.some(
+                  (item) =>
+                    !item.address.trim() ||
+                    !Number.isFinite(item.latitude) ||
+                    !Number.isFinite(item.longitude) ||
+                    Math.abs(item.latitude!) > 90 ||
+                    Math.abs(item.longitude!) > 180,
+                )
+              }
               onClick={() => void input.onSave(settingsWithPendingDreamLocation())}
             >
               {input.isSaving ? (
