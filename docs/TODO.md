@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Widoczność przycisku „Rzut” — diagnoza (2026-09-10)
+
+- [x] Sprawdzono warunek renderowania i bazę: przycisk znajduje się w lewym górnym rogu galerii szczegółów, ale pojawia się tylko dla zdjęcia z podpisem `Rzut`. Obecnie 0 z 199 951 zapisanych zdjęć ma takie oznaczenie, więc przycisk nie jest widoczny.
+- Pozostała praca: uzupełnić rozpoznawanie rzutów w istniejących ofertach i potwierdzić działanie na rzeczywistej ofercie Otodomu; dotychczasowy test UI korzystał z kontrolowanej odpowiedzi API.
+
 ## Ceny duplikatów, piętro, rzuty i ciaśniejszy interfejs (2026-09-10)
 
 - Zakres: wspólna najniższa cena grupy z historią obniżki i portalem; błędny parter oferty `3ef5c045-4e87-4375-81c0-42a16ac4c35d`; usunięcie powtórzonych portali, zwinięte umawianie oglądania, złota ramka ulubionych, mniejsze odstępy kredytu/statystyk/analizy historii.
