@@ -1,5 +1,33 @@
 # Bieżące zadania
 
+## Publikacja zmian na GitHub (2026-09-10)
+
+- Zakres: autoryzowany commit i push na `origin/main` — aktualizacja README, lokalne dane transportu i naprawa detekcji archiwizacji OLX.
+- [x] Sprawdzono zakres plików; wyniki testów, builda i kontroli UI opisano poniżej. Dane użytkownika, `.env`, `storage/` i `.local/` pozostają poza commitem.
+- Pozostałe prace funkcjonalne: brak; publikacja przygotowana na bieżącej gałęzi `main`.
+
+## Lokalny transport na mapie i wskazana oferta OLX (2026-09-10)
+
+- Zakres: mapa bez oczekiwania na pobranie tramwajów, lokalna geometria torów i przystanki kolei, diagnoza oferty OLX `olx-1cgiQn`.
+- [x] Diagnoza: tramwaje czekają na odnowienie cache po 6 godzinach; kolej odpytuje Overpass przy każdym otwarciu, a fallback łączy stacje prostymi poza torami.
+- [x] Dołączono wspólny zestaw OSM: 1297 odcinków torów tras pasażerskich, 150 stacji, 26 numerów tramwajów i 599 przystanków. Obie mapy działają bez zapytań transportu; kolej to jedna warstwa torów bez schematycznych prostych. Generator i opis źródeł w repozytorium.
+- [x] OLX: status „completed” ukrywał pominięcie `unavailableBeforeImport`; wskazany link nie był zapisany. Przyczyna: komunikat archiwizacji w słowniku tłumaczeń JavaScript aktywnej strony. Detekcja pomija skrypty, style, komentarze i atrybuty; OLX raportuje HTTP 403/429/5xx jako błędy.
+- [x] Rzeczywista strona OLX: HTTP 200, aktywna oferta, 85 m², 4 pokoje, 1 499 000 zł, 8 zdjęć. Znaleziono 30 pominiętych pozycji do ponownego sprawdzenia.
+- [x] Typecheck poprawny; 145 testów API i 85 frontendu przechodzą, 2 testy środowiskowe API pominięte. Regresje słownika OLX, prawdziwej archiwizacji i transportu bez sieci.
+- [x] Końcowy zestaw pasażerski przeszedł test offline; build i wdrożenie Docker zakończone. Chromium 1440/1280/390 px: gotowa mapa w 1,2–1,3 s, filtry 54/49/30 ms, zero zapytań transportu, działa przesuwanie, brak błędów JS i overflow. Obejrzano mapę na podkładzie OSM oraz mapę oferty na 390 px.
+- [x] Ponownie sprawdzono 30 pominiętych i 121 starszych zarchiwizowanych pozycji OLX. Wszystkie 151 zadań zakończone bez błędów: 77 aktywnych ofert przywróconych/pobranych, 73 rzeczywiście usunięte, jedna niedostępna przed importem. Wskazana oferta aktywna, niescalona i nieukryta; HTTP 200 szczegółów, 8 zdjęć i widoczność w UI potwierdzone.
+- [x] Dokumentacja użytkowa i źródła danych zaktualizowane; formatowanie oraz `git diff --check` poprawne.
+- Pozostała praca w tym zakresie: brak. Kafelki podkładu nadal pobierane z OSM; lokalne są warstwy transportu.
+
+## Aktualizacja instrukcji uruchamiania (2026-09-10)
+
+- Zakres: README zgodne z obecnym uruchamianiem aplikacji przez Docker.
+- [x] Docker Desktop, start w tle i port 8080 jako główna ścieżka; aktualizacja, zatrzymanie, logi, trwałość danych i lokalny override.
+- [x] Opisano tryb `docker:dev`; start bez kontenerów na 5173 pozostaje alternatywą. Uporządkowano sekcję alternatywną w instrukcji startu i doprecyzowano restart kontenerów.
+- [x] Polecenia i zachowanie porównano z package.json, skryptami startowymi, Dockerfile i plikami Compose.
+- [x] Prettier i `git diff --check` poprawne; lokalne odnośniki prowadzą do istniejących plików, nowe kotwice odpowiadają nagłówkom instrukcji.
+- Pozostała praca: brak. Zmiana dokumentacji; bez uruchamiania aplikacji ani modyfikacji danych.
+
 ## Wydajność mapy i transport (2026-09-09)
 
 - Zakres: przyspieszenie mapy przy wielu ofertach, lżejsze podglądy, naprawa tramwajów i przełącznika filtrów; korekta nowych stacji M2 oraz przebiegów M4/M5 według źródeł internetowych.

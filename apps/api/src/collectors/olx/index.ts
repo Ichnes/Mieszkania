@@ -33,6 +33,8 @@ export class OlxCollector {
   ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
     const document = await this.fetcher.fetchListing(url);
+    if (document.statusCode >= 400 && document.statusCode !== 404 && document.statusCode !== 410)
+      throw new Error(`HTTP ${document.statusCode}: ${url}`);
     if (!isDirectOlxListingDocument(document.finalUrl ?? document.url)) {
       throw new Error(`NOT_DIRECT_OLX_LISTING: ${document.finalUrl ?? document.url}`);
     }
@@ -213,7 +215,7 @@ export class OlxCollector {
             await completeListingImport(item.id, { unavailableBeforeImport: true });
             return item;
           }
-          await completeListingImport(item.id);
+          await completeListingImport(item.id, { unavailableBeforeImport: false });
           return item;
         }),
       );

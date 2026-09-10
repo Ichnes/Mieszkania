@@ -1,10 +1,9 @@
-import { apiFetch } from "../../shared/lib/http";
+import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import type { ListingDetail } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
-import { apiBaseUrl } from "../../shared/lib/api";
 import { escapeHtml } from "../../shared/lib/text";
-import { metroLineColors, warsawMetroLines, warsawRailLines } from "./data/transit";
+import { metroLineColors, warsawMetroLines } from "./data/transit";
 import { ensureLeafletLoaded, mapLocationIconHtml } from "./lib/leaflet";
 import { metroStationPopup } from "./lib/metro-popup";
 import { mapRailStations } from "./lib/rail-stations";
@@ -20,11 +19,8 @@ export function ListingTransitMap(input: {
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapAttempt, setMapAttempt] = useState(0);
-  const [tramStops, setTramStops] = useState<Array<MapCoordinate & { routes: string[] }>>([]);
-  const [railwayMap, setRailwayMap] = useState<{
-    stations: Array<MapCoordinate & { kind?: string }>;
-    lines: Array<Array<[number, number]>>;
-  } | null>(null);
+  const tramStops = warsawTramwayMap.stops;
+  const railwayMap = warsawRailwayMap;
   const latitude = input.listing.latitude!;
   const longitude = input.listing.longitude!;
 
@@ -62,19 +58,6 @@ export function ListingTransitMap(input: {
   }, [mapAttempt]);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void apiFetch(`${apiBaseUrl}/api/map/railway`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => setRailwayMap(data))
-      .catch(() => setRailwayMap(null));
-    void apiFetch(`${apiBaseUrl}/api/map/tramway`, { signal: controller.signal })
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => setTramStops(data?.stops ?? []))
-      .catch(() => setTramStops([]));
-    return () => controller.abort();
-  }, []);
-
-  useEffect(() => {
     if (!mapReady || !window.L || !mapRef.current || !layerRef.current) return;
     layerRef.current.clearLayers();
     if (focusedListingIdRef.current !== input.listing.id) {
@@ -97,16 +80,13 @@ export function ListingTransitMap(input: {
       .addTo(layerRef.current);
 
     const railwayStations = new Map<string, MapCoordinate>();
-    const railLines =
-      railwayMap?.lines ??
-      warsawRailLines.map((line) =>
-        line.stations.map((station) => [station.latitude, station.longitude] as [number, number]),
-      );
-    const railStations = mapRailStations(railwayMap?.stations);
-    for (const line of railLines)
-      window.L.polyline(line, { color: "#17202a", weight: 2.5, opacity: 0.76 }).addTo(
-        layerRef.current,
-      );
+    const railStations = mapRailStations(railwayMap.stations);
+    window.L.polyline(railwayMap.lines, {
+      interactive: false,
+      color: "#17202a",
+      weight: 2.5,
+      opacity: 0.76,
+    }).addTo(layerRef.current);
     for (const station of railStations)
       railwayStations.set(
         `${station.latitude.toFixed(5)}:${station.longitude.toFixed(5)}`,

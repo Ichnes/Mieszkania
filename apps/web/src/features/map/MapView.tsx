@@ -1,18 +1,13 @@
 import { Select } from "../../components/Select";
-import { apiFetch } from "../../shared/lib/http";
+import { apiBaseUrl } from "../../shared/lib/api";
+import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import type { FamilySettings, ListingSummary } from "@mieszkania/shared";
 import { SlidersHorizontal } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
-import { apiBaseUrl } from "../../shared/lib/api";
 import { escapeHtml } from "../../shared/lib/text";
 import { ListingBadgeRow } from "../listings/components/ListingBadgeRow";
-import {
-  metroLineColors,
-  warsawDistrictCoordinates,
-  warsawMetroLines,
-  warsawRailLines,
-} from "./data/transit";
+import { metroLineColors, warsawDistrictCoordinates, warsawMetroLines } from "./data/transit";
 import { isValidMapPoint } from "./lib/geometry";
 import { ensureLeafletLoaded } from "./lib/leaflet";
 import { listingPriceAmount } from "./lib/previews";
@@ -46,28 +41,13 @@ export function MapView(input: {
   const [offerSearch, setOfferSearch] = useState("");
   const [mapFiltersOpen, setMapFiltersOpen] = useState(() => window.innerWidth > 700);
   const [listPage, setListPage] = useState(1);
-  const [railwayMap, setRailwayMap] = useState<{
-    stations: Array<MapCoordinate & { kind?: string }>;
-    lines: Array<Array<[number, number]>>;
-  } | null>(null);
-  const [tramwayMap, setTramwayMap] = useState<{
-    stops: Array<MapCoordinate & { routes: string[] }>;
-    routes: Array<{
-      id: string;
-      ref: string;
-      name: string;
-      colour?: string;
-      lines: Array<Array<[number, number]>>;
-    }>;
-  } | null>(null);
+  const railwayMap = warsawRailwayMap;
+  const tramwayMap = warsawTramwayMap;
   const [transitLayerVisibility, setTransitLayerVisibility] = useState({
     metro: true,
     railway: true,
     tramway: true,
   });
-  const [tramError, setTramError] = useState(false);
-  const [tramLoading, setTramLoading] = useState(true);
-  const [tramAttempt, setTramAttempt] = useState(0);
   const [selectedTramRoute, setSelectedTramRoute] = useState<string | null>(null);
   onOpenRef.current = input.onOpen;
   const hasListingFilters = Boolean(
@@ -167,36 +147,6 @@ export function MapView(input: {
   }, [mapAttempt]);
 
   useEffect(() => {
-    void apiFetch(`${apiBaseUrl}/api/map/railway`)
-      .then((response) => (response.ok ? response.json() : null))
-      .then((data) => {
-        if (data) setRailwayMap(data);
-      })
-      .catch(() => undefined);
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-    setTramLoading(true);
-    setTramError(false);
-    void apiFetch(`${apiBaseUrl}/api/map/tramway`)
-      .then((response) => (response.ok ? response.json() : Promise.reject(new Error("tramway"))))
-      .then((data) => {
-        if (!cancelled && data?.routes?.length) setTramwayMap(data);
-        else if (!cancelled) setTramError(true);
-      })
-      .catch(() => {
-        if (!cancelled) setTramError(true);
-      })
-      .finally(() => {
-        if (!cancelled) setTramLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [tramAttempt]);
-
-  useEffect(() => {
     if (!mapReady || !window.L || !mapRef.current || !layerRef.current) return;
     layerRef.current.clearLayers();
     const bounds: Array<[number, number]> = [];
@@ -214,20 +164,14 @@ export function MapView(input: {
     }
     if (transitLayerVisibility.railway) {
       const railMarkers = new Map<string, MapCoordinate>();
-      const railLines =
-        railwayMap?.lines ??
-        warsawRailLines.map((line) =>
-          line.stations.map((station) => [station.latitude, station.longitude] as [number, number]),
-        );
-      const railStations = mapRailStations(railwayMap?.stations);
-      for (const line of railLines)
-        window.L.polyline(line, {
-          interactive: false,
-          className: "rail-line",
-          color: "#34404d",
-          weight: 3,
-          opacity: 0.85,
-        }).addTo(layerRef.current);
+      const railStations = mapRailStations(railwayMap.stations);
+      window.L.polyline(railwayMap.lines, {
+        interactive: false,
+        className: "rail-line",
+        color: "#34404d",
+        weight: 3,
+        opacity: 0.85,
+      }).addTo(layerRef.current);
       for (const station of railStations) {
         railMarkers.set(`${station.latitude.toFixed(5)}:${station.longitude.toFixed(5)}`, station);
       }
@@ -253,14 +197,10 @@ export function MapView(input: {
       const visibleTramRoutes = selectedTramRoute
         ? (tramwayMap?.routes ?? []).filter((route) => route.ref === selectedTramRoute)
         : (tramwayMap?.routes ?? []);
-      const segments = new Map<string, Array<[number, number]>>();
-      for (const route of visibleTramRoutes)
-        for (const line of route.lines) {
-          const forward = JSON.stringify(line);
-          const reverse = JSON.stringify([...line].reverse());
-          segments.set(forward < reverse ? forward : reverse, line);
-        }
-      window.L.polyline([...segments.values()], {
+      const lines = selectedTramRoute
+        ? visibleTramRoutes.flatMap((route) => route.lines)
+        : tramwayMap.lines;
+      window.L.polyline(lines, {
         interactive: false,
         className: selectedTramRoute ? "tram-line is-selected" : "tram-line",
         color: selectedTramRoute ? "#c8248d" : "#279bc7",
@@ -426,22 +366,6 @@ export function MapView(input: {
 
   return (
     <>
-      {transitLayerVisibility.tramway && tramLoading && (
-        <p className="muted" role="status">
-          Ładowanie tras tramwajowych…
-        </p>
-      )}
-      {transitLayerVisibility.tramway && tramError && (
-        <p role="alert">
-          Nie udało się pobrać tramwajów.{" "}
-          <button
-            className="action-button secondary-button"
-            onClick={() => setTramAttempt((value) => value + 1)}
-          >
-            Spróbuj ponownie
-          </button>
-        </p>
-      )}
       <section className="map-filter-shell">
         <div className="map-filter-heading">
           <div>

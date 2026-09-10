@@ -1,6 +1,4 @@
-import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
-import { join } from "node:path";
-import { storageRoot } from "../../config";
+import { warsawTramwayMap } from "@mieszkania/shared/transport";
 type RouteMember = { type: "node" | "way" | "relation"; ref: number; role?: string };
 type TramRouteRelation = {
   type: "relation";
@@ -17,80 +15,8 @@ type TramStopNode = {
 };
 type TramWay = { type: "way"; id: number; geometry?: Array<{ lat: number; lon: number }> };
 
-let cachedTramwayMap: Awaited<ReturnType<typeof loadWarsawTramwayMap>> | null = null;
-let cacheExpiresAt = 0;
-let inFlight: Promise<Awaited<ReturnType<typeof loadWarsawTramwayMap>>> | null = null;
-const cacheFile = join(storageRoot, "geography", "tramway-v2.json");
-
 export async function getWarsawTramwayMap() {
-  if (cachedTramwayMap && Date.now() < cacheExpiresAt) return cachedTramwayMap;
-  if (inFlight) return inFlight;
-  inFlight = (async () => {
-    if (!cachedTramwayMap) {
-      try {
-        const disk = JSON.parse(await readFile(cacheFile, "utf8"));
-        if (disk.data?.routes?.length && disk.data?.stops?.length) {
-          cachedTramwayMap = disk.data;
-          cacheExpiresAt = disk.expiresAt;
-          if (Date.now() < cacheExpiresAt) return cachedTramwayMap!;
-        }
-      } catch {
-        /* No usable disk cache yet. */
-      }
-    }
-    try {
-      const data = await loadWarsawTramwayMap();
-      if (!data.routes.length || !data.stops.length)
-        throw new Error("Brak tras tramwajowych w odpowiedzi serwera mapy");
-      cachedTramwayMap = data;
-      cacheExpiresAt = Date.now() + 6 * 60 * 60 * 1000;
-      await mkdir(join(storageRoot, "geography"), { recursive: true });
-      await writeFile(cacheFile + ".tmp", JSON.stringify({ data, expiresAt: cacheExpiresAt }));
-      await rename(cacheFile + ".tmp", cacheFile);
-      return data;
-    } catch (error) {
-      if (cachedTramwayMap) {
-        cacheExpiresAt = Date.now() + 60_000;
-        return cachedTramwayMap;
-      }
-      throw error;
-    }
-  })().finally(() => {
-    inFlight = null;
-  });
-  return inFlight;
-}
-
-async function loadWarsawTramwayMap() {
-  const query = `[out:json][timeout:40];relation[type=route][route=tram](52.00,20.55,52.55,21.50)->.routes;(.routes;way(r.routes);node(r.routes););out body geom;`;
-  let response: Response | undefined;
-  let failure: unknown;
-  for (const endpoint of [
-    "https://overpass.kumi.systems/api/interpreter",
-    "https://overpass-api.de/api/interpreter",
-  ]) {
-    try {
-      response = await fetch(endpoint, {
-        method: "POST",
-        signal: AbortSignal.timeout(70_000),
-        headers: {
-          "content-type": "application/x-www-form-urlencoded",
-          "user-agent": "mieszkania-local-app/0.1",
-        },
-        body: new URLSearchParams({ data: query }),
-      });
-      if (response.ok) break;
-      failure = new Error(`Tramway map import failed with status ${response.status}`);
-    } catch (error) {
-      failure = error;
-    }
-  }
-  if (!response?.ok) throw failure;
-
-  const elements =
-    ((await response.json()) as { elements?: Array<TramRouteRelation | TramStopNode | TramWay> })
-      .elements ?? [];
-  return parseTramwayMap(elements);
+  return warsawTramwayMap;
 }
 
 export function parseTramwayMap(elements: Array<TramRouteRelation | TramStopNode | TramWay>) {

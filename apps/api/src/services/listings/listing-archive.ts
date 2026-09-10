@@ -19,7 +19,15 @@ export function isUnavailableListingDocument(document: FetchedListingDocument) {
     return true;
   }
 
-  const normalizedHtml = `${document.html} ${document.url} ${document.finalUrl ?? ""}`
+  // Bundled translations contain archive messages even on active ads (notably OLX).
+  // Inspect page text, never scripts, styles, comments, URLs or HTML attributes.
+  const normalizedHtml = document.html
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, " ")
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, " ")
+    .replace(/<!--[\s\S]*?-->/g, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;|&#160;/gi, " ")
+    .replace(/\s+/g, " ")
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[łŁ]/g, "l")

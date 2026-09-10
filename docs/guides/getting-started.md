@@ -18,7 +18,8 @@ Port 8080 jest dostępny także przez `http://IP-KOMPUTERA:8080/oferty` w sieci
 domowej, jeśli zapora Windows pozwala na połączenia. Opcjonalne
 `DOCKER_BIND_ADDRESS=127.0.0.1` ogranicza dostęp do tego komputera.
 `-d` uruchamia kontenery w tle; zamknięcie terminala ich nie zatrzymuje.
-Po restarcie komputera uruchom Docker Desktop — kontenery mają automatyczny restart.
+Po restarcie komputera uruchom Docker Desktop — kontenery mają automatyczny restart,
+o ile nie zostały ręcznie zatrzymane. Po `docker compose down` ponów polecenie startu.
 Przed udostępnieniem przez internet włącz [opcjonalne logowanie](login.md) i HTTPS.
 
 `docker compose logs --tail=100` pokazuje logi. `docker compose down` zatrzymuje
@@ -53,13 +54,15 @@ ponieważ zawiera lokalne ścieżki i dane połączenia; nie wysyłaj go znajome
 W takim układzie PostgreSQL Windows musi nadal działać. Nie uruchamiaj równolegle
 drugiego API przez `npm run dev`, aby nie powielać automatycznych importów.
 
-## Wymagania
+## Bez kontenerów
+
+### Wymagania
 
 - Node.js 22.14 lub nowszy i npm.
 - Działający PostgreSQL 16 lub nowszy. Zainstaluj go lokalnie przed uruchomieniem aplikacji.
 - Wolne porty 5173 (frontend) i 3001 (API).
 
-## Nowa kopia repo
+### Nowa kopia repo
 
 ```sh
 git clone https://github.com/Ichnes/Mieszkania.git

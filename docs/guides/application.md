@@ -255,8 +255,10 @@ Współrzędne metra są dołączone do aplikacji. Po kliknięciu planowanej sta
 możesz sprawdzić jej etap i źródło planu. M4, M5 i przedłużenie M2 do Ursusa
 pokazują orientacyjne lokalizacje; połączenia punktów nie wyznaczają dokładnych
 osi tuneli. [Źródła danych metra](../reference/metro-map-sources.md).
-Tramwaje pobierają dane z sieci i zapisują ostatni poprawny wynik na dysku.
-Jeżeli pierwsze pobranie się nie powiedzie, mapa pokaże przycisk ponowienia.
+Tramwaje i kolej są zapisane w aplikacji — otwarcie mapy nie czeka na pobieranie
+transportu z internetu. Kolej to wspólna warstwa torów PKP / SKM / KM / WKD
+z przystankami, bez prostych łączących stacje. Kafelki tła nadal wymagają sieci.
+[Zakres i aktualizacja danych transportu](../reference/transport-snapshot.md).
 W pełnoekranowym podglądzie zdjęć rozsuń palce, aby powiększyć, i zsuń, aby pomniejszyć.
 Powiększone zdjęcie można przesuwać; przy podstawowym powiększeniu przesunięcie w bok
 zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje zdjęcie do
