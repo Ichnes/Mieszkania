@@ -12,10 +12,12 @@ export function StatsDistrictMap({
   stats,
   selected,
   onSelect,
+  onAreaSelect,
 }: {
   stats: MarketStatsResponse;
   selected: string | null;
   onSelect: (district: string) => void;
+  onAreaSelect: (area: string | null) => void;
 }) {
   const [data, setData] = useState<MsiCollection | null>(null);
   const [failed, setFailed] = useState(false);
@@ -35,7 +37,14 @@ export function StatsDistrictMap({
       });
     return () => controller.abort();
   }, [attempt]);
-  useEffect(() => setAreaId(null), [selected]);
+  useEffect(() => {
+    setAreaId(null);
+    onAreaSelect(null);
+  }, [selected, onAreaSelect]);
+  function selectArea(id: number, name: string) {
+    setAreaId(id);
+    onAreaSelect(name);
+  }
   const areas = useMemo(
     () =>
       (data?.features ?? [])
@@ -121,11 +130,11 @@ export function StatsDistrictMap({
                     tabIndex={0}
                     aria-pressed={a.id === areaId}
                     aria-label={a.properties.name}
-                    onClick={() => setAreaId(a.id)}
+                    onClick={() => selectArea(a.id, a.properties.name)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        setAreaId(a.id);
+                        selectArea(a.id, a.properties.name);
                       }
                     }}
                   >
@@ -182,7 +191,7 @@ export function StatsDistrictMap({
                 type="button"
                 className={a.id === areaId ? "is-selected" : ""}
                 aria-pressed={a.id === areaId}
-                onClick={() => setAreaId(a.id)}
+                onClick={() => selectArea(a.id, a.properties.name)}
               >
                 <span className={`msi-key msi-color-${index % 6}`}>{index + 1}</span>
                 {a.properties.name}

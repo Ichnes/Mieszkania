@@ -1,5 +1,7 @@
 import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import { tramStopStyle } from "./lib/tram-style";
+import { selectedTramColor } from "./lib/tram-style";
+import { createTramStopPopup } from "./lib/tram-popup";
 import type { ListingDetail } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
@@ -20,6 +22,7 @@ export function ListingTransitMap(input: {
   const [mapReady, setMapReady] = useState(false);
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapAttempt, setMapAttempt] = useState(0);
+  const [selectedTramRoute, setSelectedTramRoute] = useState<string | null>(null);
   const tramStops = warsawTramwayMap.stops;
   const railwayMap = warsawRailwayMap;
   const latitude = input.listing.latitude!;
@@ -162,23 +165,50 @@ export function ListingTransitMap(input: {
       marker.bindPopup(station.popups.join("<hr/>")).addTo(layerRef.current);
     }
 
+    if (selectedTramRoute) {
+      const route = warsawTramwayMap.routes.find((route) => route.ref === selectedTramRoute);
+      if (route)
+        window.L.polyline(route.lines, {
+          interactive: false,
+          color: selectedTramColor,
+          weight: 5,
+          opacity: 0.96,
+          className: "tram-line is-selected",
+        }).addTo(layerRef.current);
+    }
     for (const stop of tramStops) {
       const marker = window.L.circleMarker(
         [stop.latitude, stop.longitude],
-        tramStopStyle(stop.routes),
+        tramStopStyle(stop.routes, selectedTramRoute),
       );
       marker
-        .bindPopup(
-          `<strong>${escapeHtml(stop.name)}</strong><br/><small>Tramwaje: ${escapeHtml(stop.routes.join(", ") || "brak danych o linii")}</small>`,
-        )
+        .bindPopup(() => createTramStopPopup(stop, setSelectedTramRoute))
         .addTo(layerRef.current);
     }
     window.setTimeout(() => mapRef.current?.invalidateSize(), 60);
-  }, [input.listing.id, input.listing.title, latitude, longitude, mapReady, railwayMap, tramStops]);
+  }, [
+    input.listing.id,
+    input.listing.title,
+    latitude,
+    longitude,
+    mapReady,
+    railwayMap,
+    tramStops,
+    selectedTramRoute,
+  ]);
 
   useMapResize(mapContainerRef, mapRef, mapReady);
   return (
     <FullscreenFrame label="Mapa otoczenia oferty" className="listing-map-shell">
+      {selectedTramRoute && (
+        <button
+          type="button"
+          className="action-button secondary-button listing-tram-selection"
+          onClick={() => setSelectedTramRoute(null)}
+        >
+          Tramwaj {selectedTramRoute} — pokaż wszystkie
+        </button>
+      )}
       {mapError ? (
         <div className="map-load-error" role="alert">
           <p>{mapError}</p>

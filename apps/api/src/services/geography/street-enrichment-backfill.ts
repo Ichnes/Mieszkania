@@ -1,12 +1,22 @@
 import { pool } from "../../db";
 import { findWarsawDistrictAtPoint } from "./warsaw-district-boundaries";
+import {
+  inferWarsawDistrictFromLocationTitle,
+  extractStreetFromLocationTitle,
+} from "../listings/listing-title-location";
 
 const overrideDistanceMeters = 1_500;
 
 export async function enrichListingsFromLocalStreets() {
   const [streetResult, listingResult] = await Promise.all([
-    pool.query<{ normalized_name: string; name: string; center_lat: string; center_lng: string }>(
-      `select normalized_name, min(name) as name, avg(center_lat)::text as center_lat, avg(center_lng)::text as center_lng from streets where city = 'Warszawa' group by normalized_name`,
+    pool.query<{
+      normalized_name: string;
+      name: string;
+      district: string | null;
+      center_lat: string;
+      center_lng: string;
+    }>(
+      `select normalized_name, district, min(name) as name, avg(center_lat)::text as center_lat, avg(center_lng)::text as center_lng from streets where city = 'Warszawa' group by normalized_name, district`,
     ),
     pool.query<{
       id: string;
@@ -21,7 +31,20 @@ export async function enrichListingsFromLocalStreets() {
       `select id, title, description, address_text, district, city, latitude::text, longitude::text from listings where city ilike 'Warszawa'`,
     ),
   ]);
-  const streets = new Map(streetResult.rows.map((street) => [street.normalized_name, street]));
+  const counts = new Map<string, number>();
+  for (const street of streetResult.rows)
+    counts.set(street.normalized_name, (counts.get(street.normalized_name) ?? 0) + 1);
+  const streetsByDistrict = new Map<string, Map<string, (typeof streetResult.rows)[number]>>();
+  streetsByDistrict.set("", new Map());
+  for (const street of streetResult.rows) {
+    if (counts.get(street.normalized_name) === 1)
+      streetsByDistrict.get("")!.set(street.normalized_name, street);
+    if (street.district) {
+      if (!streetsByDistrict.has(street.district))
+        streetsByDistrict.set(street.district, new Map());
+      streetsByDistrict.get(street.district)!.set(street.normalized_name, street);
+    }
+  }
   let matched = 0,
     addressUpdated = 0,
     coordinatesFilled = 0,
@@ -31,16 +54,28 @@ export async function enrichListingsFromLocalStreets() {
   try {
     await db.query("begin");
     for (const listing of listingResult.rows) {
+      const preferredDistrict =
+        inferWarsawDistrictFromLocationTitle(listing.title) ?? listing.district;
+      const streets =
+        streetsByDistrict.get(
+          preferredDistrict === "Bez dzielnicy" ? "" : (preferredDistrict ?? ""),
+        ) ?? new Map();
       // Keep source fields separated: a title ending with a street name must not
       // be consumed by the first word of the description.
-      const streetName = extractStreet(
-        [listing.address_text, listing.title, listing.description].filter(Boolean).join("\n"),
-      );
+      const streetName =
+        extractStreetFromLocationTitle(
+          listing.title,
+          preferredDistrict ?? undefined,
+          listing.city,
+        ) ??
+        extractStreet(
+          [listing.address_text, listing.title, listing.description].filter(Boolean).join("\n"),
+        );
       if (!streetName) continue;
       const street = findStreet(streets, streetName);
       if (!street) continue;
       matched += 1;
-      const address = composeAddress(street.name, listing.district, listing.city);
+      const address = composeAddress(street.name, preferredDistrict, listing.city);
       const latitude = Number(listing.latitude),
         longitude = Number(listing.longitude);
       const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude);
@@ -52,7 +87,10 @@ export async function enrichListingsFromLocalStreets() {
       const pointLongitude = shouldUseStreetCoordinates ? Number(street.center_lng) : longitude;
       const district = await findWarsawDistrictAtPoint(pointLatitude, pointLongitude, db);
       const shouldAssignDistrict = Boolean(
-        district && (!listing.district || listing.district === "Bez dzielnicy"),
+        district &&
+        (!listing.district ||
+          listing.district === "Bez dzielnicy" ||
+          district === preferredDistrict),
       );
       if (shouldUseStreetCoordinates) {
         await db.query(

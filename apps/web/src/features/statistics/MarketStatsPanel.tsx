@@ -18,6 +18,7 @@ export function MarketStatsPanel({
   onFiltersChange: (filters: MarketStatsFilters) => void;
 }) {
   const [selected, setSelected] = useState<string | null>(null);
+  const [selectedArea, setSelectedArea] = useState<string | null>(null);
   const [sort, setSort] = useState<"active" | "price" | "archive" | "drops">("active");
   if (loading || !stats)
     return (
@@ -211,7 +212,12 @@ export function MarketStatsPanel({
       </div>
       <div className="stats-layout">
         <div className="panel stats-map">
-          <StatsDistrictMap stats={stats} selected={selected} onSelect={toggleSelected} />
+          <StatsDistrictMap
+            stats={stats}
+            selected={selected}
+            onSelect={toggleSelected}
+            onAreaSelect={setSelectedArea}
+          />
         </div>
         <div className="panel stats-table">
           <div className="stats-table-header">
@@ -362,7 +368,12 @@ export function MarketStatsPanel({
                                       : 0;
                                     return (
                                       <article
-                                        className="neighborhood-stat-card"
+                                        className={`neighborhood-stat-card${selectedArea === neighborhood.neighborhood ? " is-map-selected" : ""}`}
+                                        aria-current={
+                                          selectedArea === neighborhood.neighborhood
+                                            ? "true"
+                                            : undefined
+                                        }
                                         key={neighborhood.neighborhood}
                                       >
                                         <div className="neighborhood-card-top">

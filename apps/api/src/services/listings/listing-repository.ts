@@ -1,4 +1,5 @@
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
+import { effectiveDistrictSql } from "./listing-title-location";
 import { decodeListingText } from "./listing-text";
 import { buildListingSearch } from "./listing-search";
 import type {
@@ -830,15 +831,18 @@ async function getListingsPageByScope(
 
     const districts = filters.districts ?? (filters.district ? [filters.district] : []);
     if (districts.length) {
+      const districtSql = effectiveDistrictSql();
       const districtClauses: string[] = [];
       if (districts.includes("__none__"))
         districtClauses.push(
-          `(nullif(trim(coalesce(l.district, '')), '') is null or lower(trim(l.district)) = 'bez dzielnicy')`,
+          `(nullif(trim(coalesce(${districtSql}, '')), '') is null or lower(trim(${districtSql})) = 'bez dzielnicy')`,
         );
       const named = districts.filter((district) => district !== "__none__");
       if (named.length) {
-        districtClauses.push(`coalesce(l.district, '') ilike any($${paramIndex}::text[])`);
-        values.push(named.map((district) => `%${district}%`));
+        districtClauses.push(
+          `lower(trim(coalesce(${districtSql}, ''))) = any($${paramIndex}::text[])`,
+        );
+        values.push(named.map((district) => district.trim().toLowerCase()));
         paramIndex += 1;
       }
       clauses.push(`(${districtClauses.join(" or ")})`);
@@ -1484,9 +1488,10 @@ function mapListingSummary(
           garage: garageCost,
           storage: storageCost,
           garageAndStorage: bundle,
+          garden: detectedCosts.garden,
           garageIncluded: hasGarageOverride ? garageCost === 0 : detectedCosts.garageIncluded,
           storageIncluded: hasStorageOverride ? storageCost === 0 : detectedCosts.storageIncluded,
-          total: bundle ?? (garageCost ?? 0) + (storageCost ?? 0),
+          total: (bundle ?? (garageCost ?? 0) + (storageCost ?? 0)) + (detectedCosts.garden ?? 0),
         }
       : undefined;
   const previousRelistingPrice = row.relisting_previous_price_amount

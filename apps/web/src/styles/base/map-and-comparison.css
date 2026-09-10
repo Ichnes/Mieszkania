@@ -255,6 +255,9 @@
   border-top: 3px solid #55b8ea;
 }
 .tram-route-button {
+  min-width: 36px;
+  min-height: 36px;
+  touch-action: manipulation;
   margin: 5px 4px 0 0;
   padding: 3px 7px;
   border: 1px solid rgba(30, 124, 187, 0.38);
@@ -264,6 +267,20 @@
   font: inherit;
   font-weight: 800;
   cursor: pointer;
+}
+.listing-tram-selection {
+  position: absolute;
+  top: 12px;
+  left: 52px;
+  z-index: 600;
+  max-width: calc(100% - 112px);
+  white-space: normal;
+}
+@media (pointer: coarse) {
+  .tram-route-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
 }
 .tram-route-button:hover {
   background: #1e7cbb;

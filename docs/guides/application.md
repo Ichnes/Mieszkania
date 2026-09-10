@@ -157,6 +157,9 @@ W szczegółach oferty **Garaż / parking** pokazuje rozpoznaną dopłatę lub *
 mieszkania**. Komórka z osobną ceną ma własny wiersz. Gdy opis podaje jedną kwotę
 za oba dodatki, widzisz **Garaż i komórka — … łącznie**; suma zakupu dolicza tę
 kwotę tylko raz. Reguły obejmują istniejące opisy bez ponownego pobierania ofert.
+Garaż i osobne miejsce przed budynkiem sumują się w polu **Garaż / parking**.
+Parser rozpoznaje również zapis `60 000,-` oraz etykietę `Miejsce postojowe: 30 000 zł`.
+Piwnica i ogródek są osobnymi dopłatami i nie zwiększają ceny samego parkingu.
 
 ### Dojazdy do pracy
 
@@ -233,6 +236,18 @@ Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano w
 Na telefonie mapa znajduje się pod opisem, a **Działka i planowanie** na dole szczegółów.
 Pole **Szukaj w ofercie** przeszukuje także adres, dzielnicę i okolicę; np. Okopowa
 znajduje również Okopowej. Filtry dzielnicy i sortowania obsługują strzałki, Enter i Escape.
+Lista dzielnic obejmuje wszystkie 18 dzielnic Warszawy, w tym Targówek i Rembertów.
+W preferencjach lokalizacji każda dzielnica zawiera pełną listę obszarów MSI
+z mapy statystyk — łącznie 143 obszary, w tym wszystkie 5 obszarów Ursusa.
+Wybór obszaru na mapie statystyk obramowuje jego kartę w rozwiniętej tabeli.
+Wybranie innego obszaru przenosi obramowanie, a zmiana dzielnicy je czyści.
+
+Na głównej mapie i mapie szczegółów oferty kliknij przystanek, a następnie numer
+tramwaju w okienku. Wybrana trasa i jej przystanki zostaną wyróżnione. Przycisk
+pokazania wszystkich tramwajów przywraca pełny widok.
+Filtr dzielnicy obowiązuje razem z wyszukiwanym tekstem; samo wystąpienie „Wesoła”
+w opisie np. dojazdów nie oznacza, że oferta leży w Wesołej. Dzielnica wskazana
+w lokalizacyjnej części tytułu ma takie samo pierwszeństwo w filtrze i widoku oferty.
 Ocena nie uwzględnia gabinetu. Nieznany stan wykończenia daje 0 pkt.
 Przekroczenie budżetu do 7% oznacza −5 pkt, większe −15 pkt. Dla ceny za m²
 odpowiednio −5 i −10 pkt; przy limicie jest +10 pkt, przy cenie o 25% niższej +20 pkt,

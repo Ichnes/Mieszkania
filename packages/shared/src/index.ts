@@ -398,6 +398,7 @@ export type ListingSummary = {
     garage?: number;
     storage?: number;
     garageAndStorage?: number;
+    garden?: number;
     garageIncluded?: boolean;
     storageIncluded?: boolean;
     total: number;

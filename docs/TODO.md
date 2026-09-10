@@ -1,5 +1,32 @@
 # Bieżące zadania
 
+- Weryfikacja całego zestawu zmian 2026-09-10: 179 testów API poprawnych, 5 środowiskowych pominiętych (regresja dzielnic wykonana dodatkowo na PostgreSQL), 89 testów frontend poprawnych. Typecheck/build i lokalne wdrożenie poprawne.
+
+## Klikanie numerów tramwajów (2026-09-10)
+
+- Przyczyna: główna mapa miała przyciski linii, ale mapa szczegółów oferty wyświetlała numery jako zwykły tekst.
+- [x] Wspólny popup przystanku z przyciskami i obsługą zdarzeń, większe pola dotykowe, trasa i kolor przystanków wybranej linii także w ofercie oraz reset wyboru.
+- [x] Playwright: wybór numeru i reset na mapie głównej oraz oferty, myszą 1440 px i dotykiem 390 px; potwierdzona wybrana geometria trasy i widoczne sterowanie. Typecheck i build poprawne, kontenery healthy.
+
+## Zaznaczenie obszaru z mapy statystyk (2026-09-10)
+
+- [x] Kliknięcie/wybór klawiaturą obszaru MSI na mapie lub jej liście przekazuje wybór do tabeli. Właściwa karta poddzielnicy dostaje obramowanie i `aria-current`. Zmiana dzielnicy zeruje poprzedni wybór.
+- [x] Playwright 1440/390: wybór Skoroszy na mapie, przeniesienie klawiaturą do Szamot, jedna obramowana karta z `aria-current`, reset po powrocie do całej Warszawy; widoki obejrzane.
+
+## Dzielnice: zgodność filtra, Wesoła i pełny katalog (2026-09-10)
+
+- Przyczyna: filtr czytał surową dzielnicę z bazy, widok nadpisywał ją lokalizacją z tytułu. Trzy wskazane oferty miały błędny Mokotów/Ochotę i współrzędne poza Wesołą. Katalog wyboru pomijał Targówek i Rembertów.
+- [x] SQL filtra używa tej samej reguły pierwszeństwa lokalizacji tytułu i dokładnego dopasowania dzielnicy; katalog zawiera wszystkie 18 dzielnic.
+- [x] Wzbogacanie ulic nie uśrednia już ulic o identycznej nazwie z różnych dzielnic. Uwzględnia dzielnicę i ulicę z tytułu; pomija niejednoznaczne dopasowania bez dzielnicy.
+- [x] Trzy oferty skorygowane na Wesołą; środki właściwych ulic sprawdzone z granicą dzielnicy. Test PostgreSQL porównuje SQL z regułą tytułu. Rzeczywiste zapytanie użytkownika nie zwraca wskazanych ofert ani ofert oznaczonych Wesołą.
+- [x] Pełny filtr dzielnic 1440/1280/390/320 px, bez przepełnienia; preferencje Ursusa i wszystkie pięć obszarów potwierdzone na PC i telefonie. Test katalogu porównuje wszystkie 143 pary dzielnica–MSI z danymi statystyk.
+- [x] Po doprecyzowaniu zakresu zastąpiono skróconą listę osiedli pełnymi 143 obszarami MSI z mapy statystyk. Generator i test zgodności obejmują każdą dzielnicę/obszar; Ursus zawiera Czechowice, Gołąbki, Niedźwiadek, Skorosze i Szamoty.
+
+## Dalsze warianty cen dodatków (2026-09-10)
+
+- [x] Kwoty zakończone `,-`, ceny bez słów „dodatkowo płatne”, wielkie litery; sumowanie garażu i osobnego miejsca przed budynkiem. Piwnica to osobny koszt przechowywania, ogródek ma własny koszt. Powtórzenie tej samej ceny miejsca nie dubluje dopłaty.
+- [x] 57 regresji parserów i cech poprawnych. Rzeczywista oferta `4d2ff767-f917-4889-9c36-2dbdf4b69f6c`: parking 80 tys., piwnica 20 tys., ogródek 50 tys., suma dopłat 150 tys. — potwierdzone w API i UI na PC/telefonie.
+
 ## Ceny garażu i komórki w szczegółach (2026-09-10)
 
 - Zakres: wszystkie przykłady dopłat użytkownika, rozdzielne ceny, pakiet garaż + komórka liczony raz oraz oznaczenie „W cenie mieszkania”.

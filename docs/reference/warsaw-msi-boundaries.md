@@ -28,6 +28,12 @@ Niektóre nazwy ogłoszeń oznaczają osiedla lub grupy obszarów, nie MSI. Nie 
 
 ## Weryfikacja
 
+`warsawDreamDistrictCatalog` w preferencjach jest generowany z tego samego GeoJSON:
+`node scripts/generate-district-catalog.mjs`. Po zmianie danych uruchom generator
+oraz Prettier dla `apps/web/src/features/settings/districts.ts`. Do formularza
+trafiają wyłącznie nazwy, bez geometrii. Test `districts.test.ts` porównuje pełny
+zbiór par dzielnica–obszar z GeoJSON i pilnuje pięciu obszarów Ursusa.
+
 Testy `msi-geometry.test.ts`: komplet dzielnic, unikalne identyfikatory, domknięcie pierścieni, współrzędne w Warszawie, skończone ścieżki i pozycje etykiet, zachowanie otworów, Wola Grzybowska w Wesołej. Test API `warsaw-neighborhoods.test.ts` sprawdza również pełne ciągi lokalizacji.
 
 Historyczna kontrola UI (lokalne artefakty poza repo): oba motywy, 1440/1280/390 px, wybór mapą/listą/klawiaturą, bez poziomego przepełnienia.

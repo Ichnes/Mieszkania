@@ -21,6 +21,15 @@ const warsawDistrictAliases: Array<[string, string]> = [
   ["wola", "Wola"],
 ];
 
+// Match the same location suffix as inferWarsawDistrictFromLocationTitle before
+// consulting the persisted district. Filtering must agree with displayed facts.
+export function effectiveDistrictSql() {
+  const segments = "regexp_split_to_array(l.title, '[:,]')";
+  const suffix = `array_to_string((${segments})[greatest(cardinality(${segments}) - 1, 1):cardinality(${segments})], ' ')`;
+  const normalized = `regexp_replace(translate(lower(${suffix}), 'ąćęłńóśźż', 'acelnoszz'), '[^a-z0-9]+', ' ', 'g')`;
+  return `(case ${warsawDistrictAliases.map(([alias, district]) => `when ${normalized} ~ '(^| )${alias}( |$)' then '${district}'`).join(" ")} else l.district end)`;
+}
+
 export function inferWarsawDistrictFromText(value?: string | null) {
   const normalized = normalizePolish(value ?? "")
     .replace(/[^\p{L}\p{N}]+/gu, " ")

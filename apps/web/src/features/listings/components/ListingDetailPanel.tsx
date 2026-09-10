@@ -589,6 +589,9 @@ export function ListingDetailPanel(input: {
                       <th>Dodatki do zakupu</th>
                       <td>
                         {formatPln(input.listing.additionalPurchaseCosts.total)}
+                        {input.listing.additionalPurchaseCosts.garden
+                          ? ` (ogródek: ${formatPln(input.listing.additionalPurchaseCosts.garden)})`
+                          : ""}
                         {input.listing.additionalPurchaseCosts.garageAndStorage
                           ? " (garaż i komórka — razem)"
                           : ""}
@@ -596,7 +599,7 @@ export function ListingDetailPanel(input: {
                           ? ` (garaż: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
                           : ""}
                         {input.listing.additionalPurchaseCosts.storage
-                          ? ` (komórka: ${formatPln(input.listing.additionalPurchaseCosts.storage)})`
+                          ? ` (komórka / piwnica: ${formatPln(input.listing.additionalPurchaseCosts.storage)})`
                           : ""}
                       </td>
                       <th>Łączna cena zakupu</th>
@@ -658,7 +661,7 @@ export function ListingDetailPanel(input: {
                     input.listing.additionalPurchaseCosts.storageIncluded) &&
                   !input.listing.additionalPurchaseCosts.garageAndStorage ? (
                     <tr>
-                      <th>Komórka lokatorska</th>
+                      <th>Komórka / piwnica</th>
                       <td colSpan={3}>
                         {input.listing.additionalPurchaseCosts.storageIncluded
                           ? "W cenie mieszkania"

@@ -1,6 +1,7 @@
 export type PurchaseCosts = {
   garage?: number;
   storage?: number;
+  garden?: number;
   garageAndStorage?: number;
   garageIncluded?: boolean;
   storageIncluded?: boolean;
@@ -10,7 +11,7 @@ function normalize(text: string) {
   return text
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ł/g, "l")
+    .replace(/[łŁ]/g, "l")
     .toLowerCase();
 }
 function amenities(text: string) {
@@ -18,7 +19,8 @@ function amenities(text: string) {
     garage: /garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*|w\s+garaz\w*|z\s+komork\w*)/.test(
       text,
     ),
-    storage: /komork\w*|box\w*\s+lokatorsk\w*/.test(text),
+    storage: /komork\w*|piwnic\w*|box\w*\s+lokatorsk\w*/.test(text),
+    garden: /ogrod(?:ek|ka|kiem|ku)\b/.test(text),
   };
 }
 
@@ -26,8 +28,10 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
   const text = normalize(description.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ");
   const result: PurchaseCosts = {};
   let previousEnd = 0;
+  let indoorParking: number | undefined;
+  let otherParking: number | undefined;
   for (const match of text.matchAll(
-    /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?|pln|zl)\b/g,
+    /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-)/g,
   )) {
     const index = match.index!;
     const before = text
@@ -37,9 +41,12 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     const after = text.slice(index + match[0].length, index + match[0].length + 70);
     previousEnd = index + match[0].length;
     const mentioned = amenities(before);
-    if (!mentioned.garage && !mentioned.storage) continue;
+    if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
     if (
       !/dodatkow|platn|cen[ayie]|kosztuje|dokup/.test(before) &&
+      !/(?:garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*)(?:\s+przed\s+budynkiem)?|piwnic\w*|komork\w*(?:\s+lokatorsk\w*)?|ogrod\w*)\s*[:—–-]?\s*$/.test(
+        before,
+      ) &&
       !/^[^.!?]{0,50}obligatoryjn\w*\s+(?:zakup|nabyci)/.test(after)
     )
       continue;
@@ -53,8 +60,12 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       (/tys/.test(match[3]) ? 1000 : 1);
     if (!Number.isFinite(amount) || amount < 1000) continue;
     if (mentioned.garage && mentioned.storage) result.garageAndStorage = amount;
-    else if (mentioned.garage) result.garage = amount;
-    else result.storage = amount;
+    else if (mentioned.garage) {
+      if (/garaz\w*|podziemn\w*/.test(before)) indoorParking = amount;
+      else otherParking = amount;
+      result.garage = (indoorParking ?? 0) + (otherParking ?? 0);
+    } else if (mentioned.storage) result.storage = amount;
+    else result.garden = amount;
   }
   for (const clause of text.split(/[.!?](?!\d)/)) {
     for (const match of clause.matchAll(/w\s+cenie\b/g)) {

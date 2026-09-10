@@ -3,6 +3,17 @@ import test from "node:test";
 import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
+  [
+    "Dodatkowym kosztem jest : garaż 60 000,- miejsce postojowe przed budynkiem 20 000,- piwnica 20 000,- ogródek 50 000,-",
+    { garage: 80000, storage: 20000, garden: 50000 },
+  ],
+  ["Miejsce postojowe: 30 000 zł", { garage: 30000 }],
+  ["MIEJSCE POSTOJOWE W GARAŻU PODZIEMNYM W CENIE 60 000 ZŁ.", { garage: 60000 }],
+  ["Garaż: 60.000,-. Miejsce postojowe przed budynkiem: 20 000 zł.", { garage: 80000 }],
+  [
+    "Miejsce postojowe: 30 000 zł. Miejsce postojowe dodatkowo płatne 30 000 zł.",
+    { garage: 30000 },
+  ],
   ["garażu podziemnym (płatne dodatkowo 40 000 zł ).", { garage: 40000 }],
   [
     "Miejsce z komórką jest objęte odrębną księgą wieczystą, nie wchodzi w cenę mieszkania i kosztuje dodatkowo 75 000 zł.",

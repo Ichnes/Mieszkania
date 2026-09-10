@@ -1,5 +1,6 @@
 import { Select } from "../../components/Select";
 import { tramColor, selectedTramColor, tramStopStyle } from "./lib/tram-style";
+import { createTramStopPopup } from "./lib/tram-popup";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import type { FamilySettings, ListingSummary } from "@mieszkania/shared";
@@ -216,26 +217,7 @@ export function MapView(input: {
           [stop.latitude, stop.longitude],
           tramStopStyle(stop.routes, selectedTramRoute),
         );
-        const routeButtons = stop.routes
-          .map(
-            (route) =>
-              `<button type="button" class="tram-route-button" data-tram-route="${escapeHtml(route)}">${escapeHtml(route)}</button>`,
-          )
-          .join("");
-        marker.bindPopup(
-          `<strong>${escapeHtml(stop.name)}</strong><br/><small>Tramwaje: ${routeButtons || "brak danych o linii"}</small>`,
-        );
-        marker.on("popupopen", () => {
-          const popupElement = marker.getPopup()?.getElement() as HTMLElement | undefined;
-          for (const element of Array.from(
-            popupElement?.querySelectorAll("[data-tram-route]") ?? [],
-          )) {
-            const button = element as HTMLButtonElement;
-            button.addEventListener("click", () =>
-              setSelectedTramRoute(button.dataset.tramRoute ?? null),
-            );
-          }
-        });
+        marker.bindPopup(() => createTramStopPopup(stop, setSelectedTramRoute));
         marker.bindTooltip(escapeHtml(stop.name), { direction: "top", offset: [0, -9] });
         marker.addTo(layerRef.current);
       }
