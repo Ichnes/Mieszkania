@@ -92,6 +92,16 @@ export function sanitizeListingFilters(value: unknown): ListingFilters {
   for (const key of booleanKeys) {
     if (input[key] === true) output[key] = true;
   }
+  if (Array.isArray(input.districts)) {
+    output.districts = [
+      ...new Set(
+        input.districts
+          .filter((value): value is string => typeof value === "string" && Boolean(value.trim()))
+          .map((value) => value.trim()),
+      ),
+    ];
+    delete output.district;
+  }
   return output;
 }
 

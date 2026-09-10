@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Wiele dzielnic w filtrze ofert (2026-09-10)
+
+- Zakres: lista dzielnic z checkboxami, wybór wielu naraz (lub wszystkich), filtrowanie wyników ofert, zachowanie wyboru w sesji i zgodność ze starszym filtrem jednej dzielnicy.
+- [x] Frontend i API obsługują listę dzielnic; zapytanie łączy dzielnice przez OR, a pozostałe kryteria przez AND. „Bez dzielnicy” można łączyć z nazwanymi dzielnicami.
+- [x] Testy: 151 API i 87 frontend poprawne, 3 środowiskowe pominięte; typecheck i build Docker poprawne. API: Bemowo 197 + Ursus 120 = 317 ofert; sprawdzone łączenie z „Bez dzielnicy” i zgodność starego parametru.
+- [x] Playwright 1440/1280/390/320 px: zaznaczanie i odznaczanie, zastosowanie wyników, zachowanie po przeładowaniu, czyszczenie wyboru i Escape. Bez poziomego przepełnienia; widoki sprawdzone wizualnie.
+- Pozostała praca funkcjonalna: brak. Instrukcja zaktualizowana, aplikacja wdrożona lokalnie.
+
 ## Naprawa rzutów i częściowych danych okolicy (2026-09-10)
 
 - [x] Rozpoznana przyczyna: rzeczywiste dane Otodomu mają osobne `ad.floorPlans`, bez HTML galerii i bez flagi w zwykłych zdjęciach. Parser obsługuje to pole; rzuty duplikatów są dostępne także przy głównym portalu innym niż Otodom.

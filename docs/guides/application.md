@@ -297,6 +297,11 @@ nie są rejestrowane jako obniżki na całym rynku.
 
 # Automatyczne łączenie opisów
 
+Filtr **Dzielnice** pozwala zaznaczyć kilka dzielnic checkboxami. Wyniki obejmują
+każdą z wybranych dzielnic, z uwzględnieniem pozostałych kryteriów. Możesz dodać też
+**Bez dzielnicy**. **Wszystkie dzielnice** czyści wybór; następnie zastosuj filtry.
+Zestaw dzielnic pozostaje zapamiętany w bieżącej sesji przeglądarki.
+
 Połączone oferty mają wspólną cenę ogłoszeniową: najniższą znaną cenę aktywnego,
 nieodrzuconego duplikatu. Wybór portalu głównego nie zmienia tej kwoty. Gdy wszystkie
 oferty są nieaktywne, pozostaje minimum z zapisanych cen. Ceny źródłowe są zachowane

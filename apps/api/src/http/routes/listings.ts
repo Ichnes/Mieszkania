@@ -279,6 +279,10 @@ function parseListingFilters(query: Record<string, string | undefined>): Listing
   return {
     city: query.city || undefined,
     district: query.district || undefined,
+    districts: query.districts
+      ?.split(",")
+      .map((value) => value.trim())
+      .filter(Boolean),
     minPrice: toNumber(query.minPrice),
     maxPrice: toNumber(query.maxPrice),
     minArea: toNumber(query.minArea),

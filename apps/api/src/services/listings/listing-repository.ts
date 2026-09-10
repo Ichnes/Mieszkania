@@ -827,16 +827,20 @@ async function getListingsPageByScope(
       paramIndex += 1;
     }
 
-    if (filters.district) {
-      if (filters.district === "__none__")
-        clauses.push(
+    const districts = filters.districts ?? (filters.district ? [filters.district] : []);
+    if (districts.length) {
+      const districtClauses: string[] = [];
+      if (districts.includes("__none__"))
+        districtClauses.push(
           `(nullif(trim(coalesce(l.district, '')), '') is null or lower(trim(l.district)) = 'bez dzielnicy')`,
         );
-      else {
-        clauses.push(`coalesce(l.district, '') ilike $${paramIndex}`);
-        values.push(`%${filters.district}%`);
+      const named = districts.filter((district) => district !== "__none__");
+      if (named.length) {
+        districtClauses.push(`coalesce(l.district, '') ilike any($${paramIndex}::text[])`);
+        values.push(named.map((district) => `%${district}%`));
+        paramIndex += 1;
       }
-      if (filters.district !== "__none__") paramIndex += 1;
+      clauses.push(`(${districtClauses.join(" or ")})`);
     }
 
     if (filters.minPrice) {

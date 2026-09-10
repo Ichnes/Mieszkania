@@ -4,7 +4,11 @@ export function getActiveFilterBadges(filters: ListingFilters) {
   const badges: string[] = [];
 
   if (filters.city) badges.push(`Miasto: ${filters.city}`);
-  if (filters.district) badges.push(`Dzielnica: ${filters.district}`);
+  const districts = filters.districts ?? (filters.district ? [filters.district] : []);
+  if (districts.length)
+    badges.push(
+      `Dzielnice: ${districts.map((district) => (district === "__none__" ? "Bez dzielnicy" : district)).join(", ")}`,
+    );
   if (filters.minPrice !== undefined || filters.maxPrice !== undefined)
     badges.push(`Cena: ${filters.minPrice ?? 0}-${filters.maxPrice ?? "max"}`);
   if (filters.minArea !== undefined || filters.maxArea !== undefined)

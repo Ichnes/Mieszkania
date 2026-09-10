@@ -1,3 +1,4 @@
+import { DistrictFilter } from "../features/listings/components/DistrictFilter";
 import { Select } from "../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";
 import {
@@ -15,7 +16,6 @@ import { ListingSortKey } from "../app/types";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { ListingSection } from "../features/listings/components/ListingSection";
 import { buildPageNumbers, getActiveFilterBadges } from "../features/listings/lib/filters";
-import { warsawDreamDistrictCatalog } from "../features/settings/districts";
 import { stringValue, toOptionalNumber } from "../shared/lib/input";
 
 export function OffersPage({
@@ -183,24 +183,12 @@ export function OffersPage({
                     void applyFilters(filters, 1);
                   }}
                 >
-                  <label className="filter-field">
-                    <span>Dzielnica</span>
-                    <Select
-                      label="Dzielnica"
-                      value={filters.district ?? ""}
-                      onChange={(value) =>
-                        setFilters((current) => ({ ...current, district: value || undefined }))
-                      }
-                      options={[
-                        { value: "", label: "Wszystkie dzielnice" },
-                        { value: "__none__", label: "Bez dzielnicy" },
-                        ...warsawDreamDistrictCatalog.map((item) => ({
-                          value: item.district,
-                          label: item.district,
-                        })),
-                      ]}
-                    />
-                  </label>
+                  <DistrictFilter
+                    value={filters.districts ?? (filters.district ? [filters.district] : [])}
+                    onChange={(districts) =>
+                      setFilters((current) => ({ ...current, district: undefined, districts }))
+                    }
+                  />
                   <label className="filter-field">
                     <span>Cena od</span>
                     <input

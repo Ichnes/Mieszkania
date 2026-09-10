@@ -704,6 +704,7 @@ export type UpcomingViewingsResponse = {
 export type ListingFilters = {
   city?: string;
   district?: string;
+  districts?: string[];
   minPrice?: number;
   maxPrice?: number;
   minArea?: number;
