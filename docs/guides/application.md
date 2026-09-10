@@ -236,8 +236,18 @@ Segmenty pokazują medianę i kwartyle cen za m² (środkowe 50%) przy co najmni
 z ceną. Mniejsze próby są oznaczone; kwartyle nie są prognozą ani przedziałem ufności.
 Przedziały metrażu uwzględniają dokładną powierzchnię bez zaokrąglania: `40–<60 m²`
 oznacza od 40 m² włącznie do mniej niż 60 m². Zarówno 59,4, jak i 59,9 m² należy
-do tej grupy; 60 m² zaczyna kolejną. W podsumowaniu segmentu wyróżniono medianę,
-poniżej zakres środkowych 50% oraz liczbę ofert z ceną w próbie.
+do tej grupy; 60 m² zaczyna kolejną. Każda grupa ma wspólną ramkę z nazwą,
+liczbą ofert, udziałem, paskiem oraz medianą i zakresem środkowych 50%.
+Licznik ofert jest pokazany raz; jego dymek podaje też liczbę obserwacji z ceną i metrażem.
+
+**Stan wykończenia** rozróżnia mieszkania wykończone/do zamieszkania,
+do wykończenia/remontu i brak danych. Korzysta z pól portalu i rozpoznawania opisu;
+to deklaracja ogłoszenia, nie ocena techniczna mieszkania.
+**Czynsz miesięczny** grupuje deklarowane kwoty: 0 zł, poniżej 500 zł,
+500–<1000 zł, 1000–<1500 zł oraz od 1500 zł. Brak jednoznacznej kwoty stanowi
+osobną grupę: zakresy, opłaty roczne i opłaty za m² nie są traktowane jako miesięczna suma.
+W obu przekrojach mediana i kwartyle dotyczą **ceny zakupu za m²**, nie wysokości czynszu.
+Przekroje respektują ten sam okres i filtry co pozostałe segmenty.
 
 Segmenty i mediana dzielnicy dotyczą ofert wykrytych w wybranym okresie, natomiast
 liczba aktywnych i główna mediana aktywnych opisują bieżący stan. Ceny są aktualnymi cenami

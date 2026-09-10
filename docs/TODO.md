@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Spójne segmenty, wykończenie i czynsz (2026-09-10)
+
+- Zakres: usunięcie dolnej „Próby”, połączenie nazwy, paska i cen we wspólnym bloku; nowe przekroje wykończenia oraz miesięcznego czynszu.
+- [x] Jedna ramka na grupę, pojedynczy licznik ofert u góry; szczegóły liczby ofert z ceną w dymku licznika. Dodano grupy stanu i czynszu z osobnymi brakami danych, wspólnym zakresem dat i filtrami.
+- [x] Nowe przekroje korzystają z pól portali i opisów, rozdzielają brak danych od deklarowanego 0 zł, nie interpretują zakresów ani opłat rocznych/za m² jako kwoty miesięcznej. Mediany i kwartyle nadal opisują ceny zakupu za m²; wyjaśniono to w UI i instrukcji.
+- [x] Testy klasyfikacji, granic czynszu, braków, interpolacji kwartylów i małych prób poprawne. Pełny typecheck i testy: 148 API + 85 frontend, 2 testy środowiskowe pominięte; build i wdrożenie Docker poprawne.
+- [x] Rzeczywiste dane: obydwa przekroje obejmują 4821 ofert dla 90 dni i 439 po zmianie na 30 dni oraz 80–100 m², zgodnie z pozostałymi segmentami. Całe zapytanie statystyk 6,2 s przy pierwszym odczycie i 1,1 s przy kolejnym filtrowanym.
+- [x] Chromium 1440/1280/390/320 px: 7 kart, 32 wspólne bloki, brak dolnej „Próby”, overflow i błędów JS. Obejrzano desktop/mobile oraz całą kartę czynszu w ciemnym motywie.
+- Pozostałe prace funkcjonalne: brak; publikacja na bieżącej gałęzi.
+
 ## Przedziały metrażu i podsumowanie segmentów (2026-09-10)
 
 - Zakres: wyjaśnienie granic metrażu i poprawa wyglądu mediany, kwartylów oraz liczby ofert.

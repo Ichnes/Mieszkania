@@ -811,11 +811,9 @@
   display: grid;
   gap: 9px;
   min-width: 0;
-  margin: 0 0 8px;
-  padding: 11px 12px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: var(--surface-muted);
+  margin: 0;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
   font-variant-numeric: tabular-nums;
 }
 .stats-segment-sample dt {
@@ -836,36 +834,33 @@
   font-size: 0.95rem;
   font-weight: 750;
 }
-.stats-segment-count {
+.stats-segment-item-heading {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   justify-content: space-between;
-  gap: 2px 8px;
-  padding-top: 7px;
-  border-top: 1px solid var(--line);
-}
-.stats-segment-count dd {
-  color: var(--ink-soft);
-  font-size: 0.68rem;
+  gap: 5px 10px;
 }
 .stats-segment-list {
   display: grid;
   gap: 9px;
 }
-.stats-segment-list > div {
+.stats-segment-list > .stats-segment-item {
   display: grid;
-  grid-template-columns: minmax(78px, auto) minmax(50px, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: center;
-  gap: 7px;
+  gap: 9px;
   min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
 }
-.stats-segment-list span {
-  overflow: hidden;
-  color: var(--ink-soft);
-  font-size: 0.7rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.stats-segment-item-heading > span {
+  color: var(--ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .stats-segment-list i {
   height: 6px;
@@ -880,7 +875,7 @@
   border-radius: inherit;
   background: var(--brand);
 }
-.stats-segment-list > div > strong {
+.stats-segment-item-heading > strong {
   font-size: 0.7rem;
   white-space: nowrap;
 }

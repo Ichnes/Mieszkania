@@ -449,6 +449,8 @@ export function MarketStatsPanel({
           { title: "Metraż", items: stats.segments.areas },
           { title: "Rok budowy", items: stats.segments.buildingAge },
           { title: "Rynek", items: stats.segments.marketTypes },
+          { title: "Stan wykończenia", items: stats.segments.finishing ?? [] },
+          { title: "Czynsz miesięczny", items: stats.segments.monthlyFees ?? [] },
           { title: "Źródła ofert", items: stats.segments.sources },
         ].map((segment) => (
           <div className="panel stats-segment-card" key={segment.title}>
@@ -456,6 +458,16 @@ export function MarketStatsPanel({
               <div>
                 <p className="eyebrow">Struktura wykrytych · {stats.periodDays} dni</p>
                 <h3>{segment.title}</h3>
+                {segment.title === "Stan wykończenia" && (
+                  <p className="stats-segment-hint">
+                    Stan podany w ogłoszeniu lub rozpoznany z opisu. Ceny zakupu za m².
+                  </p>
+                )}
+                {segment.title === "Czynsz miesięczny" && (
+                  <p className="stats-segment-hint">
+                    Deklarowane opłaty miesięczne. Mediana i zakres poniżej to ceny zakupu za m².
+                  </p>
+                )}
                 {segment.title === "Metraż" && (
                   <p className="stats-segment-hint">
                     Dolna granica włącznie, górna wyłącznie. Bez zaokrąglania metrażu.
@@ -465,15 +477,19 @@ export function MarketStatsPanel({
             </div>
             <div className="stats-segment-list">
               {segment.items.map((item) => (
-                <div key={item.label}>
-                  <span>{item.label}</span>
-                  <i>
+                <div className="stats-segment-item" key={item.label}>
+                  <div className="stats-segment-item-heading">
+                    <span>{item.label}</span>
+                    <strong
+                      title={`${item.count.toLocaleString("pl-PL")} ofert w grupie; ${item.pricedListings.toLocaleString("pl-PL")} z ceną i metrażem`}
+                    >
+                      {item.count.toLocaleString("pl-PL")}{" "}
+                      <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
+                    </strong>
+                  </div>
+                  <i aria-hidden="true">
                     <b style={{ width: `${item.sharePercent}%` }} />
                   </i>
-                  <strong>
-                    {item.count.toLocaleString("pl-PL")}{" "}
-                    <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
-                  </strong>
                   <dl className="stats-segment-sample">
                     {item.sufficientSample && item.medianPricePerSqm != null ? (
                       <>
@@ -496,10 +512,6 @@ export function MarketStatsPanel({
                         <dd>Potrzeba co najmniej {stats.minimumSampleSize ?? 10} ofert z ceną</dd>
                       </div>
                     )}
-                    <div className="stats-segment-count">
-                      <dt>Próba</dt>
-                      <dd>{(item.pricedListings ?? 0).toLocaleString("pl-PL")} ofert z ceną</dd>
-                    </div>
                   </dl>
                 </div>
               ))}

@@ -97,6 +97,8 @@ export type MarketStatsResponse = {
     buildingAge: MarketSegment[];
     sources: MarketSegment[];
     marketTypes: MarketSegment[];
+    finishing?: MarketSegment[];
+    monthlyFees?: MarketSegment[];
   };
 };
 

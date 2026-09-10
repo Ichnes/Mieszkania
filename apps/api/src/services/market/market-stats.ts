@@ -15,6 +15,7 @@ import {
 import { getFamilySettings } from "../settings/family-settings";
 import { getMarketAmenityFilter } from "./market-amenities";
 import { getMarketSignals } from "./market-signals";
+import { getMarketPropertySegments } from "./market-property-segments";
 
 export type MarketStatsQuery = {
   minYear?: string;
@@ -74,6 +75,7 @@ export async function getMarketStats(query: MarketStatsQuery): Promise<MarketSta
       marketTypeSegments,
       boundaries,
       signals,
+      propertySegments,
     ] = await Promise.all([
       db.query<{
         active: string;
@@ -166,6 +168,7 @@ export async function getMarketStats(query: MarketStatsQuery): Promise<MarketSta
         `select name, geometry_geojson from district_boundaries where city = 'Warszawa'`,
       ),
       getMarketSignals(db, aliasedStatsFilters, periodDays, locationMapping),
+      getMarketPropertySegments(db, aliasedStatsFilters, periodDays),
     ]);
     const t = totals.rows[0] ?? ({} as any);
     const c = comparison.rows[0] ?? ({} as any);
@@ -268,6 +271,7 @@ export async function getMarketStats(query: MarketStatsQuery): Promise<MarketSta
           : 0,
       })),
       segments: {
+        ...propertySegments,
         rooms: mapSegments(roomSegments.rows),
         areas: mapSegments(areaSegments.rows),
         buildingAge: mapSegments(buildingAgeSegments.rows),
