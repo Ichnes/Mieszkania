@@ -1,4 +1,5 @@
 import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
+import { tramStopStyle } from "./lib/tram-style";
 import type { ListingDetail } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
 import { FullscreenFrame, useMapResize } from "../../shared/components/FullscreenFrame";
@@ -35,6 +36,7 @@ export function ListingTransitMap(input: {
           scrollWheelZoom: true,
           touchZoom: true,
           preferCanvas: true,
+          renderer: window.L.canvas({ tolerance: 6 }),
           zoomAnimation: false,
           fadeAnimation: false,
           markerZoomAnimation: false,
@@ -161,13 +163,10 @@ export function ListingTransitMap(input: {
     }
 
     for (const stop of tramStops) {
-      const marker = window.L.circleMarker([stop.latitude, stop.longitude], {
-        radius: 5,
-        color: "#fff",
-        weight: 1.5,
-        fillColor: "#55b8ea",
-        fillOpacity: 0.95,
-      });
+      const marker = window.L.circleMarker(
+        [stop.latitude, stop.longitude],
+        tramStopStyle(stop.routes),
+      );
       marker
         .bindPopup(
           `<strong>${escapeHtml(stop.name)}</strong><br/><small>Tramwaje: ${escapeHtml(stop.routes.join(", ") || "brak danych o linii")}</small>`,

@@ -1,4 +1,5 @@
 import { Select } from "../../components/Select";
+import { tramColor, selectedTramColor, tramStopStyle } from "./lib/tram-style";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import type { FamilySettings, ListingSummary } from "@mieszkania/shared";
@@ -124,6 +125,7 @@ export function MapView(input: {
         if (cancelled || !mapContainerRef.current || !window.L || mapRef.current) return;
         mapRef.current = window.L.map(mapContainerRef.current, {
           preferCanvas: true,
+          renderer: window.L.canvas({ tolerance: 6 }),
           zoomAnimation: false,
           fadeAnimation: false,
           markerZoomAnimation: false,
@@ -203,21 +205,17 @@ export function MapView(input: {
       window.L.polyline(lines, {
         interactive: false,
         className: selectedTramRoute ? "tram-line is-selected" : "tram-line",
-        color: selectedTramRoute ? "#c8248d" : "#279bc7",
+        color: selectedTramRoute ? selectedTramColor : tramColor,
         weight: selectedTramRoute ? 5 : 3,
         opacity: selectedTramRoute ? 0.96 : 0.76,
       }).addTo(layerRef.current);
       for (const stop of tramwayMap?.stops ?? [])
         tramStops.set(`${stop.latitude.toFixed(5)}:${stop.longitude.toFixed(5)}`, stop);
       for (const stop of tramStops.values()) {
-        const marker = window.L.circleMarker([stop.latitude, stop.longitude], {
-          radius: 6,
-          className: "leaflet-tram-stop-dot",
-          color: "#fff",
-          weight: 2,
-          fillColor: "#55b8ea",
-          fillOpacity: 0.95,
-        });
+        const marker = window.L.circleMarker(
+          [stop.latitude, stop.longitude],
+          tramStopStyle(stop.routes, selectedTramRoute),
+        );
         const routeButtons = stop.routes
           .map(
             (route) =>

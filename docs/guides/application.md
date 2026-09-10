@@ -259,6 +259,8 @@ Tramwaje i kolej są zapisane w aplikacji — otwarcie mapy nie czeka na pobiera
 transportu z internetu. Kolej to wspólna warstwa torów PKP / SKM / KM / WKD
 z przystankami, bez prostych łączących stacje. Kafelki tła nadal wymagają sieci.
 [Zakres i aktualizacja danych transportu](../reference/transport-snapshot.md).
+Kliknij przystanek i numer tramwaju w dymku, aby wyróżnić na różowo jego trasę
+oraz przystanki. **Pokaż wszystkie tramwaje** w panelu filtrów przywraca pełną sieć.
 W pełnoekranowym podglądzie zdjęć rozsuń palce, aby powiększyć, i zsuń, aby pomniejszyć.
 Powiększone zdjęcie można przesuwać; przy podstawowym powiększeniu przesunięcie w bok
 zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje zdjęcie do

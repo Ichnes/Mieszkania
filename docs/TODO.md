@@ -1,5 +1,20 @@
 # Bieżące zadania
 
+## Automatyczny commit i push po poprawkach (2026-09-10)
+
+- Zakres: stała zasada publikowania ukończonych zmian na bieżącej gałęzi oraz publikacja ostatniej poprawki przystanków.
+- [x] Dodano do `AGENTS.md` obowiązek weryfikacji, commita i push przed zgłoszeniem zakończenia, bez osobnej prośby użytkownika. Prywatne i lokalne dane pozostają poza commitem.
+- [x] Zakres publikacji obejmuje zasadę, mniejsze kropki, kolorowanie przystanków wybranej trasy i dokumentację. Build i kontrola UI przystanków opisane poniżej.
+- Pozostałe prace funkcjonalne: brak; publikacja na bieżącej gałęzi `main`.
+
+## Kropki przystanków tramwajowych (2026-09-10)
+
+- Zakres: mniejsze przystanki i kolor wybranej linii także na jej przystankach.
+- [x] Wspólny promień 4 px na mapie głównej i mapie oferty; przystanki wybranego numeru mają ten sam różowy kolor co trasa, pozostałe pozostają niebieskie. Powrót do wszystkich tras przywraca kolor.
+- [x] Obszar trafienia Canvas powiększony o 6 px, aby mniejsze kropki nadal można było wygodnie wybierać na telefonie.
+- [x] Build frontendu i wdrożenie Docker poprawne. Chromium 1440/1280/390 px: promień 4 px, kliknięcie 7 px od środka otwiera przystanek, wybór linii 1 koloruje wszystkie jej 94 przystanki tak jak trasę, reset przywraca niebieski. Bez błędów JS i overflow; obejrzano desktop/mobile.
+- Pozostała praca: brak. Zmiana wdrożona lokalnie.
+
 ## Publikacja zmian na GitHub (2026-09-10)
 
 - Zakres: autoryzowany commit i push na `origin/main` — aktualizacja README, lokalne dane transportu i naprawa detekcji archiwizacji OLX.

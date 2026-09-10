@@ -5,6 +5,8 @@
 - Keep TODO lists and session handoff notes in `docs/` alongside the other Markdown documentation. The task list is `docs/TODO.md`.
 - Update `docs/TODO.md` during each task: record the current scope, completed changes, verification results, and remaining work.
 
+- After completing every fix or change, run the relevant checks, commit the task changes, and push to the current working branch before reporting completion. This is standing user authorization: do not wait for a separate push request or ask for confirmation. Follow any explicit branch or no-push instruction given for the task. Keep private/local data out of commits. If push fails, resolve it when possible and clearly report any remaining blocker instead of claiming publication succeeded.
+
 - When import/collector runs fail, check `storage/logs/import-failures.ndjson` before debugging. The file is newline-delimited JSON and should keep recent failing source, external id, URL, error, attempts, and context.
 
 # Responsive UI
