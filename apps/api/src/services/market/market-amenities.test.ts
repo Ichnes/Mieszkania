@@ -3,6 +3,17 @@ import test from "node:test";
 import type { Pool } from "pg";
 import { getMarketAmenityFilter } from "./market-amenities";
 
+test("manual directions override opposite description in market filtering", async () => {
+  const id = "10000000-0000-0000-0000-000000000001";
+  const db = {
+    query: async () => ({
+      rows: [{ id, description: "Okna na północ.", exposure_directions_override: ["S", "W"] }],
+    }),
+  } as unknown as Pool;
+  assert.ok((await getMarketAmenityFilter(db, "true", { directions: "S" })).includes(id));
+  assert.equal(await getMarketAmenityFilter(db, "true", { directions: "N" }), " and false");
+});
+
 test("storage and compass filters combine, respect overrides and preserve unfiltered unknowns", async () => {
   const rows = [
     {

@@ -1,3 +1,4 @@
+import type { ExposureDirection } from "./sun-exposure.js";
 export type DashboardStat = {
   label: string;
   value: string;
@@ -363,6 +364,7 @@ export type ListingContactEvent = {
 };
 
 export type ListingSummary = {
+  exposureDirectionsOverride?: ExposureDirection[];
   id: string;
   title: string;
   description?: string;
@@ -496,6 +498,7 @@ export type ListingDetail = ListingSummary & {
     hasLiftOverride?: boolean;
     hasGarageOverride?: boolean;
     hasStorageOverride?: boolean;
+    exposureDirectionsOverride?: ExposureDirection[];
     garageCostOverride?: number;
     storageCostOverride?: number;
   };

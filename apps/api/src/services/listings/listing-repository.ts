@@ -1,9 +1,11 @@
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
+import { invalidateMarketStatsCache } from "../market/stats-cache";
 import { effectiveDistrictSql } from "./listing-title-location";
 import { decodeListingText } from "./listing-text";
 import { buildListingSearch } from "./listing-search";
 import type {
   DashboardStat,
+  ExposureDirection,
   FamilySettings,
   ListingContactEvent,
   ListingContactEventType,
@@ -95,6 +97,7 @@ type ListingRow = {
   manual_has_storage_override: boolean | null;
   manual_garage_cost_override: string | null;
   manual_storage_cost_override: string | null;
+  manual_exposure_directions_override?: ExposureDirection[] | null;
   relisting_previous_listing_id: string | null;
   relisting_previous_price_amount: string | null;
   relisting_relisted_price_amount: string | null;
@@ -321,6 +324,7 @@ export async function updateListingManualData(
     hasStorageOverride?: boolean;
     garageCostOverride?: number;
     storageCostOverride?: number;
+    exposureDirectionsOverride?: ExposureDirection[];
   },
 ) {
   return withDb(async (db) => {
@@ -345,6 +349,7 @@ export async function updateListingManualData(
           has_storage_override,
           garage_cost_override,
           storage_cost_override,
+          exposure_directions_override,
           updated_at
         )
         select
@@ -364,6 +369,7 @@ export async function updateListingManualData(
           $14,
           $15,
           $16,
+          $17::text[],
           now()
         from listings l
         where l.id = $1
@@ -384,6 +390,7 @@ export async function updateListingManualData(
           has_storage_override = excluded.has_storage_override,
           garage_cost_override = excluded.garage_cost_override,
           storage_cost_override = excluded.storage_cost_override,
+          exposure_directions_override = case when $18::boolean then excluded.exposure_directions_override else listing_manual_overrides.exposure_directions_override end,
           updated_at = now()
         returning listing_id as id
       `,
@@ -404,6 +411,8 @@ export async function updateListingManualData(
         typeof input.hasStorageOverride === "boolean" ? input.hasStorageOverride : null,
         normalizeNullableNumber(input.garageCostOverride),
         normalizeNullableNumber(input.storageCostOverride),
+        input.exposureDirectionsOverride?.length ? input.exposureDirectionsOverride : null,
+        Object.hasOwn(input, "exposureDirectionsOverride"),
       ],
     );
 
@@ -411,6 +420,7 @@ export async function updateListingManualData(
       return null;
     }
 
+    invalidateMarketStatsCache();
     return getListingDetail(listingId);
   });
 }
@@ -523,6 +533,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
           lmo.has_storage_override as manual_has_storage_override,
           lmo.garage_cost_override::text as manual_garage_cost_override,
           lmo.storage_cost_override::text as manual_storage_cost_override,
+          lmo.exposure_directions_override as manual_exposure_directions_override,
           lr.previous_listing_id::text as relisting_previous_listing_id,
           lr.previous_price_amount::text as relisting_previous_price_amount,
           lr.relisted_price_amount::text as relisting_relisted_price_amount,
@@ -625,6 +636,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       commutes: [],
       amenities: [],
       manual: {
+        exposureDirectionsOverride: row.manual_exposure_directions_override ?? undefined,
         contactStatus: parseListingContactStatus(row.manual_contact_status),
         decisionStage: parseListingDecisionStage(row.manual_decision_stage),
         contactName: row.manual_contact_name ?? undefined,
@@ -997,6 +1009,7 @@ async function getListingsPageByScope(
           lmo.has_storage_override as manual_has_storage_override
           ,lmo.garage_cost_override::text as manual_garage_cost_override
           ,lmo.storage_cost_override::text as manual_storage_cost_override
+          ,lmo.exposure_directions_override as manual_exposure_directions_override
           ,lr.previous_listing_id::text as relisting_previous_listing_id
           ,lr.previous_price_amount::text as relisting_previous_price_amount
           ,lr.relisted_price_amount::text as relisting_relisted_price_amount
@@ -1524,6 +1537,7 @@ function mapListingSummary(
     id: row.id,
     title: row.title,
     description: row.description ?? undefined,
+    exposureDirectionsOverride: row.manual_exposure_directions_override ?? undefined,
     canonicalUrl: row.canonical_url,
     sourceLabel: row.source_name ?? undefined,
     isActive: row.status === "active",

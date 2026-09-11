@@ -1,6 +1,24 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { createStatsCache } from "./stats-cache";
+import { createStatsCache, invalidateMarketStatsCache } from "./stats-cache";
+
+test("manual edits invalidate statistics including pending old responses", async () => {
+  const cache = createStatsCache<number>();
+  let finish!: (n: number) => void;
+  const old = cache(
+    "key",
+    () =>
+      new Promise<number>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  await Promise.resolve();
+  invalidateMarketStatsCache();
+  assert.equal(await cache("key", async () => 2), 2);
+  finish(1);
+  await old;
+  assert.equal(await cache("key", async () => 3), 2);
+});
 
 test("parallel identical requests share computation; cache expires and separates filters", async () => {
   let time = 0,

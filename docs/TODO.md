@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Wyróżnienie ulubionych i reakcje na kliknięcie (2026-09-12)
+
+- Zakres: wyraźniejsza złota ramka i animacja ulubionych, nagłówek „Ukryte oferty”, wspólne animacje naciskania kontrolek z obsługą ograniczonego ruchu.
+- Dodatkowo: wspólne ciepłe akcenty kompasu w obu motywach; nowy wygląd duplikatów bez sekcji działki/planowania; ręczna ekspozycja w notatkach z pierwszeństwem w ocenie i statystykach.
+- [x] Wyraźniejsza ramka ulubionych z dwoma cyklami złotej poświaty, wspólne reakcje na naciskanie i ograniczony ruch. Zgodnie z korektą użytkownika brak przycisków ulubionych na kartach: dodawanie/usuwanie tylko wewnątrz oferty.
+- [x] Nagłówek „Ukryte oferty”; ciepłe zaznaczenia i identyczne kolory słońca kompasu w jasnym i ciemnym motywie.
+- [x] Duplikaty: osobne karty z portalem, ceną/metrażem, szczegółami powodu i akcją rozłączenia; sekcja działki/planowania ukryta w tej zakładce.
+- [x] Ręczne kierunki w Notatkach z trwałym zapisem w osobnej kolumnie korekt; pierwszeństwo w kompasie, punktacji i statystykach. Walidacja API, usuwanie korekty, zachowanie przy pominięciu pola, unieważnienie cache statystyk. Instrukcja zaktualizowana.
+- [x] 208 testów API oraz 93 frontendu poprawnych (5 środowiskowych pominiętych). Typecheck/build poprawne. Przeglądarka: zapis/odczyt/reset/ocena kierunków i odrzucenie niepoprawnych danych (1440/390), duplikaty i rozłączanie (1440/1280/390/320); zrzuty obejrzane.
+- [x] Końcowe UI 1440/1280/390/320: brak gwiazdek na kartach, zmiana ulubionych w szczegółach, złota ramka, reakcja na naciskanie, nagłówek ukrytych ofert i zgodność palety obu motywów. Wdrożone lokalnie; gotowe do commitu/push na `main`.
+
 ## Kompas: promienie i animacja światła (2026-09-12)
 
 - Zakres: promienie odpowiadają wybranym kierunkom, stały rozmiar słońca, większe koło na telefonie, animacja światła z obsługą ograniczonego ruchu.

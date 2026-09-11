@@ -373,7 +373,7 @@ export function useWorkspaceController() {
   const listingSectionTitle = filters.archivedOnly
     ? "Oferty archiwalne"
     : filters.hiddenOnly
-      ? "Ukryte oferty 2-pokojowe"
+      ? "Ukryte oferty"
       : "Wszystkie oferty";
   const portalQueueRows = [
     { name: "Otodom", status: queueStatus },

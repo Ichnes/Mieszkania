@@ -31,6 +31,16 @@ const row = (patch: Partial<ListingSummary>, label: string) =>
     (row) => row.label === label,
   )!;
 
+test("manual directions replace description exposure and clearing restores detection", () => {
+  const description = "Okna na północ. Mieszkanie jednostronne.";
+  assert.equal(row({ description }, "Ekspozycja").points, -15);
+  assert.equal(
+    row({ description, exposureDirectionsOverride: ["S", "W"] }, "Ekspozycja").points,
+    20,
+  );
+  assert.equal(row({ description, exposureDirectionsOverride: [] }, "Ekspozycja").points, -15);
+});
+
 test("missing lift costs no points on the ground floor", () => {
   assert.equal(row({ floor: 0, hasLift: false }, "Winda").points, 0);
   assert.equal(row({ description: "Mieszkanie na parterze.", hasLift: false }, "Winda").points, 0);

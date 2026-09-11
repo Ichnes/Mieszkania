@@ -7,7 +7,11 @@ function normalizeListingText(value: string) {
     .replace(/ł/g, "l");
 }
 
-export function getSunExposure(description?: string) {
+export function getSunExposure(description?: string, override?: ExposureDirection[] | null) {
+  if (override?.length) {
+    const directions = [...new Set(override)];
+    return { directions, sideCount: directions.length, isDoubleSided: directions.length === 2 };
+  }
   const text = normalizeListingText(description ?? "");
   const exposureText = text
     .replace(/\b(?:ne|nw|se|sw)\b/g, (bearing, offset: number) =>

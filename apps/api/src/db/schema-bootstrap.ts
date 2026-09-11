@@ -407,7 +407,8 @@ export async function ensureRuntimeSchema() {
       add column if not exists has_garage_override boolean,
       add column if not exists has_storage_override boolean,
       add column if not exists garage_cost_override numeric(14, 2),
-      add column if not exists storage_cost_override numeric(14, 2);
+      add column if not exists storage_cost_override numeric(14, 2),
+      add column if not exists exposure_directions_override text[];
     `);
 
     await db.query(`

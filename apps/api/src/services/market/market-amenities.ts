@@ -1,4 +1,5 @@
 import type { Pool } from "pg";
+import type { ExposureDirection } from "@mieszkania/shared";
 import { hasExposureFilter, matchesExposureFilter } from "@mieszkania/shared";
 import { extractFeatures, resolveListingAmenities } from "../listings/listing-repository";
 import { marketSnapshotPayloadSql } from "./market-snapshot";
@@ -22,8 +23,9 @@ export async function getMarketAmenityFilter(
     has_lift_override: boolean | null;
     has_garage_override: boolean | null;
     has_storage_override: boolean | null;
+    exposure_directions_override?: ExposureDirection[] | null;
   }>(`
-    select l.id, l.description, snapshot.payload_raw, manual.has_lift_override, manual.has_garage_override, manual.has_storage_override
+    select l.id, l.description, snapshot.payload_raw, manual.has_lift_override, manual.has_garage_override, manual.has_storage_override, manual.exposure_directions_override
     from listings l
     left join listing_manual_overrides manual on manual.listing_id=l.id
     left join lateral (
@@ -48,7 +50,7 @@ export async function getMarketAmenityFilter(
         (options.garage !== "true" || amenities.garage === true) &&
         (options.storage !== "true" ||
           (row.has_storage_override ?? features.some((feature) => feature.key === "storage"))) &&
-        matchesExposureFilter(description, options.directions)
+        matchesExposureFilter(description, options.directions, row.exposure_directions_override)
       );
     })
     .map((row) => row.id);

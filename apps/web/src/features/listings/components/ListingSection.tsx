@@ -15,8 +15,6 @@ export function ListingSection(input: {
   title: string;
   listings: ListingSummary[];
   onOpen: (listingId: string) => void | Promise<void>;
-  onToggleShortlist: (listingId: string, shortlisted: boolean) => void | Promise<void>;
-  updatingShortlistId: string | null;
   isLoading: boolean;
 }) {
   return (
@@ -56,17 +54,6 @@ export function ListingSection(input: {
               className={`listing-card clickable-card${listing.isShortlisted ? " is-shortlisted" : ""}`}
               onClick={() => void input.onOpen(listing.id)}
             >
-              <button
-                className={listing.isShortlisted ? "favorite-star active" : "favorite-star"}
-                aria-label={listing.isShortlisted ? "Usuń z ulubionych" : "Dodaj do ulubionych"}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void input.onToggleShortlist(listing.id, !listing.isShortlisted);
-                }}
-                disabled={input.updatingShortlistId === listing.id}
-              >
-                {listing.isShortlisted ? "★" : "☆"}
-              </button>
               {listing.thumbnailUrl ? (
                 <div className="listing-thumb-wrap">
                   <div className="listing-chip-stack">
@@ -140,7 +127,11 @@ export function ListingSection(input: {
                       {listing.sourceLabel}
                     </span>
                   ) : null}
-                  <SunExposureCompass description={listing.description} compact />
+                  <SunExposureCompass
+                    description={listing.description}
+                    directionsOverride={listing.exposureDirectionsOverride}
+                    compact
+                  />
                 </div>
               ) : null}
               <div className="listing-card-content">

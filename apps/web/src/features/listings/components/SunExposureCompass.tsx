@@ -1,7 +1,11 @@
 import { getSunExposure, type ExposureDirection } from "../lib/listing-language";
 
-export function SunExposureCompass(input: { description?: string; compact?: boolean }) {
-  const exposure = getSunExposure(input.description);
+export function SunExposureCompass(input: {
+  description?: string;
+  compact?: boolean;
+  directionsOverride?: ExposureDirection[];
+}) {
+  const exposure = getSunExposure(input.description, input.directionsOverride);
   if (exposure.directions.length === 0 && exposure.sideCount === undefined) return null;
 
   const positions: Record<ExposureDirection, { left: string; top: string; label: string }> = {

@@ -22,11 +22,13 @@ function sector(index: number) {
 export function ExposureFilterCompass({
   selected,
   onChange,
+  mode = "filter",
 }: {
   selected: ExposureDirection[];
   onChange: (value: ExposureDirection[]) => void;
+  mode?: "filter" | "listing";
 }) {
-  const active = hasExposureFilter(selected);
+  const active = mode === "listing" ? selected.length > 0 : hasExposureFilter(selected);
   return (
     <div className="stats-exposure-filter">
       <div className="stats-exposure-compass" role="group" aria-label="Kierunki ekspozycji">
@@ -77,32 +79,39 @@ export function ExposureFilterCompass({
               />
             ))}
           </svg>
-          <small>{active ? `${selected.length} z 8` : "Cały rynek"}</small>
+          <small>
+            {active ? `${selected.length} z 8` : mode === "listing" ? "Z opisu" : "Cały rynek"}
+          </small>
         </span>
       </div>
       <div className="stats-exposure-copy">
         <p className="eyebrow">Światło i ekspozycja</p>
-        <h3>Które strony świata?</h3>
+        <h3>{mode === "listing" ? "Ekspozycja mieszkania" : "Które strony świata?"}</h3>
         <p>
-          Wystarczy jeden z wybranych kierunków. Północ obejmuje też mieszkania z ekspozycją
-          północ–południe.
+          {mode === "listing"
+            ? "Zaznacz ustalone kierunki okien i zapisz ustalenia poniżej. Ręczny wybór ma pierwszeństwo przed opisem ogłoszenia."
+            : "Wystarczy jeden z wybranych kierunków. Północ obejmuje też mieszkania z ekspozycją północ–południe."}
         </p>
         <div className="stats-exposure-selection" aria-live="polite">
           {active
             ? selected.map((direction) => names[direction]).join(" · ")
-            : "Wszystkie mieszkania"}
+            : mode === "listing"
+              ? "Automatycznie z opisu"
+              : "Wszystkie mieszkania"}
         </div>
         <small>
-          {active
-            ? "Oferty bez podanych kierunków są pomijane."
-            : "Brak wyboru lub osiem kierunków obejmuje też oferty bez danych o ekspozycji."}
+          {mode === "listing"
+            ? "Zapisane kierunki uwzględniamy w kompasie, ocenie i statystykach."
+            : active
+              ? "Oferty bez podanych kierunków są pomijane."
+              : "Brak wyboru lub osiem kierunków obejmuje też oferty bez danych o ekspozycji."}
         </small>
         <div className="stats-exposure-shortcuts">
           <button type="button" onClick={() => onChange([...exposureDirections])}>
             Zaznacz wszystkie
           </button>
           <button type="button" onClick={() => onChange([])}>
-            Odznacz kierunki
+            {mode === "listing" ? "Przywróć odczyt z opisu" : "Odznacz kierunki"}
           </button>
         </div>
       </div>

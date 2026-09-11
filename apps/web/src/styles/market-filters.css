@@ -11,6 +11,8 @@
   background: linear-gradient(115deg, var(--brand-soft), var(--surface) 65%);
 }
 .stats-exposure-compass {
+  --compass-warm: #d48252;
+  --compass-warm-strong: #bd683d;
   width: 240px;
   height: 240px;
   position: relative;
@@ -27,8 +29,8 @@
     stroke 260ms ease;
 }
 .stats-exposure-sectors path.is-selected {
-  fill: var(--brand);
-  stroke: var(--brand-strong);
+  fill: var(--compass-warm);
+  stroke: var(--compass-warm-strong);
   animation: exposure-light-bloom 650ms ease-out;
 }
 .stats-exposure-compass button {
@@ -48,10 +50,10 @@
   cursor: pointer;
 }
 .stats-exposure-compass button[aria-pressed="true"] {
-  color: white;
+  color: #2b1b13;
 }
 .stats-exposure-compass button:hover {
-  background: color-mix(in srgb, var(--brand-strong) 15%, transparent);
+  background: color-mix(in srgb, var(--compass-warm-strong) 15%, transparent);
 }
 .stats-exposure-compass button:focus-visible {
   outline: 3px solid var(--ink);
@@ -68,7 +70,7 @@
   place-content: center;
   justify-items: center;
   gap: 5px;
-  color: var(--brand-strong);
+  color: var(--compass-warm-strong);
   pointer-events: none;
 }
 .stats-exposure-center .stats-exposure-sun {
@@ -81,11 +83,11 @@
   stroke-linecap: round;
 }
 .stats-exposure-sun-core {
-  fill: color-mix(in srgb, #efb640 24%, var(--surface));
+  fill: color-mix(in srgb, #efb640 24%, #151e1b);
   stroke: #b97816;
 }
 .stats-exposure-ray {
-  stroke: color-mix(in srgb, var(--ink-soft) 35%, var(--surface));
+  stroke: color-mix(in srgb, #b9c7c1 35%, #151e1b);
   transition:
     stroke 260ms ease,
     filter 260ms ease;
@@ -113,7 +115,7 @@
     fill: #f2ce79;
   }
   100% {
-    fill: var(--brand);
+    fill: var(--compass-warm);
   }
 }
 @media (prefers-reduced-motion: reduce) {

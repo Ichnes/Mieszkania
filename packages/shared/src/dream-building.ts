@@ -1,4 +1,4 @@
-import { getSunExposure } from "./sun-exposure.js";
+import { getSunExposure, type ExposureDirection } from "./sun-exposure.js";
 
 export function getBuildingYearPoints(year: number | undefined, currentYear: number) {
   if (year === undefined || !Number.isFinite(year)) return -3;
@@ -41,8 +41,8 @@ export function hasApartmentGroundFloor(text: string) {
   });
 }
 
-export function getExposureEvaluation(description: string) {
-  const exposure = getSunExposure(description);
+export function getExposureEvaluation(description: string, override?: ExposureDirection[]) {
+  const exposure = getSunExposure(description, override);
   const sides = exposure.sideCount ?? (exposure.directions.length || undefined);
   const cardinals = [...new Set(exposure.directions.flatMap((direction) => direction.split("")))]
     .sort()

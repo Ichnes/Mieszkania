@@ -17,6 +17,9 @@ import {
   ClipboardCheck,
   GitCompareArrows,
   LayoutDashboard,
+  Link2,
+  Unlink,
+  ExternalLink,
   NotebookPen,
   RefreshCw,
   RotateCcw,
@@ -50,6 +53,7 @@ import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
 import { SunExposureCompass } from "./SunExposureCompass";
+import { ExposureFilterCompass } from "../../statistics/ExposureFilterCompass";
 import { ListingScorePanel } from "./ListingScorePanel";
 
 export function ListingDetailPanel(input: {
@@ -464,7 +468,10 @@ export function ListingDetailPanel(input: {
                   ))}
                 </div>
               ) : null}
-              <SunExposureCompass description={input.listing.description} />
+              <SunExposureCompass
+                description={input.listing.description}
+                directionsOverride={input.listing.exposureDirectionsOverride}
+              />
               {input.listing.floorPlanImageUrls?.map((url, index) => {
                 const imageIndex = input.listing.imageUrls.indexOf(url);
                 return imageIndex < 0 ? null : (
@@ -552,7 +559,8 @@ export function ListingDetailPanel(input: {
                 type="button"
                 onClick={() => setActiveDetailTab("duplicates")}
               >
-                Duplikaty ({input.listing.relatedListings.length})
+                <Link2 size={16} aria-hidden="true" /> Duplikaty (
+                {input.listing.relatedListings.length})
               </button>
             </div>
             {activeDetailTab === "duplicates" && (
@@ -560,8 +568,19 @@ export function ListingDetailPanel(input: {
                 className="detail-tab-section detail-duplicates"
                 aria-label="Duplikaty oferty"
               >
-                <div className="result-box">
-                  <strong>Połączone ogłoszenia</strong>
+                <div className="detail-duplicate-group">
+                  <div className="detail-duplicate-heading">
+                    <span className="detail-duplicate-icon">
+                      <Link2 size={20} aria-hidden="true" />
+                    </span>
+                    <div>
+                      <p className="eyebrow">Jedno mieszkanie · kilka ogłoszeń</p>
+                      <h3>Połączone ogłoszenia</h3>
+                    </div>
+                    <span className="detail-duplicate-count">
+                      {input.listing.relatedListings.length}
+                    </span>
+                  </div>
                   <p className="muted">
                     Rozłącz błędny duplikat, aby przywrócić go jako osobną ofertę. Zapamiętamy tę
                     decyzję przy automatycznym łączeniu.
@@ -572,17 +591,33 @@ export function ListingDetailPanel(input: {
                     <p className="muted">Brak połączonych ogłoszeń.</p>
                   )}
                   {input.listing.relatedListings.map((related) => (
-                    <div className="duplicate-candidate-card" key={related.id}>
+                    <div className="detail-duplicate-card" key={related.id}>
+                      <div className="detail-duplicate-source">
+                        <span>{related.sourceLabel ?? "Portal"}</span>
+                        <small>Połączona oferta</small>
+                      </div>
                       <button
-                        className="map-card-title"
+                        className="detail-duplicate-title"
                         onClick={() => void input.onOpenRelatedListing(related.id)}
                       >
-                        {related.sourceLabel}: {related.title}
+                        {related.title}
                       </button>
-                      <p className="muted">
-                        {related.priceLabel} · {related.areaLabel}
-                      </p>
-                      {related.relationNote && <p className="muted">{related.relationNote}</p>}
+                      <dl className="detail-duplicate-facts">
+                        <div>
+                          <dt>Cena</dt>
+                          <dd>{related.priceLabel}</dd>
+                        </div>
+                        <div>
+                          <dt>Metraż</dt>
+                          <dd>{related.areaLabel}</dd>
+                        </div>
+                      </dl>
+                      {related.relationNote && (
+                        <details className="detail-duplicate-reason">
+                          <summary>Dlaczego połączono?</summary>
+                          <p>{related.relationNote}</p>
+                        </details>
+                      )}
                       <div className="panel-inline-actions">
                         {related.canonicalUrl && (
                           <a
@@ -591,11 +626,11 @@ export function ListingDetailPanel(input: {
                             target="_blank"
                             rel="noreferrer"
                           >
-                            Otwórz ogłoszenie ↗
+                            <ExternalLink size={15} aria-hidden="true" /> Otwórz ogłoszenie
                           </a>
                         )}
                         <button
-                          className="action-button secondary-button"
+                          className="action-button secondary-button detail-duplicate-unlink"
                           disabled={input.isUnmergingDuplicate || !related.primaryListingId}
                           onClick={async () => {
                             setUnmergeSuccess("");
@@ -606,6 +641,7 @@ export function ListingDetailPanel(input: {
                               setUnmergeSuccess("Rozłączono oferty.");
                           }}
                         >
+                          <Unlink size={15} aria-hidden="true" />
                           {input.isUnmergingDuplicate
                             ? "Rozłączanie…"
                             : related.id === related.primaryListingId
@@ -616,8 +652,8 @@ export function ListingDetailPanel(input: {
                     </div>
                   ))}
                 </div>
-                <div className="result-box detail-sidebar-box">
-                  <strong>Potencjalne duplikaty</strong>
+                <div className="detail-duplicate-group detail-duplicate-candidates">
+                  <h3>Potencjalne duplikaty</h3>
                   {input.isLoadingDuplicateCandidates ? (
                     <p className="muted">Sprawdzanie kandydatów...</p>
                   ) : null}
@@ -638,12 +674,16 @@ export function ListingDetailPanel(input: {
                     const counterpart =
                       candidate.left.id === input.listing.id ? candidate.right : candidate.left;
                     return (
-                      <div className="duplicate-candidate-card" key={candidate.pairKey}>
+                      <div className="detail-duplicate-card" key={candidate.pairKey}>
+                        <div className="detail-duplicate-source">
+                          <span>{counterpart.sourceLabel ?? "Inny portal"}</span>
+                          <small>Do sprawdzenia · {candidate.confidenceScore}%</small>
+                        </div>
                         <button
-                          className="map-card-title"
+                          className="detail-duplicate-title"
                           onClick={() => void input.onOpenRelatedListing(counterpart.id)}
                         >
-                          {counterpart.sourceLabel ?? "Inny portal"}: {counterpart.title}
+                          {counterpart.title}
                         </button>
                         <div className="muted">
                           {counterpart.priceLabel}
@@ -873,6 +913,13 @@ export function ListingDetailPanel(input: {
                 </div>
               </div>
               <div className="ops-form viewing-form">
+                <ExposureFilterCompass
+                  mode="listing"
+                  selected={manual.exposureDirectionsOverride ?? []}
+                  onChange={(directions) =>
+                    setManual((current) => ({ ...current, exposureDirectionsOverride: directions }))
+                  }
+                />
                 <fieldset className="manual-feature-corrections">
                   <legend>Korekta automatycznego odczytu</legend>
                   <p className="muted">
@@ -1450,9 +1497,11 @@ export function ListingDetailPanel(input: {
             {!isMobileDetail && detailMap}
           </div>
         </div>
-        <div className="detail-parcel-bottom">
-          <ListingParcelCard listing={input.listing} />
-        </div>
+        {activeDetailTab !== "duplicates" && (
+          <div className="detail-parcel-bottom">
+            <ListingParcelCard listing={input.listing} />
+          </div>
+        )}
         <div className="detail-footer">
           <button className="action-button secondary-button" type="button" onClick={input.onClose}>
             Zamknij

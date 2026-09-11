@@ -177,11 +177,24 @@ export function registerListingsRoutes(app: FastifyInstance) {
       contactRole?: string;
       negotiatedPriceAmount?: number;
       askingPriceOverride?: number;
+      exposureDirectionsOverride?: import("@mieszkania/shared").ExposureDirection[];
       notes?: string;
       sourceNotes?: string;
       lastContactAt?: string;
     };
   }>("/api/listings/:id/manual", async (request, reply) => {
+    const directions = request.body?.exposureDirectionsOverride;
+    if (
+      directions !== undefined &&
+      (!Array.isArray(directions) ||
+        directions.length > 8 ||
+        directions.some((value) => !["N", "NE", "E", "SE", "S", "SW", "W", "NW"].includes(value)) ||
+        new Set(directions).size !== directions.length)
+    ) {
+      return reply
+        .code(400)
+        .send({ message: "Wybierz poprawne, niepowtarzające się kierunki świata." });
+    }
     const price = request.body?.askingPriceOverride;
     if (
       price !== undefined &&

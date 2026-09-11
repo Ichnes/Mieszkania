@@ -1,7 +1,12 @@
+let revision = 0;
+export function invalidateMarketStatsCache() {
+  revision += 1;
+}
 export function createStatsCache<T>(ttlMs = 30000, maxEntries = 12, now = Date.now) {
   const results = new Map<string, { value: T; expiresAt: number }>();
   const pending = new Map<string, Promise<T>>();
   return async (key: string, compute: () => Promise<T>): Promise<T> => {
+    key = `${revision}:${key}`;
     const cached = results.get(key);
     if (cached && cached.expiresAt > now()) return cached.value;
     if (pending.has(key)) return pending.get(key)!;

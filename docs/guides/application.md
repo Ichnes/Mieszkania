@@ -422,9 +422,17 @@ Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.
 
 W szczegółach oferty zakładka **Duplikaty** pokazuje połączone ogłoszenia i kandydatów.
+Zakładka skupia się na powiązaniach; sekcja działki i planowania nie jest w niej wyświetlana.
 Przycisk **Rozłącz duplikat** przywraca osobną ofertę wraz z jej ceną źródłową.
 Rozłączanie zapamiętuje odrzucenie względem wszystkich pozostałych członków grupy,
 aby kolejne automatyczne skanowanie nie cofnęło decyzji. Można też otworzyć stronę
 źródłową każdego ogłoszenia i sprawdzić, czy rzeczywiście dotyczy tego samego mieszkania.
+
+W zakładce **Notatki** kompas **Ekspozycja mieszkania** pozwala ręcznie wskazać
+kierunki okien. Zatwierdź je przyciskiem **Zapisz notatki do oferty**. Zapisany wybór
+ma pierwszeństwo przed opisem w kompasie, ocenie i filtrze kierunków w statystykach.
+Ponowne pobranie danych portalu zachowuje ustalenia. **Przywróć odczyt z opisu**
+i zapis notatek usuwa ręczną korektę. Samo zaznaczenie kierunków bez zapisu nie
+zmienia danych mieszkania.
 
 Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).

@@ -293,7 +293,10 @@ export function computeDreamEvaluation(
     `Piętro: ${floor ?? "brak danych"} / ${listing.totalFloors ?? "?"}${topFloor ? "; ostatnie piętro +5" : ""}`,
   );
 
-  const exposure = getExposureEvaluation(listing.description ?? "");
+  const exposure = getExposureEvaluation(
+    listing.description ?? "",
+    listing.exposureDirectionsOverride,
+  );
   points += exposure.points;
   maxPoints += exposure.maxPoints;
   record(

@@ -41,8 +41,6 @@ export function OffersPage({
     | "listingsMainRef"
     | "visibleListings"
     | "openListing"
-    | "toggleShortlist"
-    | "isUpdatingShortlist"
     | "listingsTotal"
     | "currentListingsPage"
     | "totalListingsPages"
@@ -64,8 +62,6 @@ export function OffersPage({
     listingsMainRef,
     visibleListings,
     openListing,
-    toggleShortlist,
-    isUpdatingShortlist,
     listingsTotal,
     currentListingsPage,
     totalListingsPages,
@@ -449,9 +445,7 @@ export function OffersPage({
                 title={listingSectionTitle}
                 listings={visibleListings}
                 onOpen={openListing}
-                onToggleShortlist={toggleShortlist}
                 downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}
-                updatingShortlistId={isUpdatingShortlist}
                 isLoading={isLoadingListings}
               />
               {listingsTotal > 0 ? (
