@@ -27,6 +27,7 @@ import { getNextQueueAttemptAt } from "../features/imports/lib/queue";
 import { useImportController } from "../features/imports/useImportController";
 import { applyDreamProfile } from "../features/listings/lib/dream-profile";
 import { getOfferStep } from "../features/listings/lib/offer-navigation";
+import { createCandidateCache } from "../features/duplicates/candidate-cache";
 import { buildListingInsights } from "../features/listings/lib/insights";
 import { listingHref } from "../features/listings/lib/links";
 import { MortgageDraft } from "../features/mortgage/types";
@@ -99,6 +100,17 @@ export function useWorkspaceController() {
   const [isOpeningListing, setIsOpeningListing] = useState(false);
   const [isLoadingListingInsights, setIsLoadingListingInsights] = useState(false);
   const [isLoadingDuplicateCandidates, setIsLoadingDuplicateCandidates] = useState(false);
+  const duplicateCandidatesLoadVersion = useRef(0);
+  const [duplicateCandidateCache] = useState(() =>
+    createCandidateCache(async (listingId, signal) => {
+      const response = await apiFetch(
+        `${apiBaseUrl}/api/duplicates/candidates?limit=40&listingId=${encodeURIComponent(listingId)}`,
+        { signal },
+      );
+      if (!response.ok) throw new Error("Nie udało się pobrać kandydatów.");
+      return ((await response.json()) as DuplicateCandidatesResponse).items;
+    }),
+  );
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSaveError, setSettingsSaveError] = useState<string | null>(null);
   const [compareSnapshots, setCompareSnapshots] = useState<ListingSummary[]>([]);
@@ -197,7 +209,10 @@ export function useWorkspaceController() {
     relistingScanError,
     setCollectError,
   } = useImportController({
-    refreshDashboard,
+    refreshDashboard: async () => {
+      duplicateCandidateCache.clear();
+      await refreshDashboard();
+    },
     applyFilters,
     searchCity: state.status === "ready" ? state.settings.searchContract.city : "",
   });
@@ -234,6 +249,7 @@ export function useWorkspaceController() {
     () => () => {
       listingRequest.current?.controller.abort();
       offerNavigationRequest.current?.abort();
+      duplicateCandidateCache.clear();
     },
     [],
   );
@@ -754,6 +770,7 @@ export function useWorkspaceController() {
       });
       if (!response.ok)
         throw new Error("Nie udało się rozłączyć ofert. Odśwież grupy i spróbuj ponownie.");
+      duplicateCandidateCache.clear();
       await Promise.all([
         loadDuplicateGroups(),
         refreshDashboard(),
@@ -781,6 +798,7 @@ export function useWorkspaceController() {
         body: JSON.stringify({ primaryListingId }),
       });
       if (!response.ok) throw new Error("Nie udało się zatwierdzić grupy.");
+      duplicateCandidateCache.clear();
       await loadDuplicateGroups();
     } catch (error) {
       setDuplicateError(error instanceof Error ? error.message : "Błąd zatwierdzania.");
@@ -801,6 +819,7 @@ export function useWorkspaceController() {
   }
 
   function cancelListingRequests() {
+    duplicateCandidatesLoadVersion.current += 1;
     offerNavigationRequest.current?.abort();
     offerNavigationRequest.current = null;
     setIsNavigatingOffer(false);
@@ -924,19 +943,27 @@ export function useWorkspaceController() {
     listingId: string,
     signal = listingRequest.current?.controller.signal,
   ) {
+    const version = ++duplicateCandidatesLoadVersion.current;
+    const current = () =>
+      !signal?.aborted &&
+      version === duplicateCandidatesLoadVersion.current &&
+      listingRequest.current?.id === listingId;
+    const cached = duplicateCandidateCache.peek(listingId);
+    if (cached !== undefined) {
+      if (current()) {
+        setSelectedListingDuplicateCandidates(cached);
+        setIsLoadingDuplicateCandidates(false);
+      }
+      return;
+    }
     setIsLoadingDuplicateCandidates(true);
     try {
-      const response = await apiFetch(
-        `${apiBaseUrl}/api/duplicates/candidates?limit=40&listingId=${encodeURIComponent(listingId)}`,
-        { signal },
-      );
-      if (!response.ok) return;
-      const result = (await response.json()) as DuplicateCandidatesResponse;
-      if (!signal?.aborted) setSelectedListingDuplicateCandidates(result.items);
+      const items = await duplicateCandidateCache.load(listingId);
+      if (current()) setSelectedListingDuplicateCandidates(items);
     } catch (error) {
-      if (!signal?.aborted) setSelectedListingDuplicateCandidates([]);
+      if (current()) setSelectedListingDuplicateCandidates([]);
     } finally {
-      if (!signal?.aborted) setIsLoadingDuplicateCandidates(false);
+      if (current()) setIsLoadingDuplicateCandidates(false);
     }
   }
 
@@ -1263,6 +1290,7 @@ export function useWorkspaceController() {
       });
       if (!response.ok) throw new Error(`Listing refresh failed with status ${response.status}`);
       const result = (await response.json()) as CollectorRunResponse;
+      duplicateCandidateCache.clear();
       setListingRefreshConfirmation({ listingId: listing.id, refreshedAt, action: result.action });
       await Promise.all([
         refreshDashboard(),
@@ -1298,6 +1326,7 @@ export function useWorkspaceController() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.message ?? "Nie udało się zapisać decyzji o duplikacie.");
       }
+      duplicateCandidateCache.clear();
       if (!selectedListing) return;
 
       await openListing(selectedListing.id, false, true);

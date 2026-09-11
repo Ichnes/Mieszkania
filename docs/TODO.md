@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Cache potencjalnych duplikatów (2026-09-12)
+
+- [x] Cache sesji na 5 minut / 100 ofert, również pustych wyników; współdzielenie trwających zapytań przy powrocie do oferty, ochrona przed spóźnionymi odpowiedziami.
+- [x] Unieważnianie po decyzji o duplikacie, rozłączeniu/zatwierdzeniu grupy, imporcie i pobraniu danych z portalu.
+- [x] 3 testy cache: puste wyniki, współdzielenie, wygasanie, limit LRU, ponowienie po błędzie i odrzucenie spóźnionych odpowiedzi po unieważnieniu. Typecheck/build poprawne.
+- [x] Przeglądarka 1440/390: powrót X→Y→X bez kolejnego zapytania/spinnera, powrót do trwającego wyszukiwania bez duplikacji, cache pustej listy i odświeżenie obu ofert po decyzji. Wdrożone lokalnie, instrukcja uzupełniona; gotowe do commitu/push `main`.
+
 ## Potencjalne duplikaty w Przeglądzie (2026-09-12)
 
 - [x] Wspólny panel kandydatów także nad dojazdami do pracy w Przeglądzie; zachowane rozstrzyganie, ładowanie i błędy oraz panel w zakładce Duplikaty. Układ akcji dopasowany do wąskiej kolumny.
