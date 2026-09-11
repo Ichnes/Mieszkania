@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Potencjalne duplikaty w Przeglądzie (2026-09-12)
+
+- [x] Wspólny panel kandydatów także nad dojazdami do pracy w Przeglądzie; zachowane rozstrzyganie, ładowanie i błędy oraz panel w zakładce Duplikaty. Układ akcji dopasowany do wąskiej kolumny.
+- [x] Typecheck/build poprawne; wdrożone lokalnie. UI 1440/1280/390/320: kandydaci nad dojazdami i w zakładce Duplikaty, akcja rozstrzygnięcia i błąd zapisu, brak przepełnienia. Zrzut telefonu obejrzany. Gotowe do commitu/push `main`.
+
 ## Nawigacja ofert tylko na laptopach i PC (2026-09-12)
 
 - [x] Wyłączenie przycisków, licznika oraz skrótów przełączania ofert w mobilnym układzie (do 900 px), bez rezerwowania miejsca pod nawigację.

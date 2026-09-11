@@ -163,3 +163,20 @@
     gap: 18px;
   }
 }
+.detail-potential-duplicates .detail-duplicate-candidates {
+  border: 0;
+  padding: 0;
+}
+.detail-potential-duplicates .detail-duplicate-card {
+  padding: 12px;
+}
+.detail-potential-duplicates .panel-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.detail-potential-duplicates .panel-inline-actions > * {
+  flex: 1 1 100%;
+  white-space: normal;
+  min-height: 44px;
+}

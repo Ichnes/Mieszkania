@@ -224,6 +224,79 @@ export function ListingDetailPanel(input: {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [lightboxImageIndex, input.listing.imageUrls.length]);
+  const duplicateCandidates = input.duplicateCandidates.filter(
+    (candidate) =>
+      candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
+  );
+  const potentialDuplicates = (
+    <div className="detail-duplicate-group detail-duplicate-candidates">
+      <h3>Potencjalne duplikaty</h3>
+      {input.isLoadingDuplicateCandidates ? (
+        <p className="muted">Sprawdzanie kandydatów...</p>
+      ) : null}
+      {!input.isLoadingDuplicateCandidates &&
+      duplicateCandidates.length === 0 &&
+      input.listing.relatedListings.length > 0 ? (
+        <p className="muted">
+          Brak nierozstrzygniętych kandydatów. Ta oferta ma już połączone ogłoszenia widoczne
+          powyżej.
+        </p>
+      ) : null}
+      {!input.isLoadingDuplicateCandidates &&
+      duplicateCandidates.length === 0 &&
+      input.listing.relatedListings.length === 0 ? (
+        <p className="muted">Brak nierozstrzygniętych kandydatów dla tej oferty.</p>
+      ) : null}
+      {duplicateCandidates.map((candidate) => {
+        const counterpart =
+          candidate.left.id === input.listing.id ? candidate.right : candidate.left;
+        return (
+          <div className="detail-duplicate-card" key={candidate.pairKey}>
+            <div className="detail-duplicate-source">
+              <span>{counterpart.sourceLabel ?? "Inny portal"}</span>
+              <small>Do sprawdzenia · {candidate.confidenceScore}%</small>
+            </div>
+            <button
+              className="detail-duplicate-title"
+              onClick={() => void input.onOpenRelatedListing(counterpart.id)}
+            >
+              {counterpart.title}
+            </button>
+            <div className="muted">
+              {counterpart.priceLabel}
+              {counterpart.areaLabel ? ` / ${counterpart.areaLabel}` : ""}
+              {counterpart.roomsLabel ? ` / ${counterpart.roomsLabel}` : ""}
+            </div>
+            <div className="muted">
+              {counterpart.addressText ??
+                `${counterpart.city}${counterpart.district ? ` / ${counterpart.district}` : ""}`}
+            </div>
+            <div className="muted">
+              Pewność: {candidate.confidenceScore}% · {candidate.reasons.join(", ")}
+            </div>
+            <div className="panel-inline-actions">
+              <button
+                className="action-button secondary-button"
+                type="button"
+                onClick={() => void input.onReviewDuplicate(candidate, "different_listing")}
+                disabled={input.isReviewingDuplicatePair === candidate.pairKey}
+              >
+                To nie duplikat
+              </button>
+              <button
+                className="action-button"
+                type="button"
+                onClick={() => void input.onReviewDuplicate(candidate, "same_listing")}
+                disabled={input.isReviewingDuplicatePair === candidate.pairKey}
+              >
+                Zostaw tę, ukryj duplikat
+              </button>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
   const mapQuery = [input.listing.street, input.listing.district, input.listing.city, "Polska"]
     .filter(Boolean)
     .join(", ");
@@ -235,10 +308,6 @@ export function ListingDetailPanel(input: {
   const knownAmenities = availableAmenities(input.listing.amenities, input.listing.amenityAnalysis);
   const hasKnownSurroundings =
     knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
-  const duplicateCandidates = input.duplicateCandidates.filter(
-    (candidate) =>
-      candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
-  );
   const maintenanceFee = input.listing.features.find((feature) => feature.key === "fees")?.value;
   const changeDetailImage = (direction: -1 | 1) => {
     setActiveImageIndex(
@@ -693,75 +762,7 @@ export function ListingDetailPanel(input: {
                     </div>
                   ))}
                 </div>
-                <div className="detail-duplicate-group detail-duplicate-candidates">
-                  <h3>Potencjalne duplikaty</h3>
-                  {input.isLoadingDuplicateCandidates ? (
-                    <p className="muted">Sprawdzanie kandydatów...</p>
-                  ) : null}
-                  {!input.isLoadingDuplicateCandidates &&
-                  duplicateCandidates.length === 0 &&
-                  input.listing.relatedListings.length > 0 ? (
-                    <p className="muted">
-                      Brak nierozstrzygniętych kandydatów. Ta oferta ma już połączone ogłoszenia
-                      widoczne powyżej.
-                    </p>
-                  ) : null}
-                  {!input.isLoadingDuplicateCandidates &&
-                  duplicateCandidates.length === 0 &&
-                  input.listing.relatedListings.length === 0 ? (
-                    <p className="muted">Brak nierozstrzygniętych kandydatów dla tej oferty.</p>
-                  ) : null}
-                  {duplicateCandidates.map((candidate) => {
-                    const counterpart =
-                      candidate.left.id === input.listing.id ? candidate.right : candidate.left;
-                    return (
-                      <div className="detail-duplicate-card" key={candidate.pairKey}>
-                        <div className="detail-duplicate-source">
-                          <span>{counterpart.sourceLabel ?? "Inny portal"}</span>
-                          <small>Do sprawdzenia · {candidate.confidenceScore}%</small>
-                        </div>
-                        <button
-                          className="detail-duplicate-title"
-                          onClick={() => void input.onOpenRelatedListing(counterpart.id)}
-                        >
-                          {counterpart.title}
-                        </button>
-                        <div className="muted">
-                          {counterpart.priceLabel}
-                          {counterpart.areaLabel ? ` / ${counterpart.areaLabel}` : ""}
-                          {counterpart.roomsLabel ? ` / ${counterpart.roomsLabel}` : ""}
-                        </div>
-                        <div className="muted">
-                          {counterpart.addressText ??
-                            `${counterpart.city}${counterpart.district ? ` / ${counterpart.district}` : ""}`}
-                        </div>
-                        <div className="muted">
-                          Pewność: {candidate.confidenceScore}% · {candidate.reasons.join(", ")}
-                        </div>
-                        <div className="panel-inline-actions">
-                          <button
-                            className="action-button secondary-button"
-                            type="button"
-                            onClick={() =>
-                              void input.onReviewDuplicate(candidate, "different_listing")
-                            }
-                            disabled={input.isReviewingDuplicatePair === candidate.pairKey}
-                          >
-                            To nie duplikat
-                          </button>
-                          <button
-                            className="action-button"
-                            type="button"
-                            onClick={() => void input.onReviewDuplicate(candidate, "same_listing")}
-                            disabled={input.isReviewingDuplicatePair === candidate.pairKey}
-                          >
-                            Zostaw tę, ukryj duplikat
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                {potentialDuplicates}
               </section>
             )}
             {activeDetailTab === "score" && (
@@ -1280,6 +1281,12 @@ export function ListingDetailPanel(input: {
               )}
             </div>
 
+            {activeDetailTab === "overview" && (
+              <div className="result-box detail-sidebar-box detail-potential-duplicates">
+                {input.duplicateError && <p role="alert">{input.duplicateError}</p>}
+                {potentialDuplicates}
+              </div>
+            )}
             <div className="result-box detail-sidebar-box">
               <strong>Dojazdy do pracy</strong>
               {input.isLoadingInsights && input.listing.commutes.length === 0 ? (

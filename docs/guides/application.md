@@ -427,6 +427,8 @@ Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.
 
 W szczegółach oferty zakładka **Duplikaty** pokazuje połączone ogłoszenia i kandydatów.
+**Potencjalne duplikaty** są też dostępne w **Przeglądzie**, nad dojazdami do pracy,
+z tymi samymi przyciskami do rozstrzygania kandydatów.
 Zakładka skupia się na powiązaniach; sekcja działki i planowania nie jest w niej wyświetlana.
 Przycisk **Rozłącz duplikat** przywraca osobną ofertę wraz z jej ceną źródłową.
 Rozłączanie zapamiętuje odrzucenie względem wszystkich pozostałych członków grupy,
