@@ -369,8 +369,9 @@ usunięte z formularza. Wcześniej zapisane dane pozostają zachowane.
 
 Strzałki po bokach szczegółów przełączają oferty w kolejności bieżących wyników,
 z tymi samymi filtrami i sortowaniem. Działają również klawisze **← / →**, z wyjątkiem
-pisania w polach, obsługi mapy i podglądu zdjęć. Na telefonie przyciski są przy dolnych
-rogach ekranu. Licznik pokazuje pozycję oferty i stronę wyników.
+pisania w polach, obsługi mapy i podglądu zdjęć. Nawigacja i licznik są dostępne tylko
+na laptopach i PC (szerokość powyżej 900 px). Na telefonie szczegóły zajmują pełną
+wysokość, bez przycisków i skrótów do przełączania ofert.
 
 Na końcu strony **Następna strona · pierwsza oferta** otwiera pierwszą ofertę kolejnej
 strony. Z jej początku **Poprzednia strona · ostatnia oferta** pozwala wrócić.

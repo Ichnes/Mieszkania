@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Nawigacja ofert tylko na laptopach i PC (2026-09-12)
+
+- [x] Wyłączenie przycisków, licznika oraz skrótów przełączania ofert w mobilnym układzie (do 900 px), bez rezerwowania miejsca pod nawigację.
+- [x] Typecheck/build poprawne; wdrożone lokalnie. Przeglądarka 320/390/844: brak nawigacji i skrótów, pełna wysokość. 1280/1440: nawigacja obecna. Zmiana szerokości w obie strony bez przepełnienia; zrzut telefonu obejrzany. Gotowe do commitu/push `main`.
+
 ## Prostsze notatki i nawigacja między ofertami (2026-09-12)
 
 - Zakres: zostawić notatkę, kompas i korekty odczytu; działka/planowanie wyłącznie w Przeglądzie; przyciski i strzałki klawiatury do ofert z zachowaniem filtrów/kolejności oraz przejściem między stronami wyników.

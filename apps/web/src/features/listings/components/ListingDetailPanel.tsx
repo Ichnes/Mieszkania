@@ -293,10 +293,10 @@ export function ListingDetailPanel(input: {
 
   return (
     <aside
-      className={`detail-overlay${input.offerNavigation ? " has-offer-navigation" : ""}`}
+      className={`detail-overlay${input.offerNavigation && !isMobileDetail ? " has-offer-navigation" : ""}`}
       onClick={input.onClose}
     >
-      {input.offerNavigation && (
+      {input.offerNavigation && !isMobileDetail && (
         <ListingOfferNavigation
           navigation={{
             ...input.offerNavigation,
