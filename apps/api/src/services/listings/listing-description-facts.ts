@@ -1,23 +1,32 @@
 import { decodeListingText } from "./listing-text";
-import { isNonAddressPhrase, sanitizeStreetCandidate } from "../geography/address-normalization";
+import {
+  isNonAddressPhrase,
+  sanitizeStreetCandidate,
+  normalizeWarsawStreetCandidate,
+} from "../geography/address-normalization";
+import { inferWarsawDistrictFromAddressDescription } from "./listing-title-location";
 import type { ParsedListing } from "../../collectors/types";
 
 export function enrichListingFromDescription(listing: ParsedListing): ParsedListing {
   const description = cleanListingDescription(listing.description);
   const floorFacts = inferBuildingDetails(description ?? "");
   const yearBuilt = listing.yearBuilt ?? inferConstructionYear(description);
+  const explicitDistrict = inferWarsawDistrictFromAddressDescription(description);
+  const district = explicitDistrict ?? listing.district;
   const streetFromTitle = sanitizeStreetCandidate(extractStreetFromTitle(listing.title));
   const cleanedSuppliedStreet = sanitizeStreetCandidate(listing.street) ?? undefined;
   const suppliedStreet = isPlausibleStreet(cleanedSuppliedStreet)
     ? cleanedSuppliedStreet
     : undefined;
   const street =
+    (explicitDistrict ? normalizeWarsawStreetCandidate(extractStreet(description)) : undefined) ??
     streetFromTitle ??
     suppliedStreet ??
     sanitizeStreetCandidate(extractStreet(description)) ??
     undefined;
   const shouldNormalizeAddress = Boolean(
-    street && (streetFromTitle || !suppliedStreet || suppliedStreet !== listing.street),
+    street &&
+    (explicitDistrict || streetFromTitle || !suppliedStreet || suppliedStreet !== listing.street),
   );
 
   return {
@@ -25,10 +34,13 @@ export function enrichListingFromDescription(listing: ParsedListing): ParsedList
     title: decodeListingText(listing.title),
     description,
     street,
+    district,
+    neighborhood:
+      explicitDistrict && explicitDistrict !== listing.district ? undefined : listing.neighborhood,
     // Portal address blocks occasionally contain a sentence mentioning a road.
     // Persist a compact address only from the verified street plus district/city.
     addressText: shouldNormalizeAddress
-      ? [street, listing.district, listing.city].filter(Boolean).join(", ")
+      ? [street, district, listing.city].filter(Boolean).join(", ")
       : listing.addressText,
     floor: listing.floor ?? floorFacts.floor,
     totalFloors: listing.totalFloors ?? floorFacts.totalFloors,
@@ -131,7 +143,7 @@ function isPlausibleStreet(value?: string) {
 function extractStreet(description?: string) {
   if (!description) return undefined;
   const match = description.match(
-    /\b(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac)\s+([A-ZĄĆĘŁŃÓŚŹŻ][\p{L}0-9.' -]{1,70}?)(?=,|\.|;|\n|\s{2,}|$)/u,
+    /\b(?:ul\.?|ulica|al\.?|aleja|pl\.?|plac)\s+([A-ZĄĆĘŁŃÓŚŹŻ][\p{L}0-9.' -]{1,70}?)(?=,|\.|;|\n|\s{2,}|\s+na\s+(?:\d|pierwsz|drug|trzec|czwart|piąt|szóst|ostatni)|$)/u,
   );
   return match?.[1]?.trim();
 }
@@ -185,6 +197,9 @@ export function inferBuildingDetails(description: string) {
     new RegExp(`\\b${prefix}pietrow\\w*(?:\\s+(?:blok|budyn)\\w*)?`).test(text),
   )?.[1];
   const totalFromNumber = text.match(/\b(\d{1,2})\s*[- ]?pietrow\w*(?:\s+(?:blok|budyn)\w*)?/)?.[1];
+  const floorsInSentence = text.match(
+    /\bpietrze\s+w\s+(\d{1,2})\s*[- ]?kondygnacyjn\w*\s+budyn\w*/,
+  )?.[1];
   const ordinal = ordinalFloors.map(([stem]) => `${stem}\\w*`).join("|");
   const floorToken = `(\\d{1,2}\\.?|${ordinal})`;
   const lastFloorPattern = new RegExp(
@@ -215,7 +230,12 @@ export function inferBuildingDetails(description: string) {
         (floorFromNumber ? Number(floorFromNumber) : hasGroundFloor ? 0 : undefined)),
     totalFloors: explicitFraction
       ? Number(explicitFraction[2])
-      : (totalFromWord ?? (totalFromNumber ? Number(totalFromNumber) : lastFloor)),
+      : (totalFromWord ??
+        (totalFromNumber
+          ? Number(totalFromNumber)
+          : floorsInSentence
+            ? Number(floorsInSentence)
+            : lastFloor)),
     yearBuilt,
   };
 }

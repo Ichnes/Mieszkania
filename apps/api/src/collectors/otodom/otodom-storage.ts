@@ -25,6 +25,8 @@ import {
 } from "../../services/geography/warsaw-neighborhoods";
 import { estimateWarsawListingNeighborhood } from "../../services/insights/listing-neighborhood-estimator";
 import { enrichListingFromDescription } from "../../services/listings/listing-description-facts";
+import { inferWarsawDistrictFromAddressDescription } from "../../services/listings/listing-title-location";
+import { findWarsawStreet } from "../../services/geography/geocoding";
 import type { CollectorStorage } from "../types";
 
 type ExistingListingRow = {
@@ -83,6 +85,22 @@ export class OtodomStorage implements CollectorStorage {
       input = { ...input, listing: { ...input.listing, status: "removed" } };
     }
 
+    const explicitDistrict = inferWarsawDistrictFromAddressDescription(input.listing.description);
+    if (explicitDistrict) {
+      let listing = enrichListingFromDescription(input.listing);
+      const pointDistrict =
+        listing.latitude != null && listing.longitude != null
+          ? await findWarsawDistrictAtPoint(listing.latitude, listing.longitude)
+          : null;
+      if (pointDistrict && pointDistrict !== explicitDistrict) {
+        const streetName = listing.street?.replace(/\s+\d+[a-z]?(?:[/-]\d+[a-z]?)?$/i, "");
+        const point = streetName
+          ? await findWarsawStreet(streetName, explicitDistrict)
+          : null;
+        listing = { ...listing, latitude: point?.latitude, longitude: point?.longitude };
+      }
+      input = { ...input, listing };
+    }
     const portalDistrictNeighborhood = canonicalWarsawNeighborhood(input.listing.district);
     const normalizedDistrict =
       canonicalWarsawDistrict(input.listing.district) ?? input.listing.district;

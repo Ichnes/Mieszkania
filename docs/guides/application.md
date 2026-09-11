@@ -242,6 +242,11 @@ Opis „na ostatnim, 4. piętrze” uzupełnia **4 / 4**, także przy zapisie s�
 liczby pięter. „Budynek z ok. 2000 roku” uzupełnia rok **2000**; daty remontu
 nie są rokiem budowy. Dopiski takie jak „na warszawskiej Pradze-Południe” są
 usuwane z nazwy ulicy. Reguły są wspólne dla portali.
+Pełny adres w opisie, np. „znajduje się w Warszawie-Wesołej przy ul. Długiej 80B”,
+ma pierwszeństwo przed błędną dzielnicą portalu; numer domu pozostaje w adresie.
+Dotyczy to także filtrowania dzielnic. Przy imporcie punkt spoza wskazanej dzielnicy
+jest zastępowany lokalnym przybliżeniem ulicy albo pomijany, jeśli brak dopasowania.
+Zapis „na drugim piętrze w 2-kondygnacyjnym budynku” jest pokazywany jako **2 / 2**.
 Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżniony aktywny wybór.
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
@@ -319,6 +324,9 @@ stosuje filtry do wszystkich wskaźników, tabel i wykresów; **Wyczyść** rese
 
 Koszt parkingu „dwa miejsca po 35 000 zł” to 70 000 zł, a „dwóch miejsc w cenie
 50 000 za miejsce” to 100 000 zł. Cena opisana jako łączna nie jest mnożona.
+W szczegółach oferty **Łączna cena zakupu** pokazuje cenę mieszkania z dodatkami,
+a **Cena całkowita / m²** dzieli tę kwotę przez metraż mieszkania. Zwykłe **PLN/m2**
+nadal pokazuje cenę samego mieszkania za metr; brak metrażu daje kreskę.
 Opcjonalny zakup miejsc oznacza ich dostępność. Mieszkanie narożne jest traktowane
 jako co najmniej dwustronne, ale konkretne kierunki muszą wynikać z opisu.
 W punktacji wymarzonego mieszkania brak windy na parterze daje 0 pkt zamiast −20;

@@ -406,6 +406,7 @@ export type ListingSummary = {
     total: number;
   };
   totalAcquisitionPrice?: number;
+  totalAcquisitionPricePerSqm?: number;
   rcnDeltaLabel: string;
   priceChangePercent: number;
   relisting?: {

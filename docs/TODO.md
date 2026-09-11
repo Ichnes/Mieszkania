@@ -1,5 +1,19 @@
 # Bieżące zadania
 
+## Wesoła, Długa 80B i 2/2 (2026-09-11)
+
+- [x] Jawny adres w opisie („znajduje się w Warszawie-Wesołej przy ul.”) ma pierwszeństwo przed błędną dzielnicą; wspólne wzorce w odczycie i SQL filtra. Samo sąsiedztwo stacji PKP nie wystarcza.
+- [x] Nazwa Długiej → Długa, numer 80B i nowe linie zachowane/oczyszczone. Kontekst „piętro w N-kondygnacyjnym budynku” uzupełnia liczbę pięter, bez przypisywania liczby z pobliskiej szkoły.
+- [x] Wspólny zapis portali koryguje punkt spoza jawnej dzielnicy lokalnym dopasowaniem ulicy. Wskazana oferta naprawiona: Długa 80B, Wesoła, 2/2, 2020; punkt w granicy Wesołej, przybliżony do ulicy.
+- [x] 206 testów API poprawnych, 5 środowiskowych pominiętych; test zgodności SQL z regułą wykonany dodatkowo na PostgreSQL. Typecheck/build poprawne, API/web wdrożone.
+- [x] UI 1440/390 potwierdza Długą 80B, Wesołą i 2/2, bez Śródmieścia w tabeli. Commit/push na `main`.
+
+## Cena całkowita za m² w szczegółach (2026-09-11)
+
+- [x] Powtórzona „Cena całkowita” zastąpiona „Cena całkowita / m²”. Obliczenie w API z ceny zakupu z dodatkami i liczbowego metrażu, bez parsowania zaokrąglonej etykiety. Brak/zerowy metraż daje kreskę.
+- [x] Typecheck/build poprawne; API: 1 600 000 / 70 = 22 857,14 zł/m². UI 1440/1280/390/320: 22 857 zł/m², pojedyncza łączna cena zakupu, brak przepełnienia. Zrzuty PC/telefon obejrzane; wdrożone.
+- [x] Commit/push wspólnie z poprawką Wesołej na `main`.
+
 ## Kompas: zgodność z dowolnym wybranym kierunkiem (2026-09-11)
 
 - Zakres: wybór N obejmuje też N+S; wystarczy jeden pasujący kierunek. Brak wyboru i komplet nadal oznaczają całą pulę.

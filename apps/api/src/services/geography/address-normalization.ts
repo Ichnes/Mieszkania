@@ -55,6 +55,7 @@ const knownWarsawStreetNames = new Map<string, string>(
     "Batalionów Chłopskich",
     "Bokserska",
     "Czerska",
+    "Długa",
     "Cylichowska",
     "Gagarina",
     "Głębocka",

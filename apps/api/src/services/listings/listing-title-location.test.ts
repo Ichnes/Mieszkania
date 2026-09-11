@@ -3,7 +3,33 @@ import test from "node:test";
 import {
   extractStreetFromLocationTitle,
   inferWarsawDistrictFromLocationTitle,
+  inferWarsawDistrictFromAddressDescription,
 } from "./listing-title-location";
+
+test("explicit city-district address is distinct from nearby transport", () => {
+  assert.equal(
+    inferWarsawDistrictFromAddressDescription(
+      "Lokal znajduje się w Warszawie-Wesołej przy ul. Długiej 80B.",
+    ),
+    "Wesoła",
+  );
+  assert.equal(
+    inferWarsawDistrictFromAddressDescription(
+      "Mieszkanie zlokalizowane w Warszawie-Mokotowie przy ul. Testowej.",
+    ),
+    "Mokotów",
+  );
+  assert.equal(
+    inferWarsawDistrictFromAddressDescription("Stacja PKP Wesoła oddalona 1,5 km."),
+    undefined,
+  );
+  assert.equal(
+    inferWarsawDistrictFromAddressDescription(
+      "Szybki dojazd do Warszawy-Wesołej przy ul. Testowej.",
+    ),
+    undefined,
+  );
+});
 
 test("extracts a Warsaw district and street from a portal location suffix", () => {
   const title = "Zapraszam do 83 m² dwupoziomowego mieszkania: Warszawa Targówek Zacisze: Uznamska";

@@ -2,6 +2,39 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { inferBuildingDetails } from "./listing-description-facts";
 
+test("explicit Warsaw district and multiline street override an incorrect portal address", () => {
+  const description =
+    "Komfortowe mieszkanie znajduje się w Warszawie-Wesołej przy ul.\n\nDługiej 80B na drugim piętrze w 2 kondygnacyjnym budynku z 2020r.";
+  const listing = enrichListingFromDescription({
+    title: "Mieszkanie",
+    description,
+    externalId: "test",
+    canonicalUrl: "https://example.test",
+    city: "Warszawa",
+    district: "Śródmieście",
+    neighborhood: "Śródmieście Północne",
+    street: "Długa",
+    addressText: "Długa, Śródmieście, Warszawa",
+    images: [],
+    rawPayload: {},
+    marketType: "secondary",
+    offerType: "sale",
+    status: "active",
+  });
+  assert.equal(listing.street, "Długa 80B");
+  assert.equal(listing.district, "Wesoła");
+  assert.equal(listing.neighborhood, undefined);
+  assert.equal(listing.addressText, "Długa 80B, Wesoła, Warszawa");
+  assert.equal(listing.floor, 2);
+  assert.equal(listing.totalFloors, 2);
+  assert.equal(listing.yearBuilt, 2020);
+  assert.equal(
+    inferBuildingDetails("Lokal na drugim piętrze w 2-kondygnacyjnym budynku.").totalFloors,
+    2,
+  );
+  assert.equal(inferBuildingDetails("Obok 2-kondygnacyjny budynek szkoły.").totalFloors, undefined);
+});
+
 test("last numbered or ordinal floor supplies the building height", () => {
   for (const phrase of [
     "Lokal mieści się na ostatnim, 4. piętrze w kameralnym budynku z ok. 2000 roku.",

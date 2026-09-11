@@ -48,6 +48,7 @@ import { buildEffectiveListingDateSql } from "./listing-recency";
 import {
   extractStreetFromLocationTitle,
   inferWarsawDistrictFromLocationTitle,
+  inferWarsawDistrictFromAddressDescription,
 } from "./listing-title-location";
 import { getListingViewing } from "./listing-viewings";
 
@@ -1567,6 +1568,10 @@ function mapListingSummary(
       priceAmount && additionalPurchaseCosts
         ? priceAmount + additionalPurchaseCosts.total
         : undefined,
+    totalAcquisitionPricePerSqm:
+      priceAmount && additionalPurchaseCosts && Number.isFinite(areaSqm) && areaSqm > 0
+        ? (priceAmount + additionalPurchaseCosts.total) / areaSqm
+        : undefined,
     rcnDeltaLabel,
     priceChangePercent,
     relisting,
@@ -1707,6 +1712,8 @@ export function buildAmenityBadges(features: ListingFeature[]) {
 }
 
 function resolveDistrict(row: ListingRow) {
+  const explicitDistrict = inferWarsawDistrictFromAddressDescription(row.description);
+  if (explicitDistrict) return explicitDistrict;
   const districtFromTitle = inferWarsawDistrictFromLocationTitle(row.title);
   if (districtFromTitle) {
     return districtFromTitle;

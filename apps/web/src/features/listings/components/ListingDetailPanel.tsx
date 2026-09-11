@@ -617,11 +617,11 @@ export function ListingDetailPanel(input: {
                   {input.listing.additionalPurchaseCosts &&
                   input.listing.additionalPurchaseCosts.total > 0 ? (
                     <tr>
-                      <th>Cena całkowita</th>
+                      <th>Cena całkowita / m²</th>
                       <td className="fact-price">
-                        {input.listing.totalAcquisitionPrice
-                          ? formatPln(input.listing.totalAcquisitionPrice)
-                          : input.listing.priceLabel}
+                        {input.listing.totalAcquisitionPricePerSqm
+                          ? `${formatPln(input.listing.totalAcquisitionPricePerSqm)} / m²`
+                          : "—"}
                       </td>
                       <th>Cena mieszkania</th>
                       <td>{input.listing.priceLabel}</td>

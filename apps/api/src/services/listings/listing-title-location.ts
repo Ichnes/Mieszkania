@@ -27,7 +27,41 @@ export function effectiveDistrictSql() {
   const segments = "regexp_split_to_array(l.title, '[:,]')";
   const suffix = `array_to_string((${segments})[greatest(cardinality(${segments}) - 1, 1):cardinality(${segments})], ' ')`;
   const normalized = `regexp_replace(translate(lower(${suffix}), 'ąćęłńóśźż', 'acelnoszz'), '[^a-z0-9]+', ' ', 'g')`;
-  return `(case ${warsawDistrictAliases.map(([alias, district]) => `when ${normalized} ~ '(^| )${alias}( |$)' then '${district}'`).join(" ")} else l.district end)`;
+  const description = `regexp_replace(translate(lower(coalesce(l.description, '')), 'ąćęłńóśźż', 'acelnoszz'), '[^a-z0-9]+', ' ', 'g')`;
+  return `(case ${explicitDistrictPatterns.map(([pattern, district]) => `when ${description} ~ '${pattern}' then '${district}'`).join(" ")} ${warsawDistrictAliases.map(([alias, district]) => `when ${normalized} ~ '(^| )${alias}( |$)' then '${district}'`).join(" ")} else l.district end)`;
+}
+
+const explicitDistrictPatterns: Array<[string, string]> = warsawDistrictAliases.map(
+  ([alias, district]) => {
+    const inflected: Record<string, string> = {
+      wesola: "wesol(a|ej)",
+      mokotow: "mokotow(ie)?",
+      ursynow: "ursynow(ie)?",
+      wilanow: "wilanow(ie)?",
+      rembertow: "rembertow(ie)?",
+      zoliborz: "zoliborz(u)?",
+      srodmiescie: "srodmiesci(e|u)",
+      ochota: "ochot(a|y|cie)",
+      wola: "wol(a|i)",
+      wawer: "waw(er|rze)",
+      bialoleka: "bialole(ka|ce)",
+      targowek: "targow(ek|ku)",
+      bemowo: "bemow(o|ie)",
+      bielany: "bielan(y|ach)",
+      ursus: "ursus(ie)?",
+      wlochy: "wloch(y|ach)",
+    };
+    return [
+      `(^| )(znajduje sie|polozon[a-z]*|zlokalizowan[a-z]*|usytuowan[a-z]*) w warszawie ${inflected[alias] ?? alias} przy ul( |$)`,
+      district,
+    ];
+  },
+);
+
+/** Only an explicit apartment location adjoining a street, not nearby transport. */
+export function inferWarsawDistrictFromAddressDescription(value?: string | null) {
+  const normalized = normalizePolish(value ?? "").replace(/[^a-z0-9]+/g, " ");
+  return explicitDistrictPatterns.find(([pattern]) => new RegExp(pattern).test(normalized))?.[1];
 }
 
 export function inferWarsawDistrictFromText(value?: string | null) {
