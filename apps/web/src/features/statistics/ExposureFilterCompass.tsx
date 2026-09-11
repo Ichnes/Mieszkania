@@ -23,10 +23,12 @@ export function ExposureFilterCompass({
   selected,
   onChange,
   mode = "filter",
+  automatic = false,
 }: {
   selected: ExposureDirection[];
   onChange: (value: ExposureDirection[]) => void;
   mode?: "filter" | "listing";
+  automatic?: boolean;
 }) {
   const active = mode === "listing" ? selected.length > 0 : hasExposureFilter(selected);
   return (
@@ -80,7 +82,13 @@ export function ExposureFilterCompass({
             ))}
           </svg>
           <small>
-            {active ? `${selected.length} z 8` : mode === "listing" ? "Z opisu" : "Cały rynek"}
+            {mode === "listing" && automatic
+              ? "Z opisu"
+              : active
+                ? `${selected.length} z 8`
+                : mode === "listing"
+                  ? "Z opisu"
+                  : "Cały rynek"}
           </small>
         </span>
       </div>
@@ -93,6 +101,7 @@ export function ExposureFilterCompass({
             : "Wystarczy jeden z wybranych kierunków. Północ obejmuje też mieszkania z ekspozycją północ–południe."}
         </p>
         <div className="stats-exposure-selection" aria-live="polite">
+          {mode === "listing" && active && automatic ? "Z opisu: " : ""}
           {active
             ? selected.map((direction) => names[direction]).join(" · ")
             : mode === "listing"

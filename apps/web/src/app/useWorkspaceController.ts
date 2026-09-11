@@ -26,6 +26,7 @@ import { isGratkaUrl, resolveCollectorEndpoint } from "../features/imports/lib/p
 import { getNextQueueAttemptAt } from "../features/imports/lib/queue";
 import { useImportController } from "../features/imports/useImportController";
 import { applyDreamProfile } from "../features/listings/lib/dream-profile";
+import { getOfferStep } from "../features/listings/lib/offer-navigation";
 import { buildListingInsights } from "../features/listings/lib/insights";
 import { listingHref } from "../features/listings/lib/links";
 import { MortgageDraft } from "../features/mortgage/types";
@@ -77,6 +78,9 @@ export function useWorkspaceController() {
   const listingsMainRef = useRef<HTMLDivElement | null>(null);
   const listingRequest = useRef<{ id: string; controller: AbortController } | null>(null);
   const [selectedListing, setSelectedListing] = useState<ListingDetail | null>(null);
+  const offerNavigationRequest = useRef<AbortController | null>(null);
+  const [isNavigatingOffer, setIsNavigatingOffer] = useState(false);
+  const [offerNavigationError, setOfferNavigationError] = useState<string | null>(null);
   const [marketStats, setMarketStats] = useState<MarketStatsResponse | null>(null);
   const [marketStatsLoading, setMarketStatsLoading] = useState(false);
   const {
@@ -226,7 +230,13 @@ export function useWorkspaceController() {
     return () => window.removeEventListener("popstate", onHistory);
   }, [state.status]);
 
-  useEffect(() => () => listingRequest.current?.controller.abort(), []);
+  useEffect(
+    () => () => {
+      listingRequest.current?.controller.abort();
+      offerNavigationRequest.current?.abort();
+    },
+    [],
+  );
 
   useEffect(() => {
     void refreshStaleListingStatus();
@@ -369,6 +379,30 @@ export function useWorkspaceController() {
     compareSnapshots,
   );
   const totalListingsPages = Math.max(1, Math.ceil(listingsTotal / listingsPerPage));
+  const offerIds = visibleListings.map((listing) => listing.id);
+  const offerIndex = selectedListing ? offerIds.indexOf(selectedListing.id) : -1;
+  const offerNavigation =
+    offerIndex < 0
+      ? null
+      : {
+          previous: getOfferStep(
+            offerIds,
+            selectedListing!.id,
+            currentListingsPage,
+            totalListingsPages,
+            -1,
+          ),
+          next: getOfferStep(
+            offerIds,
+            selectedListing!.id,
+            currentListingsPage,
+            totalListingsPages,
+            1,
+          ),
+          position: `Oferta ${offerIndex + 1} z ${offerIds.length} · strona ${currentListingsPage} z ${totalListingsPages}`,
+          busy: isNavigatingOffer,
+          error: offerNavigationError,
+        };
   const listingInsights = buildListingInsights(dashboard.stats, dashboardListings);
   const listingSectionTitle = filters.archivedOnly
     ? "Oferty archiwalne"
@@ -519,6 +553,8 @@ export function useWorkspaceController() {
     totalListingsPages,
     mapListings,
     selectedListing,
+    offerNavigation,
+    navigateOffer,
     settings,
     isLoadingMapListings,
     selectedListingDuplicateCandidates,
@@ -765,6 +801,9 @@ export function useWorkspaceController() {
   }
 
   function cancelListingRequests() {
+    offerNavigationRequest.current?.abort();
+    offerNavigationRequest.current = null;
+    setIsNavigatingOffer(false);
     listingRequest.current?.controller.abort();
     listingRequest.current = null;
     setIsOpeningListing(false);
@@ -778,6 +817,66 @@ export function useWorkspaceController() {
     setSelectedListing(null);
     setListingOpenError(null);
     void navigate(location.pathname);
+  }
+
+  async function navigateOffer(direction: -1 | 1) {
+    if (!selectedListing || offerNavigationRequest.current) return;
+    const step = getOfferStep(
+      offerIds,
+      selectedListing.id,
+      currentListingsPage,
+      totalListingsPages,
+      direction,
+    );
+    if (!step) return;
+    cancelListingRequests();
+    const controller = new AbortController();
+    offerNavigationRequest.current = controller;
+    const { signal } = controller;
+    setIsNavigatingOffer(true);
+    setOfferNavigationError(null);
+    try {
+      let pageData: ListingsResponse | undefined;
+      let targetId = step.listingId;
+      if (!targetId) {
+        const response = await apiFetch(
+          `${apiBaseUrl}/api/listings?${createListingsQuery(filters, step.page, listingSort)}`,
+          { signal },
+        );
+        if (!response.ok) throw new Error("Nie udało się wczytać strony ofert. Spróbuj ponownie.");
+        pageData = (await response.json()) as ListingsResponse;
+        targetId = (step.edge === "first" ? pageData.items[0] : pageData.items.at(-1))?.id;
+        if (!targetId) throw new Error("Ta strona nie zawiera już ofert. Odśwież listę wyników.");
+      }
+      listingRequest.current = { id: targetId, controller };
+      const response = await apiFetch(
+        `${apiBaseUrl}/api/listings/${encodeURIComponent(targetId)}`,
+        { signal },
+      );
+      if (!response.ok) throw new Error("Nie udało się wczytać oferty. Spróbuj ponownie.");
+      const detail = (await response.json()) as ListingDetail;
+      if (signal.aborted) return;
+      if (pageData) {
+        setFilteredListings(pageData.items);
+        setListingsTotal(pageData.total);
+        setCurrentListingsPage(step.page);
+      }
+      setSelectedListing(detail);
+      setDuplicateError(null);
+      void navigate(listingHref(detail.id));
+      void loadListingInsights(detail.id, false, signal);
+      void loadDuplicateCandidates(detail.id, signal);
+    } catch (error) {
+      if (!signal.aborted)
+        setOfferNavigationError(
+          error instanceof Error ? error.message : "Błąd przechodzenia między ofertami.",
+        );
+    } finally {
+      if (offerNavigationRequest.current === controller) {
+        offerNavigationRequest.current = null;
+        setIsNavigatingOffer(false);
+      }
+    }
   }
 
   async function openListing(listingId: string, updateUrl = true, keepOpen = false) {
@@ -980,7 +1079,7 @@ export function useWorkspaceController() {
         throw new Error(body?.message ?? "Nie udało się zapisać ustaleń. Spróbuj ponownie.");
       }
       const detail = (await response.json()) as ListingDetail;
-      setSelectedListing(detail);
+      setSelectedListing((current) => (current?.id === detail.id ? detail : current));
       setMapListings((current) =>
         current.map((listing) => (listing.id === detail.id ? { ...listing, ...detail } : listing)),
       );

@@ -1,4 +1,5 @@
 import { availableAmenities } from "../lib/available-amenities";
+import { getSunExposure } from "../lib/listing-language";
 import { Select } from "../../../components/Select";
 import { ZoomablePhoto } from "./ZoomablePhoto";
 import { copyText } from "../../../shared/lib/clipboard";
@@ -42,24 +43,21 @@ import { isValidMapPoint } from "../../map/lib/geometry";
 import { buildOsmSearchHref } from "../../map/lib/links";
 import { ListingTransitMap } from "../../map/ListingTransitMap";
 import { MortgageQuickPreview } from "../../mortgage/MortgageQuickPreview";
-import {
-  createEmptyContactEventDraft,
-  formatContactEvent,
-  formatPriceEvent,
-  toContactStatus,
-  toDecisionStage,
-} from "../lib/contact";
+import { createEmptyContactEventDraft, formatContactEvent, formatPriceEvent } from "../lib/contact";
 import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
 import { SunExposureCompass } from "./SunExposureCompass";
 import { ExposureFilterCompass } from "../../statistics/ExposureFilterCompass";
+import { ListingOfferNavigation, type OfferNavigation } from "./ListingOfferNavigation";
 import { ListingScorePanel } from "./ListingScorePanel";
 
 export function ListingDetailPanel(input: {
   settings: FamilySettings;
   downPayment: number;
   listing: ListingDetail;
+  offerNavigation: OfferNavigation | null;
+  onNavigateOffer: (direction: -1 | 1) => Promise<void>;
   duplicateCandidates: DuplicateCandidate[];
   onUnmergeDuplicate: (primaryId: string, duplicateId: string) => Promise<boolean>;
   isUnmergingDuplicate: boolean;
@@ -129,11 +127,39 @@ export function ListingDetailPanel(input: {
   const [manualFeedback, setManualFeedback] = useState<{ error: boolean; message: string } | null>(
     null,
   );
+  const offerStepPending = useRef(false);
+  const activeOfferId = useRef<string | null>(input.listing.id);
+  useEffect(() => {
+    activeOfferId.current = input.listing.id;
+    return () => {
+      activeOfferId.current = null;
+    };
+  }, [input.listing.id]);
+  const [offerStepError, setOfferStepError] = useState<string | null>(null);
+  async function changeOffer(direction: -1 | 1) {
+    if (offerStepPending.current || input.isSavingManual) return;
+    offerStepPending.current = true;
+    setOfferStepError(null);
+    try {
+      if (JSON.stringify(manual) !== JSON.stringify(input.listing.manual))
+        await input.onSaveManual(manual);
+      if (activeOfferId.current !== input.listing.id) return;
+      await input.onNavigateOffer(direction);
+    } catch (error) {
+      setOfferStepError(
+        error instanceof Error
+          ? error.message
+          : "Nie udało się zapisać notatek. Pozostajesz przy tej ofercie.",
+      );
+    } finally {
+      offerStepPending.current = false;
+    }
+  }
   async function saveManual() {
     setManualFeedback(null);
     try {
       await input.onSaveManual(manual);
-      setManualFeedback({ error: false, message: "Zapisano ustalenia i aktualną cenę." });
+      setManualFeedback({ error: false, message: "Zapisano notatkę, kierunki i korekty." });
     } catch (error) {
       setManualFeedback({
         error: true,
@@ -170,6 +196,7 @@ export function ListingDetailPanel(input: {
     setIsDismissConfirmOpen(false);
     setActiveDetailTab("overview");
     setUnmergeSuccess("");
+    setOfferStepError(null);
     setManualFeedback(null);
   }, [input.listing.id]);
   useEffect(() => {
@@ -265,7 +292,21 @@ export function ListingDetailPanel(input: {
   );
 
   return (
-    <aside className="detail-overlay" onClick={input.onClose}>
+    <aside
+      className={`detail-overlay${input.offerNavigation ? " has-offer-navigation" : ""}`}
+      onClick={input.onClose}
+    >
+      {input.offerNavigation && (
+        <ListingOfferNavigation
+          navigation={{
+            ...input.offerNavigation,
+            busy: input.offerNavigation.busy || input.isSavingManual,
+            error: offerStepError ?? input.offerNavigation.error,
+          }}
+          onNavigate={(direction) => void changeOffer(direction)}
+          suspended={lightboxImageIndex !== null || isDismissConfirmOpen}
+        />
+      )}
       <section
         ref={detailPanelRef}
         className="detail-panel"
@@ -915,7 +956,12 @@ export function ListingDetailPanel(input: {
               <div className="ops-form viewing-form">
                 <ExposureFilterCompass
                   mode="listing"
-                  selected={manual.exposureDirectionsOverride ?? []}
+                  automatic={!manual.exposureDirectionsOverride?.length}
+                  selected={
+                    manual.exposureDirectionsOverride?.length
+                      ? manual.exposureDirectionsOverride
+                      : getSunExposure(input.listing.description).directions
+                  }
                   onChange={(directions) =>
                     setManual((current) => ({ ...current, exposureDirectionsOverride: directions }))
                   }
@@ -994,134 +1040,6 @@ export function ListingDetailPanel(input: {
                     />
                   </label>
                 </fieldset>
-                <label className="detail-field">
-                  <span>Etap decyzji</span>
-                  <Select
-                    label="Etap decyzji"
-                    value={manual.decisionStage ?? ""}
-                    onChange={(value) =>
-                      setManual((current) => ({
-                        ...current,
-                        decisionStage: toDecisionStage(value),
-                      }))
-                    }
-                  >
-                    <option value="">Etap decyzji</option>
-                    <option value="new">Nowa oferta</option>
-                    <option value="to_call">Do telefonu</option>
-                    <option value="after_call">Po rozmowie</option>
-                    <option value="to_viewing">Do oglądania</option>
-                    <option value="after_viewing">Po oglądaniu</option>
-                    <option value="to_offer">Do oferty</option>
-                    <option value="rejected">Odrzucona</option>
-                    <option value="bought">Kupiona</option>
-                  </Select>
-                </label>
-                <label className="detail-field">
-                  <span>Status kontaktu</span>
-                  <Select
-                    label="Status kontaktu"
-                    value={manual.contactStatus ?? ""}
-                    onChange={(value) =>
-                      setManual((current) => ({
-                        ...current,
-                        contactStatus: toContactStatus(value),
-                      }))
-                    }
-                  >
-                    <option value="">Status kontaktu</option>
-                    <option value="new">Nowa</option>
-                    <option value="contacted">Po kontakcie</option>
-                    <option value="negotiating">W negocjacji</option>
-                    <option value="viewing_scheduled">Oglądanie umówione</option>
-                    <option value="rejected">Odrzucone</option>
-                    <option value="closed">Zamkniete</option>
-                  </Select>
-                </label>
-                <label className="detail-field">
-                  <span>Osoba kontaktowa</span>
-                  <input
-                    className="text-input"
-                    value={manual.contactName ?? ""}
-                    onChange={(event) =>
-                      setManual((current) => ({ ...current, contactName: event.target.value }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Rola</span>
-                  <input
-                    className="text-input"
-                    value={manual.contactRole ?? ""}
-                    onChange={(event) =>
-                      setManual((current) => ({ ...current, contactRole: event.target.value }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Telefon</span>
-                  <input
-                    className="text-input"
-                    inputMode="tel"
-                    value={manual.contactPhone ?? input.listing.sourceContactPhone ?? ""}
-                    onChange={(event) =>
-                      setManual((current) => ({ ...current, contactPhone: event.target.value }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Ostatni kontakt</span>
-                  <input
-                    className="text-input"
-                    type="datetime-local"
-                    value={toDatetimeInputValue(manual.lastContactAt)}
-                    onChange={(event) =>
-                      setManual((current) => ({
-                        ...current,
-                        lastContactAt: event.target.value
-                          ? new Date(event.target.value).toISOString()
-                          : undefined,
-                      }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Cena po rozmowie (aktualna)</span>
-                  <input
-                    className="text-input"
-                    value={stringValue(manual.askingPriceOverride)}
-                    onChange={(event) =>
-                      setManual((current) => ({
-                        ...current,
-                        askingPriceOverride: toOptionalNumber(event.target.value),
-                      }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Cel negocjacji (planowana kwota)</span>
-                  <input
-                    className="text-input"
-                    value={stringValue(manual.negotiatedPriceAmount)}
-                    onChange={(event) =>
-                      setManual((current) => ({
-                        ...current,
-                        negotiatedPriceAmount: toOptionalNumber(event.target.value),
-                      }))
-                    }
-                  />
-                </label>
-                <label className="detail-field">
-                  <span>Informacje od sprzedajacego</span>
-                  <textarea
-                    className="text-input"
-                    rows={4}
-                    value={manual.sourceNotes ?? ""}
-                    onChange={(event) =>
-                      setManual((current) => ({ ...current, sourceNotes: event.target.value }))
-                    }
-                  />
-                </label>
                 <label className="detail-field">
                   <span>Wasze notatki</span>
                   <textarea
@@ -1497,7 +1415,7 @@ export function ListingDetailPanel(input: {
             {!isMobileDetail && detailMap}
           </div>
         </div>
-        {activeDetailTab !== "duplicates" && (
+        {activeDetailTab === "overview" && (
           <div className="detail-parcel-bottom">
             <ListingParcelCard listing={input.listing} />
           </div>

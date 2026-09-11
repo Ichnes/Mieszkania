@@ -10,6 +10,8 @@ export function ListingDialog({
     WorkspaceState,
     | "settings"
     | "selectedListing"
+    | "offerNavigation"
+    | "navigateOffer"
     | "selectedListingDuplicateCandidates"
     | "closeListing"
     | "openListing"
@@ -83,6 +85,8 @@ export function ListingDialog({
           settings={model.settings}
           downPayment={model.settings.financing?.downPayment ?? DEFAULT_DOWN_PAYMENT}
           listing={selectedListing}
+          offerNavigation={model.offerNavigation}
+          onNavigateOffer={model.navigateOffer}
           duplicateCandidates={selectedListingDuplicateCandidates}
           onClose={closeListing}
           onOpenRelatedListing={openListing}

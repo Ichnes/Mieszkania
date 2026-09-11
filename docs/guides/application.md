@@ -253,7 +253,7 @@ na kartach dashboardu nie ma przycisku **Porównaj**.
 
 W **Szczegółach oferty** telefon kontaktowy i cel negocjacji są w zakładce **Notatki**.
 Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano własnego.
-Na telefonie mapa znajduje się pod opisem, a **Działka i planowanie** na dole szczegółów.
+Na telefonie mapa znajduje się pod opisem, a **Działka i planowanie** na dole zakładki **Przegląd**. Ta sekcja nie pojawia się w Notatkach, Cechach, Ocenie ani Duplikatach.
 Pole **Szukaj w ofercie** przeszukuje także adres, dzielnicę i okolicę; np. Okopowa
 znajduje również Okopowej. Filtry dzielnicy i sortowania obsługują strzałki, Enter i Escape.
 Lista dzielnic obejmuje wszystkie 18 dzielnic Warszawy, w tym Targówek i Rembertów.
@@ -361,18 +361,22 @@ zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje 
 nowego ekranu i resetuje powiększenie. Na telefonie pełny ekran zajmuje obszar aplikacji;
 paski systemowe przeglądarki mogą pozostać widoczne.
 
-## Cena po rozmowie
+## Notatki i przeglądanie ofert
 
-W szczegółach wpisz **Cena po rozmowie (aktualna)** i wybierz **Zapisz notatki do oferty**.
-Ta kwota jest od tej chwili główną ceną, opisaną jako **Cena po negocjacjach**.
-Korzystają z niej cena za m², filtry i sortowanie cenowe, dopasowanie, podgląd finansowania,
-mapa i porównanie. Obok pozostaje cena z ogłoszenia.
-**Cel negocjacji (planowana kwota)** nie zmienia ceny — to wyłącznie Twój cel.
-Wyczyszczenie aktualnej ceny po rozmowie i zapis przywraca kwotę portalową.
+**Notatki** zawierają notatkę, kompas ekspozycji oraz korekty windy, garażu, komórki
+i dopłat. Pola etapów, kontaktu, negocjacji i informacji od sprzedającego zostały
+usunięte z formularza. Wcześniej zapisane dane pozostają zachowane.
 
-Aktualizacja portalu nie nadpisuje ustaleń po rozmowie. Historia cen, procenty zmian
-z portalu i statystyki rynku nadal dotyczą cen ogłoszeniowych: prywatne negocjacje
-nie są rejestrowane jako obniżki na całym rynku.
+Strzałki po bokach szczegółów przełączają oferty w kolejności bieżących wyników,
+z tymi samymi filtrami i sortowaniem. Działają również klawisze **← / →**, z wyjątkiem
+pisania w polach, obsługi mapy i podglądu zdjęć. Na telefonie przyciski są przy dolnych
+rogach ekranu. Licznik pokazuje pozycję oferty i stronę wyników.
+
+Na końcu strony **Następna strona · pierwsza oferta** otwiera pierwszą ofertę kolejnej
+strony. Z jej początku **Poprzednia strona · ostatnia oferta** pozwala wrócić.
+Na początku i końcu całych wyników odpowiednia strzałka jest nieaktywna.
+Zmiany w Notatkach zapisują się przed przejściem strzałką; błąd zapisu lub pobrania
+pozostawia bieżącą ofertę otwartą i pozwala spróbować ponownie.
 
 # Automatyczne łączenie opisów
 
@@ -429,7 +433,8 @@ aby kolejne automatyczne skanowanie nie cofnęło decyzji. Można też otworzyć
 źródłową każdego ogłoszenia i sprawdzić, czy rzeczywiście dotyczy tego samego mieszkania.
 
 W zakładce **Notatki** kompas **Ekspozycja mieszkania** pozwala ręcznie wskazać
-kierunki okien. Zatwierdź je przyciskiem **Zapisz notatki do oferty**. Zapisany wybór
+kierunki okien. Bez ręcznej korekty zaznacza kierunki rozpoznane w opisie i oznacza
+je jako **Z opisu**. Zatwierdź korektę przyciskiem **Zapisz notatki do oferty**. Zapisany wybór
 ma pierwszeństwo przed opisem w kompasie, ocenie i filtrze kierunków w statystykach.
 Ponowne pobranie danych portalu zachowuje ustalenia. **Przywróć odczyt z opisu**
 i zapis notatek usuwa ręczną korektę. Samo zaznaczenie kierunków bez zapisu nie

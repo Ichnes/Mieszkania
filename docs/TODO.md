@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Prostsze notatki i nawigacja między ofertami (2026-09-12)
+
+- Zakres: zostawić notatkę, kompas i korekty odczytu; działka/planowanie wyłącznie w Przeglądzie; przyciski i strzałki klawiatury do ofert z zachowaniem filtrów/kolejności oraz przejściem między stronami wyników.
+- Kompas w Notatkach pokazuje również zaznaczenia automatycznie rozpoznane w opisie, z oznaczeniem „Z opisu”; ręczna korekta ma pierwszeństwo.
+- [x] Formularz uproszczony do notatki, ekspozycji i korekt; wcześniejsze dane pozostałych pól zachowane. Działka/planowanie renderowana tylko w Przeglądzie.
+- [x] Nawigacja po kolejności bieżących wyników: sąsiednie oferty, pierwsza kolejnej strony i ostatnia poprzedniej, licznik pozycji, wyłączone krańce. Filtry/sortowanie zachowane; błędy i anulowanie pobrania nie przełączają strony wyników.
+- [x] Klawisze ←/→ z wyłączeniem pól tekstowych, mapy i zdjęć. Zmiany notatek zapisywane przed przejściem; zabezpieczenie przed ponownym otwarciem zamkniętej oferty po spóźnionym zapisie.
+- [x] Typecheck/build i 94 testy frontendu poprawne. UI 1440/1280/390/320: granice stron, powrót, błąd/ponowienie, zapis notatki, klawiatura/pola/zdjęcia, zakres sekcji działki, brak przepełnienia. Kompas z opisu i reset korekty sprawdzone w UI 1440/390. Zrzuty PC/telefon obejrzane.
+- [x] Dokumentacja zaktualizowana; wdrożone lokalnie i przygotowane do commitu/push `main`.
+
 ## Wyróżnienie ulubionych i reakcje na kliknięcie (2026-09-12)
 
 - Zakres: wyraźniejsza złota ramka i animacja ulubionych, nagłówek „Ukryte oferty”, wspólne animacje naciskania kontrolek z obsługą ograniczonego ruchu.
