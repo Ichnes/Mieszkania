@@ -1,9 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { exposureDirections, matchesExposureFilter, getSunExposure } from "@mieszkania/shared";
-test("selected bearings define the whole allowed exposure range", () => {
+test("any selected bearing matches, including apartments with other exposures", () => {
   assert.equal(matchesExposureFilter("Okna na południe.", ["S"]), true);
-  assert.equal(matchesExposureFilter("Okna na południe i północ.", ["S"]), false);
+  assert.equal(matchesExposureFilter("Okna na południe i północ.", ["S"]), true);
+  assert.equal(matchesExposureFilter("Okna na północ i południe.", ["N"]), true);
+  assert.equal(matchesExposureFilter("Okna na wschód i zachód.", ["N", "S"]), false);
+  assert.equal(matchesExposureFilter("Okna na północ i wschód.", ["S", "E"]), true);
   assert.equal(
     matchesExposureFilter("Ekspozycja południowo-wschodnia i południowo-zachodnia.", [
       "SE",

@@ -71,8 +71,8 @@ export function ExposureFilterCompass({
         <p className="eyebrow">Światło i ekspozycja</p>
         <h3>Które strony świata?</h3>
         <p>
-          Wybierz dozwolony zakres. Wszystkie rozpoznane kierunki mieszkania muszą się w nim
-          mieścić.
+          Wystarczy jeden z wybranych kierunków. Północ obejmuje też mieszkania z ekspozycją
+          północ–południe.
         </p>
         <div className="stats-exposure-selection" aria-live="polite">
           {active

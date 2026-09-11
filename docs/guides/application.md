@@ -310,10 +310,10 @@ ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
 W **Ustaw analizowany rynek** można zaznaczyć **Komórka / piwnica** oraz wybrać
-kierunki w kompasie. Wszystkie rozpoznane kierunki mieszkania muszą należeć do
-wybranego zakresu: samo S obejmuje ekspozycję południową, S + SE + SW dopuszcza
-także południowy wschód i południowy zachód. Kierunki spoza zakresu wykluczają
-ofertę. Przy częściowym wyborze pomijane są oferty bez podanych kierunków.
+kierunki w kompasie. Wystarczy co najmniej jeden wybrany kierunek: N obejmuje
+także mieszkania północ–południe, a S + SE + SW obejmuje oferty z dowolnym z tych
+trzech kierunków. Dodatkowe kierunki mieszkania nie wykluczają oferty.
+Przy częściowym wyborze pomijane są oferty bez podanych kierunków.
 Pusty wybór i wszystkie osiem kierunków nie ograniczają ofert. **Pokaż wyniki**
 stosuje filtry do wszystkich wskaźników, tabel i wykresów; **Wyczyść** resetuje je.
 

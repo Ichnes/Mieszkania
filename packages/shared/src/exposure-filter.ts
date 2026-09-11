@@ -13,5 +13,5 @@ export function matchesExposureFilter(description: string, selected: unknown): b
   const directions = normalizeExposureDirections(selected);
   if (!hasExposureFilter(directions)) return true;
   const actual = getSunExposure(description).directions;
-  return actual.length > 0 && actual.every((direction) => directions.includes(direction));
+  return actual.some((direction) => directions.includes(direction));
 }

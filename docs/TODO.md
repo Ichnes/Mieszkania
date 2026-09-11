@@ -1,9 +1,16 @@
 # Bieżące zadania
 
+## Kompas: zgodność z dowolnym wybranym kierunkiem (2026-09-11)
+
+- Zakres: wybór N obejmuje też N+S; wystarczy jeden pasujący kierunek. Brak wyboru i komplet nadal oznaczają całą pulę.
+- [x] Wspólny predykat zmieniony z wszystkich na dowolny pasujący kierunek, zaktualizowane objaśnienie kompasu i instrukcja.
+- [x] 5 testów regresji API/frontendu poprawnych; typecheck i build poprawne. Lokalnie wdrożone API/web. Rzeczywista oferta z kierunkami S+N potwierdzona w predykacie statystyk przy wyborze samego N.
+- [x] Test przeglądarkowy 1440/1280/390/320: wybór kierunków, zapis/odświeżenie, reset, komplet, brak przepełnienia. Commit/push na `main`.
+
 ## Liczba miejsc postojowych i filtry ekspozycji statystyk (2026-09-11)
 
 - Zakres: ceny za miejsce × liczba miejsc, dostępność „dwóch, odrębnych miejsc”, narożne mieszkania jako minimum dwustronne bez wymyślania kierunków. Statystyki: komórka/piwnica i kompas 8 kierunków.
-- Uzgodnione: wszystkie rozpoznane kierunki oferty muszą należeć do zaznaczonego zakresu; brak wyboru i komplet 8 kierunków oznaczają wszystkie oferty, także bez ekspozycji.
+- Aktualna reguła po doprecyzowaniu: wystarczy dowolny pasujący kierunek; brak wyboru i komplet 8 kierunków oznaczają wszystkie oferty, także bez ekspozycji.
 - [x] Ceny jednostkowe i ilości (w tym „dwóch, odrębnych” i kwoty bez „zł”), rozpoznawanie dostępności, brak przypisywania nieznanego rodzaju parkingu do naziemnego. W ofercie 645c3224-daea-4c25-9c78-438aaf71bf68 potwierdzone 2 prywatne miejsca i 100 000 zł łącznie. W szczegółach widoczne mnożenie ilości przez cenę.
 - [x] Narożne mieszkanie oznacza minimum 2 strony, bez przypisywania nieznanych kierunków. Parter bez windy: 0 pkt zamiast −20; piętro 0 lub rozpoznane z opisu, lokal usługowy na parterze nie zmienia punktacji mieszkania na górze. Winda nadal +21.
 - [x] Komórka/piwnica z uwzględnieniem ręcznych korekt; zakres kompasu zastosowany wspólnie do agregatów, cache i porównania bazowego. Preferencje, reset, stan pusty/wszystkie i pomijanie nieznanej ekspozycji przy częściowym wyborze.

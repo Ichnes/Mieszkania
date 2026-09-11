@@ -39,8 +39,8 @@ test("storage and compass filters combine, respect overrides and preserve unfilt
     },
   } as unknown as Pool;
   const predicate = await getMarketAmenityFilter(db, "true", { storage: "true", directions: "S" });
-  for (const index of [0, 3]) assert.ok(predicate.includes(rows[index].id));
-  for (const index of [1, 2, 4]) assert.ok(!predicate.includes(rows[index].id));
+  for (const index of [0, 1, 3]) assert.ok(predicate.includes(rows[index].id));
+  for (const index of [2, 4]) assert.ok(!predicate.includes(rows[index].id));
   assert.equal(await getMarketAmenityFilter(db, "true", { directions: "N,NE,E,SE,S,SW,W,NW" }), "");
   assert.equal(await getMarketAmenityFilter(db, "true", { directions: "" }), "");
   assert.equal(calls, 1);
