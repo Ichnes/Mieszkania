@@ -296,6 +296,23 @@
   border-radius: 15px;
   background: var(--surface);
 }
+.detail-duplicates {
+  min-width: 0;
+}
+.detail-duplicates .duplicate-candidate-card {
+  overflow-wrap: anywhere;
+}
+.detail-duplicates .panel-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 600px) {
+  .detail-duplicates .panel-inline-actions > * {
+    flex: 1 1 100%;
+    white-space: normal;
+  }
+}
 .detail-section-tabs .tab-button {
   min-height: 42px;
   border: 0;

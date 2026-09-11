@@ -444,10 +444,11 @@ export function computeDreamEvaluation(
   );
 
   if (profile.maxMetroDistanceMeters > 0) {
-    maxPoints += 10;
+    maxPoints += 13;
     const nearestMetro = findNearestWarsawMetroStation(listing.latitude, listing.longitude);
     if (nearestMetro && nearestMetro.distanceMeters <= profile.maxMetroDistanceMeters) {
       points += 10;
+      if (nearestMetro.distanceMeters < profile.maxMetroDistanceMeters * 0.6) points += 3;
     } else if (
       nearestMetro &&
       nearestMetro.distanceMeters <= profile.maxMetroDistanceMeters * 1.5
@@ -460,7 +461,7 @@ export function computeDreamEvaluation(
 
   record(
     "Metro",
-    "Do limitu +10; powyżej limitu do 150% limitu +5; powyżej 150% limitu −3. Brak współrzędnych lub wyłączony limit: 0. Odległość w linii prostej.",
+    "Poniżej 60% limitu +13 (bonus +3); od 60% do limitu +10; powyżej limitu do 150% limitu +5; powyżej 150% limitu −3. Brak współrzędnych lub wyłączony limit: 0. Odległość w linii prostej.",
     `Limit: ${profile.maxMetroDistanceMeters} m`,
   );
 

@@ -707,7 +707,7 @@ export function useWorkspaceController() {
   }
 
   async function unmergeDuplicate(primaryListingId: string, duplicateListingId: string) {
-    if (duplicateAction) return;
+    if (duplicateAction) return false;
     setDuplicateAction(primaryListingId);
     setDuplicateError(null);
     try {
@@ -723,9 +723,12 @@ export function useWorkspaceController() {
         refreshDashboard(),
         loadMapListings(),
         applyFilters(filters, currentListingsPage, listingSort),
+        ...(selectedListing ? [openListing(selectedListing.id, false, true)] : []),
       ]);
+      return true;
     } catch (error) {
       setDuplicateError(error instanceof Error ? error.message : "Błąd rozłączania.");
+      return false;
     } finally {
       setDuplicateAction(null);
     }
@@ -777,13 +780,16 @@ export function useWorkspaceController() {
     void navigate(location.pathname);
   }
 
-  async function openListing(listingId: string, updateUrl = true) {
+  async function openListing(listingId: string, updateUrl = true, keepOpen = false) {
     cancelListingRequests();
     const controller = new AbortController();
     listingRequest.current = { id: listingId, controller };
     const { signal } = controller;
-    window.dispatchEvent(new Event("mieszkania:open-listing"));
-    setSelectedListing(null);
+    if (!keepOpen) {
+      window.dispatchEvent(new Event("mieszkania:open-listing"));
+      setDuplicateError(null);
+    }
+    if (!keepOpen) setSelectedListing(null);
     setIsOpeningListing(true);
     setListingOpenError(null);
     if (updateUrl) void navigate(listingHref(listingId));
@@ -1176,6 +1182,7 @@ export function useWorkspaceController() {
     status: "same_listing" | "different_listing",
   ) {
     setIsReviewingDuplicatePair(pair.pairKey);
+    setDuplicateError(null);
     try {
       const response = await apiFetch(`${apiBaseUrl}/api/duplicates/review`, {
         method: "POST",
@@ -1188,13 +1195,17 @@ export function useWorkspaceController() {
         }),
       });
 
-      if (!response.ok || !selectedListing) {
-        return;
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message ?? "Nie udało się zapisać decyzji o duplikacie.");
       }
+      if (!selectedListing) return;
 
-      await openListing(selectedListing.id);
+      await openListing(selectedListing.id, false, true);
       await refreshDashboard();
       await applyFilters(filters, currentListingsPage, listingSort);
+    } catch (error) {
+      setDuplicateError(error instanceof Error ? error.message : "Błąd zapisywania decyzji.");
     } finally {
       setIsReviewingDuplicatePair(null);
     }

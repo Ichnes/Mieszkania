@@ -107,6 +107,9 @@ test("metro penalties start beyond 150 percent; missing location remains neutral
     listing.longitude,
   )!.distanceMeters;
   for (const [limit, points] of [
+    [distance / 0.59, 13],
+    [distance / 0.6, 10],
+    [distance / 0.61, 10],
     [distance, 10],
     [distance / 1.49, 5],
     [distance / 1.51, -3],

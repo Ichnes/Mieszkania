@@ -277,6 +277,8 @@ Przekroczenie budżetu do 7% oznacza −5 pkt, większe −15 pkt. Dla ceny za m
 odpowiednio −5 i −10 pkt; przy limicie jest +10 pkt, przy cenie o 25% niższej +20 pkt,
 a pomiędzy tymi cenami premia rośnie proporcjonalnie.
 Metraż ponad 5 m² poza zakresem daje −3 pkt, a metro powyżej 150% limitu −3 pkt.
+Metro bliżej niż 60% ustawionego limitu daje dodatkowe +3 pkt, czyli łącznie +13.
+Dokładnie na granicy 60% pozostaje +10 pkt. Odległość jest liczona w linii prostej.
 Dojazd w linii prostej powyżej 18 km lub bez danych daje −5 pkt.
 Drugie piętro daje +2 pkt, jednostronne południe +4 pkt, a dwustronny wschód–zachód
 20 pkt (10 za dwustronność i 10 premii za kierunki).
@@ -412,7 +414,17 @@ puste wartości z błędnej odpowiedzi nie są potwierdzeniem braku obiektów.
 
 Identyczne pierwsze 25 słów opisu pozwala automatycznie połączyć aktywne oferty
 w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielkość
-liter i interpunkcję. Pary oznaczone jako różne oferty pozostają rozdzielone.
+liter i interpunkcję. Różnica metrażu nie może przekroczyć 2% mniejszego metrażu
+(np. 50 i 51 m² — tak, 50 i 60 m² — nie), również po połączeniu całych grup.
+Bez znanego dodatniego metrażu automat nie łączy ofert. Limit 2% znanych metraży
+obowiązuje także przy ręcznym zatwierdzaniu duplikatu.
+Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.
+
+W szczegółach oferty zakładka **Duplikaty** pokazuje połączone ogłoszenia i kandydatów.
+Przycisk **Rozłącz duplikat** przywraca osobną ofertę wraz z jej ceną źródłową.
+Rozłączanie zapamiętuje odrzucenie względem wszystkich pozostałych członków grupy,
+aby kolejne automatyczne skanowanie nie cofnęło decyzji. Można też otworzyć stronę
+źródłową każdego ogłoszenia i sprawdzić, czy rzeczywiście dotyczy tego samego mieszkania.
 
 Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).

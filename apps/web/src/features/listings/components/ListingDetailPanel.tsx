@@ -57,6 +57,9 @@ export function ListingDetailPanel(input: {
   downPayment: number;
   listing: ListingDetail;
   duplicateCandidates: DuplicateCandidate[];
+  onUnmergeDuplicate: (primaryId: string, duplicateId: string) => Promise<boolean>;
+  isUnmergingDuplicate: boolean;
+  duplicateError: string | null;
   onClose: () => void;
   onOpenRelatedListing: (listingId: string) => void | Promise<void>;
   onReviewDuplicate: (
@@ -143,9 +146,10 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features" | "score"
+    "overview" | "manual" | "contact" | "features" | "score" | "duplicates"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
+  const [unmergeSuccess, setUnmergeSuccess] = useState("");
   const [copiedId, setCopiedId] = useState(false);
   const detailPanelRef = useRef<HTMLElement | null>(null);
   const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
@@ -161,6 +165,7 @@ export function ListingDetailPanel(input: {
     setLightboxImageIndex(null);
     setIsDismissConfirmOpen(false);
     setActiveDetailTab("overview");
+    setUnmergeSuccess("");
     setManualFeedback(null);
   }, [input.listing.id]);
   useEffect(() => {
@@ -542,7 +547,142 @@ export function ListingDetailPanel(input: {
               >
                 <Star size={16} aria-hidden="true" /> Ocena
               </button>
+              <button
+                className={tabClass(activeDetailTab === "duplicates")}
+                type="button"
+                onClick={() => setActiveDetailTab("duplicates")}
+              >
+                Duplikaty ({input.listing.relatedListings.length})
+              </button>
             </div>
+            {activeDetailTab === "duplicates" && (
+              <section
+                className="detail-tab-section detail-duplicates"
+                aria-label="Duplikaty oferty"
+              >
+                <div className="result-box">
+                  <strong>Połączone ogłoszenia</strong>
+                  <p className="muted">
+                    Rozłącz błędny duplikat, aby przywrócić go jako osobną ofertę. Zapamiętamy tę
+                    decyzję przy automatycznym łączeniu.
+                  </p>
+                  {input.duplicateError && <p role="alert">{input.duplicateError}</p>}
+                  {unmergeSuccess && <p role="status">{unmergeSuccess}</p>}
+                  {input.listing.relatedListings.length === 0 && (
+                    <p className="muted">Brak połączonych ogłoszeń.</p>
+                  )}
+                  {input.listing.relatedListings.map((related) => (
+                    <div className="duplicate-candidate-card" key={related.id}>
+                      <button
+                        className="map-card-title"
+                        onClick={() => void input.onOpenRelatedListing(related.id)}
+                      >
+                        {related.sourceLabel}: {related.title}
+                      </button>
+                      <p className="muted">
+                        {related.priceLabel} · {related.areaLabel}
+                      </p>
+                      {related.relationNote && <p className="muted">{related.relationNote}</p>}
+                      <div className="panel-inline-actions">
+                        {related.canonicalUrl && (
+                          <a
+                            className="action-button secondary-button"
+                            href={related.canonicalUrl}
+                            target="_blank"
+                            rel="noreferrer"
+                          >
+                            Otwórz ogłoszenie ↗
+                          </a>
+                        )}
+                        <button
+                          className="action-button secondary-button"
+                          disabled={input.isUnmergingDuplicate || !related.primaryListingId}
+                          onClick={async () => {
+                            setUnmergeSuccess("");
+                            const primaryId = related.primaryListingId!;
+                            const duplicateId =
+                              related.id === primaryId ? input.listing.id : related.id;
+                            if (await input.onUnmergeDuplicate(primaryId, duplicateId))
+                              setUnmergeSuccess("Rozłączono oferty.");
+                          }}
+                        >
+                          {input.isUnmergingDuplicate
+                            ? "Rozłączanie…"
+                            : related.id === related.primaryListingId
+                              ? "Rozłącz tę ofertę od grupy"
+                              : "Rozłącz duplikat"}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="result-box detail-sidebar-box">
+                  <strong>Potencjalne duplikaty</strong>
+                  {input.isLoadingDuplicateCandidates ? (
+                    <p className="muted">Sprawdzanie kandydatów...</p>
+                  ) : null}
+                  {!input.isLoadingDuplicateCandidates &&
+                  duplicateCandidates.length === 0 &&
+                  input.listing.relatedListings.length > 0 ? (
+                    <p className="muted">
+                      Brak nierozstrzygniętych kandydatów. Ta oferta ma już połączone ogłoszenia
+                      widoczne powyżej.
+                    </p>
+                  ) : null}
+                  {!input.isLoadingDuplicateCandidates &&
+                  duplicateCandidates.length === 0 &&
+                  input.listing.relatedListings.length === 0 ? (
+                    <p className="muted">Brak nierozstrzygniętych kandydatów dla tej oferty.</p>
+                  ) : null}
+                  {duplicateCandidates.map((candidate) => {
+                    const counterpart =
+                      candidate.left.id === input.listing.id ? candidate.right : candidate.left;
+                    return (
+                      <div className="duplicate-candidate-card" key={candidate.pairKey}>
+                        <button
+                          className="map-card-title"
+                          onClick={() => void input.onOpenRelatedListing(counterpart.id)}
+                        >
+                          {counterpart.sourceLabel ?? "Inny portal"}: {counterpart.title}
+                        </button>
+                        <div className="muted">
+                          {counterpart.priceLabel}
+                          {counterpart.areaLabel ? ` / ${counterpart.areaLabel}` : ""}
+                          {counterpart.roomsLabel ? ` / ${counterpart.roomsLabel}` : ""}
+                        </div>
+                        <div className="muted">
+                          {counterpart.addressText ??
+                            `${counterpart.city}${counterpart.district ? ` / ${counterpart.district}` : ""}`}
+                        </div>
+                        <div className="muted">
+                          Pewność: {candidate.confidenceScore}% · {candidate.reasons.join(", ")}
+                        </div>
+                        <div className="panel-inline-actions">
+                          <button
+                            className="action-button secondary-button"
+                            type="button"
+                            onClick={() =>
+                              void input.onReviewDuplicate(candidate, "different_listing")
+                            }
+                            disabled={input.isReviewingDuplicatePair === candidate.pairKey}
+                          >
+                            To nie duplikat
+                          </button>
+                          <button
+                            className="action-button"
+                            type="button"
+                            onClick={() => void input.onReviewDuplicate(candidate, "same_listing")}
+                            disabled={input.isReviewingDuplicatePair === candidate.pairKey}
+                          >
+                            Zostaw tę, ukryj duplikat
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
             {activeDetailTab === "score" && (
               <ListingScorePanel listing={input.listing} settings={input.settings} />
             )}
@@ -1156,70 +1296,6 @@ export function ListingDetailPanel(input: {
                 ) : null}
               </div>
             </details>
-
-            <div className="result-box detail-sidebar-box">
-              <strong>Potencjalne duplikaty</strong>
-              {input.isLoadingDuplicateCandidates ? (
-                <p className="muted">Sprawdzanie kandydatów...</p>
-              ) : null}
-              {!input.isLoadingDuplicateCandidates &&
-              duplicateCandidates.length === 0 &&
-              input.listing.relatedListings.length > 0 ? (
-                <p className="muted">
-                  Brak nierozstrzygniętych kandydatów. Ta oferta ma już powiązane rekordy z innych
-                  portali powyżej.
-                </p>
-              ) : null}
-              {!input.isLoadingDuplicateCandidates &&
-              duplicateCandidates.length === 0 &&
-              input.listing.relatedListings.length === 0 ? (
-                <p className="muted">Brak nierozstrzygniętych kandydatów dla tej oferty.</p>
-              ) : null}
-              {duplicateCandidates.map((candidate) => {
-                const counterpart =
-                  candidate.left.id === input.listing.id ? candidate.right : candidate.left;
-                return (
-                  <div className="duplicate-candidate-card" key={candidate.pairKey}>
-                    <button
-                      className="map-card-title"
-                      onClick={() => void input.onOpenRelatedListing(counterpart.id)}
-                    >
-                      {counterpart.sourceLabel ?? "Inny portal"}: {counterpart.title}
-                    </button>
-                    <div className="muted">
-                      {counterpart.priceLabel}
-                      {counterpart.areaLabel ? ` / ${counterpart.areaLabel}` : ""}
-                      {counterpart.roomsLabel ? ` / ${counterpart.roomsLabel}` : ""}
-                    </div>
-                    <div className="muted">
-                      {counterpart.addressText ??
-                        `${counterpart.city}${counterpart.district ? ` / ${counterpart.district}` : ""}`}
-                    </div>
-                    <div className="muted">
-                      Pewność: {candidate.confidenceScore}% · {candidate.reasons.join(", ")}
-                    </div>
-                    <div className="panel-inline-actions">
-                      <button
-                        className="action-button secondary-button"
-                        type="button"
-                        onClick={() => void input.onReviewDuplicate(candidate, "different_listing")}
-                        disabled={input.isReviewingDuplicatePair === candidate.pairKey}
-                      >
-                        To nie duplikat
-                      </button>
-                      <button
-                        className="action-button"
-                        type="button"
-                        onClick={() => void input.onReviewDuplicate(candidate, "same_listing")}
-                        disabled={input.isReviewingDuplicatePair === candidate.pairKey}
-                      >
-                        Zostaw tę, ukryj duplikat
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
 
             <div className="result-box detail-sidebar-box">
               <strong>Historia cen w ogłoszeniu</strong>

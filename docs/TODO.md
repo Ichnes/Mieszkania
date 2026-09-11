@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Duplikaty w szczegółach i bonus metra (2026-09-12)
+
+- Zakres: zakładka Duplikaty z rozłączaniem i stanem operacji; maksymalna różnica metrażu 2% także dla identycznego początku opisu i całych grup; +3 pkt za metro bliższe niż 60% limitu.
+- [x] Zakładka Duplikaty: lista połączonych źródeł, rozłączanie, stany błędu/pracy/powodzenia, kandydaci; odświeżenie bez zamykania zakładki. Rozłączenie przywraca cenę źródłową i blokuje automatyczne ponowne łączenie.
+- [x] Limit 2% mniejszego metrażu na imporcie, skanowaniu i ręcznym łączeniu; kontrola całych grup oraz odrzuconych par. Automat wymaga dodatnich metraży. Skanowanie zapisuje atomowo pod wspólną blokadą.
+- [x] Metro poniżej 60% limitu: +13 pkt zamiast +10, dokładnie 60% nadal +10; aktualizacja maksymalnej punktacji i wyjaśnienia.
+- [x] Typecheck/build; 206 testów API i 92 frontendu poprawnych (5 środowiskowych pominiętych). Dodatkowy test PostgreSQL: granica 2%, brak metrażu, 50/60, całe grupy i odrzucone pary.
+- [x] Przeglądarka 1440/1280/390/320 px bez przepełnienia; błąd rozłączania, sukces, rozpad ostatniej pary i przywrócenie cen sprawdzone na usuwanych danych testowych. Zrzuty PC/telefon obejrzane. Instrukcja zaktualizowana.
+- [x] Końcowe API/web wdrożone lokalnie; ponowny test PostgreSQL i pełna kontrola zakładki na czterech szerokościach poprawne. Zmiany przygotowane do commitu i push na `main`; brak pozostałych prac implementacyjnych.
+
 ## Wesoła, Długa 80B i 2/2 (2026-09-11)
 
 - [x] Jawny adres w opisie („znajduje się w Warszawie-Wesołej przy ul.”) ma pierwszeństwo przed błędną dzielnicą; wspólne wzorce w odczycie i SQL filtra. Samo sąsiedztwo stacji PKP nie wystarcza.

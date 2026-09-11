@@ -14,6 +14,9 @@ export function ListingDialog({
     | "closeListing"
     | "openListing"
     | "reviewDuplicatePair"
+    | "unmergeDuplicate"
+    | "duplicateAction"
+    | "duplicateError"
     | "toggleShortlist"
     | "dismissListing"
     | "archiveListing"
@@ -84,6 +87,9 @@ export function ListingDialog({
           onClose={closeListing}
           onOpenRelatedListing={openListing}
           onReviewDuplicate={reviewDuplicatePair}
+          onUnmergeDuplicate={model.unmergeDuplicate}
+          isUnmergingDuplicate={Boolean(model.duplicateAction)}
+          duplicateError={model.duplicateError}
           onToggleShortlist={toggleShortlist}
           onDismiss={dismissListing}
           onArchive={archiveListing}

@@ -45,6 +45,7 @@ type DuplicateCandidateRow = {
 };
 
 type RelatedListingRow = {
+  primary_listing_id: string;
   id: string;
   title: string;
   canonical_url: string;
@@ -321,6 +322,12 @@ export async function reviewDuplicateCandidate(input: {
       );
 
       if (input.status === "same_listing") {
+        if (!(await duplicateGroupsCompatible(db, input.leftId, input.rightId, false))) {
+          throw Object.assign(
+            new Error("Nie można połączyć ofert: różnica metrażu przekracza 2%."),
+            { statusCode: 409 },
+          );
+        }
         const primaryListingId = await choosePreferredPrimaryListingId(
           db,
           input.leftId,
@@ -454,6 +461,8 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
             and grouped_listing.id = other.id
         )
         and coalesce(r.status, 'pending') <> 'different_listing'
+        and other.area_sqm > 0 and $3::numeric > 0
+        and abs(other.area_sqm - $3::numeric) <= least(other.area_sqm, $3::numeric) * 0.02
         and (
           ${exactDescriptionPrefix}
           or (
@@ -476,7 +485,12 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
     ],
   );
 
-  const best = candidatesResult.rows
+  const compatibleCandidates: AutoMergeCandidateRow[] = [];
+  for (const candidate of candidatesResult.rows) {
+    if (await duplicateGroupsCompatible(db, listing.id, candidate.id, true))
+      compatibleCandidates.push(candidate);
+  }
+  const best = compatibleCandidates
     .map((candidate) => {
       const similarity = computeDescriptionSimilarity(
         listingTokens,
@@ -550,9 +564,13 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
 export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
   const safeLimit = Math.max(1, Math.min(limit, 20_000));
 
-  return withDb(async (db) => {
-    const result = await db.query<AutoMergeListingRow>(
-      `
+  return withDb(async (pool) => {
+    const db = await pool.connect();
+    try {
+      await db.query("begin");
+      await db.query("select pg_advisory_xact_lock(735189241)");
+      const result = await db.query<AutoMergeListingRow>(
+        `
         select
           l.id,
           s.key as source_key,
@@ -576,78 +594,87 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
         order by l.last_seen_at desc nulls last, l.created_at desc
         limit $1
       `,
-      [safeLimit],
-    );
-
-    // The old implementation issued two or more SQL queries for every listing.
-    // Ten thousand offers therefore meant tens of thousands of database round
-    // trips. The automatic rule is an identical 25-word prefix, so fetch once,
-    // normalize once and compare only records that share the same signature.
-    const signatureGroups = new Map<string, AutoMergeListingRow[]>();
-    for (const listing of result.rows) {
-      const prefix = tokenizeDescriptionPrefix(listing.description).slice(
-        0,
-        exactDescriptionPrefixWordCount,
+        [safeLimit],
       );
-      if (prefix.length < exactDescriptionPrefixWordCount) continue;
-      const signature = `${listing.city.trim().toLowerCase()}:${prefix.join(" ")}`;
-      const group = signatureGroups.get(signature);
-      if (group) group.push(listing);
-      else signatureGroups.set(signature, [listing]);
-    }
 
-    const candidateGroups = [...signatureGroups.values()].filter((group) => group.length > 1);
-    const rejectedPairsResult = await db.query<{ pair_key: string }>(
-      `select pair_key from listing_duplicate_reviews where status = 'different_listing'`,
-    );
-    const rejectedPairKeys = new Set(rejectedPairsResult.rows.map((row) => row.pair_key));
-    let merged = 0;
-    const concurrency = 4;
-    for (let offset = 0; offset < candidateGroups.length; offset += concurrency) {
-      const batch = candidateGroups.slice(offset, offset + concurrency);
-      const outcomes = await Promise.all(
-        batch.map(async (group) => {
-          const ordered = [...group].sort((left, right) => {
-            const leftPriority = sourcePriority.indexOf(left.source_key);
-            const rightPriority = sourcePriority.indexOf(right.source_key);
-            return (
-              (leftPriority < 0 ? 999 : leftPriority) - (rightPriority < 0 ? 999 : rightPriority) ||
-              new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
-            );
-          });
-          const primary =
-            ordered.find((listing) => listing.existing_primary_id === listing.id) ?? ordered[0];
-          let groupMerged = 0;
+      // The old implementation issued two or more SQL queries for every listing.
+      // Ten thousand offers therefore meant tens of thousands of database round
+      // trips. The automatic rule is an identical 25-word prefix, so fetch once,
+      // normalize once and compare only records that share the same signature.
+      const signatureGroups = new Map<string, AutoMergeListingRow[]>();
+      for (const listing of result.rows) {
+        const prefix = tokenizeDescriptionPrefix(listing.description).slice(
+          0,
+          exactDescriptionPrefixWordCount,
+        );
+        if (prefix.length < exactDescriptionPrefixWordCount) continue;
+        const signature = `${listing.city.trim().toLowerCase()}:${prefix.join(" ")}`;
+        const group = signatureGroups.get(signature);
+        if (group) group.push(listing);
+        else signatureGroups.set(signature, [listing]);
+      }
 
-          for (const duplicate of ordered) {
-            if (duplicate.id === primary.id) continue;
-            const leftId = primary.id < duplicate.id ? primary.id : duplicate.id;
-            const rightId = primary.id < duplicate.id ? duplicate.id : primary.id;
-            const pairKey = buildDuplicatePairKey(leftId, rightId);
-            if (rejectedPairKeys.has(pairKey)) continue;
+      const candidateGroups = [...signatureGroups.values()].filter((group) => group.length > 1);
+      const rejectedPairsResult = await db.query<{ pair_key: string }>(
+        `select pair_key from listing_duplicate_reviews where status = 'different_listing'`,
+      );
+      const rejectedPairKeys = new Set(rejectedPairsResult.rows.map((row) => row.pair_key));
+      let merged = 0;
+      const concurrency = 1;
+      for (let offset = 0; offset < candidateGroups.length; offset += concurrency) {
+        const batch = candidateGroups.slice(offset, offset + concurrency);
+        const outcomes = await Promise.all(
+          batch.map(async (group) => {
+            const ordered = [...group].sort((left, right) => {
+              const leftPriority = sourcePriority.indexOf(left.source_key);
+              const rightPriority = sourcePriority.indexOf(right.source_key);
+              return (
+                (leftPriority < 0 ? 999 : leftPriority) -
+                  (rightPriority < 0 ? 999 : rightPriority) ||
+                new Date(left.created_at).getTime() - new Date(right.created_at).getTime()
+              );
+            });
+            const primary =
+              ordered.find((listing) => listing.existing_primary_id === listing.id) ?? ordered[0];
+            let groupMerged = 0;
 
-            await db.query(
-              `insert into listing_duplicate_reviews (pair_key, listing_id_left, listing_id_right, status, notes, reviewed_at)
+            for (const duplicate of ordered) {
+              if (duplicate.id === primary.id) continue;
+              const leftId = primary.id < duplicate.id ? primary.id : duplicate.id;
+              const rightId = primary.id < duplicate.id ? duplicate.id : primary.id;
+              const pairKey = buildDuplicatePairKey(leftId, rightId);
+              if (rejectedPairKeys.has(pairKey)) continue;
+              if (!(await duplicateGroupsCompatible(db, primary.id, duplicate.id, true))) continue;
+
+              await db.query(
+                `insert into listing_duplicate_reviews (pair_key, listing_id_left, listing_id_right, status, notes, reviewed_at)
              values ($1, $2, $3, 'same_listing', $4, now())
              on conflict (pair_key) do update set status = excluded.status, notes = excluded.notes, reviewed_at = now()`,
-              [
-                pairKey,
-                leftId,
-                rightId,
-                `Automatycznie polaczona: identyczne pierwsze ${exactDescriptionPrefixWordCount} slow opisu.`,
-              ],
-            );
-            await mergeDuplicateGroup(db, primary.id, duplicate.id);
-            await markDuplicateHidden(db, primary.id, duplicate.id);
-            groupMerged += 1;
-          }
-          return groupMerged;
-        }),
-      );
-      merged += outcomes.reduce((sum, count) => sum + count, 0);
-    }
+                [
+                  pairKey,
+                  leftId,
+                  rightId,
+                  `Automatycznie polaczona: identyczne pierwsze ${exactDescriptionPrefixWordCount} slow opisu.`,
+                ],
+              );
+              await mergeDuplicateGroup(db, primary.id, duplicate.id);
+              await markDuplicateHidden(db, primary.id, duplicate.id);
+              groupMerged += 1;
+            }
+            return groupMerged;
+          }),
+        );
+        merged += outcomes.reduce((sum, count) => sum + count, 0);
+      }
 
-    return { checked: result.rows.length, merged };
+      await db.query("commit");
+      return { checked: result.rows.length, merged };
+    } catch (error) {
+      await db.query("rollback");
+      throw error;
+    } finally {
+      db.release();
+    }
   });
 }
 
@@ -1064,7 +1091,8 @@ async function getRelatedListingsWithDb(
         s.name as source_label,
         other.price_amount::text,
         other.area_sqm::text,
-        r.notes as relation_note
+        r.notes as relation_note,
+        (select listing_id from listing_duplicate_group_members where group_id = self_member.group_id and is_primary = true) as primary_listing_id
       from listing_duplicate_group_members self_member
       join listing_duplicate_group_members other_member on other_member.group_id = self_member.group_id
       join listings other on other.id = other_member.listing_id
@@ -1087,7 +1115,37 @@ async function getRelatedListingsWithDb(
     priceLabel: formatCurrencyLabel(row.price_amount),
     areaLabel: formatAreaLabel(row.area_sqm),
     relationNote: row.relation_note ?? undefined,
+    primaryListingId: row.primary_listing_id,
   }));
+}
+
+export async function duplicateGroupsCompatible(
+  db: QueryableDb,
+  leftId: string,
+  rightId: string,
+  automatic: boolean,
+) {
+  const result = await db.query<{ compatible: boolean }>(
+    `
+    with members as (
+      select l.id, l.area_sqm from listings l
+      where l.id in ($1::uuid, $2::uuid) or l.id in (
+        select m.listing_id from listing_duplicate_group_members m
+        where m.group_id in (select group_id from listing_duplicate_group_members where listing_id in ($1::uuid, $2::uuid))
+      )
+    )
+    select coalesce(max(area_sqm) - min(area_sqm) <= min(area_sqm) * 0.02, not $3::boolean)
+      and (not $3::boolean or count(*) filter (where area_sqm > 0) = count(*))
+      and (not $3::boolean or not exists (
+        select 1 from listing_duplicate_reviews r
+        where r.status = 'different_listing'
+          and r.listing_id_left in (select id from members)
+          and r.listing_id_right in (select id from members)
+      )) as compatible from members
+  `,
+    [leftId, rightId, automatic],
+  );
+  return result.rows[0]?.compatible === true;
 }
 
 async function mergeDuplicateGroup(

@@ -435,6 +435,7 @@ export type ListingSummary = {
 };
 
 export type RelatedListingSummary = {
+  primaryListingId?: string;
   id: string;
   title: string;
   canonicalUrl?: string;
