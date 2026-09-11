@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Odstęp między miastem a tytułem karty (2026-09-12)
+
+- [x] Zmniejszenie odstępu między wierszem miasta/zmiany ceny a tytułem z 8 do 4 px; pozostałe odstępy bez zmian.
+- [x] Build poprawny; wdrożone lokalnie. Pomiar przeglądarkowy 1440/1280/390/320 potwierdza 8→4 px i brak przepełnienia. Gotowe do commitu/push `main`.
+
 ## Cache potencjalnych duplikatów (2026-09-12)
 
 - [x] Cache sesji na 5 minut / 100 ofert, również pustych wyników; współdzielenie trwających zapytań przy powrocie do oferty, ochrona przed spóźnionymi odpowiedziami.

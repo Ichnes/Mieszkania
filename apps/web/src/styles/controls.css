@@ -136,6 +136,10 @@
   margin: 0;
   color: var(--ink-soft);
 }
+.listing-card-content > .listing-topline + h3 {
+  /* Halve this one 8px grid gap without tightening the remaining facts. */
+  margin-top: -4px;
+}
 .listing-topline > span:first-child {
   font-size: 0.7rem;
   font-weight: 900;
