@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Liczba miejsc postojowych i filtry ekspozycji statystyk (2026-09-11)
+
+- Zakres: ceny za miejsce × liczba miejsc, dostępność „dwóch, odrębnych miejsc”, narożne mieszkania jako minimum dwustronne bez wymyślania kierunków. Statystyki: komórka/piwnica i kompas 8 kierunków.
+- Uzgodnione: wszystkie rozpoznane kierunki oferty muszą należeć do zaznaczonego zakresu; brak wyboru i komplet 8 kierunków oznaczają wszystkie oferty, także bez ekspozycji.
+- [x] Ceny jednostkowe i ilości (w tym „dwóch, odrębnych” i kwoty bez „zł”), rozpoznawanie dostępności, brak przypisywania nieznanego rodzaju parkingu do naziemnego. W ofercie 645c3224-daea-4c25-9c78-438aaf71bf68 potwierdzone 2 prywatne miejsca i 100 000 zł łącznie. W szczegółach widoczne mnożenie ilości przez cenę.
+- [x] Narożne mieszkanie oznacza minimum 2 strony, bez przypisywania nieznanych kierunków. Parter bez windy: 0 pkt zamiast −20; piętro 0 lub rozpoznane z opisu, lokal usługowy na parterze nie zmienia punktacji mieszkania na górze. Winda nadal +21.
+- [x] Komórka/piwnica z uwzględnieniem ręcznych korekt; zakres kompasu zastosowany wspólnie do agregatów, cache i porównania bazowego. Preferencje, reset, stan pusty/wszystkie i pomijanie nieznanej ekspozycji przy częściowym wyborze.
+- [x] Realne statystyki (90 dni): bazowo 2947 aktywnych, S 91, SE/S/SW 224, z komórką/piwnicą 123. Pełny kompas identyczny z wynikiem bez filtra.
+- [x] Automatyczny test przeglądarkowy 1440/1280/390/320: wybór, parametry API, zachowanie po odświeżeniu, wszystkie kierunki, czyszczenie; brak przepełnienia. Zrzuty 1440/390 obejrzane, wygląd dopasowany do kolorów aplikacji. Kompas dashboardu zachował wygląd.
+- [x] 204 testy API poprawne, 5 środowiskowych pominiętych; 92 testy frontend poprawne. Typecheck/build poprawne; lokalne API i web wdrożone. Commit/push na `main`.
+
 ## Ulica, ostatnie piętro i przybliżony rok budowy (2026-09-11)
 
 - Zakres: wspólne reguły wszystkich portali i odczytu istniejących ofert. Szaserów bez dopisku lokalizacji, ostatnie 4. piętro jako 4/4, budynek z ok. 2000 roku jako rok 2000.

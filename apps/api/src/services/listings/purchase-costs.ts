@@ -1,4 +1,8 @@
+import { extractParkingSpaceCount } from "./parking-count";
+
 export type PurchaseCosts = {
+  parkingCount?: number;
+  parkingUnitPrice?: number;
   garage?: number;
   storage?: number;
   garden?: number;
@@ -31,7 +35,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
   let indoorParking: number | undefined;
   let otherParking: number | undefined;
   for (const match of text.matchAll(
-    /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-)/g,
+    /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
   )) {
     const index = match.index!;
     const before = text
@@ -71,8 +75,17 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     if (!Number.isFinite(amount) || amount < 1000) continue;
     if (mentioned.garage && mentioned.storage) result.garageAndStorage = amount;
     else if (mentioned.garage) {
-      if (/garaz\w*|podziemn\w*/.test(before)) indoorParking = amount;
-      else otherParking = amount;
+      const count = extractParkingSpaceCount(before);
+      const perSpace =
+        /\bpo\s*$/.test(before) ||
+        /^\s*(?:za\s+(?:jedno\s+)?miejsce|(?:za\s+)?kazde|\/\s*(?:miejsce|szt))/i.test(after);
+      const parkingAmount = amount * (perSpace ? (count ?? 1) : 1);
+      if (count && perSpace) {
+        result.parkingCount = count;
+        result.parkingUnitPrice = amount;
+      }
+      if (/garaz\w*|podziemn\w*/.test(before)) indoorParking = parkingAmount;
+      else otherParking = parkingAmount;
       result.garage = (indoorParking ?? 0) + (otherParking ?? 0);
     } else if (mentioned.storage) result.storage = amount;
     else result.garden = amount;

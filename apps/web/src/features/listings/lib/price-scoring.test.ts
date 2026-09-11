@@ -30,6 +30,21 @@ const row = (patch: Partial<ListingSummary>, label: string) =>
   computeDreamEvaluation({ ...base, ...patch }, profile, []).rows.find(
     (row) => row.label === label,
   )!;
+
+test("missing lift costs no points on the ground floor", () => {
+  assert.equal(row({ floor: 0, hasLift: false }, "Winda").points, 0);
+  assert.equal(row({ description: "Mieszkanie na parterze.", hasLift: false }, "Winda").points, 0);
+  assert.equal(row({ floor: 0, hasLift: true }, "Winda").points, 21);
+  assert.equal(row({ floor: 1, hasLift: false }, "Winda").points, -20);
+  assert.equal(
+    row({ hasLift: false, description: "Na parterze lokale usługowe." }, "Winda").points,
+    -20,
+  );
+  assert.equal(
+    row({ floor: 2, hasLift: false, description: "Na parterze jest wejście." }, "Winda").points,
+    -20,
+  );
+});
 test("purchase price: exact budget, seven percent and above", () => {
   for (const [price, points] of [
     [999999, 15],

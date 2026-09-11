@@ -1,4 +1,5 @@
 import type { WorkspaceState } from "../app/useWorkspaceController";
+import { hasExposureFilter } from "@mieszkania/shared";
 import { MarketPulse } from "../features/listings/components/AnalysisInsights";
 import { MarketStatsPanel } from "../features/statistics/MarketStatsPanel";
 import { StatsControls } from "../features/statistics/StatsControls";
@@ -59,6 +60,8 @@ export function StatisticsPage({
                 maxArea: "",
                 elevator: false,
                 garage: false,
+                storage: false,
+                directions: [],
               };
               setMarketStatsDraftFilters(empty);
               setMarketStats(null);
@@ -102,7 +105,9 @@ export function StatisticsPage({
         marketStatsFilters.minArea ||
         marketStatsFilters.maxArea ||
         marketStatsFilters.elevator ||
-        marketStatsFilters.garage) ? (
+        marketStatsFilters.garage ||
+        marketStatsFilters.storage ||
+        hasExposureFilter(marketStatsFilters.directions)) ? (
         <div className="panel stats-filter-diff">
           <strong>
             Cena za m² — różnica względem zapisanych kryteriów bez dodatkowych filtrów

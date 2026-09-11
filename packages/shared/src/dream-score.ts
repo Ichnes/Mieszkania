@@ -248,10 +248,15 @@ export function computeDreamEvaluation(
   record("Komórka", "Jest +9; brak 0.", listing.hasStorage ? "Jest" : "brak danych");
 
   const liftBonus = 21;
+  const floor = listing.floor ?? (hasApartmentGroundFloor(text) ? 0 : undefined);
   maxPoints += liftBonus;
-  points += listing.hasLift ? liftBonus : -20;
+  points += listing.hasLift ? liftBonus : floor === 0 ? 0 : -20;
 
-  record("Winda", "Jest +21; brak −20.", listing.hasLift ? "Jest" : "brak danych");
+  record(
+    "Winda",
+    "Jest +21; brak na parterze 0; brak na pozostałych piętrach lub bez danych o piętrze −20.",
+    listing.hasLift ? "Jest" : floor === 0 ? "Parter — bez kary za brak windy" : "brak danych",
+  );
 
   // Having both makes day-to-day use with a family much easier, so it earns an
   // additional joint premium beyond the individual amenities.
@@ -270,7 +275,6 @@ export function computeDreamEvaluation(
     String(listing.yearBuilt ?? "Brak danych"),
   );
 
-  const floor = listing.floor ?? (hasApartmentGroundFloor(text) ? 0 : undefined);
   const topFloor =
     (typeof floor === "number" &&
       typeof listing.totalFloors === "number" &&

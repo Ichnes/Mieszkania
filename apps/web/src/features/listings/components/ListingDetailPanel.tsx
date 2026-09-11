@@ -598,6 +598,10 @@ export function ListingDetailPanel(input: {
                         {input.listing.additionalPurchaseCosts.garage
                           ? ` (garaż: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
                           : ""}
+                        {input.listing.additionalPurchaseCosts.parkingCount &&
+                        input.listing.additionalPurchaseCosts.parkingUnitPrice
+                          ? ` — ${input.listing.additionalPurchaseCosts.parkingCount} miejsca × ${formatPln(input.listing.additionalPurchaseCosts.parkingUnitPrice)}`
+                          : ""}
                         {input.listing.additionalPurchaseCosts.storage
                           ? ` (komórka / piwnica: ${formatPln(input.listing.additionalPurchaseCosts.storage)})`
                           : ""}

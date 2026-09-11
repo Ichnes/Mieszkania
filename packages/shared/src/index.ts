@@ -395,6 +395,8 @@ export type ListingSummary = {
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
   additionalPurchaseCosts?: {
+    parkingCount?: number;
+    parkingUnitPrice?: number;
     garage?: number;
     storage?: number;
     garageAndStorage?: number;
@@ -989,6 +991,12 @@ export {
   getListingAgePoints,
 } from "./dream-score.js";
 export { getSunExposure, type ExposureDirection } from "./sun-exposure.js";
+export {
+  exposureDirections,
+  normalizeExposureDirections,
+  hasExposureFilter,
+  matchesExposureFilter,
+} from "./exposure-filter.js";
 export {
   hasApartmentGroundFloor,
   getBuildingYearPoints,

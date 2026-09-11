@@ -41,6 +41,7 @@ import {
 } from "../media/image-repository";
 import { getFamilySettings } from "../settings/family-settings";
 import { inferBuildingDetails } from "./listing-description-facts";
+import { extractParkingSpaceCount } from "./parking-count";
 import { getSavedPortalBuildingFacts } from "./portal-building-facts";
 export { inferBuildingDetails } from "./listing-description-facts";
 import { buildEffectiveListingDateSql } from "./listing-recency";
@@ -1486,6 +1487,8 @@ function mapListingSummary(
     Object.keys(detectedCosts).length || hasGarageOverride || hasStorageOverride
       ? {
           garage: garageCost,
+          parkingCount: hasGarageOverride ? undefined : detectedCosts.parkingCount,
+          parkingUnitPrice: hasGarageOverride ? undefined : detectedCosts.parkingUnitPrice,
           storage: storageCost,
           garageAndStorage: bundle,
           garden: detectedCosts.garden,
@@ -2380,15 +2383,15 @@ export function extractFeatures(input: {
 function inferAmenities(description: string) {
   const text = normalizePolish(description);
   const garagePattern =
-    /\b(?:gara(?:z|ż)\w*|miejsc(?:e|a|u|em|ach|ami)\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*)|miejsc(?:e|a|u|em|ach|ami)\s+w\s+parking\w*\s+podziemn\w*|stanowisk(?:o|a|u|iem|ach|ami)\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*))\b/g;
+    /\b(?:gara(?:z|ż)\w*|miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*)|miejsc(?:e|a|u|em|ach|ami)?\s+w\s+parking\w*\s+podziemn\w*|stanowisk(?:o|a|u|iem|ach|ami)\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*))\b/g;
   const storagePattern =
     /\b(?:piwnic(?:a|y|e|ę|ą|ach|ami)?|komork(?:a|i|ę|ą|ach|ami)?(?:\s+lokatorsk(?:a|iej|ą|e|ich)?)?|schowek|box\s+lokatorski)\b/g;
   const estateParkingPattern =
-    /\b(?:\d+\s+)?miejsc(?:e|a|u|em|ach|ami)\s+(?:postojow\w*|parkingow\w*)\s+(?:dla\s+mieszkanc\w*\s+)?(?:na|w)\s+terenie\s+(?:osiedl\w*|posesj\w*)/g;
+    /\b(?:\d+\s+)?miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*)\s+(?:dla\s+mieszkanc\w*\s+)?(?:na|w)\s+terenie\s+(?:osiedl\w*|posesj\w*)/g;
   const outdoorParkingPattern =
-    /\b(?:(?:(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+)?(?:naziemn\w*|zewnetrzn\w*)\s+miejsc(?:e|a|u|em|ach|ami)\s+(?:postojow\w*|parkingow\w*)|(?:(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+)?miejsc(?:e|a|u|em|ach|ami)\s+(?:postojow\w*|parkingow\w*)\s+(?:naziemn\w*|zewnetrzn\w*|przed\s+budynk\w*|na\s+posesj\w*|na\s+podwork\w*))/g;
+    /\b(?:(?:(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+)?(?:naziemn\w*|zewnetrzn\w*)\s+miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*)|(?:(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+)?miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*)\s+(?:naziemn\w*|zewnetrzn\w*|przed\s+budynk\w*|na\s+posesj\w*|na\s+podwork\w*))/g;
   const ownedParkingPattern =
-    /\bprzynalez\w*[^.!?;]{0,90}?(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+prywatn\w*\s+miejsc(?:e|a|u|em|ach|ami)\s+(?:postojow\w*|parkingow\w*)/g;
+    /\bprzynalez\w*[^.!?;]{0,90}?(?:\d+|jedn\w*|dw\w*|trzy|cztery)\s+prywatn\w*\s+miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*)/g;
   const balconyPattern = /\b(?:balkon\w*|loggi\w*)\b/g;
   const terracePattern = /\btaras\w*\b/g;
   const gardenPattern =
@@ -2424,7 +2427,12 @@ function inferAmenities(description: string) {
   const hasOutdoorParking = outdoorParkingMatches.some(
     (match) => !isNegatedAmenity(text, match.index ?? 0),
   );
-  const ownedParkingCount = inferMentionCount(text, ownedParkingMatches);
+  const purchaseParking = garageMatches.filter(
+    (match) =>
+      !isNegatedAmenity(text, match.index ?? 0) &&
+      /\b(?:zakup|dokup)\w*\b/.test(text.slice(Math.max(0, (match.index ?? 0) - 85), match.index)),
+  );
+  const ownedParkingCount = inferMentionCount(text, [...ownedParkingMatches, ...purchaseParking]);
   const parkingCount = inferMentionCount(text, [
     ...estateParkingMatches,
     ...outdoorParkingMatches,
@@ -2509,9 +2517,10 @@ function inferAmenities(description: string) {
           ? "platform"
           : "yes"
       : undefined,
-    garageCount: hasActualGarage ? ownedParkingCount : undefined,
+    garageCount: hasActualGarage ? (parkingCount ?? ownedParkingCount) : undefined,
     outdoorParking:
-      !isPlatform && (explicitOutdoorParking || hasOutdoorParking || !hasActualGarage)
+      !isPlatform &&
+      (explicitOutdoorParking || hasOutdoorParking || (!hasActualGarage && !ownedParkingCount))
         ? "yes"
         : undefined,
     ...commonAmenities,
@@ -2541,11 +2550,17 @@ function inferMentionCount(text: string, matches: RegExpMatchArray[]) {
   let best: number | undefined;
   for (const match of matches) {
     const index = match.index ?? 0;
-    const withPrefix = text.slice(Math.max(0, index - 16), index + match[0].length);
+    const isParking = /miejsc|stanowisk/.test(match[0]);
+    const withPrefix = text.slice(
+      Math.max(0, index - (isParking ? 90 : 16)),
+      index + match[0].length,
+    );
     const countMatch = withPrefix.match(
       /(?:^|\s)(\d+|jeden|jedno|jedna|dwa|dwie|trzy|cztery|piec)\s+(?:(?:naziemn|prywatn)\w*\s+)?(?:miejsc\w*|balkon\w*)/,
     );
-    const count = countMatch?.[1] ? Number(countMatch[1]) || words[countMatch[1]] : undefined;
+    const count =
+      (isParking ? extractParkingSpaceCount(withPrefix) : undefined) ??
+      (countMatch?.[1] ? Number(countMatch[1]) || words[countMatch[1]] : undefined);
     if (count && (!best || count > best)) best = count;
   }
   return best;

@@ -1,4 +1,121 @@
 /* Market filters and loading state. */
+.stats-exposure-filter {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 240px minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  padding: 16px 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(115deg, var(--brand-soft), var(--surface) 65%);
+}
+.stats-exposure-compass {
+  width: 240px;
+  height: 240px;
+  position: relative;
+}
+.stats-exposure-compass svg {
+  width: 100%;
+  height: 100%;
+}
+.stats-exposure-compass path {
+  fill: var(--surface);
+  stroke: var(--line);
+  transition: fill 150ms;
+}
+.stats-exposure-compass path.is-selected {
+  fill: var(--brand);
+  stroke: var(--brand-strong);
+}
+.stats-exposure-compass button {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 12px;
+  font-weight: 850;
+  cursor: pointer;
+}
+.stats-exposure-compass button[aria-pressed="true"] {
+  color: white;
+}
+.stats-exposure-compass button:hover {
+  background: color-mix(in srgb, var(--brand-strong) 15%, transparent);
+}
+.stats-exposure-compass button:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: -2px;
+}
+.stats-exposure-center {
+  position: absolute;
+  inset: 35%;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 5px;
+  color: var(--brand-strong);
+  pointer-events: none;
+}
+.stats-exposure-center small {
+  white-space: nowrap;
+  font-size: 10px;
+  font-weight: 800;
+}
+.stats-exposure-copy {
+  min-width: 0;
+}
+.stats-exposure-copy h3 {
+  margin: 5px 0 9px;
+  font-size: 1.2rem;
+}
+.stats-exposure-copy p:not(.eyebrow) {
+  max-width: 580px;
+  font-size: 0.83rem;
+  line-height: 1.6;
+  color: var(--ink-soft);
+}
+.stats-exposure-copy > small {
+  display: block;
+  margin-top: 8px;
+  color: var(--ink-soft);
+  font-size: 0.73rem;
+  line-height: 1.5;
+}
+.stats-exposure-selection {
+  color: var(--brand-strong);
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1.6;
+}
+.stats-exposure-shortcuts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+.stats-exposure-shortcuts button {
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.73rem;
+  cursor: pointer;
+}
+.stats-filter-toggles label:focus-within {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
 .stats-controls {
   display: grid;
   gap: 16px;
@@ -417,4 +534,44 @@
 .district-multiselect-menu > label:has(input:checked) {
   background: var(--brand-soft);
   border-radius: 8px;
+}
+
+.stats-controls .stats-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.stats-controls .stats-filter-toggles {
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.stats-controls .stats-filter-actions {
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+@media (max-width: 640px) {
+  .stats-exposure-filter {
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+    gap: 10px;
+    padding: 12px;
+  }
+  .stats-exposure-copy {
+    width: 100%;
+  }
+  .stats-controls .stats-filter-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .stats-controls .stats-filter-toggles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stats-controls .stats-filter-toggles label {
+    min-height: 44px;
+  }
+}
+@media (max-width: 360px) {
+  .stats-controls {
+    padding: 12px;
+  }
+  .stats-exposure-filter {
+    padding: 4px;
+  }
 }

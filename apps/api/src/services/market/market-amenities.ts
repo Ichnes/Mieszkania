@@ -1,21 +1,29 @@
 import type { Pool } from "pg";
+import { hasExposureFilter, matchesExposureFilter } from "@mieszkania/shared";
 import { extractFeatures, resolveListingAmenities } from "../listings/listing-repository";
 import { marketSnapshotPayloadSql } from "./market-snapshot";
 
 export async function getMarketAmenityFilter(
   db: Pool,
   baseFilter: string,
-  options: { elevator?: string; garage?: string },
+  options: { elevator?: string; garage?: string; storage?: string; directions?: string },
 ) {
-  if (options.elevator !== "true" && options.garage !== "true") return "";
+  if (
+    options.elevator !== "true" &&
+    options.garage !== "true" &&
+    options.storage !== "true" &&
+    !hasExposureFilter(options.directions)
+  )
+    return "";
   const result = await db.query<{
     id: string;
     description: string | null;
     payload_raw: Record<string, unknown> | null;
     has_lift_override: boolean | null;
     has_garage_override: boolean | null;
+    has_storage_override: boolean | null;
   }>(`
-    select l.id, l.description, snapshot.payload_raw, manual.has_lift_override, manual.has_garage_override
+    select l.id, l.description, snapshot.payload_raw, manual.has_lift_override, manual.has_garage_override, manual.has_storage_override
     from listings l
     left join listing_manual_overrides manual on manual.listing_id=l.id
     left join lateral (
@@ -37,7 +45,10 @@ export async function getMarketAmenityFilter(
       );
       return (
         (options.elevator !== "true" || amenities.lift === true) &&
-        (options.garage !== "true" || amenities.garage === true)
+        (options.garage !== "true" || amenities.garage === true) &&
+        (options.storage !== "true" ||
+          (row.has_storage_override ?? features.some((feature) => feature.key === "storage"))) &&
+        matchesExposureFilter(description, options.directions)
       );
     })
     .map((row) => row.id);

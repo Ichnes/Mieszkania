@@ -18,6 +18,7 @@ import { getMarketSignals } from "./market-signals";
 import { getMarketPropertySegments } from "./market-property-segments";
 import { createStatsCache } from "./stats-cache";
 import type { SearchContract } from "@mieszkania/shared";
+import { hasExposureFilter, normalizeExposureDirections } from "@mieszkania/shared";
 
 const cachedStats = createStatsCache<MarketStatsResponse>();
 
@@ -27,6 +28,8 @@ export type MarketStatsQuery = {
   maxArea?: string;
   elevator?: string;
   garage?: string;
+  storage?: string;
+  directions?: string;
   period?: string;
 };
 
@@ -40,6 +43,8 @@ export async function getMarketStats(query: MarketStatsQuery): Promise<MarketSta
     query.maxArea ?? "",
     query.elevator === "true",
     query.garage === "true",
+    query.storage === "true",
+    hasExposureFilter(query.directions) ? normalizeExposureDirections(query.directions) : [],
   ]);
   return cachedStats(key, () => computeMarketStats(query, searchContract));
 }

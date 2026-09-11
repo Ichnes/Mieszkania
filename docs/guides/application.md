@@ -309,6 +309,20 @@ liczba aktywnych i główna mediana aktywnych opisują bieżący stan. Ceny są 
 ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
+W **Ustaw analizowany rynek** można zaznaczyć **Komórka / piwnica** oraz wybrać
+kierunki w kompasie. Wszystkie rozpoznane kierunki mieszkania muszą należeć do
+wybranego zakresu: samo S obejmuje ekspozycję południową, S + SE + SW dopuszcza
+także południowy wschód i południowy zachód. Kierunki spoza zakresu wykluczają
+ofertę. Przy częściowym wyborze pomijane są oferty bez podanych kierunków.
+Pusty wybór i wszystkie osiem kierunków nie ograniczają ofert. **Pokaż wyniki**
+stosuje filtry do wszystkich wskaźników, tabel i wykresów; **Wyczyść** resetuje je.
+
+Koszt parkingu „dwa miejsca po 35 000 zł” to 70 000 zł, a „dwóch miejsc w cenie
+50 000 za miejsce” to 100 000 zł. Cena opisana jako łączna nie jest mnożona.
+Opcjonalny zakup miejsc oznacza ich dostępność. Mieszkanie narożne jest traktowane
+jako co najmniej dwustronne, ale konkretne kierunki muszą wynikać z opisu.
+W punktacji wymarzonego mieszkania brak windy na parterze daje 0 pkt zamiast −20;
+obecna winda nadal daje +21 pkt. Reguła obejmuje też parter rozpoznany z opisu.
 Po odświeżeniu wracają zarówno zastosowane kryteria, jak i rozpoczęte zmiany w polach.
 **Pokaż wyniki** zatwierdza zmiany, a **Wyczyść** usuwa kryteria.
 

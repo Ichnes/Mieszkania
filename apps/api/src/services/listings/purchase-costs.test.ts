@@ -3,6 +3,20 @@ import test from "node:test";
 import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
+  [
+    "Do mieszkania przynależą dwa miejsca postojowe na parkingu podziemnym płatne dodatkowo po 35.000,00 zł",
+    { garage: 70000, parkingCount: 2, parkingUnitPrice: 35000 },
+  ],
+  [
+    "Dodatkowo możliwość zakupu dwóch, odrębnych miejsc postojowych w cenie 50 000 za miejsce.",
+    { garage: 100000, parkingCount: 2, parkingUnitPrice: 50000 },
+  ],
+  ["Dwa miejsca postojowe w cenie 70 000 zł łącznie.", { garage: 70000 }],
+  [
+    "2 miejsca postojowe dodatkowo po 35 tys. zł.",
+    { garage: 70000, parkingCount: 2, parkingUnitPrice: 35000 },
+  ],
+  ["Dwa miejsca postojowe do wynajęcia po 350 zł za miesiąc.", {}],
   ["Mieszkanie z miejscem garażowym: 1 680 000 PLN", { garageIncluded: true }],
   [
     "Czynsz administracyjny: ok. 1400 zł. Dostępność: Q4 2026. CENA: Mieszkanie z miejscem garażowym: 1 680 000 PLN Zapraszam do kontaktu.",

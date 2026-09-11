@@ -96,7 +96,7 @@ export function getSunExposure(description?: string) {
     if (prefix) directions.add(cardinalDirections[prefix]);
   }
 
-  const sideCount =
+  let sideCount =
     /\b(?:trojstronn\w*|trzystronn\w*)\b|\b(?:trzy|3)\s+stron\w*(?:\s+swiat\w*)?\b/.test(text)
       ? 3
       : /\b(?:cztery|4)\s+stron\w*(?:\s+swiat\w*)?\b/.test(text)
@@ -109,5 +109,10 @@ export function getSunExposure(description?: string) {
               ? Math.min(4, Math.max(compoundExposures.length, diagonalCount))
               : undefined;
 
+  const corner =
+    /\b(?:mieszkan\w*|lokal\w*|apartament\w*)\s+(?:(?:jest|dwustronn\w*)\s+)?narozn\w*\b|\bnarozn\w*\s+(?:mieszkan\w*|lokal\w*|apartament\w*)\b/.test(
+      text,
+    );
+  if (corner) sideCount = Math.max(2, sideCount ?? 0, directions.size);
   return { directions: [...directions], sideCount, isDoubleSided: sideCount === 2 };
 }

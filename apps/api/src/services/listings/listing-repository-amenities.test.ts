@@ -1,5 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+
+test("declined optional parking spaces are available and counted", () => {
+  const features = extractFeatures({
+    description:
+      "Dodatkowo możliwość zakupu dwóch, odrębnych miejsc postojowych w cenie 50 000 za miejsce.",
+  });
+  assert.equal(buildAmenityBadges(features).includes("Brak miejsca postojowego"), false);
+  assert.equal(features.find((feature) => feature.key === "owned_parking")?.value, "2");
+  const underground = extractFeatures({
+    description:
+      "Do mieszkania przynależą dwa miejsca postojowe na parkingu podziemnym płatne dodatkowo po 35.000,00 zł",
+  });
+  assert.equal(underground.find((feature) => feature.key === "garage")?.value, "2");
+  const mixed = extractFeatures({
+    description: "Dwa miejsca postojowe. Mieszkanie ma jeden balkon.",
+  });
+  assert.equal(mixed.find((feature) => feature.key === "balcony")?.value, "1");
+});
 import {
   buildAmenityBadges,
   extractFeatures,
@@ -194,10 +212,11 @@ test("counts private parking spaces separately from guest parking and recognizes
   );
   assert.equal(
     features.some((feature) => feature.key === "outdoor_parking"),
-    true,
+    false,
   );
   assert.equal(badges.includes("2 prywatne miejsca postojowe"), true);
-  assert.equal(badges.includes("2 naziemne miejsca postojowe"), true);
+  // The outdoor lot is for guests; the private spaces have no stated location.
+  assert.equal(badges.includes("2 naziemne miejsca postojowe"), false);
   assert.equal(
     extractFeatures({ description: "Parking za szlabanem." }).some(
       (feature) => feature.key === "outdoor_parking",

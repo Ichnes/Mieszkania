@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { normalizeExposureDirections } from "@mieszkania/shared";
 import type { MarketStatsFilters } from "./types";
 
 export const statisticsStorageKey = "mieszkania-statistics-v1";
@@ -8,6 +9,8 @@ const emptyFilters: MarketStatsFilters = {
   maxArea: "",
   elevator: false,
   garage: false,
+  storage: false,
+  directions: [],
 };
 export function readStatisticsPreferences(raw: string | null) {
   const clean = (value: unknown): MarketStatsFilters => {
@@ -22,6 +25,8 @@ export function readStatisticsPreferences(raw: string | null) {
       maxArea: number("maxArea"),
       elevator: input.elevator === true,
       garage: input.garage === true,
+      storage: input.storage === true,
+      directions: normalizeExposureDirections(input.directions),
     };
   };
   try {

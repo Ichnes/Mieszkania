@@ -1,4 +1,6 @@
 import { useScrollSession } from "./useScrollSession";
+import { hasActiveMarketFilters } from "../features/statistics/types";
+import { hasExposureFilter } from "@mieszkania/shared";
 import { apiFetch } from "../shared/lib/http";
 import { useStatisticsPreferences } from "../features/statistics/useStatisticsPreferences";
 import type {
@@ -292,6 +294,9 @@ export function useWorkspaceController() {
     if (marketStatsFilters.maxArea) params.set("maxArea", marketStatsFilters.maxArea);
     if (marketStatsFilters.elevator) params.set("elevator", "true");
     if (marketStatsFilters.garage) params.set("garage", "true");
+    if (marketStatsFilters.storage) params.set("storage", "true");
+    if (hasExposureFilter(marketStatsFilters.directions))
+      params.set("directions", marketStatsFilters.directions.join(","));
     const controller = new AbortController();
     setMarketStatsError(null);
     apiFetch(`${apiBaseUrl}/api/market-stats?${params}`, { signal: controller.signal })
@@ -303,7 +308,7 @@ export function useWorkspaceController() {
       .then((data: MarketStatsResponse) => {
         if (!controller.signal.aborted) {
           setMarketStats(data);
-          if (!Object.values(marketStatsFilters).some(Boolean)) setMarketStatsBaseline(data);
+          if (!hasActiveMarketFilters(marketStatsFilters)) setMarketStatsBaseline(data);
         }
       })
       .catch((error) => {
@@ -319,7 +324,7 @@ export function useWorkspaceController() {
   }, [activeTab, marketStatsFilters, marketStatsPeriod]);
 
   useEffect(() => {
-    if (activeTab !== "stats" || !Object.values(marketStatsFilters).some(Boolean)) return;
+    if (activeTab !== "stats" || !hasActiveMarketFilters(marketStatsFilters)) return;
     const controller = new AbortController();
     setMarketStatsBaseline(null);
     apiFetch(`${apiBaseUrl}/api/market-stats?period=${marketStatsPeriod}`, {
@@ -331,7 +336,7 @@ export function useWorkspaceController() {
       })
       .catch(() => undefined);
     return () => controller.abort();
-  }, [activeTab, marketStatsPeriod, Boolean(Object.values(marketStatsFilters).some(Boolean))]);
+  }, [activeTab, marketStatsPeriod, hasActiveMarketFilters(marketStatsFilters)]);
 
   if (state.status === "loading") {
     return { status: "loading" as const };

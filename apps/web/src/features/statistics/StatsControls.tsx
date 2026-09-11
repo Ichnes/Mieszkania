@@ -1,5 +1,7 @@
 import { SlidersHorizontal } from "lucide-react";
 import { MarketStatsFilters } from "./types";
+import { hasExposureFilter } from "@mieszkania/shared";
+import { ExposureFilterCompass } from "./ExposureFilterCompass";
 
 export function StatsControls(input: {
   period: 30 | 90 | 180;
@@ -15,6 +17,8 @@ export function StatsControls(input: {
     input.draft.maxArea,
     input.draft.elevator,
     input.draft.garage,
+    input.draft.storage,
+    hasExposureFilter(input.draft.directions),
   ].filter(Boolean).length;
 
   return (
@@ -108,13 +112,27 @@ export function StatsControls(input: {
             />
             <span>Garaż / miejsce</span>
           </label>
+          <label className={input.draft.storage ? "is-active" : ""}>
+            <input
+              type="checkbox"
+              checked={input.draft.storage}
+              onChange={(event) =>
+                input.onDraftChange({ ...input.draft, storage: event.target.checked })
+              }
+            />
+            <span>Komórka / piwnica</span>
+          </label>
         </div>
+        <ExposureFilterCompass
+          selected={input.draft.directions}
+          onChange={(directions) => input.onDraftChange({ ...input.draft, directions })}
+        />
         <div className="stats-filter-actions">
           <button
             type="button"
             className="stats-filter-clear"
             onClick={input.onClear}
-            disabled={activeFilterCount === 0}
+            disabled={activeFilterCount === 0 && input.draft.directions.length === 0}
           >
             Wyczyść
           </button>
