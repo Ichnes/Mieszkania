@@ -1,7 +1,10 @@
 import type { FetchedListingDocument, ListingFetcher } from "../types";
 import { normalizeOlxListingUrl } from "./olx-url";
+import { fetchOlxBrowserDocument } from "./olx-browser";
 
 export class OlxFetcher implements ListingFetcher {
+  constructor(private readonly browserFetch = fetchOlxBrowserDocument) {}
+
   async fetchListing(url: string): Promise<FetchedListingDocument> {
     url = normalizeOlxListingUrl(url);
     const request = () =>
@@ -15,15 +18,15 @@ export class OlxFetcher implements ListingFetcher {
         },
       });
 
-    let response = await request();
-    // OLX can intermittently reject an identical request. Retry only once;
-    // persistent denial must still reach the queue as an error.
-    if (response.status === 403) {
-      await response.body?.cancel();
-      await new Promise((resolve) => setTimeout(resolve, 1_000));
-      response = await request();
-    }
+    const response = await request();
     const html = await response.text();
+    if (response.status === 403) {
+      try {
+        return await this.browserFetch(url);
+      } catch (error) {
+        console.warn("[olx] Browser fallback failed; retaining HTTP 403.", error);
+      }
+    }
     return {
       url,
       finalUrl: response.url,

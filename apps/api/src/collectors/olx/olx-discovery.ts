@@ -1,11 +1,11 @@
-import type { SourceListingReference } from "../types";
+import type { ListingFetcher, SourceListingReference } from "../types";
 import { OlxFetcher } from "./olx-fetcher";
 import { normalizeOlxListingUrl } from "./olx-url";
 import type { SearchContract } from "@mieszkania/shared";
 import { olxWarsawDistrictIds, splitLocationGroups } from "../location-groups";
 
 export class OlxDiscovery {
-  constructor(private readonly fetcher = new OlxFetcher()) {}
+  constructor(private readonly fetcher: ListingFetcher = new OlxFetcher()) {}
 
   async discoverListingUrls(input: {
     city: string;

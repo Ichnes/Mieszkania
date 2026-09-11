@@ -3,6 +3,7 @@ import test from "node:test";
 import { OlxFetcher } from "./olx-fetcher";
 import { OlxDiscovery } from "./olx-discovery";
 import { normalizeOlxListingUrl } from "./olx-url";
+import { isUnavailableListingDocument } from "../../services/listings/listing-archive";
 
 const offer = "https://www.olx.pl/d/oferta/mieszkanie-CID3-ID18LG4K.html";
 
@@ -43,22 +44,55 @@ test("actual access denial remains an HTTP error response", async (t) => {
     "fetch",
     async () => new Response("blocked", { status: 403 }),
   );
-  assert.equal((await new OlxFetcher().fetchListing(offer)).statusCode, 403);
-  assert.equal(mocked.mock.callCount(), 2);
+  const fetcher = new OlxFetcher(async (url) => ({ url, html: "blocked", statusCode: 403 }));
+  const document = await fetcher.fetchListing(offer);
+  assert.equal(document.statusCode, 403);
+  assert.equal(isUnavailableListingDocument(document), false);
+  assert.equal(mocked.mock.callCount(), 1);
 });
 
-test("temporary 403 is retried once, removed offers are not retried", async (t) => {
-  let statuses = [403, 200];
+test("403 uses browser; successful and gone HTTP responses do not launch it", async (t) => {
+  const statuses = [403, 200, 410];
   const mocked = t.mock.method(
     globalThis,
     "fetch",
     async () => new Response("body", { status: statuses.shift()! }),
   );
-  assert.equal((await new OlxFetcher().fetchListing(offer)).statusCode, 200);
-  assert.equal(mocked.mock.callCount(), 2);
-  statuses = [410];
-  assert.equal((await new OlxFetcher().fetchListing(offer)).statusCode, 410);
+  let browserCalls = 0;
+  const fetcher = new OlxFetcher(async (url) => {
+    browserCalls++;
+    assert.equal(url, offer);
+    return { url, finalUrl: url, html: "rendered offer", statusCode: 200 };
+  });
+  assert.equal(
+    (await fetcher.fetchListing(`${offer}?search_reason=search%7Cpromoted`)).html,
+    "rendered offer",
+  );
+  assert.equal((await fetcher.fetchListing(offer)).statusCode, 200);
+  assert.equal((await fetcher.fetchListing(offer)).statusCode, 410);
+  assert.equal(browserCalls, 1);
   assert.equal(mocked.mock.callCount(), 3);
+});
+
+test("browser inactive OLX message is unavailable even with HTTP 200", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => new Response("blocked", { status: 403 }));
+  const fetcher = new OlxFetcher(async (url) => ({
+    url,
+    statusCode: 200,
+    html: '<div data-testid="ad-inactive-msg" class="css-ljpkfr"><img src="/app/static/media/illustration-error-time-out.d0f5c4edc.svg" alt=""><h4 data-nx-name="H4" data-nx-legacy="true" class="css-1g1ktcr">To ogłoszenie nie jest już dostępne</h4><a href="/" data-nx-name="Button"><span>Przejdź na stronę główną</span></a></div>',
+  }));
+  assert.equal(isUnavailableListingDocument(await fetcher.fetchListing(offer)), true);
+});
+
+test("browser failure preserves the original denial", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => new Response("blocked", { status: 403 }));
+  t.mock.method(console, "warn", () => undefined);
+  const fetcher = new OlxFetcher(async () => {
+    throw new Error("browser unavailable");
+  });
+  const document = await fetcher.fetchListing(offer);
+  assert.equal(document.statusCode, 403);
+  assert.equal(document.html, "blocked");
 });
 
 test("discovery queues one clean URL for organic and promoted copies", async () => {

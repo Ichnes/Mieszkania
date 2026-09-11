@@ -199,9 +199,11 @@ paginacji. Powtórzone adresy ofert trafiają do kolejki tylko raz w danym przeb
 Błąd jednej grupy jest raportowany, a pozostałe grupy są przeszukiwane dalej.
 Linki ogłoszeń OLX są oczyszczane ze zbędnego parametru śledzącego `search_reason`.
 Dotyczy to także ponawiania istniejących wpisów kolejki i ręcznego pobierania;
-filtry stron wyszukiwania pozostają zachowane. Przy HTTP 403 importer ponawia
-żądanie raz po sekundzie, ponieważ portal potrafi odrzucać je przejściowo.
-Jeśli odmowa się utrzymuje, kolejka nadal pokazuje błąd.
+filtry stron wyszukiwania pozostają zachowane. Przy HTTP 403 importer próbuje
+odczytu w Chromium (jedna przeglądarka naraz). Komunikat „To ogłoszenie nie jest
+już dostępne” lub HTTP 404/410 oznacza niedostępne ogłoszenie: istniejąca oferta
+jest archiwizowana, a wpis kolejki kończy się bez błędu importu.
+Jeśli również przeglądarka odmawia dostępu, kolejka nadal pokazuje błąd.
 
 Cena opisana jako „Mieszkanie z miejscem garażowym: 1 680 000 PLN” oznacza
 garaż w cenie mieszkania i nie jest ponownie doliczana do kosztu zakupu.

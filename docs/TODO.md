@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## OLX: rzeczywisty stan po odmowie HTTP (2026-09-11)
+
+- Potwierdzone Chromium: `olx-18LG4K` i `olx-1cgdqW` to aktywne oferty (200), `olx-1bOUDU` zwraca 410 i `ad-inactive-msg`. Sam 403 nie dowodzi usunięcia.
+- [x] Zamiast powtarzania tego samego HTTP: fallback Chromium po 403, ograniczony do jednej przeglądarki naraz, zamykany po odczycie. Zachowany rzeczywisty status i finalny URL; awaria przeglądarki pozostawia jawny błąd.
+- [x] 17 testów OLX/archiwizacji poprawnych, w tym dokładny HTML użytkownika z HTTP 200, aktywne oferty, trwałe 403 i awaria przeglądarki. Typecheck i build obrazu poprawne; wdrożone API, kontenery healthy.
+- [x] Ponowiono 10 wskazanych wpisów. W trakcie OLX zaczął zwracać 500/502/504 i w Chromium komunikat przeciążenia serwerów. Pozostałych 9 nie oznaczono jako usunięte; pozostają do automatycznego ponowienia po ustąpieniu awarii portalu.
+- [x] `olx-1bOUDU` zarchiwizowane na podstawie potwierdzonego wcześniej w tej sesji HTTP 410 i widocznego `ad-inactive-msg`; kolejka `completed`, `last_error=null`, zapisane metadane potwierdzenia.
+- [x] Commit/push na `main`.
+
 ## Cena mieszkania z garażem (2026-09-11)
 
 - Zakres: cena pakietu mieszkanie + garaż nie jest dodatkowym kosztem garażu.
