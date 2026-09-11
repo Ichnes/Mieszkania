@@ -1,5 +1,21 @@
 # Bieżące zadania
 
+## Cena mieszkania z garażem (2026-09-11)
+
+- Zakres: cena pakietu mieszkanie + garaż nie jest dodatkowym kosztem garażu.
+- [x] Potwierdzony opis i cena 1 680 000 PLN wskazanej oferty. Parser oznacza garaż/komórkę jako wliczone przy cenie całego mieszkania; zachowuje jawne dopłaty.
+- [x] Weryfikacja rzeczywistej oferty po wdrożeniu: `garageIncluded=true`, dopłaty 0, suma zakupu 1 680 000 PLN. Regresje parsera poprawne.
+- [x] Zmiany zapisane wspólnie z poprawką OLX na `main`.
+
+## OLX: HTTP 403 w kolejce (2026-09-11)
+
+- Diagnoza z kontenera API: CloudFront zwraca naprzemiennie 403 i 200 także dla identycznych linków. Pierwsze porównanie z/bez `search_reason` nie dowodzi, że sam parametr jest przyczyną blokady.
+- [x] Wspólne oczyszczanie linków przy discovery i pobieraniu (także stare wpisy kolejki i ręczne pobieranie), zachowanie filtrów wyszukiwarki, timeout 30 s. Jedno ponowienie HTTP 403 po 1 s; trwała odmowa nadal jest błędem, 404/410 nie są ponawiane.
+- [x] 35 testów OLX i kosztów poprawnych, typecheck poprawny. Build zweryfikowany poza sandboxem (lokalne ograniczenia blokowały Vite).
+- [x] Końcowy obraz API zbudowany i wdrożony lokalnie. Odczyt wskazanej oferty potwierdza 1 680 000 PLN łącznie.
+- Pozostaje zewnętrzna odmowa OLX: sprawdzenie 10 wskazanych linków po wdrożeniu daje 4 poprawne strony z cenami, 5 HTTP 403 mimo jednego ponowienia, 1 HTTP 410. Poprawka nie usuwa trwałej blokady portalu; błędy pozostają jawne, bez oznaczania ich jako udany import.
+- [x] Commit i push zmian na `main`.
+
 ## Pozostawienie zakresu przepływu ofert (2026-09-10)
 
 - Użytkownik wycofał prośbę o skrócenie osi czasu. Cofnięto rozpoczęte zmiany komponentu i instrukcji; zakres nadal wynika z wybranej liczby dni. Przywrócenie dotychczasowego frontendu lokalnie.

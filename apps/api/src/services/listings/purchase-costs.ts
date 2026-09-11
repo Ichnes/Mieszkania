@@ -42,6 +42,16 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     previousEnd = index + match[0].length;
     const mentioned = amenities(before);
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
+    // A price for the apartment together with an amenity is the total, not a surcharge.
+    const bundle = before.match(
+      /(?:mieszkanie|apartament|lokal)\s+(?:(?:wraz|razem)\s+)?z\s+([^:;.!?]+)\s*[:—–-]?\s*$/,
+    );
+    if (bundle && !/dodatkow|platn|dokup|kosztuje/.test(bundle[1])) {
+      const included = amenities(bundle[1]);
+      if (included.garage) result.garageIncluded = true;
+      if (included.storage) result.storageIncluded = true;
+      continue;
+    }
     if (
       !/dodatkow|platn|cen[ayie]|kosztuje|dokup/.test(before) &&
       !/(?:garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*)(?:\s+przed\s+budynkiem)?|piwnic\w*|komork\w*(?:\s+lokatorsk\w*)?|ogrod\w*)\s*[:—–-]?\s*$/.test(

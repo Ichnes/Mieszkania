@@ -1,5 +1,6 @@
 import type { SourceListingReference } from "../types";
 import { OlxFetcher } from "./olx-fetcher";
+import { normalizeOlxListingUrl } from "./olx-url";
 import type { SearchContract } from "@mieszkania/shared";
 import { olxWarsawDistrictIds, splitLocationGroups } from "../location-groups";
 
@@ -99,7 +100,7 @@ function extractListingReferences(html: string) {
 
     refs.push({
       externalId: extractExternalId(url),
-      url,
+      url: normalizeOlxListingUrl(url),
     });
   }
 
