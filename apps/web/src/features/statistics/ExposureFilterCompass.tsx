@@ -1,4 +1,3 @@
-import { Sun } from "lucide-react";
 import { exposureDirections, hasExposureFilter, type ExposureDirection } from "@mieszkania/shared";
 
 const names: Record<ExposureDirection, string> = {
@@ -31,7 +30,7 @@ export function ExposureFilterCompass({
   return (
     <div className="stats-exposure-filter">
       <div className="stats-exposure-compass" role="group" aria-label="Kierunki ekspozycji">
-        <svg viewBox="0 0 240 240" aria-hidden="true">
+        <svg className="stats-exposure-sectors" viewBox="0 0 240 240" aria-hidden="true">
           {exposureDirections.map((direction, index) => (
             <path
               key={direction}
@@ -63,7 +62,21 @@ export function ExposureFilterCompass({
           );
         })}
         <span className="stats-exposure-center" aria-hidden="true">
-          <Sun size={24} />
+          <svg className="stats-exposure-sun" viewBox="0 0 48 48">
+            <circle className="stats-exposure-sun-core" cx="24" cy="24" r="8" />
+            {exposureDirections.map((direction, index) => (
+              <line
+                key={direction}
+                data-direction={direction}
+                className={`stats-exposure-ray${selected.includes(direction) ? " is-selected" : ""}`}
+                x1="24"
+                y1="10"
+                x2="24"
+                y2="3"
+                transform={`rotate(${index * 45} 24 24)`}
+              />
+            ))}
+          </svg>
           <small>{active ? `${selected.length} z 8` : "Cały rynek"}</small>
         </span>
       </div>

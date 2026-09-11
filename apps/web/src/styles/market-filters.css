@@ -15,18 +15,21 @@
   height: 240px;
   position: relative;
 }
-.stats-exposure-compass svg {
+.stats-exposure-compass > .stats-exposure-sectors {
   width: 100%;
   height: 100%;
 }
-.stats-exposure-compass path {
+.stats-exposure-sectors path {
   fill: var(--surface);
   stroke: var(--line);
-  transition: fill 150ms;
+  transition:
+    fill 260ms ease,
+    stroke 260ms ease;
 }
-.stats-exposure-compass path.is-selected {
+.stats-exposure-sectors path.is-selected {
   fill: var(--brand);
   stroke: var(--brand-strong);
+  animation: exposure-light-bloom 650ms ease-out;
 }
 .stats-exposure-compass button {
   position: absolute;
@@ -56,13 +59,69 @@
 }
 .stats-exposure-center {
   position: absolute;
-  inset: 35%;
+  left: 50%;
+  top: 50%;
+  width: 88px;
+  height: 88px;
+  transform: translate(-50%, -50%);
   display: grid;
   place-content: center;
   justify-items: center;
   gap: 5px;
   color: var(--brand-strong);
   pointer-events: none;
+}
+.stats-exposure-center .stats-exposure-sun {
+  display: block;
+  width: 48px;
+  height: 48px;
+  overflow: visible;
+  fill: none;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+.stats-exposure-sun-core {
+  fill: color-mix(in srgb, #efb640 24%, var(--surface));
+  stroke: #b97816;
+}
+.stats-exposure-ray {
+  stroke: color-mix(in srgb, var(--ink-soft) 35%, var(--surface));
+  transition:
+    stroke 260ms ease,
+    filter 260ms ease;
+}
+.stats-exposure-ray.is-selected {
+  stroke: #c47e12;
+  filter: drop-shadow(0 0 3px #efb64099);
+  animation: exposure-ray-ignite 650ms ease-out;
+}
+@keyframes exposure-ray-ignite {
+  0% {
+    stroke-dasharray: 7;
+    stroke-dashoffset: 7;
+  }
+  45% {
+    filter: drop-shadow(0 0 5px #ffd46d);
+  }
+  100% {
+    stroke-dasharray: 7;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes exposure-light-bloom {
+  0% {
+    fill: #f2ce79;
+  }
+  100% {
+    fill: var(--brand);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stats-exposure-sectors path,
+  .stats-exposure-ray {
+    animation: none !important;
+    transition: none;
+  }
 }
 .stats-exposure-center small {
   white-space: nowrap;
@@ -548,6 +607,12 @@
   justify-content: flex-end;
 }
 @media (max-width: 640px) {
+  .stats-exposure-compass {
+    width: min(260px, 100%);
+    height: auto;
+    aspect-ratio: 1;
+    min-width: 0;
+  }
   .stats-exposure-filter {
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;

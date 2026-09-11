@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Kompas: promienie i animacja światła (2026-09-12)
+
+- Zakres: promienie odpowiadają wybranym kierunkom, stały rozmiar słońca, większe koło na telefonie, animacja światła z obsługą ograniczonego ruchu.
+- [x] Osobne promienie N/NE/E/SE/S/SW/W/NW świecą zgodnie z wyborem. Stałe SVG słońca 48×48 px niezależne od licznika; zawężona reguła rozmiaru SVG. Mobilne koło 260 px z ograniczeniem do szerokości kontenera.
+- [x] Animacja rysowania złotego promienia i ciepłego błysku sektora; wyłączona przy preferencji ograniczonego ruchu.
+- [x] Typecheck/build poprawne, wdrożone lokalnie. Przeglądarka 1440/1280/390/320: stały rozmiar, zgodność promieni, zaznacz/odznacz wszystkie, ograniczony ruch, brak przepełnienia. Zrzuty PC/telefon obejrzane. Gotowe do commitu i push `main`.
+
 ## Duplikaty w szczegółach i bonus metra (2026-09-12)
 
 - Zakres: zakładka Duplikaty z rozłączaniem i stanem operacji; maksymalna różnica metrażu 2% także dla identycznego początku opisu i całych grup; +3 pkt za metro bliższe niż 60% limitu.
