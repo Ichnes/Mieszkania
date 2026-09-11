@@ -1,6 +1,28 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+test("cuts location prose without needing a house number", () => {
+  for (const value of [
+    "ul. Szaserów na warszawskiej Pradze-Południe",
+    "Szaserów w dzielnicy Praga-Południe",
+    "Szaserów w Warszawie",
+  ]) {
+    assert.equal(sanitizeStreetCandidate(value), "Szaserów");
+  }
+  assert.equal(
+    sanitizeWarsawAddressText("Szaserów na warszawskiej Pradze-Południe, Warszawa"),
+    "Szaserów, Warszawa",
+  );
+  for (const value of [
+    "Na Skraju",
+    "Na Uboczu 12",
+    "Bitwy Warszawskiej 1920 r.",
+    "Komisji Edukacji Narodowej",
+  ]) {
+    assert.equal(sanitizeStreetCandidate(value), value.replace(/\.$/, ""));
+  }
+});
+
 test("retains house numbers when normalizing declined street names and cuts location prose", () => {
   assert.equal(
     normalizeWarsawStreetCandidate("Gwiaździstej 13 na warszawskim Żoliborzu"),

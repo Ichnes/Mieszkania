@@ -237,6 +237,11 @@ wyświetla przycisk **Odśwież aplikację** zamiast pustego ekranu.
 
 Kafelek **Pokoje / Piętro** na karcie pokazuje oba parametry. Parter ma numer **0** (np. **0 / 5**),
 a brak piętra kreskę. Obok metrażu znajduje się **Rok budowy**; kreska oznacza brak roku.
+Opis „na ostatnim, 4. piętrze” uzupełnia **4 / 4**, także przy zapisie słownym
+„na czwartym, ostatnim piętrze”. Samo „ostatnie piętro” nie wystarcza do ustalenia
+liczby pięter. „Budynek z ok. 2000 roku” uzupełnia rok **2000**; daty remontu
+nie są rokiem budowy. Dopiski takie jak „na warszawskiej Pradze-Południe” są
+usuwane z nazwy ulicy. Reguły są wspólne dla portali.
 Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżniony aktywny wybór.
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.

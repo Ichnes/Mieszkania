@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Ulica, ostatnie piętro i przybliżony rok budowy (2026-09-11)
+
+- Zakres: wspólne reguły wszystkich portali i odczytu istniejących ofert. Szaserów bez dopisku lokalizacji, ostatnie 4. piętro jako 4/4, budynek z ok. 2000 roku jako rok 2000.
+- [x] Oczyszczanie dopisków lokalizacji także bez numeru domu, wspólna normalizacja pól importu, warianty ostatniego piętra oraz przybliżonego roku budowy z kontekstem budynku.
+- [x] 42 testy regresji poprawne: warianty liczbowe/słowne, negacja, brak numeru ostatniego piętra, odległy opis suszarni, jawna sprzeczna wysokość, wielowyrazowe ulice, remonty i nieprawidłowe lata. Typecheck i build obrazu poprawne, lokalne API/web/DB healthy.
+- [x] Uzupełniono 52 istniejące oferty wyłącznie w zakresie nowych reguł: 44 brakujące liczby pięter, 2 lata, 8 adresów (zakresy zachodzą). Zachowane istniejące wartości i kontrola konkurencyjnej zmiany w bazie.
+- [x] Wskazana oferta: baza i API potwierdzają Szaserów, 4/4, rok 2000. Dane zapisane także dla filtrów, bez ponownego pobierania portalu.
+- [x] Commit/push na `main`.
+
 ## OLX: rzeczywisty stan po odmowie HTTP (2026-09-11)
 
 - Potwierdzone Chromium: `olx-18LG4K` i `olx-1cgdqW` to aktywne oferty (200), `olx-1bOUDU` zwraca 410 i `ad-inactive-msg`. Sam 403 nie dowodzi usunięcia.

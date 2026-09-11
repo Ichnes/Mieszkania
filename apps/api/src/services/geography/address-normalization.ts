@@ -37,7 +37,11 @@ export function sanitizeStreetCandidate(value?: string | null) {
     /(\d+[a-z]?(?:[/-]\d+[a-z]?)?)\s+(?:na|w|we)\s+.*$/iu,
     "$1",
   );
-  const narrativeIndex = clause.search(streetNarrativeBoundary);
+  const locationBoundary =
+    /\s+(?:na\s+(?:warszawsk\p{L}*|osiedlu\b)|w\s+(?:dzielnicy\b|Warszawie\b)|we\s+Wrocławiu\b)/iu;
+  const narrativeIndex = clause.search(
+    new RegExp(`${streetNarrativeBoundary.source}|${locationBoundary.source}`, "iu"),
+  );
   const street = (narrativeIndex >= 0 ? clause.slice(0, narrativeIndex) : clause)
     .replace(/[.:-]+$/, "")
     .trim();

@@ -1,15 +1,24 @@
 import { decodeListingText } from "./listing-text";
-import { isNonAddressPhrase } from "../geography/address-normalization";
+import { isNonAddressPhrase, sanitizeStreetCandidate } from "../geography/address-normalization";
 import type { ParsedListing } from "../../collectors/types";
 
 export function enrichListingFromDescription(listing: ParsedListing): ParsedListing {
   const description = cleanListingDescription(listing.description);
   const floorFacts = inferBuildingDetails(description ?? "");
   const yearBuilt = listing.yearBuilt ?? inferConstructionYear(description);
-  const streetFromTitle = extractStreetFromTitle(listing.title);
-  const suppliedStreet = isPlausibleStreet(listing.street) ? listing.street?.trim() : undefined;
-  const street = streetFromTitle ?? suppliedStreet ?? extractStreet(description);
-  const shouldNormalizeAddress = Boolean(street && (streetFromTitle || !suppliedStreet));
+  const streetFromTitle = sanitizeStreetCandidate(extractStreetFromTitle(listing.title));
+  const cleanedSuppliedStreet = sanitizeStreetCandidate(listing.street) ?? undefined;
+  const suppliedStreet = isPlausibleStreet(cleanedSuppliedStreet)
+    ? cleanedSuppliedStreet
+    : undefined;
+  const street =
+    streetFromTitle ??
+    suppliedStreet ??
+    sanitizeStreetCandidate(extractStreet(description)) ??
+    undefined;
+  const shouldNormalizeAddress = Boolean(
+    street && (streetFromTitle || !suppliedStreet || suppliedStreet !== listing.street),
+  );
 
   return {
     ...listing,
@@ -36,10 +45,11 @@ export function inferConstructionYear(value?: string, currentYear = new Date().g
   if (!value) return undefined;
   const text = normalize(value);
   const year = "((?:18|19|20)\\d{2})";
+  const approximate = "(?:(?:ok\\.?|okolo|circa)\\s+)?";
   const patterns = [
     new RegExp(`\\b(?:rok|data)\\s+(?:budowy|wybudowania)\\s*[:,-]?\\s*${year}\\b`),
     new RegExp(
-      `\\b(?:budyn|blok|kamienic|apartamentow|dom|osiedl|will|inwestyc)\\w*(?:\\s+\\w+){0,4}\\s+z\\s+${year}\\s*(?:rok\\w*|r\\.)`,
+      `\\b(?:budyn|blok|kamienic|apartamentow|dom|osiedl|will|inwestyc)\\w*(?:\\s+\\w+){0,4}\\s+z\\s+${approximate}${year}\\s*(?:rok\\w*|r\\.)`,
     ),
     new RegExp(
       `\\b(?:budyn|blok|kamienic|apartamentow|dom|osiedl|will)\\w*(?:\\s+\\w+){0,4}\\s+z\\s+\\w+\\s+z\\s+${year}\\s*(?:rok\\w*|r\\.)`,
@@ -63,6 +73,7 @@ export function inferConstructionYear(value?: string, currentYear = new Date().g
 
   for (const pattern of patterns) {
     const match = text.match(pattern);
+    if (match && /remon|moderniz|renow|instalac|okn|elewac/.test(match[0])) continue;
     const candidate = match?.[1] ? Number(match[1]) : undefined;
     if (candidate !== undefined && candidate >= 1800 && candidate <= currentYear + 1) {
       return candidate;
@@ -174,6 +185,24 @@ export function inferBuildingDetails(description: string) {
     new RegExp(`\\b${prefix}pietrow\\w*(?:\\s+(?:blok|budyn)\\w*)?`).test(text),
   )?.[1];
   const totalFromNumber = text.match(/\b(\d{1,2})\s*[- ]?pietrow\w*(?:\s+(?:blok|budyn)\w*)?/)?.[1];
+  const ordinal = ordinalFloors.map(([stem]) => `${stem}\\w*`).join("|");
+  const floorToken = `(\\d{1,2}\\.?|${ordinal})`;
+  const lastFloorPattern = new RegExp(
+    `\\bostatni\\w*\\s*[,(-]?\\s*${floorToken}\\s*\\)?\\s*pietr(?:ze|o)\\b|\\b${floorToken}\\s*(?:[,(-]\\s*)?(?:czyli\\s+)?ostatni\\w*\\s*\\)?\\s*pietr(?:ze|o)\\b|\\b${floorToken}\\s+pietr(?:ze|o)\\s*[,(-]\\s*(?:czyli\\s+)?ostatni\\w*\\b`,
+    "g",
+  );
+  const lastFloorMatch = [...text.matchAll(lastFloorPattern)].find(
+    (match) =>
+      !/\bnie\s+(?:(?:jest|na|to|jednak)\s+){0,3}$/.test(
+        text.slice(Math.max(0, match.index! - 40), match.index),
+      ),
+  );
+  const lastFloorToken = lastFloorMatch?.slice(1).find(Boolean);
+  const lastFloor = lastFloorToken
+    ? /^\d/.test(lastFloorToken)
+      ? Number.parseInt(lastFloorToken, 10)
+      : ordinalFloors.find(([stem]) => lastFloorToken.startsWith(stem))?.[1]
+    : undefined;
   const yearBuilt = inferConstructionYear(description);
 
   return {
@@ -181,11 +210,12 @@ export function inferBuildingDetails(description: string) {
       ? explicitFraction[1] === "parter"
         ? 0
         : Number(explicitFraction[1])
-      : (floorFromOrdinal ??
+      : (lastFloor ??
+        floorFromOrdinal ??
         (floorFromNumber ? Number(floorFromNumber) : hasGroundFloor ? 0 : undefined)),
     totalFloors: explicitFraction
       ? Number(explicitFraction[2])
-      : (totalFromWord ?? (totalFromNumber ? Number(totalFromNumber) : undefined)),
+      : (totalFromWord ?? (totalFromNumber ? Number(totalFromNumber) : lastFloor)),
     yearBuilt,
   };
 }
