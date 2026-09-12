@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Błędy HTTP 5xx OLX (2026-09-12)
+
+- [x] Sprawdzone ostatnie błędy importu: OLX 502/504; pobieranie nie miało próby przez Chromium dla błędów serwera.
+- [x] Jedna zapasowa próba przez Chromium także przy HTTP 5xx, wspólna dla wyszukiwania i importu. Zachowane filtry, limit jednej przeglądarki oraz raportowanie błędu po nieudanej próbie.
+- [x] 12 testów OLX poprawnych: odzyskanie wyszukiwania po 500/502/503/504, zachowanie filtrów i błędów bez archiwizacji ofert. Typecheck i build API poprawne; instrukcja uzupełniona.
+- [x] Wdrożone lokalnie; API, web i baza healthy. Próba na żywo: wyszukiwanie z filtrem nadal HTTP 502, bez filtrów HTTP 504 ze stroną OLX „Ups! Coś poszło nie tak...”; strona główna HTTP 200. Zapasowe pobieranie nie usuwa aktualnej awarii wyszukiwania OLX.
+- Pozostaje: ponowić wyszukiwanie po ustąpieniu błędów OLX; brak potwierdzenia pobrania ofert na żywo.
+
 ## Odstęp między miastem a tytułem karty (2026-09-12)
 
 - [x] Zmniejszenie odstępu między wierszem miasta/zmiany ceny a tytułem z 8 do 4 px; pozostałe odstępy bez zmian.

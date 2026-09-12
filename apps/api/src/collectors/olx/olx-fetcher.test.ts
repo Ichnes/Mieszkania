@@ -107,3 +107,55 @@ test("discovery queues one clean URL for organic and promoted copies", async () 
     { externalId: "olx-18LG4K", url: offer },
   ]);
 });
+
+for (const status of [500, 502, 503, 504]) {
+  test(`OLX discovery recovers from HTTP ${status} with filters intact`, async (t) => {
+    const requests: string[] = [];
+    const http = t.mock.method(globalThis, "fetch", async (url: string) => {
+      requests.push(url);
+      return new Response("server error", { status });
+    });
+    let browserCalls = 0;
+    const discovery = new OlxDiscovery(
+      new OlxFetcher(async (url) => {
+        browserCalls++;
+        assert.equal(url, requests[0]);
+        const params = new URL(url).searchParams;
+        assert.equal(params.get("search[filter_float_price:from]"), "500000");
+        assert.equal(params.get("page"), "2");
+        return { url, statusCode: 200, html: `<a href="${offer}">Offer</a>` };
+      }),
+    );
+    assert.deepEqual(
+      await discovery.discoverListingUrls({
+        city: "warszawa",
+        page: 2,
+        contract: { minPrice: 500000 },
+      }),
+      [{ externalId: "olx-18LG4K", url: offer }],
+    );
+    assert.equal(http.mock.callCount(), 1);
+    assert.equal(browserCalls, 1);
+  });
+}
+
+test("OLX server errors stay errors when browser fails or also returns 5xx", async (t) => {
+  t.mock.method(globalThis, "fetch", async () => new Response("server error", { status: 500 }));
+  t.mock.method(console, "warn", () => undefined);
+  for (const throws of [true, false]) {
+    let browserCalls = 0;
+    const fetcher = new OlxFetcher(async (url) => {
+      browserCalls++;
+      if (throws) throw new Error("browser unavailable");
+      return { url, statusCode: 502, html: "gateway error" };
+    });
+    const document = await fetcher.fetchListing(offer);
+    assert.equal(document.statusCode, throws ? 500 : 502);
+    assert.equal(isUnavailableListingDocument(document), false);
+    await assert.rejects(
+      new OlxDiscovery(fetcher).discoverListingUrls({ city: "warszawa" }),
+      new RegExp(`HTTP ${throws ? 500 : 502}`),
+    );
+    assert.equal(browserCalls, 2);
+  }
+});

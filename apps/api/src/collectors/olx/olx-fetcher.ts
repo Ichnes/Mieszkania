@@ -20,11 +20,13 @@ export class OlxFetcher implements ListingFetcher {
 
     const response = await request();
     const html = await response.text();
-    if (response.status === 403) {
+    // OLX can also return transient server/gateway errors to the HTTP client.
+    // One browser attempt is shared by discovery, queued and manual imports.
+    if (response.status === 403 || response.status >= 500) {
       try {
         return await this.browserFetch(url);
       } catch (error) {
-        console.warn("[olx] Browser fallback failed; retaining HTTP 403.", error);
+        console.warn(`[olx] Browser fallback failed; retaining HTTP ${response.status}.`, error);
       }
     }
     return {
