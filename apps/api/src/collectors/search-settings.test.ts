@@ -12,6 +12,30 @@ import { discoverLocationGroups } from "./grouped-discovery";
 import { buildSearchUrl as olxUrl } from "./olx/olx-discovery";
 import { buildSearchUrl as domiportaUrl } from "./domiporta";
 
+test("Gratka keeps newest ordering with filters, districts and pagination", () => {
+  for (const page of [1, 2]) {
+    for (const districts of [[], ["Ochota"]]) {
+      const url = new URL(
+        gratkaUrl("warszawa", page, {
+          ...createDefaultSearchContract(),
+          districts,
+          minPrice: 895000,
+          maxPrice: 2000000,
+          roomsMin: 3,
+          minArea: 53,
+        }),
+      );
+      assert.equal(url.searchParams.get("sort"), "newest");
+      assert.equal(url.searchParams.get("page"), page === 1 ? null : "2");
+      assert.equal(url.searchParams.get("cena-calkowita:min"), "895000");
+      assert.equal(url.searchParams.get("cena-calkowita:max"), "2000000");
+      assert.equal(url.searchParams.get("liczba-pokoi:min"), "3");
+      assert.equal(url.searchParams.get("powierzchnia-w-m2:min"), "53");
+      assert.equal(url.searchParams.get("location[identifiers][0][name]"), districts[0] ?? null);
+    }
+  }
+});
+
 test("single-district and multi-district portals use their own identifiers without changing numeric settings", async () => {
   const contract = {
     ...createDefaultSearchContract(),

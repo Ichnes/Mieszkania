@@ -47,7 +47,7 @@ export class GratkaDiscovery implements SourceDiscovery {
 }
 
 export function buildSearchUrl(citySlug: string, page: number, contract?: SearchContract) {
-  const query = new URLSearchParams();
+  const query = new URLSearchParams({ sort: "newest" });
   // Gratka rejects the explicit first page with HTTP 404.
   if (page > 1) query.set("page", String(page));
   const districts = [...new Set(contract?.districts ?? [])];

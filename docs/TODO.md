@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Sortowanie wyszukiwania Gratki (2026-09-13)
+
+- [x] Dodane `sort=newest` do wszystkich generowanych adresów wyszukiwania Gratki, także dla dzielnic i kolejnych stron.
+- [x] 6 testów wyszukiwania poprawnych: sortowanie, filtry, dzielnice i paginacja; typecheck i build poprawne. API wdrożone lokalnie, instrukcja uzupełniona. Brak pozostałych prac; gotowe do commitu i push na `main`.
+
 ## Adres LAN po uruchomieniu Compose (2026-09-12)
 
 - [x] `npm run docker:up` uruchamia Compose w tle z budowaniem i oczekiwaniem na gotowość, następnie wypisuje lokalny URL i linki z IP komputera. `npm run docker:urls` pokazuje linki ponownie bez restartu.

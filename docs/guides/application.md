@@ -209,6 +209,7 @@ i liczby pokoi z ustawień. Pusty wynik lub błąd nie przełącza wyszukiwania 
 Morizon i Gratka przeszukują kolejno grupy do 3 dzielnic; OLX i Nieruchomości-online
 po jednej. Każda grupa zaczyna od wskazanej strony, ma własny limit stron i koniec
 paginacji. Powtórzone adresy ofert trafiają do kolejki tylko raz w danym przebiegu.
+Gratka jest przeszukiwana od najnowszych ofert (`sort=newest`), również bez wybranych dzielnic.
 Błąd jednej grupy jest raportowany, a pozostałe grupy są przeszukiwane dalej.
 Linki ogłoszeń OLX są oczyszczane ze zbędnego parametru śledzącego `search_reason`.
 Dotyczy to także ponawiania istniejących wpisów kolejki i ręcznego pobierania;
