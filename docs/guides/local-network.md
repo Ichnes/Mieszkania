@@ -1,5 +1,12 @@
 # Dostęp z innych urządzeń w domu
 
+Z zainstalowanym Node.js użyj `npm run docker:up`: uruchomi Compose w tle,
+poczeka na gotowość i wypisze gotowe linki, np. `http://192.168.1.25:8080/oferty`.
+Adresy możesz ponownie wyświetlić przez `npm run docker:urls`. Skrypt odczytuje
+opublikowany port kontenera, uwzględnia lokalną konfigurację Compose i pomija
+typowe wirtualne karty sieciowe. Przy nasłuchiwaniu tylko na `127.0.0.1` pokazuje
+wyłącznie lokalny adres. Link LAN otwórz na telefonie w tej samej sieci.
+
 Dla Dockera otwórz `http://IP-KOMPUTERA:8080/oferty`; kontenery działają w tle po `docker compose up -d`.
 Zapora powinna dopuszczać port 8080 w sieci prywatnej. Poniższe przykłady z 5173 dotyczą
 uruchomienia bez kontenerów (`npm run dev`). [Logowanie](login.md) można włączyć w obu wariantach.

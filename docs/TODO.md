@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Adres LAN po uruchomieniu Compose (2026-09-12)
+
+- [x] `npm run docker:up` uruchamia Compose w tle z budowaniem i oczekiwaniem na gotowość, następnie wypisuje lokalny URL i linki z IP komputera. `npm run docker:urls` pokazuje linki ponownie bez restartu.
+- [x] Odczyt faktycznie opublikowanego portu z działającego kontenera, respektowanie bind/override, pomijanie typowych wirtualnych kart i duplikatów. Obsługiwany także port kontenera deweloperskiego.
+- [x] 2 testy poprawne: własny port, wildcard IPv4/IPv6, filtrowanie kart, duplikaty, bind localhost i konkretny IP. Rzeczywisty odczyt linku LAN poprawny; prywatny adres pozostaje poza repozytorium. README i instrukcje uzupełnione.
+- [x] Pełne `npm run docker:up` przebudowało obrazy, poczekało na healthy API/web/bazy i wypisało link lokalny oraz LAN. Sprawdzenie składni skryptów poprawne. Brak pozostałych prac; gotowe do commitu i push na `main`.
+
 ## Liczniki skanowania wszystkich portali (2026-09-12)
 
 - [x] API udostępnia postęp ręcznych skanów ośmiu portali, także wznowienia Otodomu: sprawdzone strony, rzeczywisty limit skanu i dodane wpisy kolejki. Osobny kontekst każdego skanu, ochrona przed równoległym uruchomieniem tego samego portalu.

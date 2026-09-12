@@ -12,6 +12,9 @@ docker compose up -d --build
 docker compose ps
 ```
 
+Z Node.js możesz użyć `npm run docker:up` — po uruchomieniu wypisze także adres IP
+do otwarcia aplikacji na telefonie. `npm run docker:urls` ponownie pokazuje linki.
+
 Otwórz **http://localhost:8080/oferty**. Docker buduje frontend i API oraz uruchamia
 PostgreSQL. Nie trzeba lokalnie instalować Node.js, npm ani PostgreSQL.
 Pierwsze budowanie pobiera obrazy, zależności i Chromium dla kolektorów ofert;

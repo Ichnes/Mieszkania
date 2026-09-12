@@ -10,6 +10,12 @@ docker compose up -d --build
 docker compose ps
 ```
 
+Jeśli masz Node.js, możesz zamiast tego uruchomić `npm run docker:up`.
+Polecenie wykonuje `docker compose up -d --build --wait`, a po uzyskaniu gotowości
+wypisuje adres lokalny i adresy IP komputera do otwarcia w sieci domowej.
+`npm run docker:urls` wyświetla te adresy ponownie bez restartowania kontenerów.
+Zwykłe `docker compose up` nadal działa; samo nie wypisuje adresu LAN komputera.
+
 Otwórz `http://localhost:8080/oferty`. Pierwsze budowanie pobiera obrazy, zależności
 i Chromium. Compose uruchamia frontend, API oraz własny PostgreSQL; nie wymaga
 lokalnej instalacji Node.js ani PostgreSQL. Dane są przechowywane w osobnych

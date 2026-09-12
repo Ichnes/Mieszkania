@@ -7,6 +7,8 @@
     "packages/*"
   ],
   "scripts": {
+    "docker:up": "node scripts/docker-up.mjs",
+    "docker:urls": "node scripts/docker-urls.mjs",
     "docker:dev": "node scripts/docker-dev.mjs",
     "auth:user": "node --import tsx apps/api/src/scripts/auth-user.ts",
     "prices:recalculate": "node --import tsx apps/api/src/scripts/maintenance/recalculate-unit-prices.ts",
