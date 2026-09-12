@@ -1,3 +1,4 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -14,13 +15,15 @@ export function registerCollectorsAdresowoRoutes(app: FastifyInstance, collector
       batchPages?: number;
       priority?: number;
     };
-    return adresowoCollector.discoverAll({
-      city: body.city ?? "warszawa",
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      priority: body.priority,
-    });
+    return withDiscoveryProgress("adresowo", () =>
+      adresowoCollector.discoverAll({
+        city: body.city ?? "warszawa",
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        priority: body.priority,
+      }),
+    );
   });
 
   app.post("/api/collectors/adresowo/process-queue", async (request) => {

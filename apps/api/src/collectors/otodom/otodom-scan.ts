@@ -1,4 +1,5 @@
 import type { SourceListingReference } from "../types";
+import { reportDiscoveryProgress } from "../discovery-progress";
 
 export async function scanOtodomPages(input: {
   startPage: number;
@@ -18,6 +19,7 @@ export async function scanOtodomPages(input: {
     scannedPages = 0,
     emptyBatches = 0;
   let error: string | undefined;
+  reportDiscoveryProgress({ pageLimit: input.maxPages });
   scan: while (scannedPages < input.maxPages && emptyBatches < input.stopAfterEmptyBatches) {
     const pagesInBatch = Math.min(input.batchPages, input.maxPages - scannedPages);
     let batchDiscovered = 0;
@@ -36,6 +38,7 @@ export async function scanOtodomPages(input: {
       discovered += links.length;
       batchDiscovered += links.length;
       scannedPages++;
+      reportDiscoveryProgress({ scannedPages, queued });
       await input.onProgress?.(page + 1);
     }
     emptyBatches = batchDiscovered === 0 ? emptyBatches + 1 : 0;

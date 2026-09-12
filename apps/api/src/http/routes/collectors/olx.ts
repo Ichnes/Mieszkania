@@ -1,3 +1,4 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -29,13 +30,15 @@ export function registerCollectorsOlxRoutes(app: FastifyInstance, collectors: Co
       batchPages?: number;
       priority?: number;
     };
-    return olxCollector.discoverAll({
-      city: body.city ?? "warszawa",
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      priority: body.priority,
-    });
+    return withDiscoveryProgress("olx", () =>
+      olxCollector.discoverAll({
+        city: body.city ?? "warszawa",
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        priority: body.priority,
+      }),
+    );
   });
 
   app.post("/api/collectors/olx/process-queue", async (request) => {

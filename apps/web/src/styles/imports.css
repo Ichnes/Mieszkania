@@ -427,3 +427,29 @@
 .relisting-empty {
   margin: 0;
 }
+.discovery-progress {
+  grid-column: 1 / -1;
+  min-width: 0;
+  padding: 16px;
+}
+.discovery-progress-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+.discovery-progress-item {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+  font-size: 0.85rem;
+}
+.discovery-progress-item progress {
+  width: 100%;
+  min-width: 0;
+  accent-color: var(--brand);
+}

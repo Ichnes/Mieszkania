@@ -1,3 +1,4 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -14,13 +15,15 @@ export function registerCollectorsDomiportaRoutes(app: FastifyInstance, collecto
       batchPages?: number;
       priority?: number;
     };
-    return domiportaCollector.discoverAll({
-      city: body.city ?? "warszawa",
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      priority: body.priority,
-    });
+    return withDiscoveryProgress("domiporta", () =>
+      domiportaCollector.discoverAll({
+        city: body.city ?? "warszawa",
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        priority: body.priority,
+      }),
+    );
   });
 
   app.post("/api/collectors/domiporta/process-queue", async (request) => {

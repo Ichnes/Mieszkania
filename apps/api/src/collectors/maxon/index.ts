@@ -1,3 +1,4 @@
+import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { createHash } from "node:crypto";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
@@ -46,6 +47,7 @@ export class MaxonCollector {
     let currentPage = startPage;
     let error: string | undefined;
 
+    reportDiscoveryProgress({ pageLimit: maxPages });
     while (scannedPages < maxPages) {
       const pages = Math.min(batchPages, maxPages - scannedPages);
       try {
@@ -59,6 +61,7 @@ export class MaxonCollector {
         queued += result.queued;
         discovered += links.length;
         scannedPages += pages;
+        reportDiscoveryProgress({ scannedPages, queued });
         currentPage += pages;
         if (links.length === 0) break;
       } catch (cause) {

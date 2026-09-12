@@ -1,3 +1,4 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -30,13 +31,15 @@ export function registerCollectorsGratkaRoutes(app: FastifyInstance, collectors:
       priority?: number;
     };
 
-    return gratkaCollector.discoverAll({
-      city: body.city ?? activeRegion.primaryCity.toLowerCase(),
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      priority: body.priority,
-    });
+    return withDiscoveryProgress("gratka", () =>
+      gratkaCollector.discoverAll({
+        city: body.city ?? activeRegion.primaryCity.toLowerCase(),
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        priority: body.priority,
+      }),
+    );
   });
 
   app.post("/api/collectors/gratka/process-queue", async (request) => {

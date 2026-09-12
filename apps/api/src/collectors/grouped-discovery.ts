@@ -1,6 +1,7 @@
 import type { SearchContract } from "@mieszkania/shared";
 import type { SourceListingReference } from "./types";
 import { splitLocationGroups } from "./location-groups";
+import { reportDiscoveryProgress } from "./discovery-progress";
 
 export async function discoverLocationGroups(input: {
   city: string;
@@ -17,6 +18,7 @@ export async function discoverLocationGroups(input: {
   let queued = 0;
   let reachedLimit = false;
   const groups = splitLocationGroups(input.contract.districts, input.groupSize);
+  reportDiscoveryProgress({ pageLimit: input.maxPages * groups.length });
   for (const districts of groups) {
     let emptyPages = 0;
     for (let offset = 0; offset < input.maxPages; offset++) {
@@ -28,6 +30,7 @@ export async function discoverLocationGroups(input: {
         const result = await input.enqueue(unseen);
         unseen.forEach((reference) => seen.add(reference.externalId));
         queued += result.queued;
+        reportDiscoveryProgress({ scannedPages, queued });
         // Overlap with earlier groups is not an empty page.
         emptyPages = references.length ? 0 : emptyPages + 1;
         if (emptyPages >= 2) break;

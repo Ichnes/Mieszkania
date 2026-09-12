@@ -1,3 +1,4 @@
+import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { adresowoWarsawDistrictIds } from "../location-groups";
 import { createHash } from "node:crypto";
@@ -48,6 +49,7 @@ export class AdresowoCollector {
       scannedPages = 0,
       currentPage = startPage;
     let error: string | undefined;
+    reportDiscoveryProgress({ pageLimit: maxPages });
     while (scannedPages < maxPages) {
       const pages = Math.min(batchPages, maxPages - scannedPages);
       try {
@@ -61,6 +63,7 @@ export class AdresowoCollector {
         queued += result.queued;
         discovered += links.length;
         scannedPages += pages;
+        reportDiscoveryProgress({ scannedPages, queued });
         currentPage += pages;
         if (links.length === 0) break;
       } catch (cause) {

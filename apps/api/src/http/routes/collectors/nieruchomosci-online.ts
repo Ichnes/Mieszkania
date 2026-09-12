@@ -1,3 +1,4 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -17,13 +18,15 @@ export function registerCollectorsNieruchomosciOnlineRoutes(
       batchPages?: number;
       priority?: number;
     };
-    return nieruchomosciOnlineCollector.discoverAll({
-      city: body.city ?? "warszawa",
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      priority: body.priority,
-    });
+    return withDiscoveryProgress("nieruchomosci-online", () =>
+      nieruchomosciOnlineCollector.discoverAll({
+        city: body.city ?? "warszawa",
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        priority: body.priority,
+      }),
+    );
   });
 
   app.post("/api/collectors/nieruchomosci-online/process-queue", async (request) => {

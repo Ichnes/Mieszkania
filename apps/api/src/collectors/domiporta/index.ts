@@ -1,3 +1,4 @@
+import { reportDiscoveryProgress } from "../discovery-progress";
 import { request as httpsRequest } from "node:https";
 
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
@@ -60,6 +61,7 @@ export class DomiportaCollector {
       currentPage = startPage,
       emptyBatches = 0;
     let error: string | undefined;
+    reportDiscoveryProgress({ pageLimit: maxPages });
     while (scannedPages < maxPages) {
       try {
         const links = await this.discover(
@@ -76,6 +78,7 @@ export class DomiportaCollector {
         queued += result.queued;
         discovered += links.length;
         scannedPages += Math.min(batchPages, maxPages - scannedPages);
+        reportDiscoveryProgress({ scannedPages, queued });
         currentPage += batchPages;
         emptyBatches = links.length === 0 ? emptyBatches + 1 : 0;
         // Domiporta intermittently serves an empty result page. Do not stop a long scan on one such response.

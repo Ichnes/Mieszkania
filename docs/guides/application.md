@@ -131,6 +131,14 @@ Synonimy w opisie nie naliczają wielokrotnie tej samej premii (np. „projekt a
 i „architekta”, „dwie łazienki” i „2 łazienki”).
 
 Portale: Otodom, Gratka, OLX, Nieruchomości-online, Domiporta, Maxon, Adresowo i Morizon.
+
+W **Aktualizacji** panel **Postęp skanowania portali** pokazuje osobno dla każdego
+portalu sprawdzone strony, limit skanu, liczbę ofert dodanych do kolejki i stan
+skanowania. Liczniki odświeżają się co 2 sekundy podczas pracy, po zakończeniu
+strony lub partii. Limit dla dzielnic obejmuje wszystkie grupy lokalizacji.
+To maksymalny zakres, nie liczba stron dostępnych na portalu ani przewidywany czas:
+skan może skończyć się wcześniej przy braku wyników lub błędzie. Wyniki liczników
+pozostają widoczne po zakończeniu i odświeżeniu strony, do restartu API lub kolejnego skanu.
 Dane dojazdu oraz preferencje należą do lokalnej instalacji. Opcjonalne konta chronią dostęp do wspólnej bazy; nie rozdzielają danych między użytkowników. [Włączenie logowania](login.md).
 
 ## Pierwsze dane i import

@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { OtodomResume } from "../features/imports/OtodomResume";
+import { DiscoveryProgress } from "../features/imports/DiscoveryProgress";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatQueueAttemptTime, formatStaleRefreshTime } from "../features/imports/lib/queue";
 import { formatOptionalPln, formatPln } from "../shared/lib/format";
@@ -282,6 +283,7 @@ export function UpdatesPage({
                   </label>
                 </div>
               </div>
+              <DiscoveryProgress discovering={isDiscoveringAllPortals} />
               <div className="sync-step-footer">
                 <button
                   className="action-button sync-main-button"

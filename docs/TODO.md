@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Liczniki skanowania wszystkich portali (2026-09-12)
+
+- [x] API udostępnia postęp ręcznych skanów ośmiu portali, także wznowienia Otodomu: sprawdzone strony, rzeczywisty limit skanu i dodane wpisy kolejki. Osobny kontekst każdego skanu, ochrona przed równoległym uruchomieniem tego samego portalu.
+- [x] Panel w Aktualizacji odświeża liczniki podczas pracy co 2 sekundy; pokazuje zakończenie i błąd oraz ostrzeżenie o nieudanym odczycie. Limit grup dzielnic zsumowany; opis wyjaśnia wcześniejsze zakończenie i brak dokładnego czasu do końca. Liczniki w pamięci API zachowane do następnego skanu/restartu.
+- [x] 9 testów postępu, skanowania Otodomu i grup lokalizacji poprawnych; typecheck i build poprawne; wdrożone lokalnie. Endpoint statusu HTTP 200. UI ze sterowanymi odpowiedziami dla 8 portali: aktualizacja liczb, zakończenie/błąd i brak przepełnienia przy 1440/1280/390/320 px; zrzut mobilny obejrzany. Bez uruchamiania pełnego importu podczas QA.
+- [x] Potwierdzone: reset filtrów dashboardu zapisuje pusty zestaw w localStorage (test poprzedniego zadania).
+- Pozostałe prace: brak; przygotowane do commitu i push na `main`.
+
 ## Trwałe filtry dashboardu (2026-09-12)
 
 - [x] Tylko filtry dashboardu zapisywane w localStorage i odtwarzane po zamknięciu przeglądarki; sortowanie, strona i zakładka pozostają w dotychczasowej sesji. Dotychczasowe filtry sesji przechodzą do trwałego zapisu automatycznie.

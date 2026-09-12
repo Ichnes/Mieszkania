@@ -1,4 +1,6 @@
+import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { FastifyInstance } from "fastify";
+import { readDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
 import { activeRegion } from "../../../domain/region";
@@ -6,6 +8,7 @@ import { resetProcessingListingImportsNow } from "../../../services/collecting/l
 
 export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors: Collectors) {
   const { otodomCollector } = collectors;
+  app.get("/api/collectors/discovery-progress", async () => ({ items: readDiscoveryProgress() }));
   app.get("/api/collectors/otodom/discovery-checkpoint", async (request) => {
     const { city } = request.query as { city?: string };
     return otodomCollector.discoveryCheckpoint(city ?? activeRegion.primaryCity.toLowerCase());
@@ -37,16 +40,18 @@ export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors:
       resumeKey?: string;
     };
 
-    return otodomCollector.discoverAll({
-      city: body.city ?? activeRegion.primaryCity.toLowerCase(),
-      startPage: body.startPage,
-      maxPages: body.maxPages,
-      batchPages: body.batchPages,
-      stopAfterEmptyBatches: body.stopAfterEmptyBatches,
-      priority: body.priority,
-      resume: body.resume === true,
-      resumeKey: body.resumeKey,
-    });
+    return withDiscoveryProgress("otodom", () =>
+      otodomCollector.discoverAll({
+        city: body.city ?? activeRegion.primaryCity.toLowerCase(),
+        startPage: body.startPage,
+        maxPages: body.maxPages,
+        batchPages: body.batchPages,
+        stopAfterEmptyBatches: body.stopAfterEmptyBatches,
+        priority: body.priority,
+        resume: body.resume === true,
+        resumeKey: body.resumeKey,
+      }),
+    );
   });
 
   app.post<{ Body: { url: string } }>(
