@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Trwałe filtry dashboardu (2026-09-12)
+
+- [x] Tylko filtry dashboardu zapisywane w localStorage i odtwarzane po zamknięciu przeglądarki; sortowanie, strona i zakładka pozostają w dotychczasowej sesji. Dotychczasowe filtry sesji przechodzą do trwałego zapisu automatycznie.
+- [x] Zapamiętywanie resetu, walidacja danych oraz bezpieczny powrót do sesji/domyślnych filtrów przy błędnym lub zablokowanym storage. Instrukcja uzupełniona.
+- [x] 3 testy poprawne, typecheck i build poprawne; wdrożone lokalnie. Przeglądarka: zmiana ceny minimalnej na PC, zamknięcie kontekstu i otwarcie nowej sesji mobilnej z zachowanym localStorage — filtr odtworzony i użyty w zapytaniu API.
+- Pozostałe prace: brak; gotowe do commitu i push na `main`.
+
 ## Adres Otodom bez dzielnic (2026-09-12)
 
 - [x] Porównanie z linkiem użytkownika: główny URL całej Warszawy był zgodny, włącznie z rynkiem wtórnym, ceną 895000–2000000, metrażem 53+, pokojami 3+, limitem 36 i sortowaniem najnowsze. Kolejność parametrów nie ma znaczenia.

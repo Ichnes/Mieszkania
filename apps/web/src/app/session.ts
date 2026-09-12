@@ -4,6 +4,7 @@ import { AppTab, ListingSortKey, ListingsSession } from "./types";
 export const listingsPerPage = 30;
 
 export const listingsSessionStorageKey = "mieszkania-listings-session-v1";
+export const listingsPreferencesStorageKey = "mieszkania-listings-preferences-v1";
 
 export const defaultFilters: ListingFilters = {};
 
@@ -30,13 +31,16 @@ export function readListingsSession(): ListingsSession {
     currentListingsPage: 1,
   };
 
-  try {
-    const saved = window.sessionStorage.getItem(listingsSessionStorageKey);
-    if (!saved) return fallback;
-    const parsed = JSON.parse(saved) as Record<string, unknown>;
+  const parsed = readStoredObject(() => window.sessionStorage, listingsSessionStorageKey);
+  const preferences = readStoredObject(() => window.localStorage, listingsPreferencesStorageKey);
+  const savedFilters = preferences ?? parsed;
+  if (savedFilters) {
+    fallback.filters = sanitizeListingFilters(savedFilters.filters);
+  }
+  if (parsed) {
     return {
       activeTab: isAppTab(parsed.activeTab) ? parsed.activeTab : fallback.activeTab,
-      filters: sanitizeListingFilters(parsed.filters),
+      filters: fallback.filters,
       listingSort: isListingSortKey(parsed.listingSort) ? parsed.listingSort : fallback.listingSort,
       currentListingsPage:
         typeof parsed.currentListingsPage === "number" &&
@@ -45,12 +49,32 @@ export function readListingsSession(): ListingsSession {
           ? parsed.currentListingsPage
           : fallback.currentListingsPage,
     };
+  }
+  return fallback;
+}
+
+function readStoredObject(storage: () => Storage, key: string): Record<string, unknown> | null {
+  try {
+    const parsed: unknown = JSON.parse(storage().getItem(key) ?? "null");
+    return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
   } catch {
-    return fallback;
+    return null;
   }
 }
 
 export function writeListingsSession(value: ListingsSession) {
+  try {
+    window.localStorage.setItem(
+      listingsPreferencesStorageKey,
+      JSON.stringify({
+        filters: sanitizeListingFilters(value.filters),
+      }),
+    );
+  } catch {
+    // Session persistence can still work when local storage is unavailable.
+  }
   try {
     window.sessionStorage.setItem(listingsSessionStorageKey, JSON.stringify(value));
   } catch {

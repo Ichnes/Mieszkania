@@ -182,6 +182,9 @@ Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe
 na wszystkich ośmiu portalach używają wybranego miasta.
 
 Miasto zmienia się w preferencjach; dashboard nie ma osobnego pola miasta w filtrach.
+Filtry dashboardu zapisują się automatycznie w tej przeglądarce i wracają po jej
+zamknięciu lub restarcie komputera. Wyczyszczenie filtrów też jest zapamiętywane.
+Trwały zapis nie obejmuje sortowania ani numeru strony; usunięcie danych strony usuwa zapis filtrów.
 Sortowanie ofert obejmuje cenę za m² rosnąco i malejąco. Jest liczone z aktualnej ceny
 i metrażu dla wszystkich wyników przed podziałem na strony; brakujące wartości są na końcu.
 W **Zakresie pobieranych ofert** ustaw cenę od/do, minimalny metraż, liczbę pokoi
