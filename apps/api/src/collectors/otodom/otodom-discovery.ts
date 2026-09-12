@@ -141,9 +141,13 @@ export function buildSearchUrls(citySlug: string, page: number, contract?: Searc
   }
 
   const queryString = query.toString();
+  const cityUrl = `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}/${citySlug}?${queryString}`;
+
+  // Keep the exact city scope even after an empty page or a portal error.
+  if (citySlug === "warszawa") return [cityUrl];
 
   return [
-    `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}/${citySlug}?${queryString}`,
+    cityUrl,
     `https://www.otodom.pl/pl/wyniki/sprzedaz/mieszkanie,rynek-wtorny/mazowieckie/${citySlug}/${citySlug}?${queryString}`,
   ];
 }

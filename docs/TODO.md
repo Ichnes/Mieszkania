@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Adres Otodom bez dzielnic (2026-09-12)
+
+- [x] Porównanie z linkiem użytkownika: główny URL całej Warszawy był zgodny, włącznie z rynkiem wtórnym, ceną 895000–2000000, metrażem 53+, pokojami 3+, limitem 36 i sortowaniem najnowsze. Kolejność parametrów nie ma znaczenia.
+- [x] Usunięty zapasowy skrócony adres Warszawy, uruchamiany przy błędzie albo pustej stronie; zachowany osobny tryb wybranych dzielnic i paginacja.
+- [x] 10 testów wyszukiwania i typecheck API poprawne: zgodność URL przy pustych/pominiętych dzielnicach, druga strona, brak przełączenia ścieżki po pustym wyniku/błędzie i dotychczasowe filtry dzielnic. Instrukcja uzupełniona.
+- [x] Build i wdrożenie lokalne zakończone; sprawdzony stan usług. Zmiany przygotowane do commitu i push na `main`. Brak pozostałych prac; zgodność adresu zweryfikowana testami, bez uruchamiania pełnego importu.
+
 ## Długie tytuły i wyrównanie zakładek oferty (2026-09-12)
 
 - [x] Łamanie tytułów bez spacji w szczegółach i kartach; nagłówek nie rozszerza kolumny, przyciski mieszczą się i zawijają tekst na telefonie.

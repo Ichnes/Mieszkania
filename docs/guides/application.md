@@ -193,6 +193,8 @@ pobranych ofert. Preferowane dzielnice w profilu wymarzonego mieszkania pozostaj
 osobnym ustawieniem oceny dopasowania.
 
 Otodom, Adresowo, Domiporta i Maxon wyszukują wybrane lokalizacje wspólnie.
+Bez wybranych dzielnic Otodom przeszukuje całą Warszawę z filtrami ceny, metrażu
+i liczby pokoi z ustawień. Pusty wynik lub błąd nie przełącza wyszukiwania na inną ścieżkę lokalizacji.
 Morizon i Gratka przeszukują kolejno grupy do 3 dzielnic; OLX i Nieruchomości-online
 po jednej. Każda grupa zaczyna od wskazanej strony, ma własny limit stron i koniec
 paginacji. Powtórzone adresy ofert trafiają do kolejki tylko raz w danym przebiegu.
