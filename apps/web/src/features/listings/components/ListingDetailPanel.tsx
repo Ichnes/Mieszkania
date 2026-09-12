@@ -641,36 +641,36 @@ export function ListingDetailPanel(input: {
                 type="button"
                 onClick={() => setActiveDetailTab("overview")}
               >
-                <LayoutDashboard size={16} aria-hidden="true" /> Przegląd
+                <LayoutDashboard size={16} aria-hidden="true" /> <span>Przegląd</span>
               </button>
               <button
                 className={tabClass(activeDetailTab === "manual")}
                 type="button"
                 onClick={() => setActiveDetailTab("manual")}
               >
-                <NotebookPen size={16} aria-hidden="true" /> Notatki
+                <NotebookPen size={16} aria-hidden="true" /> <span>Notatki</span>
               </button>
               <button
                 className={tabClass(activeDetailTab === "features")}
                 type="button"
                 onClick={() => setActiveDetailTab("features")}
               >
-                <ClipboardCheck size={16} aria-hidden="true" /> Cechy
+                <ClipboardCheck size={16} aria-hidden="true" /> <span>Cechy</span>
               </button>
               <button
                 className={tabClass(activeDetailTab === "score")}
                 type="button"
                 onClick={() => setActiveDetailTab("score")}
               >
-                <Star size={16} aria-hidden="true" /> Ocena
+                <Star size={16} aria-hidden="true" /> <span>Ocena</span>
               </button>
               <button
                 className={tabClass(activeDetailTab === "duplicates")}
                 type="button"
                 onClick={() => setActiveDetailTab("duplicates")}
               >
-                <Link2 size={16} aria-hidden="true" /> Duplikaty (
-                {input.listing.relatedListings.length})
+                <Link2 size={16} aria-hidden="true" />
+                <span>Duplikaty ({input.listing.relatedListings.length})</span>
               </button>
             </div>
             {activeDetailTab === "duplicates" && (

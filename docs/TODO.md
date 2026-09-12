@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Długie tytuły i wyrównanie zakładek oferty (2026-09-12)
+
+- [x] Łamanie tytułów bez spacji w szczegółach i kartach; nagłówek nie rozszerza kolumny, przyciski mieszczą się i zawijają tekst na telefonie.
+- [x] Zakładki mają stałą kolumnę ikony 16 px i odstęp 8 px do podpisu; licznik duplikatów pozostaje częścią podpisu.
+- [x] Typecheck i build frontendu poprawne; wdrożone lokalnie. Kontrola przeglądarkowa z tytułem użytkownika przy 1440/1280/390/320 px: brak przepełnienia, wszystkie przyciski w granicach nagłówka, odstępy ikon 8 px, działające przełączanie zakładek. Zrzut mobilny obejrzany.
+- Pozostałe prace: brak; zmiany przygotowane do commitu i push na `main`.
+
 ## Błędy HTTP 5xx OLX (2026-09-12)
 
 - [x] Sprawdzone ostatnie błędy importu: OLX 502/504; pobieranie nie miało próby przez Chromium dla błędów serwera.
