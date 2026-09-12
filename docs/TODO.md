@@ -6,7 +6,7 @@
 - [x] Jedna zapasowa próba przez Chromium także przy HTTP 5xx, wspólna dla wyszukiwania i importu. Zachowane filtry, limit jednej przeglądarki oraz raportowanie błędu po nieudanej próbie.
 - [x] 12 testów OLX poprawnych: odzyskanie wyszukiwania po 500/502/503/504, zachowanie filtrów i błędów bez archiwizacji ofert. Typecheck i build API poprawne; instrukcja uzupełniona.
 - [x] Wdrożone lokalnie; API, web i baza healthy. Próba na żywo: wyszukiwanie z filtrem nadal HTTP 502, bez filtrów HTTP 504 ze stroną OLX „Ups! Coś poszło nie tak...”; strona główna HTTP 200. Zapasowe pobieranie nie usuwa aktualnej awarii wyszukiwania OLX.
-- Pozostaje: ponowić wyszukiwanie po ustąpieniu błędów OLX; brak potwierdzenia pobrania ofert na żywo.
+- [x] Ponowiona próba tego samego wyszukiwania z filtrem ceny zakończona sukcesem: 19 adresów ofert. Błędy OLX są przejściowe; brak pozostałych prac. Kod i dokumentacja wysłane na `main`.
 
 ## Odstęp między miastem a tytułem karty (2026-09-12)
 
