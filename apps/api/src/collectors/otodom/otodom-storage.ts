@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import type { PoolClient } from "pg";
 import { pool } from "../../db";
 import { syncListingGroupPrice } from "../../services/duplicates/group-prices";
+import { recordDiscoveryImport } from "../discovery-progress";
 import {
   compactArchivePayload,
   createListingArchiveChecksum,
@@ -94,9 +95,7 @@ export class OtodomStorage implements CollectorStorage {
           : null;
       if (pointDistrict && pointDistrict !== explicitDistrict) {
         const streetName = listing.street?.replace(/\s+\d+[a-z]?(?:[/-]\d+[a-z]?)?$/i, "");
-        const point = streetName
-          ? await findWarsawStreet(streetName, explicitDistrict)
-          : null;
+        const point = streetName ? await findWarsawStreet(streetName, explicitDistrict) : null;
         listing = { ...listing, latitude: point?.latitude, longitude: point?.longitude };
       }
       input = { ...input, listing };
@@ -400,9 +399,8 @@ export class OtodomStorage implements CollectorStorage {
             contentChanged,
           });
 
-          if (action === "created") {
-            await autoMergeDuplicateByDescription(db, listingId);
-          }
+          const merged =
+            action === "created" ? await autoMergeDuplicateByDescription(db, listingId) : null;
           await syncListingGroupPrice(db, listingId);
           // A portal can reveal a missing fact long after the offers were merged.
           if (contentChanged) {
@@ -490,6 +488,7 @@ export class OtodomStorage implements CollectorStorage {
             }
 
           await db.query("commit");
+          recordDiscoveryImport(input.sourceKey, listing.externalId, Boolean(merged));
 
           return { listingId, snapshotId: snapshotId ?? "", action, mediaAssets };
         } catch (error) {

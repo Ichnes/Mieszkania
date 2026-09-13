@@ -8,6 +8,7 @@ type Progress = {
   scannedPages: number;
   pageLimit: number;
   queued: number;
+  duplicatesAdded: number;
 };
 const portals = [
   ["otodom", "Otodom"],
@@ -55,7 +56,9 @@ export function DiscoveryProgress({ discovering }: { discovering: boolean }) {
       <h3>Postęp skanowania portali</h3>
       <p className="muted">
         Sprawdzone strony / limit skanu. Skan może skończyć się wcześniej, gdy zabraknie wyników.
-        Przy dzielnicach limit obejmuje wszystkie grupy lokalizacji.
+        Przy dzielnicach limit obejmuje wszystkie grupy lokalizacji. Duplikaty są liczone po
+        pobraniu szczegółów ofert z kolejki tego skanu, także po zakończeniu skanowania. Oferty już
+        znane nie zwiększają tego licznika.
       </p>
       {error && (
         <p role="alert">
@@ -84,6 +87,7 @@ export function DiscoveryProgress({ discovering }: { discovering: boolean }) {
                     Strony: <b>{item.scannedPages}</b> / {item.pageLimit || "ustalanie limitu…"}
                   </span>
                   <span>Dodano do kolejki: {item.queued}</span>
+                  <span>Dodano do duplikatów: {item.duplicatesAdded ?? 0}</span>
                   <progress
                     aria-label={`${name}: sprawdzone strony`}
                     max={item.pageLimit || 1}

@@ -5,8 +5,37 @@ import {
   readDiscoveryProgress,
   reportDiscoveryProgress,
   withDiscoveryProgress,
+  trackDiscoveryImport,
+  recordDiscoveryImport,
 } from "./discovery-progress";
 import { discoverLocationGroups } from "./grouped-discovery";
+
+test("duplicate counts follow queued offers per portal, survive scan completion and reset on next scan", async () => {
+  const scan = (source: string, ids: string[]) =>
+    withDiscoveryProgress(source, async () => {
+      ids.forEach((id) => trackDiscoveryImport(source, id));
+      trackDiscoveryImport("unrelated", "wrong-context");
+      return { scannedPages: 1, queued: ids.length, stoppedBecause: "max_pages" };
+    });
+  const count = (source: string) =>
+    readDiscoveryProgress().find((p) => p.source === source)!.duplicatesAdded;
+  await scan("duplicates-a", ["same-id", "updated", "old-run"]);
+  await scan("duplicates-b", ["same-id"]);
+  recordDiscoveryImport("duplicates-a", "same-id", true);
+  recordDiscoveryImport("duplicates-a", "same-id", true);
+  recordDiscoveryImport("duplicates-a", "unknown", true);
+  recordDiscoveryImport("duplicates-a", "updated", false);
+  recordDiscoveryImport("duplicates-a", "updated", true);
+  assert.equal(count("duplicates-a"), 1);
+  assert.equal(count("duplicates-b"), 0);
+  recordDiscoveryImport("duplicates-b", "same-id", true);
+  assert.equal(count("duplicates-b"), 1);
+  await scan("duplicates-a", ["new-run"]);
+  recordDiscoveryImport("duplicates-a", "old-run", true);
+  assert.equal(count("duplicates-a"), 0);
+  recordDiscoveryImport("duplicates-a", "new-run", true);
+  assert.equal(count("duplicates-a"), 1);
+});
 
 test("parallel scans keep independent live counters and finish or fail separately", async () => {
   let release!: () => void;

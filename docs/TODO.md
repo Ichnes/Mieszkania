@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Licznik duplikatów w postępie skanowania (2026-09-13)
+
+- [x] Przy każdym portalu dodano „Dodano do duplikatów”: nowe oferty z kolejki skanu automatycznie połączone po zatwierdzeniu zapisu. Odrębne liczniki portali, ochrona przed powtórnym naliczeniem, reset przy nowym skanie.
+- [x] Wyjaśnienie opóźnionego wyniku pobierania w panelu i instrukcji. Zachowana responsywna siatka kart z zawijaniem tekstu na PC, laptopie i telefonie.
+- [x] 3 testy liczników poprawne, typecheck i build wszystkich pakietów poprawne (build ponowiony poza sandboxem). Wdrożenie lokalne: API, web i baza healthy; układ zachowuje istniejącą responsywną siatkę. Nie uruchamiano pełnego importu portali.
+- [x] Zmiany gotowe do commitu i push na bieżącą gałąź. Brak pozostałych prac; nowy licznik zbiera wyniki od kolejnego skanu.
+
 ## Sortowanie wyszukiwania Gratki (2026-09-13)
 
 - [x] Dodane `sort=newest` do wszystkich generowanych adresów wyszukiwania Gratki, także dla dzielnic i kolejnych stron.

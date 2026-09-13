@@ -1,4 +1,5 @@
 import { withDb } from "../../db";
+import { trackDiscoveryImport } from "../../collectors/discovery-progress";
 import { appendImportFailureLog } from "./import-failure-log";
 
 export type ListingImportQueueItem = {
@@ -231,6 +232,7 @@ export async function enqueueListingImports(input: {
       const row = result.rows[0];
       if (row?.inserted || (row?.status === "pending" && row.previous_status !== "pending")) {
         queued += 1;
+        trackDiscoveryImport(input.sourceKey, item.externalId);
       }
     }
 
