@@ -463,6 +463,8 @@ je jako **Z opisu**. Zatwierdź korektę przyciskiem **Zapisz notatki do oferty*
 ma pierwszeństwo przed opisem w kompasie, ocenie i filtrze kierunków w statystykach.
 Ponowne pobranie danych portalu zachowuje ustalenia. **Przywróć odczyt z opisu**
 i zapis notatek usuwa ręczną korektę. Samo zaznaczenie kierunków bez zapisu nie
-zmienia danych mieszkania.
+zmienia danych mieszkania. Podgląd w zakładce **Ocena** przelicza się od razu po
+zmianie kierunków lub przywróceniu odczytu z opisu. Do aktualizacji oceny na liście
+ofert potrzebny jest zapis notatek.
 
 Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).

@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Przeliczanie oceny po wyborze kierunków (2026-09-14)
+
+- [x] Zakładka Ocena przelicza podgląd z aktualnie wybranych kierunków w Notatkach, także po przywróceniu odczytu z opisu. Informacja o niezapisanym podglądzie wyjaśnia aktualizację listy ofert po zapisie.
+- [x] Instrukcja uzupełniona. Zachowany układ responsywny; komunikat jest zwykłym, zawijanym akapitem.
+- [x] 23 testy punktacji poprawne; typecheck wszystkich pakietów poprawny.
+- [x] Build shared/web/API poprawny (web poza sandboxem; API sprawdzone również osobno). Brak pozostałych prac implementacyjnych; zmiany przygotowane do commitu i push na main.
+
 ## Licznik duplikatów w postępie skanowania (2026-09-13)
 
 - [x] Przy każdym portalu dodano „Dodano do duplikatów”: nowe oferty z kolejki skanu automatycznie połączone po zatwierdzeniu zapisu. Odrębne liczniki portali, ochrona przed powtórnym naliczeniem, reset przy nowym skanie.

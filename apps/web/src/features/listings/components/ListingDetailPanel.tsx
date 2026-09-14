@@ -766,7 +766,22 @@ export function ListingDetailPanel(input: {
               </section>
             )}
             {activeDetailTab === "score" && (
-              <ListingScorePanel listing={input.listing} settings={input.settings} />
+              <>
+                {JSON.stringify(manual.exposureDirectionsOverride ?? []) !==
+                  JSON.stringify(input.listing.exposureDirectionsOverride ?? []) && (
+                  <p className="muted" role="status">
+                    Podgląd oceny uwzględnia wybrane kierunki. Zapisz notatki do oferty, aby
+                    zaktualizować również ocenę na liście ofert.
+                  </p>
+                )}
+                <ListingScorePanel
+                  listing={{
+                    ...input.listing,
+                    exposureDirectionsOverride: manual.exposureDirectionsOverride,
+                  }}
+                  settings={input.settings}
+                />
+              </>
             )}
             <div
               className={
