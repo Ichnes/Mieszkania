@@ -59,6 +59,8 @@ export function getExposureEvaluation(description: string, override?: ExposureDi
       (({ SW: 10, ES: 7, NS: 4, NW: 2, EN: 1, EW: 10 } as Record<string, number>)[cardinals] ?? 0);
   } else if (sides === 3) {
     points = 13 + (({ ESW: 5, NSW: 4, ENS: 3, ENW: 1 } as Record<string, number>)[cardinals] ?? 0);
+  } else if (sides && sides >= 4) {
+    points = 20;
   }
-  return { ...exposure, sides, points, maxPoints: sides && sides <= 3 ? 20 : 0 };
+  return { ...exposure, sides, points, maxPoints: sides ? 20 : 0 };
 }

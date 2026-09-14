@@ -41,6 +41,35 @@ test("manual directions replace description exposure and clearing restores detec
   assert.equal(row({ description, exposureDirectionsOverride: [] }, "Ekspozycja").points, -15);
 });
 
+test("four manual directions count toward the score and reset without retaining points", () => {
+  const listing = {
+    ...base,
+    roomsCount: 3,
+    hasLift: true,
+    hasGarage: true,
+    hasBalcony: true,
+    description: "Okna mieszkania wychodzą na wewnętrzne podwórko.",
+  };
+  const evaluate = (directions?: ListingSummary["exposureDirectionsOverride"]) =>
+    computeDreamEvaluation({ ...listing, exposureDirectionsOverride: directions }, profile, []);
+  const original = evaluate();
+  const manual = evaluate(["SE", "S", "SW", "NW"]);
+  const exposure = manual.rows.find((item) => item.label === "Ekspozycja")!;
+  assert.equal(exposure.points, 20);
+  assert.equal(exposure.maxPoints, 20);
+  assert.equal(manual.points, original.points + 20);
+  assert.equal(manual.maxPoints, original.maxPoints + 20);
+  assert.ok(manual.score > original.score);
+  assert.deepEqual(evaluate([]), original);
+  assert.equal(evaluate(["N"]).rows.find((item) => item.label === "Ekspozycja")!.points, -15);
+  assert.equal(
+    evaluate(["N", "NE", "E", "SE", "S", "SW", "W", "NW"]).rows.find(
+      (item) => item.label === "Ekspozycja",
+    )!.points,
+    20,
+  );
+});
+
 test("missing lift costs no points on the ground floor", () => {
   assert.equal(row({ floor: 0, hasLift: false }, "Winda").points, 0);
   assert.equal(row({ description: "Mieszkanie na parterze.", hasLift: false }, "Winda").points, 0);

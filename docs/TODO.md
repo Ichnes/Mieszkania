@@ -9,7 +9,9 @@
 ## Reset punktacji kierunków — wskazana oferta (2026-09-14)
 
 - [x] Odczyt zapisanych kierunków i opisu wskazanej oferty: cztery kierunki, brak jednoznacznej ekspozycji w opisie.
-- [ ] Doprecyzowanie obserwowanego resetu i sprawdzenie działania aktualnej wersji w lokalnej aplikacji.
+- [x] Potwierdzona przyczyna: cztery lub więcej kierunków pomijano w punktacji. Dodane 20/20 punktów za ten przypadek, wspólne dla API i frontendu, reguły i instrukcja zaktualizowane.
+- [x] 28 testów poprawnych, w tym zestaw użytkownika, zmiana na północ i reset; typecheck i build wszystkich pakietów poprawne. Lokalne API i web przebudowane z poprawkami punktacji i galerii.
+- [x] Odczyt rzeczywistej oferty: zapisany zestaw 49%, wariant bez korekty 46%, sama północ 38%. Warianty sprawdzone bez zmiany danych użytkownika. Brak pozostałych prac; gotowe do commitu i push na main.
 
 ## Przeliczanie oceny po wyborze kierunków (2026-09-14)
 

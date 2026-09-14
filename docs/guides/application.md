@@ -48,10 +48,11 @@ Piętro: parter i poniżej −4; pierwsze +1; drugie −2; trzecie +3; czwarte +
 piąte +5; szóste +7; siódme +8; 8–12 +9; powyżej 12 +12.
 Premia ostatniego piętra nalicza się tylko raz, w tym samym wierszu.
 
-Ekspozycja jednostronna daje −5, z wyjątkiem potwierdzonego S +2, W +4, N −15, E +2.
+Ekspozycja jednostronna daje −5, z wyjątkiem potwierdzonego S +4, W +4, N −15, E +2.
 Dwustronna daje +10 oraz bonus za parę: S/W +10, S/E +7, S/N +4, N/W +2,
-N/E +1, E/W +8. Trójstronna daje +13 oraz bonus: S/E/W +5, S/W/N +4,
-S/E/N +3, N/W/E +1. Brak rozpoznanej ekspozycji daje 0.
+N/E +1, E/W +10. Trójstronna daje +13 oraz bonus: S/E/W +5, S/W/N +4,
+S/E/N +3, N/W/E +1. Cztery lub więcej kierunków daje 20 z 20 możliwych punktów.
+Brak rozpoznanej ekspozycji daje 0.
 
 Ocena raty korzysta z zapisanego wkładu własnego w **Finansowaniu zakupu**.
 Kwota kredytu to cena zakupu z rozpoznanymi dodatkowymi kosztami garażu i komórki,

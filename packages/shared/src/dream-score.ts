@@ -301,7 +301,7 @@ export function computeDreamEvaluation(
   maxPoints += exposure.maxPoints;
   record(
     "Ekspozycja",
-    "Brak danych: 0. Jednostronne: południe +4, zachód +4, północ −15, wschód +2, nieokreślony kierunek −5. Dwustronne: baza +10 i premia za kierunki: S/W +10, S/E +7, S/N +4, N/W +2, N/E +1, E/W +10 (łącznie 20). Trójstronne: baza +13 i premia: S/E/W +5, S/W/N +4, S/E/N +3, N/W/E +1. S = południe, W = zachód, N = północ, E = wschód.",
+    "Brak danych: 0. Jednostronne: południe +4, zachód +4, północ −15, wschód +2, nieokreślony kierunek −5. Dwustronne: baza +10 i premia za kierunki: S/W +10, S/E +7, S/N +4, N/W +2, N/E +1, E/W +10 (łącznie 20). Trójstronne: baza +13 i premia: S/E/W +5, S/W/N +4, S/E/N +3, N/W/E +1. Cztery lub więcej kierunków: +20 z 20 możliwych punktów. S = południe, W = zachód, N = północ, E = wschód.",
     `Strony: ${exposure.sides ?? "brak danych"}; kierunki: ${exposure.directions.join(", ") || "brak danych"}`,
   );
 
