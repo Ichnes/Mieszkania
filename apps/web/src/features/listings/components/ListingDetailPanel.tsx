@@ -1533,6 +1533,7 @@ export function ListingDetailPanel(input: {
                 rotation={photoRotation}
                 onPrevious={showPreviousLightboxImage}
                 onNext={showNextLightboxImage}
+                onClose={() => setLightboxImageIndex(null)}
               />
               {input.listing.imageUrls.length > 1 ? (
                 <button

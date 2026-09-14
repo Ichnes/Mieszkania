@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Zamykanie zdjęcia kliknięciem tła (2026-09-14)
+
+- [x] Kliknięcie/dotknięcie tła w warstwie gestów zamyka galerię; uwzględnione rozmiary, obrót i zoom zdjęcia. Przeciągnięcie i gest wielodotykowy nie są kliknięciem tła.
+- [x] Test przeglądarkowy przy 1440/1280/390 px: kliknięcie zdjęcia, tła, dotyk i przeciągnięcie; zdjęcie obrócone. Typecheck i build web poprawne. Instrukcja uzupełniona.
+- [x] Gotowe do commitu i push na main. Brak dalszych prac w tej poprawce.
+
+## Reset punktacji kierunków — wskazana oferta (2026-09-14)
+
+- [x] Odczyt zapisanych kierunków i opisu wskazanej oferty: cztery kierunki, brak jednoznacznej ekspozycji w opisie.
+- [ ] Doprecyzowanie obserwowanego resetu i sprawdzenie działania aktualnej wersji w lokalnej aplikacji.
+
 ## Przeliczanie oceny po wyborze kierunków (2026-09-14)
 
 - [x] Zakładka Ocena przelicza podgląd z aktualnie wybranych kierunków w Notatkach, także po przywróceniu odczytu z opisu. Informacja o niezapisanym podglądzie wyjaśnia aktualizację listy ofert po zapisie.

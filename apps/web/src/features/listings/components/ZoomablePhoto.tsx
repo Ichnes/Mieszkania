@@ -8,14 +8,25 @@ export function ZoomablePhoto({
   rotation,
   onPrevious,
   onNext,
+  onClose,
 }: {
   src: string;
   alt: string;
   rotation: number;
   onPrevious: () => void;
   onNext: () => void;
+  onClose: () => void;
 }) {
   const stage = useRef<HTMLDivElement>(null);
+  const photo = useRef<HTMLImageElement>(null);
+  const backdropTap = useRef<Point | null>(null);
+  const isOutsidePhoto = (point: Point) => {
+    const rect = photo.current?.getBoundingClientRect();
+    return (
+      rect &&
+      (point.x < rect.left || point.x > rect.right || point.y < rect.top || point.y > rect.bottom)
+    );
+  };
   const pointers = useRef(new Map<number, Point>());
   const swipe = useRef<Point | null>(null);
   const pinched = useRef(false);
@@ -58,6 +69,7 @@ export function ZoomablePhoto({
         event.currentTarget.setPointerCapture(event.pointerId);
         const point = { x: event.clientX, y: event.clientY };
         pointers.current.set(event.pointerId, point);
+        backdropTap.current = pointers.current.size === 1 && isOutsidePhoto(point) ? point : null;
         if (pointers.current.size === 1) {
           swipe.current = point;
           pinched.current = view.scale > 1;
@@ -71,6 +83,8 @@ export function ZoomablePhoto({
         if (!previous) return;
         const before = [...pointers.current.values()];
         const point = { x: event.clientX, y: event.clientY };
+        if (backdropTap.current && distance(backdropTap.current, point) > 8)
+          backdropTap.current = null;
         pointers.current.set(event.pointerId, point);
         const after = [...pointers.current.values()];
         if (before.length === 2) {
@@ -105,6 +119,14 @@ export function ZoomablePhoto({
       }}
       onPointerUp={(event) => {
         pointers.current.delete(event.pointerId);
+        const point = { x: event.clientX, y: event.clientY };
+        const tap = backdropTap.current;
+        backdropTap.current = null;
+        if (!pointers.current.size && tap && distance(tap, point) <= 8 && isOutsidePhoto(point)) {
+          swipe.current = null;
+          onClose();
+          return;
+        }
         const start = swipe.current;
         if (!pointers.current.size && start && !pinched.current && view.scale === 1) {
           const dx = event.clientX - start.x,
@@ -117,12 +139,14 @@ export function ZoomablePhoto({
         if (!pointers.current.size) swipe.current = null;
       }}
       onPointerCancel={(event) => {
+        backdropTap.current = null;
         pointers.current.delete(event.pointerId);
         swipe.current = null;
         pinched.current = true;
       }}
     >
       <img
+        ref={photo}
         className="image-lightbox-image"
         src={src}
         alt={alt}

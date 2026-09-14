@@ -306,6 +306,8 @@ w dniach i osiągnięte zakresy dojazdu oraz raty. Parking zewnętrzny bez gara�
 osobne +8 pkt; kara za brak garażu nadal obowiązuje.
 Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
 Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
+Kliknięcie lub dotknięcie tła poza zdjęciem również zamyka pełnoekranowy podgląd.
+Przesuwanie i powiększanie zdjęcia oraz przyciski galerii nie zamykają podglądu.
 Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez spóźnioną odpowiedź.
 
 ## Zapamiętywanie statystyk i gesty
