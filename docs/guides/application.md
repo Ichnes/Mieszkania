@@ -28,6 +28,11 @@ osobno; nie są potrzebne do przeglądania ani oceny mieszkań.
 
 W szczegółach oferty otwórz czwartą zakładkę **Ocena**. Tabela pokazuje każde
 kryterium, zdobyte punkty, jego udział w mianowniku oraz dane/powód oceny.
+Punkty możliwe to stała suma maksimów wszystkich aktywnych kryteriów dla danych
+preferencji, identyczna dla każdej oferty. Brak danych nie usuwa kryterium z mianownika.
+Uzupełnienie kierunków, roku, piętra, ceny lub wyposażenia zmienia tylko zdobyte punkty.
+Zmiana preferencji może zmienić mianownik dla wszystkich ofert. Maksima kryteriów
+są sumowane osobno, także dla alternatywnych udogodnień (garaż i parking zewnętrzny).
 Przycisk **Co ile daje punktów?** rozwija nad tabelą karty zasad w kategoriach
 **Koszty**, **Lokalizacja**, **Układ**, **Budynek** i **Wykończenie**.
 Wybierz kategorię, aby zobaczyć jej kryteria i punkty bieżącej oferty.
@@ -72,8 +77,8 @@ odświeżenia danych z portalu, jeśli informacji nie ma w opisie ani snapshotac
 Lista, porównanie i sortowanie „Sortuj: wymarzone mieszkanie” korzystają ze wspólnego
 algorytmu. Wynik to suma punktów podzielona przez możliwą sumę, zaokrąglona
 i ograniczona do 0–100%. Punkty nie są punktami procentowymi. Mianownik zależy
-od aktywnych preferencji i dostępnych danych; wykryte dodatkowe udogodnienia
-zwiększają zarówno licznik, jak i mianownik.
+wyłącznie od aktywnych preferencji; wykryte dodatkowe udogodnienia zwiększają
+licznik, a mianownik pozostaje stały, również przy brakujących danych.
 
 Minimum to 3 pokoje (domyślne ustawienie profilu), a ideałem są 4:
 3 pokoje dostają 11 pkt, 4 — 18 pkt, więcej — 14 pkt.

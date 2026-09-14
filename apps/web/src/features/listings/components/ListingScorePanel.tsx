@@ -43,6 +43,10 @@ export function ListingScorePanel({
         ograniczeniu do 0–100%.
       </p>
       <p className="muted">
+        Punkty możliwe to suma maksymalnych punktów wszystkich kryteriów aktywnych w Twoich
+        preferencjach. Są takie same dla każdej oferty; uzupełnienie danych ich nie zmienia.
+      </p>
+      <p className="muted">
         Punkty nie są punktami procentowymi. Brak potwierdzenia cechy oznacza brak danych w
         ogłoszeniu, nie pewność, że mieszkanie jej nie ma.
       </p>

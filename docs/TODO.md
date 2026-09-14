@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Stała pula możliwych punktów oceny (2026-09-14)
+
+- [x] Mianownik obejmuje maksima wszystkich aktywnych kryteriów i zależy tylko od preferencji. Ekspozycja zawsze 20; rok 14; piętro wraz z premią 17; stałe maksima wyposażenia, parkingu, raty i sprzedaży bezpośredniej. Odświeżenie/remont mają wspólne maksimum 4.
+- [x] Uzupełnienie cechy zmienia tylko licznik. Testy porównują maksima każdego wiersza po dodaniu/usunięciu danych i po zmianie preferencji; aktualizacja wcześniejszego testu resetu ekspozycji.
+- [x] 29 testów punktacji i typecheck wszystkich pakietów poprawne. Build API/web/shared oraz lokalne wdrożenie zakończone; dokumentacja i wyjaśnienie w Ocenie zaktualizowane. Komunikat używa zawijanego akapitu w istniejącym układzie PC/laptop/mobile.
+- [x] Odczyt rzeczywistej oferty bez zmian w bazie: brak korekty 126/377 (33%), południe 130/377 (34%), zapisane cztery kierunki 146/377 (39%), północ 111/377 (29%). Mianownik identyczny.
+- [x] Brak pozostałych prac; gotowe do commitu i push na main.
+
 ## Zamykanie zdjęcia kliknięciem tła (2026-09-14)
 
 - [x] Kliknięcie/dotknięcie tła w warstwie gestów zamyka galerię; uwzględnione rozmiary, obrót i zoom zdjęcia. Przeciągnięcie i gest wielodotykowy nie są kliknięciem tła.

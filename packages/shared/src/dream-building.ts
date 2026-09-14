@@ -62,5 +62,5 @@ export function getExposureEvaluation(description: string, override?: ExposureDi
   } else if (sides && sides >= 4) {
     points = 20;
   }
-  return { ...exposure, sides, points, maxPoints: sides ? 20 : 0 };
+  return { ...exposure, sides, points, maxPoints: 20 };
 }

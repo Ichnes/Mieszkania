@@ -225,8 +225,8 @@ export function computeDreamEvaluation(
     listing.hasGarage ? "Jest" : "brak danych",
   );
 
+  maxPoints += 8;
   if (!listing.hasGarage && listing.hasOutdoorParking) {
-    maxPoints += 8;
     points += 8;
   }
 
@@ -267,7 +267,7 @@ export function computeDreamEvaluation(
 
   record("Garaż i winda razem", "Oba udogodnienia +12; inaczej 0.");
 
-  if (typeof listing.yearBuilt === "number") maxPoints += 14;
+  maxPoints += 14;
   points += getBuildingYearPoints(listing.yearBuilt, now.getFullYear());
   record(
     "Rok budowy",
@@ -281,11 +281,10 @@ export function computeDreamEvaluation(
       listing.totalFloors > 0 &&
       floor >= listing.totalFloors) ||
     descriptionFacts.topFloor;
-  if (typeof floor === "number") maxPoints += 12;
+  maxPoints += 17;
   points += getFloorPoints(floor);
   if (topFloor) {
     points += 5;
-    maxPoints += 5;
   }
   record(
     "Piętro",
@@ -321,9 +320,9 @@ export function computeDreamEvaluation(
   );
 
   // Each group describes one amenity; synonyms cannot multiply its bonus.
+  maxPoints += 8;
   if (descriptionFacts.countertopPoints > 0) {
     points += descriptionFacts.countertopPoints;
-    maxPoints += 8;
   }
   record(
     "Blat",
@@ -337,9 +336,9 @@ export function computeDreamEvaluation(
     [descriptionFacts.customCarpentry, 5, "Stolarka na wymiar"],
     [descriptionFacts.multipleParking, 5, "Co najmniej 2 miejsca parkingowe"],
   ] as const) {
+    maxPoints += bonus;
     if (present) {
       points += bonus;
-      maxPoints += bonus;
     }
     record(
       label,
@@ -355,7 +354,7 @@ export function computeDreamEvaluation(
       ? "Rozpoznano wynajem / opłatę miesięczną za miejsca"
       : "brak danych",
   );
-  const premiumSignals: Array<[RegExp, number]> = [
+  const premiumSignals: Array<[RegExp, number, number?]> = [
     [/\barchitekt\w*\b/, 8],
     [
       /\b(?:ogrzewan\w*\s+podlogow\w*|podlogow\w*\s+ogrzewan\w*|podlogowk\w*|ogrzewan\w*\s+podlog\w*)\b/,
@@ -364,6 +363,7 @@ export function computeDreamEvaluation(
     [
       /\b(?:po\s+(?:(?:generaln\w*|gruntown\w*|kapitaln\w*|kompleksow\w*)\s+)?remoncie|(?:swiezo\s+)?wyremontowan\w*|odswiezon\w*)\b/,
       /remoncie|wyremontowan/.test(text) ? 4 : 3,
+      4,
     ],
     [/\bgarderob\w*\b/, 5],
     [/\b(?:dwie|dwiema|dwoch|dwoma|2)\s+(?:osobn\w*\s+)?lazien\w*\b/, 4],
@@ -375,8 +375,8 @@ export function computeDreamEvaluation(
       5,
     ],
   ];
+  maxPoints += 5;
   if (listing.hasAirConditioning) {
-    maxPoints += 5;
     points += 5;
   }
   record(
@@ -395,9 +395,9 @@ export function computeDreamEvaluation(
     "Monitoring",
     "Jasne mieszkanie",
   ];
-  for (const [index, [pattern, value]] of premiumSignals.entries()) {
+  for (const [index, [pattern, value, maximum = value]] of premiumSignals.entries()) {
+    maxPoints += maximum;
     if (hasPositiveDescriptionFact(text, pattern)) {
-      maxPoints += value;
       points += value;
     }
     record(
@@ -513,6 +513,7 @@ export function computeDreamEvaluation(
 
   // Commercial terms affect the real acquisition cost. A broker listing with
   // explicitly no commission stays neutral; only an actual commission is a penalty.
+  maxPoints += 10;
   if (listing.badges.includes("Z prowizją")) {
     points -= 15;
   } else if (
@@ -527,9 +528,9 @@ export function computeDreamEvaluation(
     "Prowizja dla kupującego: −15 pkt. Oferta prywatna lub bezpośrednia bez oznaczenia prowizji: +10 pkt. Jeśli oferta ma oznaczenie prowizji, nie dostaje jednocześnie premii za sprzedaż bezpośrednią. Pozostałe oferty: 0 pkt.",
     listing.badges.join(", "),
   );
+  maxPoints += 3;
   if (descriptionFacts.shower) {
     points += 3;
-    maxPoints += 3;
   }
   record(
     "Prysznic",
@@ -546,8 +547,8 @@ export function computeDreamEvaluation(
     hasMaintenanceFee ? (listing.maintenanceFeeLabel ?? "Informacja w opisie") : "Brak kwoty",
   );
   const mortgage = estimateDreamMortgage(listing, financing);
+  maxPoints += 10;
   if (mortgage) {
-    maxPoints += 10;
     points += mortgage.points;
   }
   record(

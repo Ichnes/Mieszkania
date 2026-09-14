@@ -31,6 +31,42 @@ const base = {
 const evaluate = (changes: Partial<ListingSummary> = {}, profile = settings.dreamProfile) =>
   computeDreamEvaluation({ ...base, ...changes }, profile, [], now);
 
+test("possible points stay fixed when listing facts are added, changed or cleared", () => {
+  const baseline = evaluate();
+  const maxima = (result: ReturnType<typeof evaluate>) =>
+    result.rows.map(({ label, maxPoints }) => ({ label, maxPoints }));
+  for (const patch of [
+    { exposureDirectionsOverride: ["S"] },
+    { exposureDirectionsOverride: ["SE", "S", "SW", "NW"] },
+    { exposureDirectionsOverride: [] },
+    { yearBuilt: 2026, floor: 15, totalFloors: 15 },
+    { hasGarage: false, hasOutdoorParking: true },
+    { hasAirConditioning: true },
+    { priceLabel: "Brak ceny" },
+    { description: "Odświeżone mieszkanie." },
+    {
+      description:
+        "Mieszkanie po remoncie, projekt architekta. Granitowy blat, drewniana podłoga, stolarka na wymiar. Dwa miejsca parkingowe. Ogrzewanie podłogowe, garderoba, dwie łazienki, prysznic. Wysoki standard, zamknięte osiedle, monitoring. Jasne mieszkanie.",
+    },
+    { badges: ["Oferta prywatna"] },
+  ] satisfies Partial<ListingSummary>[]) {
+    const result = evaluate(patch);
+    assert.deepEqual(maxima(result), maxima(baseline), JSON.stringify(patch));
+    assert.equal(result.maxPoints, baseline.maxPoints);
+    assert.equal(
+      result.rows.reduce((sum, row) => sum + row.maxPoints, 0),
+      result.maxPoints,
+    );
+  }
+  const south = evaluate({ exposureDirectionsOverride: ["S"] });
+  assert.equal(south.points, baseline.points + 4);
+  assert.ok(south.score >= baseline.score);
+  assert.equal(
+    evaluate({}, { ...settings.dreamProfile, prefersBalcony: false }).maxPoints,
+    baseline.maxPoints - (settings.dreamProfile.prefersBalcony ? 10 : 0),
+  );
+});
+
 test("two rented parking spaces incur an additional five-point penalty, not a purchase-price penalty", () => {
   for (const description of [
     "Od wspólnoty mieszkaniowej są również wynajmowane aż 2 miejsca postojowe pod samym wejściem do bloku to ogromny i rzadki atut, oznaczający całkowity koniec z szukaniem miejsca parkingowego po pracy!",
@@ -336,16 +372,15 @@ test("scores stay within 0–100 and the frontend recomputes stale scores using 
     priceChangePercent: -5,
     firstSeenAt: now.toISOString(),
   };
-  assert.equal(
-    computeDreamScore(
-      ideal,
-      settings.dreamProfile,
-      [{ key: "test", label: "Test", address: "", latitude: 52.23, longitude: 21.01 }],
-      now,
-      { downPayment: 2000000 },
-    ),
-    100,
+  const goodScore = computeDreamScore(
+    ideal,
+    settings.dreamProfile,
+    [{ key: "test", label: "Test", address: "", latitude: 52.23, longitude: 21.01 }],
+    now,
+    { downPayment: 2000000 },
   );
+  // This offer lacks some premium features, so it cannot earn a perfect score.
+  assert.ok(goodScore > 0 && goodScore < 100);
   assert.equal(
     evaluate({
       hasGarage: false,

@@ -58,7 +58,7 @@ test("four manual directions count toward the score and reset without retaining 
   assert.equal(exposure.points, 20);
   assert.equal(exposure.maxPoints, 20);
   assert.equal(manual.points, original.points + 20);
-  assert.equal(manual.maxPoints, original.maxPoints + 20);
+  assert.equal(manual.maxPoints, original.maxPoints);
   assert.ok(manual.score > original.score);
   assert.deepEqual(evaluate([]), original);
   assert.equal(evaluate(["N"]).rows.find((item) => item.label === "Ekspozycja")!.points, -15);
