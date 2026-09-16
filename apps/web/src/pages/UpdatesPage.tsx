@@ -16,7 +16,7 @@ import { OtodomResume } from "../features/imports/OtodomResume";
 import { DiscoveryProgress } from "../features/imports/DiscoveryProgress";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatQueueAttemptTime, formatStaleRefreshTime } from "../features/imports/lib/queue";
-import { formatOptionalPln, formatPln } from "../shared/lib/format";
+import { RelistingMatches } from "../features/relistings/RelistingMatches";
 
 export function UpdatesPage({
   model,
@@ -651,7 +651,8 @@ export function UpdatesPage({
                 <div>
                   <h3>Sprawdź ponownie dodane oferty</h3>
                   <p>
-                    Łączy aktywne ogłoszenia z ich wcześniejszą, archiwalną wersją i porównuje ceny.
+                    Porównuje aktywne ogłoszenia z archiwum, rozpoznaje ponowne wystawienia i
+                    pokazuje potencjalne wcześniejsze oferty do sprawdzenia.
                   </p>
                 </div>
                 <button
@@ -663,7 +664,10 @@ export function UpdatesPage({
                   {isScanningRelistedListings ? "Sprawdzam…" : "Sprawdź ponownie dodane"}
                 </button>
                 {relistingScanResult ? (
-                  <small>{relistingScanResult.matched} znalezionych relistingów</small>
+                  <small>
+                    {relistingScanResult.matched} dopasowań · {relistingScanResult.potentialCount}{" "}
+                    propozycji z archiwum
+                  </small>
                 ) : null}
               </article>
             </div>
@@ -680,70 +684,40 @@ export function UpdatesPage({
                   <span>{relistingScanResult.matched} dopasowań</span>
                 </div>
                 {relistingScanResult.items.length > 0 ? (
-                  <div className="relisting-result-grid">
-                    {relistingScanResult.items.map((match) => {
-                      const difference = match.priceDifferenceAmount;
-                      const differenceClass =
-                        difference === undefined || difference === 0
-                          ? "is-neutral"
-                          : difference < 0
-                            ? "is-lower"
-                            : "is-higher";
-                      return (
-                        <article
-                          className="relisting-result-card"
-                          key={`${match.previous.id}:${match.current.id}`}
-                        >
-                          <div className="relisting-offer-row is-archived">
-                            <span>Archiwalna · {match.previous.sourceLabel}</span>
-                            <button
-                              className="text-link-button"
-                              type="button"
-                              onClick={() => void openListing(match.previous.id)}
-                            >
-                              {match.previous.title}
-                            </button>
-                            <strong>{formatOptionalPln(match.previous.priceAmount)}</strong>
-                          </div>
-                          <div className="relisting-arrow" aria-hidden="true">
-                            →
-                          </div>
-                          <div className="relisting-offer-row is-current">
-                            <span>Aktualna · {match.current.sourceLabel}</span>
-                            <button
-                              className="text-link-button"
-                              type="button"
-                              onClick={() => void openListing(match.current.id)}
-                            >
-                              {match.current.title}
-                            </button>
-                            <strong>{formatOptionalPln(match.current.priceAmount)}</strong>
-                          </div>
-                          <div className={`relisting-price-difference ${differenceClass}`}>
-                            <span>Różnica ceny</span>
-                            <strong>
-                              {difference === undefined
-                                ? "brak danych"
-                                : `${difference > 0 ? "+" : ""}${formatPln(difference)}`}
-                            </strong>
-                            {match.priceDifferencePercent !== undefined ? (
-                              <small>
-                                {match.priceDifferencePercent > 0 ? "+" : ""}
-                                {match.priceDifferencePercent.toFixed(1)}%
-                              </small>
-                            ) : null}
-                          </div>
-                          <small className="relisting-reasons">
-                            Pewność {match.confidenceScore}% · {match.reasons.join(", ")}
-                          </small>
-                        </article>
-                      );
-                    })}
-                  </div>
+                  <RelistingMatches items={relistingScanResult.items} onOpenListing={openListing} />
                 ) : (
                   <p className="muted relisting-empty">
-                    Nie znaleziono aktywnych ofert, które pojawiły się ponownie po archiwizacji.
+                    Nie znaleziono mocnych dopasowań do wcześniejszych ofert.
                   </p>
+                )}
+                <div className="relisting-results-heading">
+                  <div>
+                    <h3>Potencjalne wcześniejsze oferty</h3>
+                    <p className="muted">
+                      Te oferty mogły już być w naszej bazie. Porównaj je z archiwum — podobieństwo
+                      nie potwierdza ponownego wystawienia.
+                    </p>
+                  </div>
+                  <span>{relistingScanResult.potentialCount} propozycji</span>
+                </div>
+                {relistingScanResult.potentialItems.length > 0 ? (
+                  <>
+                    <RelistingMatches
+                      items={relistingScanResult.potentialItems}
+                      potential
+                      onOpenListing={openListing}
+                    />
+                    {relistingScanResult.potentialCount >
+                      relistingScanResult.potentialItems.length && (
+                      <p className="muted">
+                        Pokazano {relistingScanResult.potentialItems.length} z{" "}
+                        {relistingScanResult.potentialCount} propozycji. Pozostałe są dostępne w
+                        szczegółach odpowiednich ofert.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="muted relisting-empty">Brak dodatkowych propozycji z archiwum.</p>
                 )}
               </section>
             ) : null}

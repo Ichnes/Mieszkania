@@ -434,6 +434,7 @@ export type ListingSummary = {
   viewingStatus?: ListingViewingStatus;
   relatedCount?: number;
   potentialDuplicateCount?: number;
+  potentialRelistingCount?: number;
 };
 
 export type RelatedListingSummary = {
@@ -547,6 +548,10 @@ export type RelistedListingPreview = {
   canonicalUrl?: string;
   priceAmount?: number;
   eventAt: string;
+  addressText?: string;
+  areaSqm?: number;
+  rooms?: number;
+  floor?: number;
 };
 
 export type RelistedListingMatch = {
@@ -563,6 +568,8 @@ export type RelistedListingsScanResponse = {
   checkedArchived: number;
   matched: number;
   items: RelistedListingMatch[];
+  potentialCount: number;
+  potentialItems: RelistedListingMatch[];
 };
 
 export type ListingCard = ListingSummary;

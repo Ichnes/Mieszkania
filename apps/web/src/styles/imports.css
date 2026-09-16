@@ -348,7 +348,7 @@
 }
 .relisting-result-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   align-items: center;
   min-width: 0;
@@ -370,10 +370,29 @@
 }
 .relisting-offer-row .text-link-button {
   max-width: 100%;
-  overflow: hidden;
   text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.relisting-offer-row small,
+.relisting-reasons,
+.relisting-candidate-label {
+  overflow-wrap: anywhere;
+}
+.relisting-candidate-label {
+  grid-column: 1 / -1;
+  color: var(--brand-strong);
+  font-size: 0.8rem;
+}
+.potential-relistings {
+  min-width: 0;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.potential-relistings .relisting-result-grid,
+.potential-relistings .relisting-result-card {
+  grid-template-columns: minmax(0, 1fr);
 }
 .relisting-offer-row > strong {
   font-size: 0.88rem;

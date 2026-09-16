@@ -1172,6 +1172,7 @@ export function useImportController({
       });
       if (!response.ok) throw new Error(`Relisting scan failed with status ${response.status}`);
       setRelistingScanResult((await response.json()) as RelistedListingsScanResponse);
+      await Promise.all([refreshDashboard(), applyFilters()]);
     } catch (error) {
       setRelistingScanError(
         error instanceof Error ? error.message : "Nie udało się sprawdzić ponownie dodanych ofert.",

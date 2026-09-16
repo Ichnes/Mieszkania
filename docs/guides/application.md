@@ -392,6 +392,25 @@ zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje 
 nowego ekranu i resetuje powiększenie. Na telefonie pełny ekran zajmuje obszar aplikacji;
 paski systemowe przeglądarki mogą pozostać widoczne.
 
+## Potencjalne wcześniejsze oferty
+
+W **Aktualizacji** przycisk **Sprawdź ponownie dodane** porównuje aktywne ogłoszenia
+z archiwum. Wyniki obejmują mocne dopasowania oraz osobną sekcję
+**Potencjalne wcześniejsze oferty**. Propozycja może pojawić się mimo zmienionego
+opisu, gdy zgadzają się ulica, metraż, pokoje i piętro albo opis i lokalizacja są
+dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobieństwo
+dzielnicy nie wystarcza; sprzeczne piętra lub numery budynków wykluczają propozycję.
+
+Karty pokazują obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
+tytułu otwiera odpowiednią ofertę. Różnica cen propozycji jest porównaniem dwóch
+ogłoszeń, a nie potwierdzoną zmianą ceny tego samego mieszkania.
+
+Propozycje zapisują się po skanie. Na aktywnej ofercie pojawia się oznaczenie
+**Potencjalnie w archiwum**, a w szczegółach lista podobnych archiwalnych ogłoszeń,
+także po odświeżeniu strony. Pokazujemy do pięciu najlepszych propozycji na ofertę.
+Nie są automatycznie łączone ani oznaczane jako potwierdzone ponowne wystawienia.
+Ponowny skan odświeża propozycje; ręcznie odrzucone i ukryte duplikaty są pomijane.
+
 ## Notatki i przeglądanie ofert
 
 **Notatki** zawierają notatkę, kompas ekspozycji oraz korekty windy, garażu, komórki

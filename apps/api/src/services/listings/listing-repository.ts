@@ -1,3 +1,4 @@
+import { visibleRelistingCandidateSql } from "./listing-relistings";
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
 import { invalidateMarketStatsCache } from "../market/stats-cache";
 import { effectiveDistrictSql } from "./listing-title-location";
@@ -98,6 +99,7 @@ type ListingRow = {
   manual_garage_cost_override: string | null;
   manual_storage_cost_override: string | null;
   manual_exposure_directions_override?: ExposureDirection[] | null;
+  potential_relisting_count?: string;
   relisting_previous_listing_id: string | null;
   relisting_previous_price_amount: string | null;
   relisting_relisted_price_amount: string | null;
@@ -534,6 +536,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
           lmo.garage_cost_override::text as manual_garage_cost_override,
           lmo.storage_cost_override::text as manual_storage_cost_override,
           lmo.exposure_directions_override as manual_exposure_directions_override,
+          (select count(*) ${visibleRelistingCandidateSql})::text as potential_relisting_count,
           lr.previous_listing_id::text as relisting_previous_listing_id,
           lr.previous_price_amount::text as relisting_previous_price_amount,
           lr.relisted_price_amount::text as relisting_relisted_price_amount,
@@ -1010,6 +1013,7 @@ async function getListingsPageByScope(
           ,lmo.garage_cost_override::text as manual_garage_cost_override
           ,lmo.storage_cost_override::text as manual_storage_cost_override
           ,lmo.exposure_directions_override as manual_exposure_directions_override
+          ,(select count(*) ${visibleRelistingCandidateSql})::text as potential_relisting_count
           ,lr.previous_listing_id::text as relisting_previous_listing_id
           ,lr.previous_price_amount::text as relisting_previous_price_amount
           ,lr.relisted_price_amount::text as relisting_relisted_price_amount
@@ -1589,6 +1593,7 @@ function mapListingSummary(
     rcnDeltaLabel,
     priceChangePercent,
     relisting,
+    potentialRelistingCount: Number(row.potential_relisting_count ?? 0),
     summary: buildListingSummary(row, latestEvent, imageCount, manualSummary),
     thumbnailUrl,
     imageCount,
@@ -1599,6 +1604,7 @@ function mapListingSummary(
       manualBadges,
       relatedCount,
       potentialDuplicateCount,
+      potentialRelistingCount: Number(row.potential_relisting_count ?? 0),
     }),
     latitude: row.latitude ? Number(row.latitude) : undefined,
     longitude: row.longitude ? Number(row.longitude) : undefined,
@@ -1665,8 +1671,11 @@ function buildListingBadges(input: {
   manualBadges: string[];
   relatedCount: number;
   potentialDuplicateCount: number;
+  potentialRelistingCount: number;
 }) {
   const badges = [...input.commercialBadges, ...input.amenityBadges, ...input.manualBadges];
+  if (input.potentialRelistingCount > 0)
+    badges.push(`Potencjalnie w archiwum ${input.potentialRelistingCount}`);
 
   if (input.relatedCount > 0) {
     badges.push(`Powiązane ${input.relatedCount + 1} portale`);

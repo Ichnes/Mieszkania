@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Propozycje wcześniejszych ofert w archiwum (2026-09-16)
+
+- [x] Zakres: osobne potencjalne dopasowania aktywnych ofert do archiwalnych, obok dotychczasowych mocnych dopasowań; zapis propozycji i oznaczenie na kartach oraz szczegółach.
+- [x] Porównanie cen, adresów, metrażu, pokoi, piętra i dat; uzasadnienie podobieństwa oraz otwieranie obu ofert. Propozycje nie są automatycznie potwierdzane ani łączone.
+- [x] 11 testów algorytmu: zmienione opisy, częściowe podobieństwo, daty, metraż, piętra, różne numery budynków, etykiety dzielnic i limit kandydatów. Pełny zestaw API/web bez błędów (332 zaliczone, 6 pominiętych przed dodaniem dwóch końcowych regresji); wszystkie 11 testów algorytmu ponowione. Test PostgreSQL w izolowanym schemacie potwierdził zapis, idempotencję, odrzucenie archiwum i rozdzielenie mocnych dopasowań od propozycji.
+- [x] Typecheck i build wszystkich pakietów poprawne. UI przy 1440/1280/390/320 px: stan pracy skanu, wyniki, otwieranie archiwum, ponowienie odczytu po błędzie, pusty wynik; brak przepełnienia. Zrzuty mobilnego wyniku i desktopowych szczegółów obejrzane.
+- [x] Instrukcja uzupełniona; lokalne API/web/baza healthy. Rzeczywisty skan: 4298 aktywnych i 3147 archiwalnych, 283 mocne dopasowania i 228 propozycji; odczyt liczników i propozycji z API szczegółów potwierdzony dla trzech ofert.
+- [x] Brak pozostałych prac; gotowe do commitu i push na `main`.
+
 ## Ulice z opisów i timeout skanowania OLX (2026-09-16)
 
 - [x] Log nginx potwierdza timeout OLX; parser pomijał odmiany nazw dzielnic po ulicy.

@@ -7,7 +7,10 @@ import type { FastifyInstance } from "fastify";
 import "../../config";
 import { getListingParcelContext } from "../../services/insights/listing-parcel-context";
 import { getListingPlanningContext } from "../../services/insights/listing-planning-context";
-import { scanRelistedListings } from "../../services/listings/listing-relistings";
+import {
+  getPotentialRelistings,
+  scanRelistedListings,
+} from "../../services/listings/listing-relistings";
 import {
   addListingContactEvent,
   archiveListingRecord,
@@ -249,6 +252,16 @@ export function registerListingsRoutes(app: FastifyInstance) {
   app.post<{ Body: { limit?: number } }>("/api/listings/relistings/scan", async (request) => {
     return scanRelistedListings(request.body?.limit);
   });
+
+  app.get<{ Params: { id: string } }>(
+    "/api/listings/:id/relisting-candidates",
+    async (request, reply) => {
+      if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(request.params.id)) {
+        return reply.code(400).send({ message: "Nieprawidłowy identyfikator oferty." });
+      }
+      return { items: await getPotentialRelistings(request.params.id) };
+    },
+  );
 
   app.post<{
     Params: { id: string };

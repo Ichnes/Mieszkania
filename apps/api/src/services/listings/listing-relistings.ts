@@ -1,6 +1,12 @@
 import type { RelistedListingMatch, RelistedListingsScanResponse } from "@mieszkania/shared";
-import { withDb } from "../../db";
+import { pool } from "../../db";
+import type { Pool } from "pg";
 import { activeRegion } from "../../domain/region";
+import { normalizePolish, normalizeWarsawStreetAddress } from "../geography/address-normalization";
+import {
+  canonicalWarsawDistrict,
+  isWarsawNeighborhoodLabel,
+} from "../geography/warsaw-neighborhoods";
 
 export type RelistingMatchRow = {
   id: string;
@@ -33,30 +39,59 @@ type PreparedRelistingRow = RelistingMatchRow & {
 const descriptionPrefixWords = 30;
 const descriptionSimilarityThreshold = 0.82;
 
-export async function scanRelistedListings(limit = 100): Promise<RelistedListingsScanResponse> {
+// Shared by the card counter and the detail endpoint so stale/hidden archives disappear together.
+export const visibleRelistingCandidateSql = `
+  from listing_relisting_candidates rc
+  join listings archived on archived.id = rc.previous_listing_id
+  where rc.current_listing_id = l.id
+    and l.status = 'active' and l.hidden_duplicate_of_id is null
+    and archived.status = 'removed' and archived.hidden_duplicate_of_id is null
+    and coalesce(archived.exclusion_reason, '') <> 'manual_rejected'
+    and not exists (select 1 from listing_relistings confirmed where confirmed.current_listing_id = l.id)
+`;
+
+export async function getPotentialRelistings(
+  listingId: string,
+  db: Pick<Pool, "query"> = pool,
+): Promise<RelistedListingMatch[]> {
+  const result = await db.query<{ match_payload: RelistedListingMatch }>(
+    `
+      select candidate.match_payload from listings l
+      cross join lateral (select rc.match_payload ${visibleRelistingCandidateSql}) candidate
+      where l.id = $1
+      order by (candidate.match_payload->>'confidenceScore')::int desc
+    `,
+    [listingId],
+  );
+  return result.rows.map((row) => row.match_payload);
+}
+
+export async function scanRelistedListings(
+  limit = 100,
+  db: Pool = pool,
+): Promise<RelistedListingsScanResponse> {
   const safeLimit = Math.max(1, Math.min(limit, 500));
 
-  return withDb(async (db) => {
-    const result = await db.query<{
-      id: string;
-      status: "active" | "removed";
-      title: string;
-      source_label: string | null;
-      canonical_url: string | null;
-      city: string;
-      address_text: string | null;
-      description: string | null;
-      rooms: string;
-      area_sqm: string;
-      floor: number | null;
-      latitude: string | null;
-      longitude: string | null;
-      price_amount: string | null;
-      first_seen_at: string;
-      last_seen_at: string;
-      removed_at: string | null;
-    }>(
-      `
+  const result = await db.query<{
+    id: string;
+    status: "active" | "removed";
+    title: string;
+    source_label: string | null;
+    canonical_url: string | null;
+    city: string;
+    address_text: string | null;
+    description: string | null;
+    rooms: string;
+    area_sqm: string;
+    floor: number | null;
+    latitude: string | null;
+    longitude: string | null;
+    price_amount: string | null;
+    first_seen_at: string;
+    last_seen_at: string;
+    removed_at: string | null;
+  }>(
+    `
         select
           l.id,
           l.status::text,
@@ -84,41 +119,41 @@ export async function scanRelistedListings(limit = 100): Promise<RelistedListing
           and l.city = any($1::text[])
           and (l.status = 'active' or coalesce(l.exclusion_reason, '') <> 'manual_rejected')
       `,
-      [activeRegion.supportedCities],
-    );
+    [activeRegion.supportedCities],
+  );
 
-    const rows: RelistingMatchRow[] = result.rows.map((row) => ({
-      id: row.id,
-      status: row.status,
-      title: row.title,
-      sourceLabel: row.source_label ?? "Portal",
-      canonicalUrl: row.canonical_url,
-      city: row.city,
-      addressText: row.address_text,
-      description: row.description,
-      rooms: Number(row.rooms),
-      areaSqm: Number(row.area_sqm),
-      floor: row.floor,
-      latitude: row.latitude ? Number(row.latitude) : null,
-      longitude: row.longitude ? Number(row.longitude) : null,
-      priceAmount: row.price_amount ? Number(row.price_amount) : null,
-      firstSeenAt: row.first_seen_at,
-      lastSeenAt: row.last_seen_at,
-      removedAt: row.removed_at,
+  const rows: RelistingMatchRow[] = result.rows.map((row) => ({
+    id: row.id,
+    status: row.status,
+    title: row.title,
+    sourceLabel: row.source_label ?? "Portal",
+    canonicalUrl: row.canonical_url,
+    city: row.city,
+    addressText: row.address_text,
+    description: row.description,
+    rooms: Number(row.rooms),
+    areaSqm: Number(row.area_sqm),
+    floor: row.floor,
+    latitude: row.latitude ? Number(row.latitude) : null,
+    longitude: row.longitude ? Number(row.longitude) : null,
+    priceAmount: row.price_amount ? Number(row.price_amount) : null,
+    firstSeenAt: row.first_seen_at,
+    lastSeenAt: row.last_seen_at,
+    removedAt: row.removed_at,
+  }));
+  const { matches, candidates } = findRelistedListingRows(rows);
+
+  if (matches.length > 0) {
+    const persistedMatches = matches.map((match) => ({
+      current_listing_id: match.current.id,
+      previous_listing_id: match.previous.id,
+      confidence_score: match.confidenceScore,
+      reason_summary: match.reasons.join(", "),
+      previous_price_amount: match.previous.priceAmount ?? null,
+      relisted_price_amount: match.current.priceAmount ?? null,
     }));
-    const matches = matchRelistedListingRows(rows);
-
-    if (matches.length > 0) {
-      const persistedMatches = matches.map((match) => ({
-        current_listing_id: match.current.id,
-        previous_listing_id: match.previous.id,
-        confidence_score: match.confidenceScore,
-        reason_summary: match.reasons.join(", "),
-        previous_price_amount: match.previous.priceAmount ?? null,
-        relisted_price_amount: match.current.priceAmount ?? null,
-      }));
-      await db.query(
-        `
+    await db.query(
+      `
           insert into listing_relistings (
             current_listing_id,
             previous_listing_id,
@@ -159,20 +194,52 @@ export async function scanRelistedListings(limit = 100): Promise<RelistedListing
             end,
             last_detected_at = now()
         `,
-        [JSON.stringify(persistedMatches)],
+      [JSON.stringify(persistedMatches)],
+    );
+  }
+
+  // Replace suggestions atomically. They never become confirmed relistings.
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    await client.query("select pg_advisory_xact_lock(hashtext('relisting-candidates'))");
+    await client.query("delete from listing_relisting_candidates");
+    if (candidates.length) {
+      await client.query(
+        `
+          insert into listing_relisting_candidates (current_listing_id, previous_listing_id, match_payload)
+          select (item->'current'->>'id')::uuid, (item->'previous'->>'id')::uuid, item
+          from jsonb_array_elements($1::jsonb) item
+        `,
+        [JSON.stringify(candidates)],
       );
     }
+    await client.query("commit");
+  } catch (error) {
+    await client.query("rollback");
+    throw error;
+  } finally {
+    client.release();
+  }
 
-    return {
-      checkedActive: rows.filter((row) => row.status === "active").length,
-      checkedArchived: rows.filter((row) => row.status === "removed").length,
-      matched: matches.length,
-      items: matches.slice(0, safeLimit),
-    };
-  });
+  return {
+    checkedActive: rows.filter((row) => row.status === "active").length,
+    checkedArchived: rows.filter((row) => row.status === "removed").length,
+    matched: matches.length,
+    items: matches.slice(0, safeLimit),
+    potentialCount: candidates.length,
+    potentialItems: candidates.slice(0, safeLimit),
+  };
 }
 
 export function matchRelistedListingRows(rows: RelistingMatchRow[]): RelistedListingMatch[] {
+  return findRelistedListingRows(rows).matches;
+}
+
+export function findRelistedListingRows(rows: RelistingMatchRow[]): {
+  matches: RelistedListingMatch[];
+  candidates: RelistedListingMatch[];
+} {
   const prepared = rows.map(prepareRow);
   const active = prepared.filter((row) => row.status === "active");
   const archived = prepared.filter((row) => row.status === "removed");
@@ -186,6 +253,7 @@ export function matchRelistedListingRows(rows: RelistingMatchRow[]): RelistedLis
   }
 
   const matches: RelistedListingMatch[] = [];
+  const potential: RelistedListingMatch[] = [];
   for (const current of active) {
     const candidates = new Map<string, PreparedRelistingRow>();
     const areaBucket = Math.floor(current.areaSqm);
@@ -195,28 +263,37 @@ export function matchRelistedListingRows(rows: RelistingMatchRow[]): RelistedLis
       }
     }
 
-    const best = [...candidates.values()]
+    const scored = [...candidates.values()]
       .map((previous) => scoreRelisting(previous, current))
       .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
       .sort(
         (left, right) =>
-          right.confidenceScore - left.confidenceScore ||
-          new Date(right.previous.eventAt).getTime() - new Date(left.previous.eventAt).getTime(),
-      )[0];
+          right.match.confidenceScore - left.match.confidenceScore ||
+          new Date(right.match.previous.eventAt).getTime() -
+            new Date(left.match.previous.eventAt).getTime(),
+      );
 
-    if (best) matches.push(best);
+    const best = scored.find((item) => item.strong);
+    if (best) matches.push(best.match);
+    else potential.push(...scored.slice(0, 5).map((item) => item.match));
   }
 
-  return matches.sort(
+  matches.sort(
     (left, right) =>
       new Date(right.current.eventAt).getTime() - new Date(left.current.eventAt).getTime(),
   );
+  potential.sort(
+    (left, right) =>
+      right.confidenceScore - left.confidenceScore ||
+      new Date(right.current.eventAt).getTime() - new Date(left.current.eventAt).getTime(),
+  );
+  return { matches, candidates: potential };
 }
 
 function scoreRelisting(
   previous: PreparedRelistingRow,
   current: PreparedRelistingRow,
-): RelistedListingMatch | null {
+): { strong: boolean; match: RelistedListingMatch } | null {
   const archivedAt = previous.removedAt ?? previous.lastSeenAt;
   if (new Date(archivedAt).getTime() > new Date(current.firstSeenAt).getTime()) return null;
   if (new Date(previous.firstSeenAt).getTime() >= new Date(current.firstSeenAt).getTime())
@@ -238,18 +315,31 @@ function scoreRelisting(
     previous.floor !== null && current.floor !== null && previous.floor === current.floor;
   const nearbyCoordinates = areCoordinatesNearby(previous, current);
 
-  const strongPrefixMatch = exactPrefix && (areaDifference <= 1 || sameStreet || nearbyCoordinates);
+  const strongPrefixMatch =
+    exactPrefix && (areaDifference <= 1 || sameAddress || nearbyCoordinates);
   const strongSimilarityMatch =
     descriptionSimilarity >= descriptionSimilarityThreshold &&
     areaDifference <= 1 &&
-    sameStreet &&
+    sameAddress &&
     (sameAddress || sameFloor || nearbyCoordinates);
-  if (!strongPrefixMatch && !strongSimilarityMatch) return null;
+  const strong = strongPrefixMatch || strongSimilarityMatch;
+  const conflictingFloors = previous.floor !== null && current.floor !== null && !sameFloor;
+  const previousNumber = previous.addressKey.match(/\d+[a-z]?(?:[/-]\d+[a-z]?)?$/)?.[0];
+  const currentNumber = current.addressKey.match(/\d+[a-z]?(?:[/-]\d+[a-z]?)?$/)?.[0];
+  const conflictingNumbers = previousNumber && currentNumber && previousNumber !== currentNumber;
+  const plausible =
+    !conflictingFloors &&
+    !conflictingNumbers &&
+    ((sameStreet && sameFloor && areaDifference <= 1) ||
+      (descriptionSimilarity >= 0.55 && areaDifference <= 1 && (sameStreet || nearbyCoordinates)));
+  if (!strong && !plausible) return null;
 
-  let confidenceScore = exactPrefix ? 78 : 68;
+  let confidenceScore = strong ? (exactPrefix ? 78 : 68) : 40;
   const reasons: string[] = [];
   if (exactPrefix) reasons.push(`identyczne pierwsze ${descriptionPrefixWords} słów opisu`);
-  else reasons.push(`${Math.round(descriptionSimilarity * 100)}% wspólnych słów opisu`);
+  else if (descriptionSimilarity > 0)
+    reasons.push(`${Math.round(descriptionSimilarity * 100)}% wspólnych słów opisu`);
+  reasons.push("ta sama liczba pokoi");
   if (areaDifference <= 0.5) {
     confidenceScore += 8;
     reasons.push("ten sam metraż");
@@ -275,7 +365,8 @@ function scoreRelisting(
     confidenceScore += 5;
     reasons.push("ten sam punkt na mapie");
   }
-  confidenceScore = Math.min(100, confidenceScore);
+  if (!strong && descriptionSimilarity >= 0.55) confidenceScore += 10;
+  confidenceScore = Math.min(strong ? 100 : 79, confidenceScore);
 
   const previousPrice = previous.priceAmount ?? undefined;
   const currentPrice = current.priceAmount ?? undefined;
@@ -289,31 +380,48 @@ function scoreRelisting(
       : undefined;
 
   return {
-    previous: {
-      id: previous.id,
-      title: previous.title,
-      sourceLabel: previous.sourceLabel,
-      canonicalUrl: previous.canonicalUrl ?? undefined,
-      priceAmount: previousPrice,
-      eventAt: archivedAt,
+    strong,
+    match: {
+      previous: {
+        id: previous.id,
+        title: previous.title,
+        sourceLabel: previous.sourceLabel,
+        canonicalUrl: previous.canonicalUrl ?? undefined,
+        priceAmount: previousPrice,
+        eventAt: archivedAt,
+        addressText: previous.addressText ?? undefined,
+        areaSqm: previous.areaSqm,
+        rooms: previous.rooms,
+        floor: previous.floor ?? undefined,
+      },
+      current: {
+        id: current.id,
+        title: current.title,
+        sourceLabel: current.sourceLabel,
+        canonicalUrl: current.canonicalUrl ?? undefined,
+        priceAmount: currentPrice,
+        eventAt: current.firstSeenAt,
+        addressText: current.addressText ?? undefined,
+        areaSqm: current.areaSqm,
+        rooms: current.rooms,
+        floor: current.floor ?? undefined,
+      },
+      priceDifferenceAmount,
+      priceDifferencePercent,
+      confidenceScore,
+      reasons,
     },
-    current: {
-      id: current.id,
-      title: current.title,
-      sourceLabel: current.sourceLabel,
-      canonicalUrl: current.canonicalUrl ?? undefined,
-      priceAmount: currentPrice,
-      eventAt: current.firstSeenAt,
-    },
-    priceDifferenceAmount,
-    priceDifferencePercent,
-    confidenceScore,
-    reasons,
   };
 }
 
 function prepareRow(row: RelistingMatchRow): PreparedRelistingRow {
   const prefixTokens = normalizeWords(row.description);
+  const street = normalizeWarsawStreetAddress(row.addressText);
+  const usableStreet =
+    street &&
+    !canonicalWarsawDistrict(street) &&
+    !isWarsawNeighborhoodLabel(street) &&
+    normalizeCompact(street) !== normalizeCompact(row.city);
   return {
     ...row,
     cityKey: normalizeCompact(row.city),
@@ -322,8 +430,10 @@ function prepareRow(row: RelistingMatchRow): PreparedRelistingRow {
       prefixTokens.length >= descriptionPrefixWords
         ? prefixTokens.slice(0, descriptionPrefixWords).join(" ")
         : "",
-    addressKey: normalizeCompact(row.addressText),
-    streetKey: normalizeCompact(row.addressText?.split(",", 1)[0]),
+    addressKey: usableStreet ? normalizeCompact(street) : "",
+    streetKey: usableStreet
+      ? normalizeCompact(street.replace(/\s+\d+[a-z]?(?:[/-]\d+[a-z]?)?$/iu, ""))
+      : "",
   };
 }
 
@@ -333,10 +443,7 @@ function physicalBucket(row: Pick<PreparedRelistingRow, "cityKey" | "rooms">, ar
 
 function normalizeWords(value?: string | null) {
   if (!value) return [];
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .toLowerCase()
+  return normalizePolish(value)
     .replace(/[^a-z0-9\s]/g, " ")
     .split(/\s+/)
     .map((token) => token.trim())

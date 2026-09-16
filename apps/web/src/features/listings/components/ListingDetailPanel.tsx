@@ -1,3 +1,4 @@
+import { PotentialRelistings } from "../../relistings/PotentialRelistings";
 import { availableAmenities } from "../lib/available-amenities";
 import { getSunExposure } from "../lib/listing-language";
 import { Select } from "../../../components/Select";
@@ -295,6 +296,11 @@ export function ListingDetailPanel(input: {
           </div>
         );
       })}
+      <PotentialRelistings
+        listingId={input.listing.id}
+        count={input.listing.potentialRelistingCount ?? 0}
+        onOpenListing={input.onOpenRelatedListing}
+      />
     </div>
   );
   const mapQuery = [input.listing.street, input.listing.district, input.listing.city, "Polska"]

@@ -392,6 +392,17 @@ export async function ensureRuntimeSchema() {
     `);
 
     await db.query(`
+      create table if not exists listing_relisting_candidates (
+        current_listing_id uuid not null references listings(id) on delete cascade,
+        previous_listing_id uuid not null references listings(id) on delete cascade,
+        match_payload jsonb not null,
+        detected_at timestamptz not null default now(),
+        primary key (current_listing_id, previous_listing_id),
+        check (current_listing_id <> previous_listing_id)
+      );
+    `);
+
+    await db.query(`
       alter table listing_manual_overrides
       add column if not exists contact_status text;
     `);
