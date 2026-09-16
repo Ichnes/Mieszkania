@@ -1,4 +1,5 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { registerDiscoveryJobRoutes } from "./discovery-jobs";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import { readDiscoveryProgress } from "../../../collectors/discovery-progress";
 import type { Collectors } from "../../../collectors/registry";
@@ -8,6 +9,7 @@ import { resetProcessingListingImportsNow } from "../../../services/collecting/l
 
 export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors: Collectors) {
   const { otodomCollector } = collectors;
+  registerDiscoveryJobRoutes(app);
   app.get("/api/collectors/discovery-progress", async () => ({ items: readDiscoveryProgress() }));
   app.get("/api/collectors/otodom/discovery-checkpoint", async (request) => {
     const { city } = request.query as { city?: string };
@@ -28,7 +30,7 @@ export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors:
     return otodomCollector.discover({ city, page, pages, startPage });
   });
 
-  app.post("/api/collectors/otodom/discover-all", async (request) => {
+  app.post("/api/collectors/otodom/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -40,7 +42,7 @@ export function registerCollectorsOtodomRoutes(app: FastifyInstance, collectors:
       resumeKey?: string;
     };
 
-    return withDiscoveryProgress("otodom", () =>
+    return runDiscoveryRequest(request, reply, "otodom", () =>
       otodomCollector.discoverAll({
         city: body.city ?? activeRegion.primaryCity.toLowerCase(),
         startPage: body.startPage,

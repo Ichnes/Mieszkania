@@ -145,6 +145,11 @@ strony lub partii. Limit dla dzielnic obejmuje wszystkie grupy lokalizacji.
 To maksymalny zakres, nie liczba stron dostępnych na portalu ani przewidywany czas:
 skan może skończyć się wcześniej przy braku wyników lub błędzie. Wyniki liczników
 pozostają widoczne po zakończeniu i odświeżeniu strony, do restartu API lub kolejnego skanu.
+Skanowanie portali (również wznowienie Otodomu) działa w tle. Panel odczytuje wynik
+krótkimi zapytaniami, więc długi skan nie przekracza limitu czasu pojedynczego
+połączenia. Zamknięcie strony nie zatrzymuje pracy. Ponowne uruchomienie aktualizacji
+dołącza do trwających skanów; zakończone portale mogą rozpocząć nowy skan.
+Restart API przerywa zadania w tle; po restarcie uruchom aktualizację ponownie.
 **Dodano do duplikatów** liczy nowe oferty z kolejki danego skanu, automatycznie
 połączone z istniejącymi ofertami po pobraniu szczegółów i zapisaniu danych.
 Licznik może rosnąć po zakończeniu skanowania (wtedy panel odświeża się co 10 sekund).

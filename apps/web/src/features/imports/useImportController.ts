@@ -1,3 +1,4 @@
+import { discoveryRequest } from "./discovery-request";
 import { apiFetch } from "../../shared/lib/http";
 import type {
   CollectorRunResponse,
@@ -342,7 +343,7 @@ export function useImportController({
         morizonResponse,
         staleRefreshResponse,
       ] = await Promise.all([
-        apiFetch(`${apiBaseUrl}/api/collectors/otodom/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/otodom/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -352,7 +353,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/gratka/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/gratka/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -362,7 +363,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/olx/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/olx/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -372,7 +373,21 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/nieruchomosci-online/discover-all`, {
+        discoveryRequest(
+          apiFetch,
+          `${apiBaseUrl}/api/collectors/nieruchomosci-online/discover-all`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              city: discoverAllCity.trim(),
+              startPage: 1,
+              maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+              batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
+            }),
+          },
+        ),
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/domiporta/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -382,7 +397,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/domiporta/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/maxon/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -392,7 +407,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/maxon/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/adresowo/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -402,17 +417,7 @@ export function useImportController({
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
-        apiFetch(`${apiBaseUrl}/api/collectors/adresowo/discover-all`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
-            batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
-          }),
-        }),
-        apiFetch(`${apiBaseUrl}/api/collectors/morizon/discover-all`, {
+        discoveryRequest(apiFetch, `${apiBaseUrl}/api/collectors/morizon/discover-all`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({

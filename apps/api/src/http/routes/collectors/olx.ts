@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -22,7 +22,7 @@ export function registerCollectorsOlxRoutes(app: FastifyInstance, collectors: Co
     });
   });
 
-  app.post("/api/collectors/olx/discover-all", async (request) => {
+  app.post("/api/collectors/olx/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -30,7 +30,7 @@ export function registerCollectorsOlxRoutes(app: FastifyInstance, collectors: Co
       batchPages?: number;
       priority?: number;
     };
-    return withDiscoveryProgress("olx", () =>
+    return runDiscoveryRequest(request, reply, "olx", () =>
       olxCollector.discoverAll({
         city: body.city ?? "warszawa",
         startPage: body.startPage,

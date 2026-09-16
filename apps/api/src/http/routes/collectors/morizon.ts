@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -7,7 +7,7 @@ import { deletePortalSourceData } from "../../../services/collecting/source-data
 
 export function registerCollectorsMorizonRoutes(app: FastifyInstance, collectors: Collectors) {
   const { morizonCollector } = collectors;
-  app.post("/api/collectors/morizon/discover-all", async (request) => {
+  app.post("/api/collectors/morizon/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -15,7 +15,7 @@ export function registerCollectorsMorizonRoutes(app: FastifyInstance, collectors
       batchPages?: number;
       priority?: number;
     };
-    return withDiscoveryProgress("morizon", () =>
+    return runDiscoveryRequest(request, reply, "morizon", () =>
       morizonCollector.discoverAll({
         city: body.city ?? "warszawa",
         startPage: body.startPage,

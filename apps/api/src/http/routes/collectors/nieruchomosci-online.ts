@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -10,7 +10,7 @@ export function registerCollectorsNieruchomosciOnlineRoutes(
   collectors: Collectors,
 ) {
   const { nieruchomosciOnlineCollector } = collectors;
-  app.post("/api/collectors/nieruchomosci-online/discover-all", async (request) => {
+  app.post("/api/collectors/nieruchomosci-online/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -18,7 +18,7 @@ export function registerCollectorsNieruchomosciOnlineRoutes(
       batchPages?: number;
       priority?: number;
     };
-    return withDiscoveryProgress("nieruchomosci-online", () =>
+    return runDiscoveryRequest(request, reply, "nieruchomosci-online", () =>
       nieruchomosciOnlineCollector.discoverAll({
         city: body.city ?? "warszawa",
         startPage: body.startPage,

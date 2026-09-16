@@ -38,7 +38,7 @@ export function sanitizeStreetCandidate(value?: string | null) {
     "$1",
   );
   const locationBoundary =
-    /\s+(?:na\s+(?:warszawsk\p{L}*|osiedlu\b)|w\s+(?:dzielnicy\b|Warszawie\b)|we\s+Wrocławiu\b)/iu;
+    /\s+(?:na\s+(?:warszawsk\p{L}*|osiedlu\b|(?:Bemowie|Białołęce|Bielanach|Mokotowie|Ochocie|Pradze(?:[- ](?:Północ|Południe))?|Targówku|Ursynowie|Woli|Żoliborzu)(?!\p{L}))|w\s+(?:dzielnicy\b|Warszawie\b|(?:Rembertowie|Śródmieściu|Ursusie|Wawrze|Wesołej|Wilanowie|Włochach)(?!\p{L}))|we\s+Wrocławiu\b)/iu;
   const narrativeIndex = clause.search(
     new RegExp(`${streetNarrativeBoundary.source}|${locationBoundary.source}`, "iu"),
   );

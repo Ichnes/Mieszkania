@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -7,7 +7,7 @@ import { deletePortalSourceData } from "../../../services/collecting/source-data
 
 export function registerCollectorsDomiportaRoutes(app: FastifyInstance, collectors: Collectors) {
   const { domiportaCollector } = collectors;
-  app.post("/api/collectors/domiporta/discover-all", async (request) => {
+  app.post("/api/collectors/domiporta/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -15,7 +15,7 @@ export function registerCollectorsDomiportaRoutes(app: FastifyInstance, collecto
       batchPages?: number;
       priority?: number;
     };
-    return withDiscoveryProgress("domiporta", () =>
+    return runDiscoveryRequest(request, reply, "domiporta", () =>
       domiportaCollector.discoverAll({
         city: body.city ?? "warszawa",
         startPage: body.startPage,

@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -7,7 +7,7 @@ import { deletePortalSourceData } from "../../../services/collecting/source-data
 
 export function registerCollectorsAdresowoRoutes(app: FastifyInstance, collectors: Collectors) {
   const { adresowoCollector } = collectors;
-  app.post("/api/collectors/adresowo/discover-all", async (request) => {
+  app.post("/api/collectors/adresowo/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -15,7 +15,7 @@ export function registerCollectorsAdresowoRoutes(app: FastifyInstance, collector
       batchPages?: number;
       priority?: number;
     };
-    return withDiscoveryProgress("adresowo", () =>
+    return runDiscoveryRequest(request, reply, "adresowo", () =>
       adresowoCollector.discoverAll({
         city: body.city ?? "warszawa",
         startPage: body.startPage,

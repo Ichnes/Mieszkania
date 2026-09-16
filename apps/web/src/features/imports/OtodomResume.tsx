@@ -1,3 +1,4 @@
+import { discoveryRequest } from "./discovery-request";
 import { useEffect, useState } from "react";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
@@ -54,11 +55,15 @@ export function OtodomResume({
     setBusy(true);
     setMessage("");
     try {
-      const response = await apiFetch(`${apiBaseUrl}/api/collectors/otodom/discover-all`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ city, resume: true, resumeKey: status?.key }),
-      });
+      const response = await discoveryRequest(
+        apiFetch,
+        `${apiBaseUrl}/api/collectors/otodom/discover-all`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ city, resume: true, resumeKey: status?.key }),
+        },
+      );
       const result = await response.json();
       if (!response.ok) throw new Error(result.message ?? "Nie udało się wznowić skanu.");
       setMessage(

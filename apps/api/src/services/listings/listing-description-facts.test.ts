@@ -2,6 +2,40 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { inferBuildingDetails } from "./listing-description-facts";
 
+test("extracts only the street from the reported multiline descriptions and dirty portal fields", () => {
+  for (const [description, street, dirty] of [
+    [
+      "Przy ul.\n\nJana Kochanowskiego na Bielanach czeka przestronne, 4-pokojowe mieszkanie o powierzchni 90 m².",
+      "Jana Kochanowskiego",
+      "Jana Kochanowskiego na Bielanach czeka przestronne",
+    ],
+    [
+      "Przy ul.\n\nPostępu na Mokotowie znajduje się przestronny, 3-pokojowy apartament o powierzchni 78,54 m².",
+      "Postępu",
+      "Postępu na Mokotowie znajduje się przestronny",
+    ],
+  ]) {
+    for (const supplied of [undefined, dirty]) {
+      const listing = enrichListingFromDescription({
+        title: "Mieszkanie",
+        description,
+        street: supplied,
+        addressText: supplied ? `${supplied}, Warszawa` : undefined,
+        externalId: "regression",
+        canonicalUrl: "https://example.test/offer",
+        city: "Warszawa",
+        images: [],
+        rawPayload: {},
+        marketType: "secondary",
+        offerType: "sale",
+        status: "active",
+      });
+      assert.equal(listing.street, street);
+      assert.equal(listing.addressText?.split(",")[0], street);
+    }
+  }
+});
+
 test("explicit Warsaw district and multiline street override an incorrect portal address", () => {
   const description =
     "Komfortowe mieszkanie znajduje się w Warszawie-Wesołej przy ul.\n\nDługiej 80B na drugim piętrze w 2 kondygnacyjnym budynku z 2020r.";

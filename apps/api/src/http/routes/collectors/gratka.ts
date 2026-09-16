@@ -1,4 +1,4 @@
-import { withDiscoveryProgress } from "../../../collectors/discovery-progress";
+import { runDiscoveryRequest } from "./discovery-jobs";
 import type { FastifyInstance } from "fastify";
 import type { Collectors } from "../../../collectors/registry";
 import "../../../config";
@@ -22,7 +22,7 @@ export function registerCollectorsGratkaRoutes(app: FastifyInstance, collectors:
     return gratkaCollector.discover({ city, page, pages, startPage });
   });
 
-  app.post("/api/collectors/gratka/discover-all", async (request) => {
+  app.post("/api/collectors/gratka/discover-all", async (request, reply) => {
     const body = (request.body ?? {}) as {
       city?: string;
       startPage?: number;
@@ -31,7 +31,7 @@ export function registerCollectorsGratkaRoutes(app: FastifyInstance, collectors:
       priority?: number;
     };
 
-    return withDiscoveryProgress("gratka", () =>
+    return runDiscoveryRequest(request, reply, "gratka", () =>
       gratkaCollector.discoverAll({
         city: body.city ?? activeRegion.primaryCity.toLowerCase(),
         startPage: body.startPage,

@@ -1,6 +1,29 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+test("cuts district clauses from the reported street candidates and stored addresses", () => {
+  for (const [candidate, street] of [
+    ["Jana Kochanowskiego na Bielanach czeka przestronne", "Jana Kochanowskiego"],
+    ["Postępu na Mokotowie znajduje się przestronny", "Postępu"],
+    ["Postępu 12A na Mokotowie znajduje się apartament", "Postępu 12A"],
+    ["Długa w Śródmieściu znajduje się blisko metra", "Długa"],
+    ["Grójecka na Ochocie", "Grójecka"],
+    ["Na Uboczu na Ursynowie", "Na Uboczu"],
+  ]) {
+    assert.equal(sanitizeStreetCandidate(candidate), street);
+    assert.equal(sanitizeWarsawAddressText(`${candidate}, Warszawa`), `${street}, Warszawa`);
+  }
+  for (const street of [
+    "Na Skraju",
+    "Na Uboczu 12",
+    "Droga na Bystre",
+    "Jana Kochanowskiego",
+    "Żwirki i Wigury",
+  ]) {
+    assert.equal(sanitizeStreetCandidate(street), street);
+  }
+});
+
 test("cuts location prose without needing a house number", () => {
   for (const value of [
     "ul. Szaserów na warszawskiej Pradze-Południe",

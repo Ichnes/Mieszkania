@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Ulice z opisów i timeout skanowania OLX (2026-09-16)
+
+- [x] Log nginx potwierdza timeout OLX; parser pomijał odmiany nazw dzielnic po ulicy.
+- [x] Poprawa wspólnego parsera oraz zadania skanowania w tle z odczytem wyniku po identyfikatorze, dla wszystkich portali i wznowienia Otodomu.
+- [x] Regresje obu zdań i zapisanych adresów, zachowanie nazw wielowyrazowych i numerów; testy natychmiastowego 202, konfliktu skanów, odczytu wyników, błędów i przejściowego 504. Pełny zestaw: 327 zaliczonych, 5 pominiętych, 0 błędów; typecheck i build wszystkich pakietów poprawne.
+- [x] Wdrożenie lokalne: API/web/baza healthy. Naprawiono i ponownie odczytano 12 adresów, w tym oba zgłoszone; kopia poprzednich wartości w lokalnym storage, poza repozytorium. Pozostałe pola lokalizacji niezmieniane. Endpoint zadań sprawdzony przez nginx; health HTTP 200.
+- [x] Instrukcja uzupełniona. Zmiana frontendu dotyczy komunikacji z API, zachowuje dotychczasowy układ PC/laptop/mobile. Bez pełnego skanowania zewnętrznych portali podczas weryfikacji.
+- [x] Brak pozostałych prac implementacyjnych; przygotowane do commitu i push na `main`.
+
 ## Stała pula możliwych punktów oceny (2026-09-14)
 
 - [x] Mianownik obejmuje maksima wszystkich aktywnych kryteriów i zależy tylko od preferencji. Ekspozycja zawsze 20; rok 14; piętro wraz z premią 17; stałe maksima wyposażenia, parkingu, raty i sprzedaży bezpośredniej. Odświeżenie/remont mają wspólne maksimum 4.
