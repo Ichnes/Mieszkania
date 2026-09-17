@@ -1,12 +1,18 @@
 # Bieżące zadania
 
+## Weryfikacja właściwej bazy aplikacji (2026-09-17)
+
+- [x] Korekta wcześniejszej diagnozy: kontener `db` nie jest bazą używaną przez działające API. Przed diagnostyką danych należy sprawdzać je przez rzeczywiste `DATABASE_URL` procesu API, bez wypisywania danych dostępowych.
+- [x] Wszystkie trzy zgłoszone identyfikatory znalezione. Maxon `791e7142-5d89-4ff0-876d-b819570f38b5` już archiwalny; odświeżenie Adresowo `d284e69d-c32c-4e59-b4a1-f52cd5c8c44d` zakończone poprawnie, ponowny odczyt obu statusów: `removed`.
+- [x] Odczyt szczegółów `9bd5af51-e93e-4dfd-86ba-f43b02902fed` z właściwej bazy: cena 1 240 000 zł, dopłata 80 000 zł, suma 1 320 000 zł. Brak dalszych prac; korekta dokumentacji przygotowana do commitu i push.
+
 ## Usunięte Adresowo i nieaktualne Maxon (2026-09-17)
 
 - [x] Zakres: wykrywanie podanych komunikatów portali podczas pełnego pobrania i odświeżania ceny; archiwizacja zamiast MISSING_PRICE lub nadpisania danych.
 - [x] Wspólne rozpoznawanie komunikatów, zachowanie zapisanych danych, obsługa ofert wygasłych przed importem w kolejce; instrukcja uzupełniona.
 - [x] Testy komunikatów HTML, cen rekomendacji, braku ceny, skryptów/komentarzy i niezaimportowanych ofert (10 zaliczonych).
 - [x] Pełne testy: 364 zaliczone, 7 pominiętych, bez błędów; typecheck i build wszystkich pakietów poprawne. Dodatkowy test PostgreSQL zaliczony w tymczasowych tabelach: zachowanie danych, dopasowanie po URL starszego ID, izolacja źródeł i idempotencja. API wdrożone lokalnie, health HTTP 200.
-- [x] Zmiany przygotowane do commitu i push na main. W lokalnej bazie brak obu wskazanych identyfikatorów; ich statusów nie zmieniono. Po wdrożeniu w bazie zawierającej te rekordy wymagane odświeżenie ofert.
+- [x] Commit i push na main zakończone. Późniejsza kontrola przez połączenie API potwierdziła obecność obu ofert i status `removed`; wcześniejsze stwierdzenie o braku rekordów wynikało ze sprawdzenia niewłaściwej bazy.
 
 ## Cena pakietu mieszkanie + garaż + komórka (2026-09-17)
 
@@ -14,7 +20,7 @@
 - [x] Rozpoznawanie zapisu z plusem, spójnikami i ceną łączną; zachowanie jawnych dopłat niezależnie od kolejności; pomijanie ceny mieszkania i ceny za m² przy wzmiankach o dodatkach.
 - [x] Regresje przesłanego opisu: 1 240 000 + 80 000 = 1 320 000 zł, różne formaty kwot, HTML, kolejność i osobne dopłaty. Instrukcja zaktualizowana.
 - [x] Pełne testy: 356 zaliczonych, 6 pominiętych, 0 błędów; typecheck i build wszystkich pakietów poprawne. Lokalne API przebudowane; odczyt health HTTP 200 i wykonanie parsera w kontenerze potwierdzają dopłatę 80 000 zł i sumę 1 320 000 zł.
-- [x] Zmiany przygotowane do commitu i push na main; brak dalszych prac implementacyjnych. W lokalnej bazie brak oferty 9bd5af51-e93e-4dfd-86ba-f43b02902fed; weryfikacja jej danych oparta na opisie użytkownika.
+- [x] Commit i push na main zakończone. Odczyt rzeczywistych szczegółów oferty przez połączenie API potwierdził sumę 1 320 000 zł; wcześniejsze stwierdzenie o braku rekordu wynikało ze sprawdzenia niewłaściwej bazy.
 
 ## Propozycje wcześniejszych ofert w archiwum (2026-09-16)
 
