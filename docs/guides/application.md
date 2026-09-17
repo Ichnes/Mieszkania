@@ -236,6 +236,10 @@ Jeśli również przeglądarka odmawia dostępu, kolejka nadal pokazuje błąd.
 
 Cena opisana jako „Mieszkanie z miejscem garażowym: 1 680 000 PLN” oznacza
 garaż w cenie mieszkania i nie jest ponownie doliczana do kosztu zakupu.
+Dotyczy to również zapisów „Mieszkanie + garaż + komórka” i ceny łącznej pakietu.
+Jeżeli opis podaje osobno dopłatę, zachowujemy ją niezależnie od kolejności kwot:
+mieszkanie 1 240 000 zł + garaż i komórka 80 000 zł daje podstawę kalkulacji
+raty 1 320 000 zł. Cena całego pakietu nie zastępuje dopłaty.
 Adresowo rozdziela Gocław od Pragi-Południe, dlatego wybór Pragi-Południe obejmuje
 obie lokalizacje. Katalog Adresowo nie zawiera Wesołej; jej wybór jest zgłaszany
 jako nieobsługiwany zamiast rozszerzać wyszukiwanie na całe miasto.

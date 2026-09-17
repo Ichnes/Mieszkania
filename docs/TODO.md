@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Cena pakietu mieszkanie + garaż + komórka (2026-09-17)
+
+- [x] Zakres: wspólny parser dopłat dla wszystkich portali; cena całego pakietu nie może nadpisywać dopłat ani zwiększać ponownie podstawy raty.
+- [x] Rozpoznawanie zapisu z plusem, spójnikami i ceną łączną; zachowanie jawnych dopłat niezależnie od kolejności; pomijanie ceny mieszkania i ceny za m² przy wzmiankach o dodatkach.
+- [x] Regresje przesłanego opisu: 1 240 000 + 80 000 = 1 320 000 zł, różne formaty kwot, HTML, kolejność i osobne dopłaty. Instrukcja zaktualizowana.
+- [x] Pełne testy: 356 zaliczonych, 6 pominiętych, 0 błędów; typecheck i build wszystkich pakietów poprawne. Lokalne API przebudowane; odczyt health HTTP 200 i wykonanie parsera w kontenerze potwierdzają dopłatę 80 000 zł i sumę 1 320 000 zł.
+- [x] Zmiany przygotowane do commitu i push na main; brak dalszych prac implementacyjnych. W lokalnej bazie brak oferty 9bd5af51-e93e-4dfd-86ba-f43b02902fed; weryfikacja jej danych oparta na opisie użytkownika.
+
 ## Propozycje wcześniejszych ofert w archiwum (2026-09-16)
 
 - [x] Zakres: osobne potencjalne dopasowania aktywnych ofert do archiwalnych, obok dotychczasowych mocnych dopasowań; zapis propozycji i oznaczenie na kartach oraz szczegółach.

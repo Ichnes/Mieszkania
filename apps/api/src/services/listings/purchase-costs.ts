@@ -34,6 +34,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
   let previousEnd = 0;
   let indoorParking: number | undefined;
   let otherParking: number | undefined;
+  const includedInBundle = { garage: false, storage: false };
   for (const match of text.matchAll(
     /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
   )) {
@@ -46,14 +47,22 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     previousEnd = index + match[0].length;
     const mentioned = amenities(before);
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
+    // Nearby amenity mentions do not turn the apartment price or unit price into a surcharge.
+    if (/\bcena\s+(?:mieszkania|apartamentu|lokalu|za\s+m[²2])\s*[:=—–-]?\s*$/.test(before))
+      continue;
     // A price for the apartment together with an amenity is the total, not a surcharge.
     const bundle = before.match(
-      /(?:mieszkanie|apartament|lokal)\s+(?:(?:wraz|razem)\s+)?z\s+([^:;.!?]+)\s*[:—–-]?\s*$/,
+      /(?:mieszkanie|apartament|lokal)\s+(?:(?:(?:wraz|razem|lacznie)\s+)?z|\+|i|oraz)\s+([^;.!?]+)\s*[:=—–-]?\s*$/,
     );
-    if (bundle && !/dodatkow|platn|dokup|kosztuje/.test(bundle[1])) {
-      const included = amenities(bundle[1]);
-      if (included.garage) result.garageIncluded = true;
-      if (included.storage) result.storageIncluded = true;
+    const totalPrice =
+      /\b(?:mieszkanie|mieszkania|apartament|apartamentu|lokal|lokalu)\b/.test(before) &&
+      /(?:cena\s+(?:laczna|calkowita|za\s+calosc)|(?:laczna|calkowita)\s+cena|(?:razem|lacznie)\s+za\s+(?:calosc|mieszkanie|apartament|lokal))\b/.test(
+        before,
+      );
+    if ((bundle && !/dodatkow|platn|dokup|kosztuje/.test(bundle[1])) || totalPrice) {
+      const included = amenities(bundle?.[1] ?? before);
+      includedInBundle.garage ||= included.garage;
+      includedInBundle.storage ||= included.storage;
       continue;
     }
     if (
@@ -114,5 +123,18 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     delete result.garage;
     delete result.storage;
   }
+  // Explicit surcharges remain authoritative regardless of where a package total appears.
+  if (
+    includedInBundle.garage &&
+    result.garage === undefined &&
+    result.garageAndStorage === undefined
+  )
+    result.garageIncluded = true;
+  if (
+    includedInBundle.storage &&
+    result.storage === undefined &&
+    result.garageAndStorage === undefined
+  )
+    result.storageIncluded = true;
   return result;
 }

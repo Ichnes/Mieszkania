@@ -84,3 +84,48 @@ const cases: Array<[string, ReturnType<typeof parse>]> = [
 for (const [description, expected] of cases) {
   test(description, () => assert.deepEqual(parse(description), expected));
 }
+
+const surcharge =
+  "Do mieszkania można dokupić: miejsce postojowe w garażu podziemnym + komórka lokatorska - 80.000 zł";
+const apartmentPrice = "CENA MIESZKANIA: 1 240 000 zł Cena za m²: 18023 zł";
+for (const total of [
+  "Mieszkanie + garaż + komórka: 1 320 000 zł",
+  "Mieszkanie z garażem i komórką: 1 320 000 zł",
+  "Apartament wraz z garażem oraz komórką: 1.320.000 PLN",
+  "Lokal i garaż i komórka = 1320000 zł",
+  "Cena łączna mieszkania, garażu i komórki: 1 320 000 zł",
+  "Mieszkanie, garaż i komórka — cena całkowita: 1320 tys. zł",
+]) {
+  for (const description of [
+    `${surcharge}, ${apartmentPrice} ${total}`,
+    `${total}. ${apartmentPrice}. ${surcharge}`,
+    `<p>${surcharge}</p><p>${apartmentPrice}</p><p>${total}</p>`,
+  ]) {
+    test(`package total never replaces the surcharge: ${description}`, () => {
+      const costs = parse(description);
+      assert.deepEqual(costs, { garageAndStorage: 80000 });
+      assert.equal(1240000 + costs.garageAndStorage!, 1320000);
+    });
+  }
+}
+test("a package total preserves separate garage and storage surcharges", () => {
+  assert.deepEqual(
+    parse("Garaż: 60 000 zł. Komórka: 20 000 zł. Mieszkanie + garaż + komórka: 1 320 000 zł"),
+    { garage: 60000, storage: 20000 },
+  );
+});
+test("the total price of amenities alone is still a surcharge", () => {
+  assert.deepEqual(parse("Garaż + komórka, cena łączna: 80 000 zł"), { garageAndStorage: 80000 });
+});
+test("an apartment package without explicit surcharges is not added again", () => {
+  assert.deepEqual(parse("Mieszkanie + garaż + komórka: 1 320 000 zł"), {
+    garageIncluded: true,
+    storageIncluded: true,
+  });
+});
+test("apartment and unit prices after unpriced amenities are not surcharges", () => {
+  assert.deepEqual(
+    parse("Można dokupić garaż i komórkę; CENA MIESZKANIA: 1 240 000 zł Cena za m²: 18023 zł"),
+    {},
+  );
+});
