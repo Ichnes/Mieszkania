@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Usunięte Adresowo i nieaktualne Maxon (2026-09-17)
+
+- [x] Zakres: wykrywanie podanych komunikatów portali podczas pełnego pobrania i odświeżania ceny; archiwizacja zamiast MISSING_PRICE lub nadpisania danych.
+- [x] Wspólne rozpoznawanie komunikatów, zachowanie zapisanych danych, obsługa ofert wygasłych przed importem w kolejce; instrukcja uzupełniona.
+- [x] Testy komunikatów HTML, cen rekomendacji, braku ceny, skryptów/komentarzy i niezaimportowanych ofert (10 zaliczonych).
+- [x] Pełne testy: 364 zaliczone, 7 pominiętych, bez błędów; typecheck i build wszystkich pakietów poprawne. Dodatkowy test PostgreSQL zaliczony w tymczasowych tabelach: zachowanie danych, dopasowanie po URL starszego ID, izolacja źródeł i idempotencja. API wdrożone lokalnie, health HTTP 200.
+- [x] Zmiany przygotowane do commitu i push na main. W lokalnej bazie brak obu wskazanych identyfikatorów; ich statusów nie zmieniono. Po wdrożeniu w bazie zawierającej te rekordy wymagane odświeżenie ofert.
+
 ## Cena pakietu mieszkanie + garaż + komórka (2026-09-17)
 
 - [x] Zakres: wspólny parser dopłat dla wszystkich portali; cena całego pakietu nie może nadpisywać dopłat ani zwiększać ponownie podstawy raty.

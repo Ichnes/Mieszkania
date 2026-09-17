@@ -15,12 +15,18 @@ import { geocodeListing } from "../../services/geography/geocoding";
 import { downloadListingMedia } from "../../services/media/media-downloader";
 import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomStorage } from "../otodom/otodom-storage";
+import {
+  archiveUnavailableListing,
+  isUnavailableListingDocument,
+  ListingUnavailableBeforeImportError,
+} from "../../services/listings/listing-archive";
 import type { ParsedListing, SourceListingReference } from "../types";
 
 const sourceKey = "maxon";
 
 export class MaxonCollector {
   private readonly storage = new OtodomStorage();
+  constructor(private readonly archiveUnavailable = archiveUnavailableListing) {}
 
   async collectOne(
     url: string,
@@ -115,7 +121,10 @@ export class MaxonCollector {
         const item = batch[index];
         if (result.status === "fulfilled") {
           completed += 1;
-          await completeListingImport(item.id);
+          await completeListingImport(item.id, { unavailableBeforeImport: false });
+        } else if (result.reason instanceof ListingUnavailableBeforeImportError) {
+          completed += 1;
+          await completeListingImport(item.id, { unavailableBeforeImport: true });
         } else {
           failed += 1;
           const error = result.reason instanceof Error ? result.reason.message : "unknown error";
@@ -152,6 +161,13 @@ export class MaxonCollector {
   ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
     let rendered = isPriceOnlyRefresh ? await fetchStaticPage(url) : await fetchRenderedPage(url);
+    const unavailable = await this.archiveUnavailable({
+      sourceKey,
+      externalId,
+      url,
+      html: rendered.html,
+    });
+    if (unavailable) return unavailable;
     // Queue rows are keyed by the ID that owns the existing listing. Some old
     // Maxon records predate numeric OfferId discovery and use a URL hash. During
     // refresh we must update that exact record instead of silently creating a
@@ -162,6 +178,13 @@ export class MaxonCollector {
     let parsed = parseListing(url, rendered.html, rendered.text, storedExternalId);
     if (isPriceOnlyRefresh && !parsed.priceAmount) {
       rendered = await fetchRenderedPage(url, { mode: "price_only" });
+      const unavailable = await this.archiveUnavailable({
+        sourceKey,
+        externalId,
+        url,
+        html: rendered.html,
+      });
+      if (unavailable) return unavailable;
       parsed = parseListing(url, rendered.html, rendered.text, storedExternalId);
     }
     if (!parsed.priceAmount) throw new Error(`MISSING_PRICE: ${parsed.externalId} (${url})`);
@@ -293,7 +316,7 @@ async function fetchRenderedPage(url: string, options?: { mode?: "full" | "price
   }
 }
 
-function parseListing(
+export function parseListing(
   url: string,
   html: string,
   visibleText: string,
@@ -348,9 +371,7 @@ function parseListing(
     publishedAt: publishedAt ?? undefined,
     marketType: /Rynek:\s*wtórny/i.test(visibleText) ? "secondary" : "primary",
     offerType: "sale",
-    status: /og[łl]oszenie archiwalne/i.test(`${title} ${description} ${visibleText}`)
-      ? "removed"
-      : "active",
+    status: isUnavailableListingDocument({ url, html, statusCode: 200 }) ? "removed" : "active",
     images: images.map((sourceUrl, position) => ({
       sourceUrl,
       position,

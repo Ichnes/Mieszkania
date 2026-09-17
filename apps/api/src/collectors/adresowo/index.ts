@@ -18,12 +18,18 @@ import { geocodeListing } from "../../services/geography/geocoding";
 import { downloadListingMedia } from "../../services/media/media-downloader";
 import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomStorage } from "../otodom/otodom-storage";
+import {
+  archiveUnavailableListing,
+  isUnavailableListingDocument,
+  ListingUnavailableBeforeImportError,
+} from "../../services/listings/listing-archive";
 import type { ParsedListing, SourceListingReference } from "../types";
 
 const sourceKey = "adresowo";
 
 export class AdresowoCollector {
   private readonly storage = new OtodomStorage();
+  constructor(private readonly archiveUnavailable = archiveUnavailableListing) {}
 
   async collectOne(
     url: string,
@@ -118,7 +124,10 @@ export class AdresowoCollector {
           item = batch[index];
         if (result.status === "fulfilled") {
           completed += 1;
-          await completeListingImport(item.id);
+          await completeListingImport(item.id, { unavailableBeforeImport: false });
+        } else if (result.reason instanceof ListingUnavailableBeforeImportError) {
+          completed += 1;
+          await completeListingImport(item.id, { unavailableBeforeImport: true });
         } else {
           failed += 1;
           const error = result.reason instanceof Error ? result.reason.message : "unknown error";
@@ -199,6 +208,13 @@ export class AdresowoCollector {
         page = await fetchRenderedPage(url);
       }
     }
+    const unavailable = await this.archiveUnavailable({
+      sourceKey,
+      externalId,
+      url,
+      html: page.html,
+    });
+    if (unavailable) return unavailable;
     const parsed = parseListing(url, page.html, page.text, externalId);
     if (!parsed.priceAmount && parsed.status !== "removed")
       throw new Error(`MISSING_PRICE: ${externalId} (${url})`);
@@ -395,7 +411,7 @@ async function fetchRenderedPage(url: string) {
   }
 }
 
-function parseListing(
+export function parseListing(
   url: string,
   html: string,
   visibleText: string,
@@ -462,9 +478,7 @@ function parseListing(
     publishedAt,
     marketType: /deweloper|rynek pierwotny/i.test(text) ? "primary" : "secondary",
     offerType: "sale",
-    status: /ogłoszenie (?:jest )?nieaktualne|oferta nieaktualna/i.test(text)
-      ? "removed"
-      : "active",
+    status: isUnavailableListingDocument({ url, html, statusCode: 200 }) ? "removed" : "active",
     images: normalizedImages.map((sourceUrl, position) => ({
       sourceUrl,
       position,

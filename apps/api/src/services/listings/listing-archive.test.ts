@@ -15,6 +15,10 @@ test("active ad ignores archive translations in scripts, attributes and comments
 test("real archive text and HTTP gone responses remain unavailable", () => {
   for (const [statusCode, html] of [
     [200, "<h1>To ogłoszenie <span>nie jest już dostępne</span></h1>"],
+    [200, '<p class="text-rose-800">Ogłoszenie&nbsp;usunięte</p>'],
+    [200, "<h1>OFERTA NIEAKTUALNA</h1>"],
+    [200, "<h4>Poszukiwana oferta 64681/MS/MAX nie jest już aktualna.</h4>"],
+    [200, "<p>Ogłoszenie zostało usunięte</p>"],
     [404, ""],
     [410, ""],
   ] as const)

@@ -234,6 +234,13 @@ już dostępne” lub HTTP 404/410 oznacza niedostępne ogłoszenie: istniejąca
 jest archiwizowana, a wpis kolejki kończy się bez błędu importu.
 Jeśli również przeglądarka odmawia dostępu, kolejka nadal pokazuje błąd.
 
+Adresowo: komunikat **Ogłoszenie usunięte** oznacza ofertę archiwalną.
+Maxon: tak samo traktujemy **OFERTA NIEAKTUALNA** oraz komunikat
+„Poszukiwana oferta … nie jest już aktualna”. Pełne pobranie danych i odświeżenie
+ceny archiwizują istniejącą ofertę, zachowując ostatnią cenę, opis i zdjęcia.
+Brak ceny na takiej stronie nie jest błędem importu. Jeśli oferta wygasła jeszcze
+przed pierwszym importem, kolejka kończy wpis jako niedostępny bez tworzenia oferty.
+
 Cena opisana jako „Mieszkanie z miejscem garażowym: 1 680 000 PLN” oznacza
 garaż w cenie mieszkania i nie jest ponownie doliczana do kosztu zakupu.
 Dotyczy to również zapisów „Mieszkanie + garaż + komórka” i ceny łącznej pakietu.

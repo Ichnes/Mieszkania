@@ -47,6 +47,9 @@ export function isUnavailableListingDocument(document: FetchedListingDocument) {
     .replace(/[łŁ]/g, "l")
     .toLowerCase();
   return (
+    /\bogloszenie\s+(?:(?:jest|zostalo)\s+)?(?:usuniete|nieaktualne)\b/.test(normalizedHtml) ||
+    /\boferta\s+(?:jest\s+)?nieaktualna\b/.test(normalizedHtml) ||
+    /\bposzukiwana oferta\s+[^.!?]{1,80}\s+nie jest juz aktualna\b/.test(normalizedHtml) ||
     normalizedHtml.includes("ogloszenie archiwalne") ||
     normalizedHtml.includes("ogłoszenie jest już nieaktualne") ||
     normalizedHtml.includes("ogloszenie jest juz nieaktualne") ||
@@ -59,6 +62,36 @@ export function isUnavailableListingDocument(document: FetchedListingDocument) {
     normalizedHtml.includes("this ad is no longer available") ||
     normalizedHtml.includes("ad is no longer available")
   );
+}
+
+export class ListingUnavailableBeforeImportError extends Error {
+  constructor(url: string) {
+    super(`LISTING_UNAVAILABLE_BEFORE_IMPORT: ${url}`);
+    this.name = "ListingUnavailableBeforeImportError";
+  }
+}
+
+// Archive only the status: unavailable pages may contain no facts, or prices/photos
+// of recommended offers. Never replace the last saved snapshot with that content.
+export async function archiveUnavailableListing(
+  input: { sourceKey: string; externalId: string; url: string; html: string },
+  archive = markListingArchived,
+) {
+  if (!isUnavailableListingDocument({ url: input.url, html: input.html, statusCode: 200 }))
+    return undefined;
+  const result = await archive({
+    sourceKey: input.sourceKey,
+    externalId: input.externalId,
+    canonicalUrl: input.url,
+    reason: "Portal oznaczył ofertę jako usuniętą lub nieaktualną",
+  });
+  if (!result) throw new ListingUnavailableBeforeImportError(input.url);
+  return {
+    listingId: result.listingId,
+    snapshotId: "",
+    action: "updated" as const,
+    mediaAssets: [],
+  };
 }
 
 export async function markListingArchivedWithDb(
