@@ -18,13 +18,17 @@ export function getDreamDescriptionFacts(text: string) {
   const countertopPoints = getCountertopPoints(text);
   const multipleParkingPattern =
     /\b(?:(?:[2-9]|[1-9]\d+|dwa|dwie|dwoch|dwoma|trzy|trzech|cztery|czterech|piec|pieciu|szesc|szesciu)\s+(?:(?:prywatn\w*|wlasn\w*|niezalezn\w*|naziemn\w*|zewnetrzn\w*|przynalezn\w*|dodatkow\w*)\s+){0,3}(?:miejsc\w*|stanowisk\w*)\s+(?:parkingow\w*|postojow\w*|garazow\w*|w\s+(?:garaz\w*|hali\w*))|(?:miejsc\w*|stanowisk\w*)\s+(?:parkingow\w*|postojow\w*|garazow\w*)\s*[:–-]?\s*(?:[2-9]|[1-9]\d+)|garaz\w*\s+(?:dwustanowiskow\w*|na\s+(?:[2-9]|dwa|trzy|cztery)\s+(?:aut\w*|samochod\w*))|dwustanowiskow\w*\s+garaz\w*)\b/;
-  const multipleParking = hasPositiveDescriptionFact(text, multipleParkingPattern);
+  const parkingText = text
+    .split(/[.!?;\n]/)
+    .filter((clause) => !/\bdla\s+gosci\b/.test(clause))
+    .join(". ");
+  const multipleParking = hasPositiveDescriptionFact(parkingText, multipleParkingPattern);
   // Keep the recurring cost tied to parking, not a rent mentioned elsewhere.
   const rentalPattern =
     /\b(?:(?:wynajm\w*|najm\w*|najem|dzierzaw\w*)\b[^.!?;\n]{0,90}?\bmiejsc\w*\s+(?:postojow\w*|parkingow\w*|garazow\w*)|miejsc\w*\s+(?:postojow\w*|parkingow\w*|garazow\w*)\b[^.!?;\n]{0,100}?\b(?:wynajm\w*|najm\w*|najem|dzierzaw\w*|miesieczn\w*|co\s+miesiac|za\s+miesiac|zl\s*\/\s*mies\w*))\b/;
   const rentedMultipleParking =
     multipleParking &&
-    text
+    parkingText
       .split(/[.!?;\n]/)
       .some(
         (clause) =>

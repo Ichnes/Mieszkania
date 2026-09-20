@@ -329,6 +329,7 @@ export function parseListing(
     /<div[^>]+class=["'][^"']*description_cnt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
   );
   const address =
+    firstText(html, /<h1\b[^>]*>[\s\S]*?<\/h1>\s*<h2\b[^>]*>([\s\S]*?)<\/h2>/i) ??
     firstText(html, /<[^>]+class=["'][^"']*(?:address|location)[^"']*["'][^>]*>([\s\S]*?)<\//i) ??
     "Warszawa";
   const details = {
@@ -361,6 +362,9 @@ export function parseListing(
     description: description || undefined,
     city: "Warszawa",
     district,
+    street: strip(address)
+      .match(/\bul\.?\s+([^,]+)/i)?.[1]
+      ?.trim(),
     addressText: strip(address),
     sourceContactPhone: phone,
     priceAmount: details.price,

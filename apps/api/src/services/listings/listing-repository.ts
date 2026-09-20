@@ -2431,7 +2431,13 @@ function inferAmenities(description: string) {
   const airConditioningPattern = /\b(?:klimatyzacj\w*|klimatyzowan\w*)\b/g;
   const isGuestOnly = (match: RegExpMatchArray) =>
     /\bdla\s+gosci\b/.test(
-      text.slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 45).split(/[.!?;]/)[0],
+      (text
+        .slice(0, match.index ?? 0)
+        .split(/[.!?;\n]/)
+        .at(-1) ?? "") +
+        text
+          .slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 45)
+          .split(/[.!?;\n]/)[0],
     );
   const garageMatches = [...text.matchAll(garagePattern)].filter((match) => !isGuestOnly(match));
   const storageMatches = [...text.matchAll(storagePattern)];

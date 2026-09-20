@@ -108,6 +108,7 @@ export function extractStreetFromLocationTitle(title: string, district?: string,
     return undefined;
 
   const normalizedCandidate = normalizePolish(candidate);
+  if (/^(?:cisza|zielen|spokoj|cicho|ciche|sloneczne)$/.test(normalizedCandidate)) return undefined;
   const excludedLocations = [district, city, "Warszawa", "Polska"]
     .filter((value): value is string => Boolean(value))
     .map(normalizePolish);

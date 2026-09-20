@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Maxon: Cybernetyki i miejsca dla gości (2026-09-20)
+
+- [x] Zakres: adres z nagłówka h2 Maxona zamiast reklamowej końcówki tytułu; „cisza” odrzucona jako ulica.
+- [x] „Dla gości przewidziano dodatkowo 7 miejsc postojowych” nie zwiększa liczby miejsc mieszkania ani premii za wiele miejsc. Zachowano osobne prywatne miejsca.
+- [x] Regresje obu zgłoszeń i kolejności wzmianki o gościach; 366 testów zaliczonych, 7 środowiskowych pominiętych. Typecheck i build kontenerów poprawne; lokalna aplikacja przebudowana.
+- [x] We właściwej bazie API zapisano „Cybernetyki, Mokotów, Warszawa” i ponownie ustalono współrzędne ulicy. Rzeczywisty opis drugiej oferty zwraca garaż bez liczby 7; premia za wiele miejsc jest wyłączona.
+- [x] Prace zakończone; zmiany przygotowane do commitu i push na bieżącej gałęzi. Brak pozostałych prac implementacyjnych.
+
 ## Weryfikacja właściwej bazy aplikacji (2026-09-17)
 
 - [x] Korekta wcześniejszej diagnozy: kontener `db` nie jest bazą używaną przez działające API. Przed diagnostyką danych należy sprawdzać je przez rzeczywiste `DATABASE_URL` procesu API, bez wypisywania danych dostępowych.
