@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Ocena zdjęć mieszkań — rozpoznanie (2026-09-22)
+
+- [x] Zakres: rozpoznanie możliwości oceny widocznego standardu i stanu mieszkania ze zdjęć przy ograniczonym zużyciu tokenów.
+- [x] Zweryfikowano istniejący odczyt zdjęć (również ofert scalonych), oznaczenie rzutów, lokalne pliki i generowanie miniatur przez sharp. Obecna ocena wykończenia bazuje na opisie; brak konfiguracji dostawcy AI w API.
+- [x] Propozycja: maksymalnie 4–6 zdjęć, osobna ocena standardu i widocznego stanu, możliwość braku oceny, krótkie uzasadnienie, zapis wyniku według zdjęć i wersji analizy; ręczny start oraz limit kosztu dla wariantu API.
+- [ ] Wybór wariantu przez użytkownika: API, model lokalny lub samo omówienie. Implementacja i pomiar jakości/kosztu na próbce pozostają do wykonania; nie uruchomiono płatnej analizy.
+
+
 ## Maxon: Cybernetyki i miejsca dla gości (2026-09-20)
 
 - [x] Zakres: adres z nagłówka h2 Maxona zamiast reklamowej końcówki tytułu; „cisza” odrzucona jako ulica.
