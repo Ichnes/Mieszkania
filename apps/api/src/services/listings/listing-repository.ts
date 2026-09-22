@@ -43,6 +43,7 @@ import {
   getMediaResponsePath,
 } from "../media/image-repository";
 import { getFamilySettings } from "../settings/family-settings";
+import { getAiAssessments } from "./ai-assessment-repository";
 import { inferBuildingDetails } from "./listing-description-facts";
 import { extractParkingSpaceCount } from "./parking-count";
 import { getSavedPortalBuildingFacts } from "./portal-building-facts";
@@ -564,7 +565,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       return null;
     }
 
-    const [images, priceHistoryResult, viewing, contactHistory, relatedListings] =
+    const [images, priceHistoryResult, viewing, contactHistory, relatedListings, aiAssessments] =
       await Promise.all([
         getListingImages(row.id),
         db.query<PriceEventRow>(
@@ -579,6 +580,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         getListingViewing(listingId),
         listListingContactEvents(db, listingId),
         getRelatedListings(listingId),
+        getAiAssessments([listingId]),
       ]);
 
     const resolvedImages = images
@@ -608,6 +610,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     );
     return {
       ...detail,
+      aiAssessment: aiAssessments.get(listingId),
       canonicalUrl: row.canonical_url,
       sourceContactPhone,
       floorPlanImageUrls: resolvedImages
@@ -1077,6 +1080,7 @@ async function getListingsPageByScope(
       getListingImagesForListings(listingIds),
     ]);
 
+    const aiAssessments = await getAiAssessments(pageRows.map((row) => row.id));
     const items = pageRows.map((row, index) => {
       const images = imagesByListingId.get(row.id) ?? [];
       const resolvedImages = images
@@ -1103,6 +1107,11 @@ async function getListingsPageByScope(
         relatedCounts.get(row.id) ?? 0,
         0,
       );
+      const assessment = aiAssessments.get(row.id);
+      if (assessment) {
+        const { score, coverage, confidence, evaluatedAt } = assessment;
+        item.aiAssessment = { score, coverage, confidence, evaluatedAt };
+      }
       return isDreamSort ? { ...item, dreamScore: dreamScores.get(row.id) } : item;
     });
 

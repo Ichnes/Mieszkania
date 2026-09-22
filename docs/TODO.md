@@ -1,11 +1,22 @@
 # Bieżące zadania
 
+## Ocena AI — eksperyment wstrzymany przez użytkownika (2026-09-22)
+
+- [x] Zakres: 10 najlepszych aktywnych ofert według „Wymarzone mieszkanie”, zakładka „Ocena AI” i wynik obok obecnego kółka na kartach ofert.
+- [x] Uzgodniono delegowanie samej analizy do GPT-6 Luna; bez płatnego API. Wagi: lokalizacja 25%, cena 20%, stan 20%, układ 15%, budynek 10%, światło/przestrzeń zewnętrzna 10%.
+- [x] Zapis 10 ocen, walidacja importu i jawne braki danych; Luna obejrzała 60 zdjęć/rzutów. Ponowny import nie nadpisuje wyników; odczyt API potwierdzony.
+- [x] 370 testów zaliczonych, 7 pominiętych; typecheck/build poprawne. Kontrola UI 1440/1280/390/320 px: kółka, zakładka, pusty stan i brak przepełnienia. Ostatnia korekta przewijania ma poprawny build, bez ponownej kontroli wizualnej przed zatrzymaniem.
+- [x] Użytkownik odrzucił jakość analizy: nadmierny wpływ opisu, zbyt powierzchowna ocena zdjęć, błędne podejrzenia wizualizacji. Przerwano dalszą analizę; istniejące dane i UI pozostają.
+- [x] Zapisano [handoff i wnioski](ai-photo-review-handoff.md) oraz [skill](../skills/apartment-photo-review/SKILL.md). Nie wznawiać automatycznie.
+- [x] Skill zainstalowany w globalnym katalogu Codex; walidator skill-creator zakończony poprawnie, zgodność kopii z repozytorium potwierdzona.
+- [ ] Dopiero po nowym zleceniu: pilot oceny wyłącznie zdjęć, kalibracja jakości/modelu i ewentualna zmiana istniejących wyników.
+
 ## Ocena zdjęć mieszkań — rozpoznanie (2026-09-22)
 
 - [x] Zakres: rozpoznanie możliwości oceny widocznego standardu i stanu mieszkania ze zdjęć przy ograniczonym zużyciu tokenów.
 - [x] Zweryfikowano istniejący odczyt zdjęć (również ofert scalonych), oznaczenie rzutów, lokalne pliki i generowanie miniatur przez sharp. Obecna ocena wykończenia bazuje na opisie; brak konfiguracji dostawcy AI w API.
 - [x] Propozycja: maksymalnie 4–6 zdjęć, osobna ocena standardu i widocznego stanu, możliwość braku oceny, krótkie uzasadnienie, zapis wyniku według zdjęć i wersji analizy; ręczny start oraz limit kosztu dla wariantu API.
-- [ ] Wybór wariantu przez użytkownika: API, model lokalny lub samo omówienie. Implementacja i pomiar jakości/kosztu na próbce pozostają do wykonania; nie uruchomiono płatnej analizy.
+- [x] Dalsza decyzja: pilot w Codex z GPT-6 Luna bez API modelu. Po próbie użytkownik wstrzymał eksperyment; aktualny stan i przyczyny zapisano powyżej.
 
 
 ## Maxon: Cybernetyki i miejsca dla gości (2026-09-20)

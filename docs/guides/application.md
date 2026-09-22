@@ -22,11 +22,44 @@ zapisanych ustawień (baza i lokalna kopia family-settings).
 
 ## Punktacja wymarzonego mieszkania
 
+### Dodatkowa ocena AI
+
+Eksperyment jest **wstrzymany na prośbę użytkownika**. Istniejące wyniki pozostają
+w aplikacji, ale ich jakość nie została zaakceptowana. Wnioski i warunki powrotu
+opisuje [notatka z eksperymentu](../ai-photo-review-handoff.md).
+
+W szczegółach oferty zakładka **Ocena AI** znajduje się między **Ocena** i **Duplikaty**.
+Jeżeli mieszkanie ma zapisaną analizę, na jego karcie po prawej stronie dotychczasowego
+kółka dopasowania pojawia się fioletowe kółko **AI** z wynikiem 0–100. Oferty bez zdjęcia
+pokazują ocenę tekstowo. Brak analizy ma osobny komunikat w zakładce; nie jest oceną zero.
+
+Analiza zawiera uzasadnienie, mocne i słabsze strony, pytania na oględziny, datę,
+model i liczbę analizowanych zdjęć/rzutów. Oceny cząstkowe mają stałe wagi:
+lokalizacja 25%, cena i koszty 20%, stan i wykończenie 20%, układ 15%,
+budynek 10%, światło i przestrzeń zewnętrzna 10%.
+Wynik liczy aplikacja, nie model. Kryterium bez danych jest pomijane w średniej;
+**pokrycie kryteriów** pokazuje sumę ocenionych wag, a **pewność** wiarygodność podstaw oceny.
+Wyniki o różnym pokryciu lub niskiej pewności wymagają ostrożnego porównania.
+
+Oceny AI nie zmieniają sortowania „Wymarzone mieszkanie”. Są zapisanym stanem
+z dnia analizy: otwieranie stron nie wysyła zdjęć do modelu, nie zużywa kredytów
+i nie odświeża oceny. Zmiana ceny od analizy ma ostrzeżenie; aktualizacja opisu,
+zdjęć lub preferencji również wymaga nowej weryfikacji.
+Pierwsza partia obejmuje 10 najlepszych aktywnych ofert według tego sortowania,
+bez dodatkowych filtrów, maksymalnie 6 zdjęć/rzutów na ofertę.
+
+Ta wersja ocenia lokalizację i cenę na podstawie danych oferty oraz preferencji;
+nie weryfikuje tras, hałasu ani wyceny rynkowej. Materiały poglądowe i deklaracje
+sprzedawcy są oznaczane w uzasadnieniach. Przygotowanie/import partii opisuje
+[instrukcja utrzymania](maintenance.md#oceny-ai-bez-wywołań-api-modelu).
+
+### Zasady dotychczasowej punktacji
+
 Lista, ekran startowy i szczegóły nie porównują automatycznie ofert z RCN ani
 nie pobierają pobliskich transakcji. Import i zapisane dane RCN pozostają dostępne
 osobno; nie są potrzebne do przeglądania ani oceny mieszkań.
 
-W szczegółach oferty otwórz czwartą zakładkę **Ocena**. Tabela pokazuje każde
+W szczegółach oferty otwórz zakładkę **Ocena**. Tabela pokazuje każde
 kryterium, zdobyte punkty, jego udział w mianowniku oraz dane/powód oceny.
 Punkty możliwe to stała suma maksimów wszystkich aktywnych kryteriów dla danych
 preferencji, identyczna dla każdej oferty. Brak danych nie usuwa kryterium z mianownika.

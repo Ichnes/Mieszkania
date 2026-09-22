@@ -26,6 +26,7 @@ import {
   RefreshCw,
   RotateCcw,
   Star,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -52,6 +53,7 @@ import { SunExposureCompass } from "./SunExposureCompass";
 import { ExposureFilterCompass } from "../../statistics/ExposureFilterCompass";
 import { ListingOfferNavigation, type OfferNavigation } from "./ListingOfferNavigation";
 import { ListingScorePanel } from "./ListingScorePanel";
+import { ListingAiAssessment } from "./ListingAiAssessment";
 
 export function ListingDetailPanel(input: {
   settings: FamilySettings;
@@ -177,7 +179,7 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features" | "score" | "duplicates"
+    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
@@ -671,6 +673,13 @@ export function ListingDetailPanel(input: {
                 <Star size={16} aria-hidden="true" /> <span>Ocena</span>
               </button>
               <button
+                className={tabClass(activeDetailTab === "ai")}
+                type="button"
+                onClick={() => setActiveDetailTab("ai")}
+              >
+                <Sparkles size={16} aria-hidden="true" /> <span>Ocena AI</span>
+              </button>
+              <button
                 className={tabClass(activeDetailTab === "duplicates")}
                 type="button"
                 onClick={() => setActiveDetailTab("duplicates")}
@@ -679,6 +688,12 @@ export function ListingDetailPanel(input: {
                 <span>Duplikaty ({input.listing.relatedListings.length})</span>
               </button>
             </div>
+            {activeDetailTab === "ai" && (
+              <ListingAiAssessment
+                assessment={input.listing.aiAssessment}
+                currentPrice={input.listing.totalAcquisitionPrice}
+              />
+            )}
             {activeDetailTab === "duplicates" && (
               <section
                 className="detail-tab-section detail-duplicates"

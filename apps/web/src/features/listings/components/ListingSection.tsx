@@ -75,7 +75,7 @@ export function ListingSection(input: {
                       </div>
                     ) : null}
                   </div>
-                  {typeof listing.dreamScore === "number" ? (
+                  {typeof listing.dreamScore === "number" || listing.aiAssessment ? (
                     <div className="listing-bottom-left-stack">
                       {typeof listing.dreamScore === "number" ? (
                         <span
@@ -85,6 +85,16 @@ export function ListingSection(input: {
                           <strong>{listing.dreamScore}%</strong>
                         </span>
                       ) : null}
+                      {listing.aiAssessment && (
+                        <span
+                          className="listing-ai-chip"
+                          aria-label={`Ocena AI: ${listing.aiAssessment.score ?? "brak danych"} na 100`}
+                          title={`Ocena AI · Pokrycie ${listing.aiAssessment.coverage}% · ${new Date(listing.aiAssessment.evaluatedAt).toLocaleDateString("pl-PL")}`}
+                        >
+                          <small>AI</small>
+                          <strong>{listing.aiAssessment.score ?? "—"}</strong>
+                        </span>
+                      )}
                     </div>
                   ) : null}
                   <div className="listing-status-group">
@@ -135,6 +145,11 @@ export function ListingSection(input: {
                 </div>
               ) : null}
               <div className="listing-card-content">
+                {!listing.thumbnailUrl && listing.aiAssessment && (
+                  <span className="listing-ai-inline">
+                    Ocena AI: {listing.aiAssessment.score ?? "brak danych"}/100
+                  </span>
+                )}
                 <div className="listing-topline">
                   <span>{listing.city}</span>
                   <span

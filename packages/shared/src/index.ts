@@ -1,4 +1,6 @@
 import type { ExposureDirection } from "./sun-exposure.js";
+import type { AiAssessment, AiAssessmentSummary } from "./ai-assessment.js";
+export * from "./ai-assessment.js";
 export type DashboardStat = {
   label: string;
   value: string;
@@ -430,6 +432,7 @@ export type ListingSummary = {
   decisionStage?: ListingDecisionStage;
   rankingScore?: number;
   dreamScore?: number;
+  aiAssessment?: AiAssessmentSummary;
   viewingScheduledAt?: string;
   viewingStatus?: ListingViewingStatus;
   relatedCount?: number;
@@ -462,6 +465,7 @@ export type RcnComparableTransaction = {
 export { getDreamDescriptionFacts } from "./dream-description.js";
 
 export type ListingDetail = ListingSummary & {
+  aiAssessment?: AiAssessment;
   floorPlanImageUrls?: string[];
   canonicalUrl?: string;
   sourceContactPhone?: string;
