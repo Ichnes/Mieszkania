@@ -1,4 +1,17 @@
 /* Aligned comparison columns; horizontal scrolling stays inside the table. */
+.comparison-issues {
+  display: block;
+}
+.comparison-issues ul {
+  padding-left: 20px;
+}
+.comparison-issues li {
+  margin: 12px 0;
+}
+.comparison-issues li .action-button {
+  margin: 8px;
+  white-space: normal;
+}
 .comparison-page,
 .import-page {
   min-width: 0;

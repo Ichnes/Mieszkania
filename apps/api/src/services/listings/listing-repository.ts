@@ -165,8 +165,13 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
   return page.items;
 }
 
-export async function getListingsPage(filters: ListingFilters = {}): Promise<ListingsPage> {
-  return getListingsPageByScope("region", filters);
+export type ListingsTimingObserver = (phase: string, durationMs: number) => void;
+
+export async function getListingsPage(
+  filters: ListingFilters = {},
+  onTiming?: ListingsTimingObserver,
+): Promise<ListingsPage> {
+  return getListingsPageByScope("region", filters, onTiming);
 }
 
 export async function getMapListings() {
@@ -811,8 +816,17 @@ export async function getListingInsights(listingId: string, force = false) {
 async function getListingsPageByScope(
   scope: "region" | "all",
   filters: ListingFilters,
+  onTiming?: ListingsTimingObserver,
 ): Promise<ListingsPage> {
+  let phaseStart = performance.now();
+  const measure = (phase: string) => {
+    if (!onTiming) return;
+    const now = performance.now();
+    onTiming(phase, now - phaseStart);
+    phaseStart = now;
+  };
   const settings = await getFamilySettings();
+  measure("settings");
   const minimumVisibleArea = settings.searchContract.minArea;
   const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
@@ -960,6 +974,7 @@ async function getListingsPageByScope(
       values,
     );
 
+    measure("count-query-and-filters");
     const total = Number(totalResult.rows[0]?.total ?? "0");
     const page = Math.max(1, filters.page ?? 1);
     const pageSize = Math.max(1, Math.min(filters.pageSize ?? 30, 5000));
@@ -1045,9 +1060,11 @@ async function getListingsPageByScope(
     );
 
     // Score all candidates before pagination, but enrich only the visible page.
+    measure("candidates-query");
     // Photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
     let pageRows = listingsResult.rows.map(decodeListingRow);
+    measure("decode-rows");
     // Price changes must be available before global scoring and pagination.
     const priceEventsResult = await db.query<PriceEventRow>(
       `
@@ -1061,6 +1078,7 @@ async function getListingsPageByScope(
       [pageRows.map((row) => row.id)],
     );
     const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
+    measure("price-events-query");
     const dreamScores = new Map<string, number>();
     if (isDreamSort) {
       for (const row of pageRows) {
@@ -1074,6 +1092,7 @@ async function getListingsPageByScope(
         )
         .slice(offset, offset + pageSize);
     }
+    measure("score-and-sort");
     const listingIds = pageRows.map((row) => row.id);
     const [relatedCounts, imagesByListingId] = await Promise.all([
       getRelatedCounts(listingIds),
@@ -1081,6 +1100,7 @@ async function getListingsPageByScope(
     ]);
 
     const aiAssessments = await getAiAssessments(pageRows.map((row) => row.id));
+    measure("media-related-and-ai");
     const items = pageRows.map((row, index) => {
       const images = imagesByListingId.get(row.id) ?? [];
       const resolvedImages = images
@@ -1115,10 +1135,8 @@ async function getListingsPageByScope(
       return isDreamSort ? { ...item, dreamScore: dreamScores.get(row.id) } : item;
     });
 
-    return {
-      total,
-      items,
-    };
+    measure("page-summaries");
+    return { total, items };
   });
 }
 

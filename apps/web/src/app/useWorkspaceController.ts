@@ -21,6 +21,8 @@ import type {
 } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
 import { resolveCompareListings } from "../features/compare/lib/selection";
+import { useComparison } from "../features/compare/useComparison";
+import { createLatestRequest } from "../shared/lib/latest-request";
 import { DuplicateGroupOverview } from "../features/duplicates/types";
 import { isGratkaUrl, resolveCollectorEndpoint } from "../features/imports/lib/portals";
 import { getNextQueueAttemptAt } from "../features/imports/lib/queue";
@@ -47,11 +49,26 @@ export function useWorkspaceController() {
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const { activeTab, setActiveTab, location, navigate } = useAppRoute();
   const [filters, setFilters] = useState<ListingFilters>(initialListingsSession.filters);
+  const [appliedFilters, setAppliedFilters] = useState(initialListingsSession.filters);
+  const [appliedListingSort, setAppliedListingSort] = useState(initialListingsSession.listingSort);
+  const [listingsError, setListingsError] = useState<string | null>(null);
+  const [mapListingsError, setMapListingsError] = useState<string | null>(null);
+  const [listRequests] = useState(createLatestRequest);
+  const [mapRequests] = useState(createLatestRequest);
+  const lastListingsQuery = useRef({
+    filters: initialListingsSession.filters,
+    page: initialListingsSession.currentListingsPage,
+    sort: initialListingsSession.listingSort,
+  });
   const [filtersPanelCollapsed, setFiltersPanelCollapsed] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
-    const saved = window.localStorage.getItem("mieszkania-theme");
-    if (saved === "light" || saved === "dark") return saved;
+    try {
+      const saved = window.localStorage.getItem("mieszkania-theme");
+      if (saved === "light" || saved === "dark") return saved;
+    } catch {
+      /* Storage restrictions must not prevent opening the application. */
+    }
     return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
   });
   const [listingSort, setListingSort] = useState<ListingSortKey>(
@@ -113,8 +130,16 @@ export function useWorkspaceController() {
   );
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsSaveError, setSettingsSaveError] = useState<string | null>(null);
-  const [compareSnapshots, setCompareSnapshots] = useState<ListingSummary[]>([]);
-  const [compareListingIds, setCompareListingIds] = useState<string[]>([]);
+  const {
+    compareSnapshots,
+    setCompareSnapshots,
+    compareListingIds,
+    setCompareListingIds,
+    compareIssues,
+    isLoadingCompare,
+    comparisonStorageAvailable,
+    refreshComparison,
+  } = useComparison(state.status === "ready" && activeTab === "compare");
   const [mediaBackfillError, setMediaBackfillError] = useState<string | null>(null);
   const [isRunningAll, setIsRunningAll] = useState(false);
   const [isRunningGratkaAll, setIsRunningGratkaAll] = useState(false);
@@ -220,12 +245,21 @@ export function useWorkspaceController() {
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
-    window.localStorage.setItem("mieszkania-theme", theme);
+    try {
+      window.localStorage.setItem("mieszkania-theme", theme);
+    } catch {
+      /* Session-only theme. */
+    }
   }, [theme]);
 
   useEffect(() => {
-    writeListingsSession({ activeTab, filters, listingSort, currentListingsPage });
-  }, [activeTab, filters, listingSort, currentListingsPage]);
+    writeListingsSession({
+      activeTab,
+      filters: appliedFilters,
+      listingSort: appliedListingSort,
+      currentListingsPage,
+    });
+  }, [activeTab, appliedFilters, appliedListingSort, currentListingsPage]);
   useScrollSession(state.status === "ready", location.pathname);
   useEffect(() => {
     void loadInitial();
@@ -250,6 +284,8 @@ export function useWorkspaceController() {
       listingRequest.current?.controller.abort();
       offerNavigationRequest.current?.abort();
       duplicateCandidateCache.clear();
+      listRequests.cancel();
+      mapRequests.cancel();
     },
     [],
   );
@@ -388,11 +424,9 @@ export function useWorkspaceController() {
       : 0;
   const dashboardListings = applyDreamProfile(dashboard.listings, settings);
   const visibleListings = applyDreamProfile(filteredListings, settings);
-  const compareListings = resolveCompareListings(
-    compareListingIds,
-    dashboardListings,
-    visibleListings,
-    compareSnapshots,
+  const compareListings = applyDreamProfile(
+    resolveCompareListings(compareListingIds, compareSnapshots),
+    settings,
   );
   const totalListingsPages = Math.max(1, Math.ceil(listingsTotal / listingsPerPage));
   const offerIds = visibleListings.map((listing) => listing.id);
@@ -420,9 +454,9 @@ export function useWorkspaceController() {
           error: offerNavigationError,
         };
   const listingInsights = buildListingInsights(dashboard.stats, dashboardListings);
-  const listingSectionTitle = filters.archivedOnly
+  const listingSectionTitle = appliedFilters.archivedOnly
     ? "Oferty archiwalne"
-    : filters.hiddenOnly
+    : appliedFilters.hiddenOnly
       ? "Ukryte oferty"
       : "Wszystkie oferty";
   const portalQueueRows = [
@@ -478,6 +512,10 @@ export function useWorkspaceController() {
     marketStatsBaseline,
     statsPriceDelta,
     compareListings,
+    compareIssues,
+    isLoadingCompare,
+    comparisonStorageAvailable,
+    refreshComparison,
     removeFromCompare,
     mortgageDraft,
     duplicateGroups,
@@ -555,6 +593,18 @@ export function useWorkspaceController() {
     setMobileFiltersOpen,
     listingSectionTitle,
     filters,
+    appliedFilters,
+    appliedListingSort,
+    hasUnappliedFilters:
+      createListingsQuery(filters, 1, listingSort) !==
+      createListingsQuery(appliedFilters, 1, appliedListingSort),
+    listingsError,
+    retryListings: () =>
+      applyFilters(
+        lastListingsQuery.current.filters,
+        lastListingsQuery.current.page,
+        lastListingsQuery.current.sort,
+      ),
     setFilters,
     applyFilters,
     listingSort,
@@ -573,6 +623,8 @@ export function useWorkspaceController() {
     navigateOffer,
     settings,
     isLoadingMapListings,
+    mapListingsError,
+    loadMapListings,
     selectedListingDuplicateCandidates,
     closeListing,
     setSelectedListing,
@@ -695,43 +747,68 @@ export function useWorkspaceController() {
   }
 
   async function applyFilters(
-    nextFilters = filters,
+    nextFilters = appliedFilters,
     nextPage = currentListingsPage,
-    nextSort = listingSort,
+    nextSort = appliedListingSort,
   ) {
     const shouldScrollToListingTop = nextPage !== currentListingsPage;
-    setIsLoadingListings(true);
-    try {
-      const response = await apiFetch(
-        `${apiBaseUrl}/api/listings?${createListingsQuery(nextFilters, nextPage, nextSort)}`,
-      );
-      if (!response.ok) return;
-      const data = (await response.json()) as ListingsResponse;
-      setFilteredListings(data.items);
-      setListingsTotal(data.total);
-      setFilters(nextFilters);
-      setListingSort(nextSort);
-      setCurrentListingsPage(nextPage);
-      if (shouldScrollToListingTop) {
-        requestAnimationFrame(() => {
-          listingsMainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-    } finally {
-      setIsLoadingListings(false);
-    }
+    lastListingsQuery.current = { filters: nextFilters, page: nextPage, sort: nextSort };
+    await listRequests.run(
+      async (signal) => {
+        const response = await apiFetch(
+          `${apiBaseUrl}/api/listings?${createListingsQuery(nextFilters, nextPage, nextSort)}`,
+          { signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]) },
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return (await response.json()) as ListingsResponse;
+      },
+      {
+        start: () => {
+          setIsLoadingListings(true);
+          setListingsError(null);
+        },
+        success: (data) => {
+          setFilteredListings(data.items);
+          setListingsTotal(data.total);
+          setAppliedFilters(nextFilters);
+          setAppliedListingSort(nextSort);
+          setCurrentListingsPage(nextPage);
+          if (shouldScrollToListingTop)
+            requestAnimationFrame(() => {
+              listingsMainRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+        },
+        error: () =>
+          setListingsError(
+            "Nie udało się odświeżyć ofert. Wyniki i licznik pozostają z ostatniego udanego odczytu.",
+          ),
+        finish: () => setIsLoadingListings(false),
+      },
+    );
   }
 
   async function loadMapListings() {
-    setIsLoadingMapListings(true);
-    try {
-      const response = await apiFetch(`${apiBaseUrl}/api/listings/map`);
-      if (!response.ok) return;
-      const data = (await response.json()) as ListingSummary[];
-      setMapListings(data);
-    } finally {
-      setIsLoadingMapListings(false);
-    }
+    await mapRequests.run(
+      async (signal) => {
+        const response = await apiFetch(`${apiBaseUrl}/api/listings/map`, {
+          signal: AbortSignal.any([signal, AbortSignal.timeout(60_000)]),
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        return (await response.json()) as ListingSummary[];
+      },
+      {
+        start: () => {
+          setIsLoadingMapListings(true);
+          setMapListingsError(null);
+        },
+        success: setMapListings,
+        error: () =>
+          setMapListingsError(
+            "Nie udało się pobrać ofert na mapę. Widoczne wcześniej oferty mogą być nieaktualne; pusta mapa nie oznacza braku ofert.",
+          ),
+        finish: () => setIsLoadingMapListings(false),
+      },
+    );
   }
 
   async function loadDuplicateGroups(limit = 100) {
@@ -775,7 +852,7 @@ export function useWorkspaceController() {
         loadDuplicateGroups(),
         refreshDashboard(),
         loadMapListings(),
-        applyFilters(filters, currentListingsPage, listingSort),
+        applyFilters(appliedFilters, currentListingsPage, appliedListingSort),
         ...(selectedListing ? [openListing(selectedListing.id, false, true)] : []),
       ]);
       return true;
@@ -859,7 +936,7 @@ export function useWorkspaceController() {
       let targetId = step.listingId;
       if (!targetId) {
         const response = await apiFetch(
-          `${apiBaseUrl}/api/listings?${createListingsQuery(filters, step.page, listingSort)}`,
+          `${apiBaseUrl}/api/listings?${createListingsQuery(appliedFilters, step.page, appliedListingSort)}`,
           { signal },
         );
         if (!response.ok) throw new Error("Nie udało się wczytać strony ofert. Spróbuj ponownie.");
@@ -881,6 +958,9 @@ export function useWorkspaceController() {
         setCurrentListingsPage(step.page);
       }
       setSelectedListing(detail);
+      setCompareSnapshots((current) =>
+        current.map((listing) => (listing.id === detail.id ? detail : listing)),
+      );
       setDuplicateError(null);
       void navigate(listingHref(detail.id));
       void loadListingInsights(detail.id, false, signal);
@@ -927,6 +1007,9 @@ export function useWorkspaceController() {
       const detail = (await response.json()) as ListingDetail;
       if (signal.aborted) return;
       setSelectedListing(detail);
+      setCompareSnapshots((current) =>
+        current.map((listing) => (listing.id === detail.id ? detail : listing)),
+      );
       void loadListingInsights(detail.id, false, signal);
       void loadDuplicateCandidates(detail.id, signal);
     } catch (error) {
@@ -1141,6 +1224,9 @@ export function useWorkspaceController() {
       if (!response.ok) return;
       const detail = (await response.json()) as ListingDetail;
       setSelectedListing(detail);
+      setCompareSnapshots((current) =>
+        current.map((listing) => (listing.id === detail.id ? detail : listing)),
+      );
       await Promise.all([
         refreshDashboard(),
         refreshUpcomingViewings(),
@@ -1294,7 +1380,7 @@ export function useWorkspaceController() {
       setListingRefreshConfirmation({ listingId: listing.id, refreshedAt, action: result.action });
       await Promise.all([
         refreshDashboard(),
-        applyFilters(filters, currentListingsPage, listingSort),
+        applyFilters(appliedFilters, currentListingsPage, appliedListingSort),
         openListing(listing.id),
       ]);
     } catch (error) {
@@ -1331,7 +1417,7 @@ export function useWorkspaceController() {
 
       await openListing(selectedListing.id, false, true);
       await refreshDashboard();
-      await applyFilters(filters, currentListingsPage, listingSort);
+      await applyFilters(appliedFilters, currentListingsPage, appliedListingSort);
     } catch (error) {
       setDuplicateError(error instanceof Error ? error.message : "Błąd zapisywania decyzji.");
     } finally {

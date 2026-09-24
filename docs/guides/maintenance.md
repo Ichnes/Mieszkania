@@ -1,5 +1,23 @@
 # Utrzymanie lokalnych danych
 
+## Pomiar czasu listy i rankingu
+
+W działającej instalacji Docker uruchom:
+
+```sh
+docker compose exec -T api node --import tsx apps/api/src/scripts/maintenance/profile-listings.ts
+```
+
+Skrypt korzysta z konfiguracji bazy i plików rzeczywistego API. Nie uruchamia importów
+ani nie zmienia ofert. Odczytuje jedną stronę najnowszych ofert i trzy razy ranking
+„Wymarzone mieszkanie”, po 30 wyników, bez filtrów z przeglądarki.
+Wypisuje czasy w milisekundach, liczebność i etapy: ustawienia, licznik, zapytanie
+kandydatów, dekodowanie, historia cen, ocena/sortowanie, media/powiązania/AI i budowa
+widocznej strony. Nie wypisuje treści ofert, preferencji ani danych dostępowych.
+Pierwszy ranking ma pusty cache punktacji nowego procesu; cache bazy może być już
+rozgrzany. Proces API ma własny cache, więc to pomiar diagnostyczny etapów,
+nie pomiar czasu HTTP. Porównuj wyniki przy podobnym obciążeniu instalacji.
+
 ## Oceny AI bez wywołań API modelu
 
 `npm run ai:prepare -- .local/ai-review` pobiera 10 najlepszych aktywnych ofert

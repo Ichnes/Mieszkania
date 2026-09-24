@@ -17,6 +17,7 @@ import type { WorkspaceState } from "../app/useWorkspaceController";
 import { ListingSection } from "../features/listings/components/ListingSection";
 import { buildPageNumbers, getActiveFilterBadges } from "../features/listings/lib/filters";
 import { stringValue, toOptionalNumber } from "../shared/lib/input";
+import { LoadError } from "../shared/components/LoadError";
 
 export function OffersPage({
   model,
@@ -32,6 +33,11 @@ export function OffersPage({
     | "setMobileFiltersOpen"
     | "listingSectionTitle"
     | "filters"
+    | "appliedFilters"
+    | "appliedListingSort"
+    | "hasUnappliedFilters"
+    | "listingsError"
+    | "retryListings"
     | "setFilters"
     | "applyFilters"
     | "listingSort"
@@ -124,7 +130,7 @@ export function OffersPage({
                           hiddenOnly: undefined,
                         };
                         setFilters(nextFilters);
-                        void applyFilters(nextFilters, 1);
+                        void applyFilters(nextFilters, 1, listingSort);
                       }}
                     >
                       <Star size={16} aria-hidden="true" /> Ulubione
@@ -147,7 +153,7 @@ export function OffersPage({
                           hiddenOnly: undefined,
                         };
                         setFilters(nextFilters);
-                        void applyFilters(nextFilters, 1);
+                        void applyFilters(nextFilters, 1, listingSort);
                       }}
                     >
                       <LayoutGrid size={16} aria-hidden="true" /> Wszystkie
@@ -164,7 +170,7 @@ export function OffersPage({
                           hiddenOnly: true as const,
                         };
                         setFilters(nextFilters);
-                        void applyFilters(nextFilters, 1);
+                        void applyFilters(nextFilters, 1, listingSort);
                       }}
                     >
                       <EyeOff size={16} aria-hidden="true" /> Tylko ukryte
@@ -176,7 +182,7 @@ export function OffersPage({
                   onSubmit={(event) => {
                     event.preventDefault();
                     setMobileFiltersOpen(false);
-                    void applyFilters(filters, 1);
+                    void applyFilters(filters, 1, listingSort);
                   }}
                 >
                   <DistrictFilter
@@ -407,6 +413,7 @@ export function OffersPage({
                       onClick={() => {
                         setFilters(defaultFilters);
                         setListingSort("newest");
+                        void applyFilters(defaultFilters, 1, "newest");
                       }}
                     >
                       Reset
@@ -435,10 +442,22 @@ export function OffersPage({
                 onClick={() => setMobileFiltersOpen(true)}
               >
                 <SlidersHorizontal size={18} aria-hidden="true" /> Filtry
-                {getActiveFilterBadges(filters).length > 0 ? (
-                  <span>{getActiveFilterBadges(filters).length}</span>
+                {getActiveFilterBadges(model.appliedFilters).length > 0 ? (
+                  <span>{getActiveFilterBadges(model.appliedFilters).length}</span>
                 ) : null}
               </button>
+              {model.hasUnappliedFilters && !isLoadingListings ? (
+                <p className="load-feedback" role="status">
+                  Zmieniono ustawienia filtrów. Kliknij „Filtruj”, aby zastosować je do wyników.
+                </p>
+              ) : null}
+              {model.listingsError ? (
+                <LoadError
+                  message={model.listingsError}
+                  onRetry={model.retryListings}
+                  busy={isLoadingListings}
+                />
+              ) : null}
               <ListingSection
                 compareIds={model.compareListingIds}
                 onToggleCompare={model.toggleCompareListing}
@@ -459,7 +478,13 @@ export function OffersPage({
                         className="action-button secondary-button"
                         type="button"
                         disabled={isLoadingListings || currentListingsPage <= 1}
-                        onClick={() => void applyFilters(filters, currentListingsPage - 1)}
+                        onClick={() =>
+                          void applyFilters(
+                            model.appliedFilters,
+                            currentListingsPage - 1,
+                            model.appliedListingSort,
+                          )
+                        }
                       >
                         Poprzednia
                       </button>
@@ -473,7 +498,13 @@ export function OffersPage({
                                 : "tab-button"
                             }
                             type="button"
-                            onClick={() => void applyFilters(filters, pageNumber)}
+                            onClick={() =>
+                              void applyFilters(
+                                model.appliedFilters,
+                                pageNumber,
+                                model.appliedListingSort,
+                              )
+                            }
                             disabled={isLoadingListings}
                           >
                             {pageNumber}
@@ -484,7 +515,13 @@ export function OffersPage({
                         className="action-button secondary-button"
                         type="button"
                         disabled={isLoadingListings || currentListingsPage >= totalListingsPages}
-                        onClick={() => void applyFilters(filters, currentListingsPage + 1)}
+                        onClick={() =>
+                          void applyFilters(
+                            model.appliedFilters,
+                            currentListingsPage + 1,
+                            model.appliedListingSort,
+                          )
+                        }
                       >
                         Nastepna
                       </button>

@@ -1,12 +1,23 @@
 # Bieżące zadania
 
+## Pierwsza iteracja po przeglądzie aplikacji (2026-09-24)
+
+- [x] Zakres przyjęty do realizacji: poprawność odpowiedzi filtrów, osobne ustawienia formularza i wyników, komunikaty błędów listy/mapy, trwały wybór porównania z odczytem aktualnych danych oraz pomiar rankingu.
+- [x] Dodano anulowanie i ochronę przed starszymi odpowiedziami, ponawianie odczytu, trwały zapis identyfikatorów porównania, informację o archiwum/brakujących ofertach i niedostępnym zapisie przeglądarki.
+- [x] Weryfikacja: 378 testów zaliczonych, 7 pominiętych, 0 błędów; typecheck shared/web/API i build poprawne. Końcowe API/web/db healthy po lokalnej przebudowie. Odczyt aktualnych cen i odtworzenie dwóch ofert, brakujący rekord oraz trasy HTTP 200 sprawdzone z rzeczywistym API.
+- [x] Osobna próba funkcji kontrolera: paginacja pomija niedokończony formularz, starsza odpowiedź nie nadpisuje nowszej, HTTP 500 zachowuje wyniki i parametry do ponowienia. Nowe testy obejmują anulowanie, błędy sieci, ponowienie, zapis/odczyt wyboru i blokadę storage.
+- [x] Diagnostyka we właściwym kontenerze API: pierwsze liczenie ocen 8,62 s; kolejne 0,12–0,13 s. Zapytanie kandydatów 2,56–3,76 s. Skrypt i instrukcja pomiaru zapisane; ranking nie był jeszcze optymalizowany.
+- [x] Instrukcje i raport uzupełnione, zmiany sprawdzone i przygotowane do commitu/push na `main`.
+- [ ] Następna iteracja: optymalizacja zapytania kandydatów i pierwszego liczenia cech na podstawie pomiarów; dalsze propozycje porównania, kompletności danych, startu stron i statusów portali pozostają w raporcie.
+- Przegląd wizualny ograniczony: narzędzie nadal nie udostępnia przeglądarki. Nowe komunikaty mają zawijanie tekstu i przycisków na mniejszych ekranach; eksperyment Ocena AI pozostaje wstrzymany.
+
 ## Przegląd aplikacji (2026-09-24)
 
 - [x] Zakres: przegląd kodu głównych przepływów, lokalnych odczytów API i testów; priorytety usprawnień, bez zmian logiki i danych użytkownika.
 - [x] Zapisano [raport i kryteria weryfikacji](review-2026-09-24.md): kolejność odpowiedzi filtrów, błędy listy/mapy, szybkość rankingu, trwałość porównania, niezależne ładowanie stron, kompletność oceny i monitoring portali.
 - [x] Potwierdzono izolowaną reprodukcją nadpisanie nowych filtrów przez starszą odpowiedź. Pomiar rankingu: pierwszy odczyt 11,67 s, kolejne 3,13–3,33 s; najnowsze oferty 0,17–0,19 s, 2945 ofert w wyniku.
 - [x] Weryfikacja: 370 testów zaliczonych, 7 pominiętych, 0 błędów; typecheck shared/web/API poprawny. API dashboard/lista HTTP 200, kontenery healthy. Raport rozróżnia pomiary, ustalenia z kodu i propozycje.
-- [ ] Kolejna iteracja po wyborze zakresu: poprawność listy i komunikatów, trwałe porównanie; profilowanie rankingu przed optymalizacją.
+- [x] Pierwsza iteracja: poprawność listy i komunikatów, trwałe porównanie oraz profilowanie rankingu wykonane; szczegóły powyżej.
 - [ ] Przegląd wizualny PC/laptop/mobile i klawiatury: narzędzie nie udostępniło przeglądarki. Eksperyment Ocena AI pozostaje wstrzymany.
 
 ## Ocena AI — eksperyment wstrzymany przez użytkownika (2026-09-22)

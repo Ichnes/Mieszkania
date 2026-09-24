@@ -1,5 +1,6 @@
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { MapView } from "../features/map/MapView";
+import { LoadError } from "../shared/components/LoadError";
 
 export function MapPage({
   model,
@@ -12,6 +13,8 @@ export function MapPage({
     | "openListing"
     | "settings"
     | "isLoadingMapListings"
+    | "mapListingsError"
+    | "loadMapListings"
   >;
 }) {
   const { activeTab, mapListings, selectedListing, openListing, settings, isLoadingMapListings } =
@@ -26,6 +29,13 @@ export function MapPage({
               <h2>Oferty naniesione na mapie</h2>
             </div>
           </div>
+          {model.mapListingsError ? (
+            <LoadError
+              message={model.mapListingsError}
+              onRetry={model.loadMapListings}
+              busy={isLoadingMapListings}
+            />
+          ) : null}
           <MapView
             listings={mapListings}
             selectedListingId={selectedListing?.id}

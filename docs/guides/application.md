@@ -205,7 +205,12 @@ Na kartach wybierz **Porównaj** (maksymalnie pięć ofert). W zakładce **Poró
 ceny i cechy znajdują się w tych samych wierszach. Na małym ekranie przewijaj samą tabelę
 w bok. Kliknięcie tytułu otwiera ofertę, krzyżyk usuwa ją z porównania, a **Dodaj oferty**
 wraca do listy. Zmiana filtrów lub strony listy nie usuwa wcześniejszego wyboru.
-Wybór obowiązuje w bieżącej sesji aplikacji; odświeżenie całej strony go resetuje.
+Wybór zapisuje się w tej przeglądarce i pozostaje po odświeżeniu lub ponownym otwarciu.
+Przy wejściu do porównania aplikacja pobiera aktualne ceny i cechy wybranych mieszkań.
+Wiersz **Status oferty** oznacza oferty archiwalne. Gdy oferta zniknęła z bazy lub
+odczyt się nie udał, wybór pozostaje zapisany; możesz użyć **Ponów odczyt** albo
+**Usuń z porównania**. Niedostępne dane nie są zastępowane dawną ceną.
+Jeśli przeglądarka blokuje zapis, komunikat informuje, że wybór działa tylko do odświeżenia.
 
 ## Preferencje i finansowanie
 
@@ -238,8 +243,14 @@ Przycisk **Zmień w preferencjach** otwiera ten sam formularz. Po zapisaniu nowe
 na wszystkich ośmiu portalach używają wybranego miasta.
 
 Miasto zmienia się w preferencjach; dashboard nie ma osobnego pola miasta w filtrach.
-Filtry dashboardu zapisują się automatycznie w tej przeglądarce i wracają po jej
-zamknięciu lub restarcie komputera. Wyczyszczenie filtrów też jest zapamiętywane.
+Filtry dashboardu zapisują się po poprawnym zastosowaniu przyciskiem **Filtruj**
+i wracają po zamknięciu przeglądarki lub restarcie komputera. **Reset** od razu
+wczytuje listę bez filtrów i z sortowaniem **Najnowsze**; po udanym odczycie zapisuje reset.
+Edycja pól nie zmienia jeszcze wyników ani zapisanego zestawu. Przejście na kolejną
+stronę używa ostatnio zastosowanych filtrów i sortowania; niedokończony formularz pozostaje.
+Przełączniki **Ulubione**, **Wszystkie**, **Tylko ukryte** stosują bieżące ustawienia formularza.
+Przy błędzie pobierania listy lub mapy aplikacja pokazuje komunikat i **Ponów**.
+Ostatnio odczytane wyniki pozostają widoczne, ale mogą być nieaktualne.
 Trwały zapis nie obejmuje sortowania ani numeru strony; usunięcie danych strony usuwa zapis filtrów.
 Sortowanie ofert obejmuje cenę za m² rosnąco i malejąco. Jest liczone z aktualnej ceny
 i metrażu dla wszystkich wyników przed podziałem na strony; brakujące wartości są na końcu.

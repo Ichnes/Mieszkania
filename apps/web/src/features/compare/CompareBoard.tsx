@@ -5,6 +5,11 @@ import { formatPln } from "../../shared/lib/format";
 
 const yesNo = (value?: boolean) => (value === undefined ? "Brak danych" : value ? "Tak" : "Nie");
 const fields: { label: string; value: (listing: ListingSummary) => string }[] = [
+  {
+    label: "Status oferty",
+    value: (l) =>
+      l.isActive === false ? "Archiwalna" : l.isActive === true ? "Aktywna" : "Brak danych",
+  },
   { label: "Aktualna cena", value: (l) => l.priceLabel },
   {
     label: "Źródło aktualnej ceny",
