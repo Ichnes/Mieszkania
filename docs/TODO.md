@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Przegląd aplikacji (2026-09-24)
+
+- [x] Zakres: przegląd kodu głównych przepływów, lokalnych odczytów API i testów; priorytety usprawnień, bez zmian logiki i danych użytkownika.
+- [x] Zapisano [raport i kryteria weryfikacji](review-2026-09-24.md): kolejność odpowiedzi filtrów, błędy listy/mapy, szybkość rankingu, trwałość porównania, niezależne ładowanie stron, kompletność oceny i monitoring portali.
+- [x] Potwierdzono izolowaną reprodukcją nadpisanie nowych filtrów przez starszą odpowiedź. Pomiar rankingu: pierwszy odczyt 11,67 s, kolejne 3,13–3,33 s; najnowsze oferty 0,17–0,19 s, 2945 ofert w wyniku.
+- [x] Weryfikacja: 370 testów zaliczonych, 7 pominiętych, 0 błędów; typecheck shared/web/API poprawny. API dashboard/lista HTTP 200, kontenery healthy. Raport rozróżnia pomiary, ustalenia z kodu i propozycje.
+- [ ] Kolejna iteracja po wyborze zakresu: poprawność listy i komunikatów, trwałe porównanie; profilowanie rankingu przed optymalizacją.
+- [ ] Przegląd wizualny PC/laptop/mobile i klawiatury: narzędzie nie udostępniło przeglądarki. Eksperyment Ocena AI pozostaje wstrzymany.
+
 ## Ocena AI — eksperyment wstrzymany przez użytkownika (2026-09-22)
 
 - [x] Zakres: 10 najlepszych aktywnych ofert według „Wymarzone mieszkanie”, zakładka „Ocena AI” i wynik obok obecnego kółka na kartach ofert.
