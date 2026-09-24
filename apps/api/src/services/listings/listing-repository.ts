@@ -37,7 +37,7 @@ import {
   isWarsawNeighborhoodLabel,
   sameStreetOrLocation,
 } from "../geography/warsaw-neighborhoods";
-import { getNeighborhoodInsights } from "../insights/neighborhood-insights";
+import { getCommutes, getNeighborhoodInsights } from "../insights/neighborhood-insights";
 import {
   getListingImages,
   getListingImagesForListings,
@@ -789,8 +789,8 @@ export async function archiveListingsWithArchivedNotice() {
   });
 }
 
-export async function getListingInsights(listingId: string, force = false) {
-  const row = await withDb(async (db) => {
+async function getListingLocation(listingId: string) {
+  return withDb(async (db) => {
     const result = await db.query<Pick<ListingRow, "latitude" | "longitude">>(
       `
         select
@@ -805,8 +805,21 @@ export async function getListingInsights(listingId: string, force = false) {
 
     return result.rows[0] ?? null;
   });
-  if (!row) return null;
+}
 
+export async function getListingCommutes(listingId: string) {
+  const row = await getListingLocation(listingId);
+  if (!row) return null;
+  return getCommutes(
+    row.latitude ? Number(row.latitude) : undefined,
+    row.longitude ? Number(row.longitude) : undefined,
+    await getFamilySettings(),
+  );
+}
+
+export async function getListingInsights(listingId: string, force = false) {
+  const row = await getListingLocation(listingId);
+  if (!row) return null;
   const settings = await getFamilySettings();
   return getNeighborhoodInsights({
     listingId,

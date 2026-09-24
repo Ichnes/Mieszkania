@@ -16,6 +16,8 @@ export function ComparePage({
     | "isLoadingCompare"
     | "refreshComparison"
     | "comparisonStorageAvailable"
+    | "settings"
+    | "setSettingsOpen"
   >;
 }) {
   return (
@@ -77,6 +79,8 @@ export function ComparePage({
           {model.compareListings.length > 0 || model.compareIssues.length === 0 ? (
             <CompareBoard
               listings={model.compareListings}
+              workplaces={model.settings.workplaces}
+              onSettings={() => model.setSettingsOpen(true)}
               onOpen={model.openListing}
               onRemove={model.removeFromCompare}
             />

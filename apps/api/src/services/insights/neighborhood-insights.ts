@@ -218,15 +218,21 @@ async function getCachedOrFreshAmenities(
   return surroundings;
 }
 
-async function getCommutes(
-  latitude: number,
-  longitude: number,
+export async function getCommutes(
+  latitude: number | undefined,
+  longitude: number | undefined,
   settings: FamilySettings,
 ): Promise<CommuteSummary[]> {
   return Promise.all(
     settings.workplaces.map(async (workplace): Promise<CommuteSummary> => {
       const basic = { key: workplace.key, label: workplace.label };
-      if (!isCoordinate(workplace.latitude) || !isCoordinate(workplace.longitude)) return basic;
+      if (
+        !isCoordinate(latitude) ||
+        !isCoordinate(longitude) ||
+        !isCoordinate(workplace.latitude) ||
+        !isCoordinate(workplace.longitude)
+      )
+        return basic;
       try {
         const route = await fetchRoute(
           latitude,
@@ -267,7 +273,15 @@ async function fetchRoute(
       const payload = (await response.json()) as {
         routes?: Array<{ distance: number; duration: number }>;
       };
-      if (payload.routes?.[0]) return payload.routes[0];
+      const route = payload.routes?.[0];
+      if (
+        route &&
+        Number.isFinite(route.distance) &&
+        route.distance >= 0 &&
+        Number.isFinite(route.duration) &&
+        route.duration >= 0
+      )
+        return route;
     } catch {
       continue;
     }

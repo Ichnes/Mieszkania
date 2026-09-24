@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Rozbudowa porównania (2026-09-24)
+
+- [x] Zakres: tylko różnice, ekspozycja, ustalenia po kontakcie i dojazdy do zapisanych celów; jawne braki danych, układ PC/laptop/mobile.
+- [x] Przełącznik różnic, stałe nagłówki ofert, pełny widok przy jednej ofercie i pusty stan. Osobne braki danych garażu/parkingu; ekspozycja respektuje korekty, notatki i negocjacje pochodzą z aktualnych szczegółów. Wyróżnienie ceny niezależne od kolejności wierszy.
+- [x] Dojazdy na żądanie przez osobny endpoint, do wszystkich zapisanych celów; czas samochodem bez korków, obsługa braku lokalizacji i częściowych błędów, ponowienie. Zmiana wyboru/lokalizacji/celów unieważnia poprzedni odczyt.
+- [x] 392 testy zaliczone, 8 pominiętych, 0 błędów. Typecheck i build poprawne; API/web przebudowane lokalnie. Rzeczywiste API: 2 oferty, 23 wiersze, 2 cele, 4 dostępne trasy; brakująca oferta HTTP 404, porównanie i health HTTP 200. Bez zmian danych użytkownika.
+- [x] Instrukcja i raport zaktualizowane; zmiany gotowe do commitu i push na `main`.
+- [ ] Kontrola wizualna PC/laptop/mobile: narzędzie ponownie zwróciło pustą listę przeglądarek. CSS zachowuje przewijanie wewnątrz tabeli, zawijanie paska narzędzi i notatek oraz widoczny fokus.
+- [ ] Pozostałe usprawnienia z przeglądu: kompletność ocen, niezależne ładowanie stron, zbiorczy status portali.
+
 ## Przyspieszenie rankingu ofert (2026-09-24)
 
 - [x] Zakres: profil CPU i plan SQL rankingu, ograniczenie powtarzanych obliczeń i odczytów snapshotów przy zachowaniu punktacji, kolejności i aktualizacji danych.
@@ -47,7 +57,6 @@
 - [x] Zweryfikowano istniejący odczyt zdjęć (również ofert scalonych), oznaczenie rzutów, lokalne pliki i generowanie miniatur przez sharp. Obecna ocena wykończenia bazuje na opisie; brak konfiguracji dostawcy AI w API.
 - [x] Propozycja: maksymalnie 4–6 zdjęć, osobna ocena standardu i widocznego stanu, możliwość braku oceny, krótkie uzasadnienie, zapis wyniku według zdjęć i wersji analizy; ręczny start oraz limit kosztu dla wariantu API.
 - [x] Dalsza decyzja: pilot w Codex z GPT-6 Luna bez API modelu. Po próbie użytkownik wstrzymał eksperyment; aktualny stan i przyczyny zapisano powyżej.
-
 
 ## Maxon: Cybernetyki i miejsca dla gości (2026-09-20)
 

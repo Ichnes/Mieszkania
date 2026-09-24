@@ -17,6 +17,7 @@ import {
   deleteListingRecord,
   dismissListingRecord,
   getListingDetail,
+  getListingCommutes,
   getListingInsights,
   getListingsPage,
   getMapListings,
@@ -136,6 +137,12 @@ export function registerListingsRoutes(app: FastifyInstance) {
       return insights;
     },
   );
+
+  app.get<{ Params: { id: string } }>("/api/listings/:id/commutes", async (request, reply) => {
+    const commutes = await getListingCommutes(request.params.id);
+    if (!commutes) return reply.code(404).send({ message: "Listing not found" });
+    return commutes;
+  });
 
   app.post<{ Params: { id: string }; Body: { shortlisted?: boolean } }>(
     "/api/listings/:id/shortlist",

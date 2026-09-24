@@ -1,7 +1,10 @@
 import type { ListingSummary } from "@mieszkania/shared";
 
-export function resolveCompareListings(compareIds: string[], ...sources: ListingSummary[][]) {
-  const byId = new Map<string, ListingSummary>();
+export function resolveCompareListings<T extends ListingSummary>(
+  compareIds: string[],
+  ...sources: T[][]
+) {
+  const byId = new Map<string, T>();
 
   for (const source of sources) {
     for (const listing of source) {
@@ -11,7 +14,5 @@ export function resolveCompareListings(compareIds: string[], ...sources: Listing
     }
   }
 
-  return compareIds
-    .map((id) => byId.get(id))
-    .filter((listing): listing is ListingSummary => Boolean(listing));
+  return compareIds.map((id) => byId.get(id)).filter((listing): listing is T => Boolean(listing));
 }

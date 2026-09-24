@@ -1,4 +1,4 @@
-import type { ListingSummary } from "@mieszkania/shared";
+import type { ComparisonListing } from "./types";
 
 export const comparisonStorageKey = "mieszkania-comparison-v1";
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -36,7 +36,7 @@ export async function fetchComparison(
         const response = await fetchListing(id);
         if (response.status === 404) return { id, reason: "missing" as const };
         if (!response.ok) throw new Error(String(response.status));
-        const listing = (await response.json()) as ListingSummary;
+        const listing = (await response.json()) as ComparisonListing;
         if (listing.id !== id) throw new Error("Unexpected listing");
         return listing;
       } catch {
@@ -45,7 +45,7 @@ export async function fetchComparison(
     }),
   );
   return {
-    listings: results.filter((result): result is ListingSummary => !("reason" in result)),
+    listings: results.filter((result): result is ComparisonListing => !("reason" in result)),
     issues: results.filter((result): result is ComparisonIssue => "reason" in result),
   };
 }

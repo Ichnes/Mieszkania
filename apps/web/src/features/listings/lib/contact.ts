@@ -2,7 +2,6 @@ import type {
   ListingContactEventType,
   ListingContactStatus,
   ListingDetail,
-  ListingSummary,
 } from "@mieszkania/shared";
 import { formatOptionalPln, formatPln, toDatetimeInputValue } from "../../../shared/lib/format";
 
@@ -20,22 +19,7 @@ export function toContactStatus(value: string): ListingContactStatus | undefined
     : undefined;
 }
 
-export function contactStatusDisplay(status?: ListingContactStatus) {
-  if (!status) {
-    return "-";
-  }
-
-  return (
-    {
-      new: "Nowa",
-      contacted: "Po kontakcie",
-      negotiating: "W negocjacjach",
-      viewing_scheduled: "Oglądanie umówione",
-      rejected: "Odrzucone",
-      closed: "Zamkniete",
-    } satisfies Record<ListingContactStatus, string>
-  )[status];
-}
+export { contactStatusDisplay, decisionStageDisplay } from "../../../shared/lib/contact-labels";
 
 export function createEmptyContactEventDraft(contactName?: string) {
   return {
@@ -62,25 +46,6 @@ export function toDecisionStage(value: string): ListingDetail["manual"]["decisio
   return allowed.includes(value as NonNullable<ListingDetail["manual"]["decisionStage"]>)
     ? (value as NonNullable<ListingDetail["manual"]["decisionStage"]>)
     : undefined;
-}
-
-export function decisionStageDisplay(stage?: ListingSummary["decisionStage"]) {
-  if (!stage) {
-    return "-";
-  }
-
-  return (
-    {
-      new: "Nowa",
-      to_call: "Do telefonu",
-      after_call: "Po rozmowie",
-      to_viewing: "Do ogladania",
-      after_viewing: "Po ogladaniu",
-      to_offer: "Do oferty",
-      rejected: "Odrzucona",
-      bought: "Kupiona",
-    } satisfies Record<NonNullable<ListingSummary["decisionStage"]>, string>
-  )[stage];
 }
 
 export function formatPriceEvent(event: ListingDetail["priceHistory"][number]) {

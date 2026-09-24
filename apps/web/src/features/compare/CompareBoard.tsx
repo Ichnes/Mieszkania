@@ -1,60 +1,38 @@
-import type { ListingSummary } from "@mieszkania/shared";
+import { useState } from "react";
+import type { FamilySettings } from "@mieszkania/shared";
 import { ArrowUpRight, ImageOff, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { formatPln } from "../../shared/lib/format";
-
-const yesNo = (value?: boolean) => (value === undefined ? "Brak danych" : value ? "Tak" : "Nie");
-const fields: { label: string; value: (listing: ListingSummary) => string }[] = [
-  {
-    label: "Status oferty",
-    value: (l) =>
-      l.isActive === false ? "Archiwalna" : l.isActive === true ? "Aktywna" : "Brak danych",
-  },
-  { label: "Aktualna cena", value: (l) => l.priceLabel },
-  {
-    label: "Źródło aktualnej ceny",
-    value: (l) => (l.priceSource === "negotiated" ? "Cena po negocjacjach" : "Ogłoszenie"),
-  },
-  { label: "Cena w ogłoszeniu", value: (l) => l.advertisedPriceLabel ?? l.priceLabel },
-  {
-    label: "Cena z dodatkami",
-    value: (l) => (l.totalAcquisitionPrice ? formatPln(l.totalAcquisitionPrice) : "Brak danych"),
-  },
-  { label: "Cena za m²", value: (l) => l.pricePerSqmLabel ?? "Brak danych" },
-  { label: "Powierzchnia", value: (l) => l.areaLabel },
-  { label: "Pokoje", value: (l) => l.roomsCount?.toString() ?? "Brak danych" },
-  {
-    label: "Piętro",
-    value: (l) =>
-      l.floor === undefined
-        ? "Brak danych"
-        : `${l.floor === 0 ? "Parter" : l.floor}${l.totalFloors !== undefined ? ` / ${l.totalFloors}` : ""}`,
-  },
-  { label: "Rok budowy", value: (l) => l.yearBuilt?.toString() ?? "Brak danych" },
-  {
-    label: "Miejsce postojowe",
-    value: (l) =>
-      [l.hasGarage && "Garaż", l.hasOutdoorParking && "Naziemne"].filter(Boolean).join(" · ") ||
-      "Brak miejsca postojowego w opisie",
-  },
-  { label: "Winda", value: (l) => yesNo(l.hasLift) },
-  { label: "Balkon", value: (l) => yesNo(l.hasBalcony) },
-  { label: "Komórka lokatorska", value: (l) => yesNo(l.hasStorage) },
-  {
-    label: "Dopasowanie do preferencji",
-    value: (l) => (typeof l.dreamScore === "number" ? `${l.dreamScore}%` : "Brak danych"),
-  },
-];
+import { buildComparisonRows, visibleComparisonRows } from "./lib/rows";
+import type { ComparisonListing } from "./lib/types";
+import { useComparisonCommutes } from "./useComparisonCommutes";
 
 export function CompareBoard({
   listings,
+  workplaces,
+  onSettings,
   onOpen,
   onRemove,
 }: {
-  listings: ListingSummary[];
+  listings: ComparisonListing[];
+  workplaces: FamilySettings["workplaces"];
+  onSettings: () => void;
   onOpen: (id: string) => void | Promise<void>;
   onRemove: (id: string) => void;
 }) {
+  const [onlyDifferences, setOnlyDifferences] = useState(false);
+  const commutes = useComparisonCommutes(listings, workplaces);
+  const rows = buildComparisonRows(listings, workplaces, commutes.values);
+  const visibleRows = visibleComparisonRows(rows, onlyDifferences, listings.length);
+  const hasCommutes = Object.keys(commutes.values).length > 0;
+  const hasCommuteErrors = listings.some(({ id }) => {
+    const value = commutes.values[id];
+    return (
+      !Array.isArray(value) ||
+      workplaces.some(
+        ({ key }) => value.find((item) => item.key === key)?.durationMinutes === undefined,
+      )
+    );
+  });
   if (!listings.length)
     return (
       <div className="comparison-empty">
@@ -75,6 +53,71 @@ export function CompareBoard({
         <p className="comparison-hint">
           Masz pierwszą ofertę. Dodaj kolejną, żeby porównać różnice.
         </p>
+      )}
+      <div className="comparison-toolbar">
+        <label className="comparison-toggle">
+          <input
+            type="checkbox"
+            checked={onlyDifferences && listings.length > 1}
+            disabled={listings.length < 2}
+            onChange={(event) => setOnlyDifferences(event.target.checked)}
+          />
+          Tylko różnice
+        </label>
+        <span role="status">
+          Widoczne cechy: {visibleRows.length} z {rows.length}
+        </span>
+        {workplaces.length > 0 && (
+          <button
+            type="button"
+            className="action-button secondary-button"
+            disabled={commutes.loading}
+            onClick={() => void commutes.load()}
+          >
+            {commutes.loading
+              ? "Obliczam dojazdy…"
+              : hasCommutes
+                ? "Oblicz dojazdy ponownie"
+                : "Oblicz dojazdy"}
+          </button>
+        )}
+      </div>
+      <p className="comparison-hint" role="status">
+        {workplaces.length === 0 ? (
+          <>
+            Aby porównać dojazdy, dodaj cele w ustawieniach.{" "}
+            <button type="button" className="action-button secondary-button" onClick={onSettings}>
+              Otwórz ustawienia
+            </button>
+          </>
+        ) : commutes.loading ? (
+          "Pobieram trasy do zapisanych celów…"
+        ) : hasCommutes ? (
+          hasCommuteErrors ? (
+            "Obliczanie zakończone. Część tras jest niedostępna; możesz ponowić obliczenie."
+          ) : (
+            "Obliczanie dojazdów zakończone."
+          )
+        ) : (
+          "Dojazdy czekają na obliczenie."
+        )}
+        {workplaces.length > 0 &&
+          " Szacunek samochodem bez korków, według OpenStreetMap. Przybliżona lokalizacja oferty wpływa na wynik."}
+      </p>
+      {visibleRows.length === 0 && (
+        <div className="comparison-hint" role="status">
+          <p>
+            Brak różnic w porównywanych cechach. Wspólny brak danych nie oznacza identycznych
+            mieszkań.
+          </p>
+          <button
+            type="button"
+            className="action-button secondary-button"
+            onClick={() => setOnlyDifferences(false)}
+          >
+            Pokaż wszystkie cechy
+          </button>
+        </div>
       )}
       <p className="comparison-scroll-hint">Przesuń tabelę w bok, aby zobaczyć pozostałe oferty.</p>
       <div
@@ -122,11 +165,16 @@ export function CompareBoard({
             </tr>
           </thead>
           <tbody>
-            {fields.map((field) => (
-              <tr key={field.label}>
-                <th scope="row">{field.label}</th>
-                {listings.map((l) => (
-                  <td key={l.id}>{field.value(l)}</td>
+            {visibleRows.map((row) => (
+              <tr key={row.id} className={row.id === "price" ? "comparison-price-row" : undefined}>
+                <th scope="row">{row.label}</th>
+                {row.values.map((value, index) => (
+                  <td
+                    key={listings[index].id}
+                    className={row.id === "notes" ? "comparison-notes" : undefined}
+                  >
+                    {value}
+                  </td>
                 ))}
               </tr>
             ))}

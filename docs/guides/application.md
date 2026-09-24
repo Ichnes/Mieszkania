@@ -212,6 +212,21 @@ odczyt się nie udał, wybór pozostaje zapisany; możesz użyć **Ponów odczyt
 **Usuń z porównania**. Niedostępne dane nie są zastępowane dawną ceną.
 Jeśli przeglądarka blokuje zapis, komunikat informuje, że wybór działa tylko do odświeżenia.
 
+Przełącznik **Tylko różnice** ukrywa identyczne wiersze dla co najmniej dwóch ofert.
+Wspólny brak danych również znika; nie oznacza to identycznych mieszkań. **Brak danych**
+różni się od **Nie**. Gdy wszystkie porównywane cechy są jednakowe, przycisk
+**Pokaż wszystkie cechy** przywraca pełną tabelę. Nagłówki ofert pozostają widoczne.
+Tabela obejmuje ekspozycję (z pierwszeństwem ręcznej korekty), status kontaktu, etap
+decyzji, cenę po negocjacjach oraz zapisane **Notatki i ustalenia**.
+
+**Oblicz dojazdy** pobiera trasy do celów zapisanych w ustawieniach. Każdy cel ma
+osobny wiersz. Wynik to szacunek jazdy samochodem bez korków według OpenStreetMap;
+przybliżona lokalizacja mieszkania obniża jego dokładność. Brak współrzędnych celu
+lub oferty oraz niedostępna trasa mają osobne komunikaty. **Oblicz dojazdy ponownie**
+ponawia odczyt; błąd jednej oferty nie usuwa wyników pozostałych. Zmiana wyboru,
+lokalizacji lub celów wymaga ponownego obliczenia. Trasy nie są pobierane przy samym
+wejściu na stronę i nie zapisują się pomiędzy wizytami w porównaniu.
+
 ## Preferencje i finansowanie
 
 W szczegółach oferty **Garaż / parking** pokazuje rozpoznaną dopłatę lub **W cenie

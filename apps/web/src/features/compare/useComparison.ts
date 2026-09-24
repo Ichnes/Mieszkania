@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ListingSummary } from "@mieszkania/shared";
+import type { ComparisonListing } from "./lib/types";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { apiFetch } from "../../shared/lib/http";
 import { createLatestRequest } from "../../shared/lib/latest-request";
@@ -12,7 +12,7 @@ import {
 
 export function useComparison(enabled: boolean) {
   const [compareListingIds, setCompareListingIds] = useState(readComparisonIds);
-  const [compareSnapshots, setCompareSnapshots] = useState<ListingSummary[]>([]);
+  const [compareSnapshots, setCompareSnapshots] = useState<ComparisonListing[]>([]);
   const [compareIssues, setCompareIssues] = useState<ComparisonIssue[]>([]);
   const [isLoadingCompare, setIsLoadingCompare] = useState(false);
   const [comparisonStorageAvailable, setComparisonStorageAvailable] = useState(true);

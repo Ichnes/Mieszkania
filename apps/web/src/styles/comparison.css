@@ -68,6 +68,36 @@
   table-layout: fixed;
   text-align: left;
 }
+.comparison-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  margin: 20px 0 12px;
+}
+.comparison-toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  cursor: pointer;
+}
+.comparison-toggle input {
+  width: 20px;
+  height: 20px;
+  accent-color: #236b58;
+}
+.comparison-toolbar .action-button {
+  white-space: normal;
+}
+.comparison-table .comparison-notes {
+  white-space: pre-wrap;
+  font-weight: 400;
+}
+.comparison-scroll:focus-visible {
+  outline: 3px solid #469478;
+  outline-offset: 3px;
+}
 .comparison-table th,
 .comparison-table td {
   min-width: 240px;
@@ -104,7 +134,7 @@
   font-size: 15px;
   font-weight: 600;
 }
-.comparison-table tbody tr:first-child td {
+.comparison-table tbody .comparison-price-row td {
   font-size: 24px;
   color: #1c6356;
 }
@@ -242,7 +272,7 @@
 [data-theme="dark"] .comparison-table tr > :first-child {
   background: #20382f;
 }
-[data-theme="dark"] .comparison-table tbody tr:first-child td {
+[data-theme="dark"] .comparison-table tbody .comparison-price-row td {
   color: #9addbc;
 }
 [data-theme="dark"] .setup-card {
@@ -282,7 +312,7 @@
   .comparison-property-text {
     padding: 14px;
   }
-  .comparison-table tbody tr:first-child td {
+  .comparison-table tbody .comparison-price-row td {
     font-size: 20px;
   }
   .setup-card {
