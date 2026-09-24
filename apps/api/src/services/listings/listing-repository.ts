@@ -1,4 +1,5 @@
 import { visibleRelistingCandidateSql } from "./listing-relistings";
+import { createListingSnapshotCache, listingSnapshotPayloadSql } from "./listing-snapshot-cache";
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
 import { invalidateMarketStatsCache } from "../market/stats-cache";
 import { effectiveDistrictSql } from "./listing-title-location";
@@ -105,6 +106,8 @@ type ListingRow = {
   relisting_previous_price_amount: string | null;
   relisting_relisted_price_amount: string | null;
   snapshot_payload_raw?: Record<string, unknown> | null;
+  snapshot_id?: string | null;
+  snapshot_version?: string | null;
 };
 
 type PriceEventRow = {
@@ -166,6 +169,7 @@ export async function getListings(filters: ListingFilters = {}): Promise<Listing
 }
 
 export type ListingsTimingObserver = (phase: string, durationMs: number) => void;
+const listingSnapshotCache = createListingSnapshotCache();
 
 export async function getListingsPage(
   filters: ListingFilters = {},
@@ -1035,18 +1039,15 @@ async function getListingsPageByScope(
           ,lr.previous_listing_id::text as relisting_previous_listing_id
           ,lr.previous_price_amount::text as relisting_previous_price_amount
           ,lr.relisted_price_amount::text as relisting_relisted_price_amount
-          ,ls.snapshot_payload_raw
+          ,ls.id as snapshot_id
+          ,ls.row_version as snapshot_version
         from listings l
         join sources s on s.id = l.source_id
         left join listing_viewings lv on lv.listing_id = l.id
         left join listing_manual_overrides lmo on lmo.listing_id = l.id
         left join listing_relistings lr on lr.current_listing_id = l.id
         left join lateral (
-          select jsonb_build_object(
-            'portalFeatures', payload_raw->'portalFeatures',
-            'jsonLd', payload_raw->'jsonLd',
-            'nextData', jsonb_build_object('props', jsonb_build_object('pageProps', jsonb_build_object('ad', jsonb_build_object('attributes', payload_raw#>'{nextData,props,pageProps,ad,attributes}'))))
-          ) as snapshot_payload_raw
+          select id, xmin::text as row_version
           from listing_snapshots
           where listing_id = l.id
           order by captured_at desc limit 1
@@ -1059,8 +1060,24 @@ async function getListingsPageByScope(
       pagedValues,
     );
 
-    // Score all candidates before pagination, but enrich only the visible page.
     measure("candidates-query");
+    const payloads = await listingSnapshotCache.load(listingsResult.rows, async (ids) => {
+      const result = await db.query<{
+        id: string;
+        version: string;
+        payload: Record<string, unknown>;
+      }>(
+        `select id, xmin::text as version, ${listingSnapshotPayloadSql} as payload
+         from listing_snapshots where id = any($1::uuid[])`,
+        [ids],
+      );
+      return result.rows;
+    });
+    for (const row of listingsResult.rows) {
+      if (row.snapshot_id) row.snapshot_payload_raw = payloads.get(row.snapshot_id);
+    }
+    measure("snapshot-payloads");
+    // Score all candidates before pagination, but enrich only the visible page.
     // Photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
     let pageRows = listingsResult.rows.map(decodeListingRow);
@@ -1330,8 +1347,11 @@ async function hydrateListingCoordinatesInPlace(
   }
 
   const resolvedDistrict = resolveDistrict(row);
-  const resolvedNeighborhood = resolveNeighborhood(row);
-  const resolvedStreet = resolveStreet(row);
+  const resolvedNeighborhood = resolveNeighborhood(row, resolvedDistrict);
+  const resolvedStreet = resolveStreet(row, {
+    district: resolvedDistrict,
+    neighborhood: resolvedNeighborhood,
+  });
   const resolvedAddressText = resolveAddressText(
     row,
     resolvedStreet,
@@ -1465,8 +1485,11 @@ function mapListingSummary(
   const priceChangePercent = getPriceChangePercent(latestEvent);
   const rcnDeltaLabel = "";
   const resolvedDistrict = resolveDistrict(row);
-  const resolvedNeighborhood = resolveNeighborhood(row);
-  const resolvedStreet = resolveStreet(row);
+  const resolvedNeighborhood = resolveNeighborhood(row, resolvedDistrict);
+  const resolvedStreet = resolveStreet(row, {
+    district: resolvedDistrict,
+    neighborhood: resolvedNeighborhood,
+  });
   const resolvedAddressText = resolveAddressText(
     row,
     resolvedStreet,
@@ -1913,9 +1936,8 @@ function resolveDistrict(row: ListingRow) {
   return "Bez dzielnicy";
 }
 
-function resolveNeighborhood(row: ListingRow) {
+function resolveNeighborhood(row: ListingRow, district = resolveDistrict(row)) {
   const cleaned = cleanLocationText(row.neighborhood);
-  const district = resolveDistrict(row);
   if (row.city.toLowerCase() !== "warszawa")
     return !cleaned || cleaned === district ? undefined : cleaned;
 
@@ -1930,9 +1952,9 @@ function resolveNeighborhood(row: ListingRow) {
     : undefined;
 }
 
-function resolveStreet(row: ListingRow) {
-  const district = resolveDistrict(row);
-  const neighborhood = resolveNeighborhood(row);
+function resolveStreet(row: ListingRow, location?: { district: string; neighborhood?: string }) {
+  const district = location?.district ?? resolveDistrict(row);
+  const neighborhood = location ? location.neighborhood : resolveNeighborhood(row, district);
   if (row.city.toLowerCase() === "warszawa") {
     const canonicalAddress = normalizeWarsawStreetAddress(row.address_text);
     if (
@@ -2257,13 +2279,13 @@ export function extractFeatures(input: {
   const payloadFeatures = extractFeaturesFromPayload(input.snapshotPayload);
   const structuredWithoutLift = payloadFeatures.some((feature) => feature.key === "no_lift");
   const structuredWithLift = payloadFeatures.some((feature) => feature.key === "lift");
-  const garagePrice = extractCurrencyNearKeywords(input.description, ["garaz", "garaż"]);
-  const parkingPrice = extractCurrencyNearKeywords(input.description, [
+  const garagePrice = extractCurrencyNearKeywords(descriptionNormalized, ["garaz", "garaż"]);
+  const parkingPrice = extractCurrencyNearKeywords(descriptionNormalized, [
     "miejsce parkingowe",
     "miejsce postojowe",
     "parking",
   ]);
-  const maintenanceFee = extractCurrencyNearKeywords(input.description, [
+  const maintenanceFee = extractCurrencyNearKeywords(descriptionNormalized, [
     "czynsz",
     "oplata",
     "opłata",
@@ -2738,9 +2760,7 @@ function dedupeFeatures(features: ListingFeature[]) {
   });
 }
 
-function extractCurrencyNearKeywords(description: string, keywords: string[]) {
-  const normalizedDescription = normalizePolish(description);
-
+function extractCurrencyNearKeywords(normalizedDescription: string, keywords: string[]) {
   for (const keyword of keywords) {
     const normalizedKeyword = escapeRegExp(normalizePolish(keyword));
     const pattern = new RegExp(
@@ -2756,7 +2776,7 @@ function extractCurrencyNearKeywords(description: string, keywords: string[]) {
       }
 
       const finalValue = /tys/i.test(match[2] ?? "") ? numeric * 1000 : numeric;
-      return `${new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 }).format(finalValue)} PLN`;
+      return `${wholeNumberFormatter.format(finalValue)} PLN`;
     }
   }
 
@@ -2897,16 +2917,20 @@ function getPriceChangePercent(latestEvent: PriceEventRow | undefined) {
   return Number((((next - previous) / previous) * 100).toFixed(1));
 }
 
+const currencyFormatter = new Intl.NumberFormat("pl-PL", {
+  style: "currency",
+  currency: "PLN",
+  maximumFractionDigits: 0,
+});
+const integerFormatter = new Intl.NumberFormat("pl-PL");
+const wholeNumberFormatter = new Intl.NumberFormat("pl-PL", { maximumFractionDigits: 0 });
+
 function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pl-PL", {
-    style: "currency",
-    currency: "PLN",
-    maximumFractionDigits: 0,
-  }).format(value);
+  return currencyFormatter.format(value);
 }
 
 function formatInteger(value: string) {
-  return new Intl.NumberFormat("pl-PL").format(Number(value));
+  return integerFormatter.format(Number(value));
 }
 
 function formatWeeklyDelta(delta: number, unit: string) {

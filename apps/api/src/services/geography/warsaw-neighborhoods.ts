@@ -204,6 +204,16 @@ for (const neighborhood of warsawNeighborhoods) {
   }
 }
 
+// Preserve the longest-label precedence and stable tie order, but normalize the
+// fixed dictionary once instead of both district names for every candidate.
+const neighborhoodCandidates = [...byExactLabel.entries()]
+  .map(([label, neighborhood]) => ({
+    label,
+    neighborhood,
+    district: normalizeLocation(neighborhood.district),
+  }))
+  .sort((left, right) => right.label.length - left.label.length);
+
 const warsawDistrictNames = [
   "Bemowo",
   "Białołęka",
@@ -255,14 +265,13 @@ export function canonicalWarsawNeighborhood(value?: string | null, district?: st
 export function inferWarsawNeighborhood(text?: string | null, district?: string | null) {
   const normalizedText = ` ${normalizeLocation(text ?? "")} `;
   if (!normalizedText.trim()) return undefined;
-
-  const matches = [...byExactLabel.entries()]
-    .filter(
-      ([label, neighborhood]) =>
-        districtMatches(neighborhood.district, district) && normalizedText.includes(` ${label} `),
-    )
-    .sort(([left], [right]) => right.length - left.length);
-  return matches[0]?.[1].name;
+  const districtKey =
+    !district || district === "Bez dzielnicy" ? undefined : normalizeLocation(district);
+  return neighborhoodCandidates.find(
+    ({ label, district: expected }) =>
+      (districtKey === undefined || expected === districtKey) &&
+      normalizedText.includes(` ${label} `),
+  )?.neighborhood.name;
 }
 
 export function isWarsawNeighborhoodLabel(value?: string | null, district?: string | null) {

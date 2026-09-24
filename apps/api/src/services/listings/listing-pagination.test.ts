@@ -23,11 +23,11 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   let rcnQueries = 0;
   const imageRequests: string[][] = [];
   const priceEvents: Array<Record<string, string>> = [];
+  const settings = createDefaultFamilySettings();
   // Prevent local settings backup writes: this test uses only in-memory database rows.
   t.mock.method(fs, "existsSync", () => true);
   t.mock.method(pool, "query", async (sql: string, values: unknown[]) => {
-    if (sql.includes("select value from app_settings"))
-      return { rows: [{ value: createDefaultFamilySettings() }] };
+    if (sql.includes("select value from app_settings")) return { rows: [{ value: settings }] };
     if (sql.includes("count(*)::text as total")) return { rows: [{ total: String(rows.length) }] };
     if (sql.includes("l.canonical_url")) return { rows };
     if (sql.includes("from price_events")) {
@@ -70,7 +70,6 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     "Changed description must invalidate the cached match score",
   );
   assert.ok(updated.items[0].dreamScore! > result.items[0].dreamScore!);
-  const settings = createDefaultFamilySettings();
   assert.equal(
     updated.items[0].dreamScore,
     computeDreamScore(updated.items[0], settings.dreamProfile, settings.workplaces),
@@ -118,4 +117,20 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   assert.equal(correctFloor?.floor, 3);
   assert.equal(correctFloor?.totalFloors, 5);
   assert.ok(correctFloor!.priceChangePercent < 0);
+
+  // Preference changes must also invalidate the score while snapshot contents stay unchanged.
+  settings.dreamProfile.preferredDistricts = ["Wola"];
+  const changedPreferences = await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });
+  for (const item of changedPreferences.items) {
+    assert.equal(
+      item.dreamScore,
+      computeDreamScore(
+        item,
+        settings.dreamProfile,
+        settings.workplaces,
+        undefined,
+        settings.financing,
+      ),
+    );
+  }
 });

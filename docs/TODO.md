@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Przyspieszenie rankingu ofert (2026-09-24)
+
+- [x] Zakres: profil CPU i plan SQL rankingu, ograniczenie powtarzanych obliczeń i odczytów snapshotów przy zachowaniu punktacji, kolejności i aktualizacji danych.
+- [x] Profil potwierdził wielokrotne rozpoznawanie tej samej lokalizacji oraz normalizację opisów. Plan SQL korzysta z indeksu snapshotów; duże payloady są odczytywane dla wszystkich kandydatów przy każdym rankingu.
+- [x] Powtórne użycie rozpoznanej lokalizacji, przygotowanych wzorców i formaterów oraz znormalizowanego słownika osiedli. Pamięć payloadów snapshotów ograniczona do 5000 wpisów/32 MiB JSON, wersja `xmin` sprawdzana przy każdym odczycie; brak migracji.
+- [x] Zamrożone 2905 ofert: całe podsumowania, oceny i pełna kolejność identyczne przed/po. PostgreSQL: edycja tego samego snapshotu i usunięcie w tabeli tymczasowej nie wykorzystują starego wyniku; dane użytkownika niezmienione.
+- [x] Pomiary HTTP po wdrożeniu: 8,12 s pierwszy odczyt, 1,42 s kolejny i 1,53 s następna strona; przed zmianą 11,67 s i 3,13–3,33 s. Końcowa próbka 2911 ofert. Diagnostyka: kolejne odczyty payloadów 2–3 ms zamiast ponownego pobierania całości.
+- [x] Pełne testy: 384 zaliczone, 8 pominiętych, 0 błędów; jeden z pomijanych testów PostgreSQL uruchomiony osobno i zaliczony. Typecheck i build poprawne. API/web/db healthy po lokalnym wdrożeniu, HTTP 200 i spójna paginacja. Instrukcja i raport zaktualizowane; przygotowane do commitu/push na `main`.
+- [ ] Kolejne iteracje: dalsze zmniejszenie kosztu pierwszego rankingu; porównanie różnic, kompletność danych, niezależne ładowanie stron i zbiorczy status portali według raportu.
+
 ## Pierwsza iteracja po przeglądzie aplikacji (2026-09-24)
 
 - [x] Zakres przyjęty do realizacji: poprawność odpowiedzi filtrów, osobne ustawienia formularza i wyników, komunikaty błędów listy/mapy, trwały wybór porównania z odczytem aktualnych danych oraz pomiar rankingu.
@@ -8,7 +18,7 @@
 - [x] Osobna próba funkcji kontrolera: paginacja pomija niedokończony formularz, starsza odpowiedź nie nadpisuje nowszej, HTTP 500 zachowuje wyniki i parametry do ponowienia. Nowe testy obejmują anulowanie, błędy sieci, ponowienie, zapis/odczyt wyboru i blokadę storage.
 - [x] Diagnostyka we właściwym kontenerze API: pierwsze liczenie ocen 8,62 s; kolejne 0,12–0,13 s. Zapytanie kandydatów 2,56–3,76 s. Skrypt i instrukcja pomiaru zapisane; ranking nie był jeszcze optymalizowany.
 - [x] Instrukcje i raport uzupełnione, zmiany sprawdzone i przygotowane do commitu/push na `main`.
-- [ ] Następna iteracja: optymalizacja zapytania kandydatów i pierwszego liczenia cech na podstawie pomiarów; dalsze propozycje porównania, kompletności danych, startu stron i statusów portali pozostają w raporcie.
+- [x] Optymalizacja zapytania kandydatów i pierwszego liczenia cech wykonana w kolejnej iteracji opisanej powyżej. Dalsze propozycje porównania, kompletności danych, startu stron i statusów portali pozostają w raporcie.
 - Przegląd wizualny ograniczony: narzędzie nadal nie udostępnia przeglądarki. Nowe komunikaty mają zawijanie tekstu i przycisków na mniejszych ekranach; eksperyment Ocena AI pozostaje wstrzymany.
 
 ## Przegląd aplikacji (2026-09-24)

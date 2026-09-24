@@ -59,18 +59,25 @@ const explicitDistrictPatterns: Array<[string, string]> = warsawDistrictAliases.
 );
 
 /** Only an explicit apartment location adjoining a street, not nearby transport. */
+const compiledExplicitDistrictPatterns = explicitDistrictPatterns.map(
+  ([pattern, district]) => [new RegExp(pattern), district] as const,
+);
+const districtTextPatterns = warsawDistrictAliases.map(
+  ([alias, district]) =>
+    [new RegExp(`(?:^|\\s)${alias.replace(/ /g, "\\s+")}(?=$|\\s)`, "i"), district] as const,
+);
+
 export function inferWarsawDistrictFromAddressDescription(value?: string | null) {
   const normalized = normalizePolish(value ?? "").replace(/[^a-z0-9]+/g, " ");
-  return explicitDistrictPatterns.find(([pattern]) => new RegExp(pattern).test(normalized))?.[1];
+  if (!normalized.includes(" w warszawie ") || !normalized.includes(" przy ul")) return undefined;
+  return compiledExplicitDistrictPatterns.find(([pattern]) => pattern.test(normalized))?.[1];
 }
 
 export function inferWarsawDistrictFromText(value?: string | null) {
   const normalized = normalizePolish(value ?? "")
     .replace(/[^\p{L}\p{N}]+/gu, " ")
     .trim();
-  return warsawDistrictAliases.find(([alias]) =>
-    new RegExp(`(?:^|\\s)${alias.replace(/ /g, "\\s+")}(?=$|\\s)`, "i").test(normalized),
-  )?.[1];
+  return districtTextPatterns.find(([pattern]) => pattern.test(normalized))?.[1];
 }
 
 export function inferWarsawDistrictFromLocationTitle(title: string) {

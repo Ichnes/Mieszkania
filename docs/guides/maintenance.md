@@ -12,11 +12,19 @@ Skrypt korzysta z konfiguracji bazy i plików rzeczywistego API. Nie uruchamia i
 ani nie zmienia ofert. Odczytuje jedną stronę najnowszych ofert i trzy razy ranking
 „Wymarzone mieszkanie”, po 30 wyników, bez filtrów z przeglądarki.
 Wypisuje czasy w milisekundach, liczebność i etapy: ustawienia, licznik, zapytanie
-kandydatów, dekodowanie, historia cen, ocena/sortowanie, media/powiązania/AI i budowa
+kandydatów, payloady snapshotów, dekodowanie, historia cen, ocena/sortowanie, media/powiązania/AI i budowa
 widocznej strony. Nie wypisuje treści ofert, preferencji ani danych dostępowych.
 Pierwszy ranking ma pusty cache punktacji nowego procesu; cache bazy może być już
 rozgrzany. Proces API ma własny cache, więc to pomiar diagnostyczny etapów,
 nie pomiar czasu HTTP. Porównuj wyniki przy podobnym obciążeniu instalacji.
+
+Lista sprawdza identyfikator i wersję snapshotu w bazie przy każdym odczycie.
+Pamięć payloadów pobiera ponownie dane po dodaniu snapshotu lub jego edycji,
+także przez skrypt utrzymaniowy. Nie wymaga ręcznego czyszczenia po zmianie ofert.
+Ma limit 5000 wpisów i 32 MiB sumy rozmiarów JSON (rzeczywista pamięć obiektów
+JavaScript jest większa). Restart API czyści pamięć; pierwszy ranking może więc
+potrwać dłużej. Zmiany preferencji, ceny, korekt i zdarzeń cenowych nadal wymuszają
+przeliczenie odpowiednich ocen. Wagi i zasady rankingu pozostały takie same.
 
 ## Oceny AI bez wywołań API modelu
 
