@@ -1,6 +1,7 @@
 import { GitCompareArrows, Search } from "lucide-react";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatViewingDate } from "../shared/lib/format";
+import { LoadError } from "../shared/components/LoadError";
 
 export function OffersOverview({
   model,
@@ -11,10 +12,14 @@ export function OffersOverview({
     | "region"
     | "upcomingViewings"
     | "listingsTotal"
-    | "dashboardListings"
     | "setActiveTab"
     | "listingInsights"
     | "openListing"
+    | "dashboardSection"
+    | "viewingsSection"
+    | "hasLoadedListings"
+    | "isLoadingListings"
+    | "listingsError"
   >;
 }) {
   const {
@@ -22,10 +27,11 @@ export function OffersOverview({
     region,
     upcomingViewings,
     listingsTotal,
-    dashboardListings,
     setActiveTab,
     listingInsights,
     openListing,
+    dashboardSection,
+    viewingsSection,
   } = model;
   return (
     <>
@@ -41,11 +47,23 @@ export function OffersOverview({
             <div className="hero-card">
               <span>Najbliższy krok</span>
               <strong>
-                {upcomingViewings.total > 0
-                  ? `${upcomingViewings.total} zaplanowane`
-                  : "Przejrzyj nowe oferty"}
+                {viewingsSection.data === null
+                  ? viewingsSection.error
+                    ? "Kalendarz niedostępny"
+                    : "Wczytuję kalendarz…"
+                  : upcomingViewings.total > 0
+                    ? `${upcomingViewings.total} zaplanowane`
+                    : "Przejrzyj nowe oferty"}
               </strong>
-              <p>{listingsTotal || dashboardListings.length} ofert gotowych do porównania.</p>
+              <p>
+                {!model.hasLoadedListings
+                  ? model.listingsError
+                    ? "Lista ofert wymaga ponowienia odczytu."
+                    : "Wczytuję oferty…"
+                  : model.isLoadingListings
+                    ? "Aktualizuję listę ofert…"
+                    : `${listingsTotal} ofert w bieżących wynikach.`}
+              </p>
               <button
                 className="action-button hero-primary-action"
                 onClick={() =>
@@ -63,7 +81,19 @@ export function OffersOverview({
             </div>
           </section>
 
-          <div className="hero-stats" aria-label="Snapshot stanu bazy">
+          {dashboardSection.error && (
+            <LoadError message={dashboardSection.error} onRetry={dashboardSection.reload} />
+          )}
+          {dashboardSection.status === "loading" || dashboardSection.status === "idle" ? (
+            <p className="load-feedback" role="status">
+              Wczytuję podsumowanie bazy…
+            </p>
+          ) : null}
+          <div
+            className="hero-stats"
+            aria-label="Snapshot stanu bazy"
+            aria-busy={dashboardSection.status === "loading"}
+          >
             {listingInsights.map((stat) => (
               <div key={stat.label} className="hero-stat" title={stat.description}>
                 <span>{stat.label}</span>
@@ -73,6 +103,14 @@ export function OffersOverview({
             ))}
           </div>
 
+          {viewingsSection.error && (
+            <LoadError message={viewingsSection.error} onRetry={viewingsSection.reload} />
+          )}
+          {viewingsSection.status === "loading" || viewingsSection.status === "idle" ? (
+            <p className="load-feedback" role="status">
+              Wczytuję kalendarz…
+            </p>
+          ) : null}
           {upcomingViewings.items.length > 0 ? (
             <section className="panel compact-panel">
               <div className="panel-header">
@@ -105,11 +143,11 @@ export function OffersOverview({
                 )}
               </div>
             </section>
-          ) : (
+          ) : viewingsSection.status === "ready" ? (
             <p className="empty-viewings-note">
               Brak zaplanowanych oglądań. Termin dodasz w szczegółach oferty.
             </p>
-          )}
+          ) : null}
         </div>
       ) : null}
     </>

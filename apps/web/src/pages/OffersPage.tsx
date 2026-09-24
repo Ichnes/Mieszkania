@@ -43,6 +43,7 @@ export function OffersPage({
     | "listingSort"
     | "setListingSort"
     | "isLoadingListings"
+    | "hasLoadedListings"
     | "setFiltersPanelCollapsed"
     | "listingsMainRef"
     | "visibleListings"
@@ -458,15 +459,19 @@ export function OffersPage({
                   busy={isLoadingListings}
                 />
               ) : null}
-              <ListingSection
-                compareIds={model.compareListingIds}
-                onToggleCompare={model.toggleCompareListing}
-                title={listingSectionTitle}
-                listings={visibleListings}
-                onOpen={openListing}
-                downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}
-                isLoading={isLoadingListings}
-              />
+              {model.hasLoadedListings || !model.listingsError || isLoadingListings ? (
+                <ListingSection
+                  compareIds={model.compareListingIds}
+                  onToggleCompare={model.toggleCompareListing}
+                  title={listingSectionTitle}
+                  listings={visibleListings}
+                  onOpen={openListing}
+                  downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}
+                  isLoading={
+                    isLoadingListings || (!model.hasLoadedListings && !model.listingsError)
+                  }
+                />
+              ) : null}
               {listingsTotal > 0 ? (
                 <section className="panel">
                   <div className="pagination-row">

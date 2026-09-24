@@ -1,10 +1,11 @@
+import { loadWorkspaceBootstrap } from "./bootstrap";
+import { useRemoteSection } from "./useRemoteSection";
 import { useScrollSession } from "./useScrollSession";
 import { hasActiveMarketFilters } from "../features/statistics/types";
 import { hasExposureFilter } from "@mieszkania/shared";
 import { apiFetch } from "../shared/lib/http";
 import { useStatisticsPreferences } from "../features/statistics/useStatisticsPreferences";
 import type {
-  AlertsResponse,
   CollectorRunResponse,
   DashboardResponse,
   DuplicateCandidate,
@@ -16,7 +17,6 @@ import type {
   ListingsResponse,
   ListingSummary,
   MarketStatsResponse,
-  SupportedRegion,
   UpcomingViewingsResponse,
 } from "@mieszkania/shared";
 import { useEffect, useRef, useState } from "react";
@@ -45,9 +45,24 @@ import {
 import { ListingSortKey, LoadState } from "./types";
 
 export function useWorkspaceController() {
+  const [initialRequests] = useState(createLatestRequest);
   const [initialListingsSession] = useState(readListingsSession);
   const [state, setState] = useState<LoadState>({ status: "loading" });
   const { activeTab, setActiveTab, location, navigate } = useAppRoute();
+  const overviewEnabled = state.status === "ready" && activeTab === "dashboard";
+  const dashboardSection = useRemoteSection<DashboardResponse>(
+    "/api/dashboard",
+    overviewEnabled,
+    "Nie udało się pobrać podsumowania bazy. Poprzednie dane, jeśli są widoczne, mogą być nieaktualne.",
+  );
+  const viewingsSection = useRemoteSection<UpcomingViewingsResponse>(
+    "/api/viewings/upcoming",
+    overviewEnabled,
+    "Nie udało się pobrać kalendarza. Poprzednie terminy, jeśli są widoczne, mogą być nieaktualne.",
+  );
+  const refreshDashboard = dashboardSection.reload;
+  const refreshUpcomingViewings = viewingsSection.reload;
+  const [hasLoadedListings, setHasLoadedListings] = useState(false);
   const [filters, setFilters] = useState<ListingFilters>(initialListingsSession.filters);
   const [appliedFilters, setAppliedFilters] = useState(initialListingsSession.filters);
   const [appliedListingSort, setAppliedListingSort] = useState(initialListingsSession.listingSort);
@@ -157,7 +172,6 @@ export function useWorkspaceController() {
     action: CollectorRunResponse["action"];
   } | null>(null);
   const [isReviewingDuplicatePair, setIsReviewingDuplicatePair] = useState<string | null>(null);
-  const initialLoadInFlightRef = useRef(false);
   const {
     refreshQueueStatus,
     refreshStaleListingStatus,
@@ -238,7 +252,7 @@ export function useWorkspaceController() {
       duplicateCandidateCache.clear();
       await refreshDashboard();
     },
-    applyFilters,
+    applyFilters: refreshListings,
     searchCity: state.status === "ready" ? state.settings.searchContract.city : "",
   });
 
@@ -263,6 +277,7 @@ export function useWorkspaceController() {
   useScrollSession(state.status === "ready", location.pathname);
   useEffect(() => {
     void loadInitial();
+    return () => initialRequests.cancel();
   }, []);
 
   useEffect(() => {
@@ -342,9 +357,23 @@ export function useWorkspaceController() {
   ]);
 
   useEffect(() => {
-    if (activeTab === "map") void loadMapListings();
+    if (state.status !== "ready") return;
+    if (activeTab === "dashboard") void applyFilters();
+    return () => {
+      listRequests.cancel();
+      setIsLoadingListings(false);
+    };
+  }, [state.status, activeTab]);
+
+  useEffect(() => {
+    if (state.status !== "ready") return;
+    if (activeTab === "map") void refreshMapListings();
     if (activeTab === "duplicates") void loadDuplicateGroups();
-  }, [activeTab]);
+    return () => {
+      mapRequests.cancel();
+      setIsLoadingMapListings(false);
+    };
+  }, [state.status, activeTab]);
 
   useEffect(() => {
     if (activeTab !== "stats") return;
@@ -415,7 +444,9 @@ export function useWorkspaceController() {
     };
   }
 
-  const { dashboard, alerts, region, settings, upcomingViewings } = state;
+  const { region, settings } = state;
+  const dashboard = dashboardSection.data ?? { market: "", stats: [], listings: [] };
+  const upcomingViewings = viewingsSection.data ?? { total: 0, items: [] };
   const statsPriceDelta =
     marketStats && marketStatsBaseline
       ? Math.round(
@@ -495,6 +526,9 @@ export function useWorkspaceController() {
     activeTab,
     region,
     upcomingViewings,
+    dashboardSection,
+    viewingsSection,
+    hasLoadedListings,
     listingsTotal,
     dashboardListings,
     listingInsights,
@@ -660,90 +694,33 @@ export function useWorkspaceController() {
   };
 
   async function loadInitial() {
-    if (initialLoadInFlightRef.current) return;
-    initialLoadInFlightRef.current = true;
-    try {
-      const [
-        dashboardResponse,
-        alertsResponse,
-        regionResponse,
-        settingsResponse,
-        upcomingViewingsResponse,
-        listingsResponse,
-      ] = await Promise.all([
-        apiFetch(`${apiBaseUrl}/api/dashboard`),
-        apiFetch(`${apiBaseUrl}/api/alerts`),
-        apiFetch(`${apiBaseUrl}/api/region`),
-        apiFetch(`${apiBaseUrl}/api/settings/family`),
-        apiFetch(`${apiBaseUrl}/api/viewings/upcoming`),
-        apiFetch(
-          `${apiBaseUrl}/api/listings?${createListingsQuery(filters, currentListingsPage, listingSort)}`,
+    await initialRequests.run(
+      (signal) =>
+        loadWorkspaceBootstrap((path) =>
+          apiFetch(apiBaseUrl + path, {
+            signal: AbortSignal.any([signal, AbortSignal.timeout(30_000)]),
+          }),
         ),
-      ]);
-      const failedResponse = [
-        dashboardResponse,
-        alertsResponse,
-        regionResponse,
-        settingsResponse,
-        upcomingViewingsResponse,
-        listingsResponse,
-      ].find((response) => !response.ok);
-      if (failedResponse) {
-        const endpoint = new URL(failedResponse.url).pathname;
-        throw new Error(
-          `Nie udało się pobrać danych: ${endpoint} (HTTP ${failedResponse.status}). Spróbuj ponownie.`,
-        );
-      }
-
-      const listings = (await listingsResponse.json()) as ListingsResponse;
-      setState({
-        status: "ready",
-        dashboard: (await dashboardResponse.json()) as DashboardResponse,
-        alerts: (await alertsResponse.json()) as AlertsResponse,
-        region: (await regionResponse.json()) as SupportedRegion,
-        settings: (await settingsResponse.json()) as FamilySettings,
-        upcomingViewings: (await upcomingViewingsResponse.json()) as UpcomingViewingsResponse,
-      });
-      setFilteredListings(listings.items);
-      setListingsTotal(listings.total);
-      setCurrentListingsPage(currentListingsPage);
-    } catch (error) {
-      setState({
-        status: "error",
-        message: error instanceof Error ? error.message : "Nieznany blad pobierania danych.",
-      });
-    } finally {
-      initialLoadInFlightRef.current = false;
-    }
-  }
-
-  async function refreshDashboard() {
-    const response = await apiFetch(`${apiBaseUrl}/api/dashboard`);
-    if (!response.ok) return;
-    const dashboardResponse = (await response.json()) as DashboardResponse;
-    setState((current) =>
-      current.status === "ready" ? { ...current, dashboard: dashboardResponse } : current,
+      {
+        start: () => setState({ status: "loading" }),
+        success: (data) => setState({ status: "ready", ...data }),
+        error: (error) =>
+          setState({
+            status: "error",
+            message:
+              error instanceof Error ? error.message : "Nie udało się pobrać ustawień aplikacji.",
+          }),
+        finish: () => {},
+      },
     );
   }
 
-  async function refreshAlerts() {
-    const response = await apiFetch(`${apiBaseUrl}/api/alerts`);
-    if (!response.ok) return;
-    const alertsResponse = (await response.json()) as AlertsResponse;
-    setState((current) =>
-      current.status === "ready" ? { ...current, alerts: alertsResponse } : current,
-    );
+  async function refreshListings() {
+    if (activeTab === "dashboard") await applyFilters();
   }
 
-  async function refreshUpcomingViewings() {
-    const response = await apiFetch(`${apiBaseUrl}/api/viewings/upcoming`);
-    if (!response.ok) return;
-    const upcomingViewingsResponse = (await response.json()) as UpcomingViewingsResponse;
-    setState((current) =>
-      current.status === "ready"
-        ? { ...current, upcomingViewings: upcomingViewingsResponse }
-        : current,
-    );
+  async function refreshMapListings() {
+    if (activeTab === "map") await loadMapListings();
   }
 
   async function applyFilters(
@@ -768,6 +745,7 @@ export function useWorkspaceController() {
           setListingsError(null);
         },
         success: (data) => {
+          setHasLoadedListings(true);
           setFilteredListings(data.items);
           setListingsTotal(data.total);
           setAppliedFilters(nextFilters);
@@ -780,7 +758,9 @@ export function useWorkspaceController() {
         },
         error: () =>
           setListingsError(
-            "Nie udało się odświeżyć ofert. Wyniki i licznik pozostają z ostatniego udanego odczytu.",
+            hasLoadedListings
+              ? "Nie udało się odświeżyć ofert. Wyniki i licznik pozostają z ostatniego udanego odczytu."
+              : "Nie udało się pobrać ofert. Ponów odczyt; brak wyników nie oznacza pustej bazy.",
           ),
         finish: () => setIsLoadingListings(false),
       },
@@ -851,7 +831,7 @@ export function useWorkspaceController() {
       await Promise.all([
         loadDuplicateGroups(),
         refreshDashboard(),
-        loadMapListings(),
+        refreshMapListings(),
         applyFilters(appliedFilters, currentListingsPage, appliedListingSort),
         ...(selectedListing ? [openListing(selectedListing.id, false, true)] : []),
       ]);
@@ -1115,19 +1095,12 @@ export function useWorkspaceController() {
           listing.id === listingId ? { ...listing, isShortlisted: shortlisted } : listing,
         ),
       );
-      setState((current) =>
-        current.status === "ready"
-          ? {
-              ...current,
-              dashboard: {
-                ...current.dashboard,
-                listings: current.dashboard.listings.map((listing) =>
-                  listing.id === listingId ? { ...listing, isShortlisted: shortlisted } : listing,
-                ),
-              },
-            }
-          : current,
-      );
+      dashboardSection.updateData((current) => ({
+        ...current,
+        listings: current.listings.map((listing) =>
+          listing.id === listingId ? { ...listing, isShortlisted: shortlisted } : listing,
+        ),
+      }));
       setSelectedListing((current) =>
         current?.id === listingId ? { ...current, isShortlisted: shortlisted } : current,
       );
@@ -1161,9 +1134,8 @@ export function useWorkspaceController() {
       );
       await Promise.all([
         refreshDashboard(),
-        refreshAlerts(),
-        applyFilters(),
-        ...(activeTab === "map" ? [loadMapListings()] : []),
+        refreshListings(),
+        ...(activeTab === "map" ? [refreshMapListings()] : []),
       ]);
       setSettingsOpen(false);
     } catch (error) {
@@ -1196,7 +1168,7 @@ export function useWorkspaceController() {
       setCompareSnapshots((current) =>
         current.map((listing) => (listing.id === detail.id ? detail : listing)),
       );
-      await applyFilters();
+      await refreshListings();
     } finally {
       setIsSavingListingManual(false);
     }
@@ -1227,12 +1199,7 @@ export function useWorkspaceController() {
       setCompareSnapshots((current) =>
         current.map((listing) => (listing.id === detail.id ? detail : listing)),
       );
-      await Promise.all([
-        refreshDashboard(),
-        refreshUpcomingViewings(),
-        refreshAlerts(),
-        applyFilters(),
-      ]);
+      await Promise.all([refreshDashboard(), refreshUpcomingViewings(), refreshListings()]);
     } finally {
       setIsSavingContactEvent(false);
     }
@@ -1285,8 +1252,7 @@ export function useWorkspaceController() {
       openListing(input.listingId),
       refreshDashboard(),
       refreshUpcomingViewings(),
-      refreshAlerts(),
-      applyFilters(),
+      refreshListings(),
     ]);
   }
 
@@ -1299,8 +1265,7 @@ export function useWorkspaceController() {
       openListing(listingId),
       refreshDashboard(),
       refreshUpcomingViewings(),
-      refreshAlerts(),
-      applyFilters(),
+      refreshListings(),
     ]);
   }
 
@@ -1313,7 +1278,7 @@ export function useWorkspaceController() {
       if (!response.ok) throw new Error(`Dismiss listing failed with status ${response.status}`);
       setSelectedListing(null);
       setCompareListingIds((current) => current.filter((id) => id !== listingId));
-      await Promise.all([refreshDashboard(), refreshAlerts(), applyFilters(), loadMapListings()]);
+      await Promise.all([refreshDashboard(), refreshListings(), refreshMapListings()]);
     } finally {
       setIsDismissingListing(null);
     }
@@ -1328,7 +1293,7 @@ export function useWorkspaceController() {
       if (!response.ok) throw new Error(`Archive listing failed with status ${response.status}`);
       setSelectedListing(null);
       setCompareListingIds((current) => current.filter((id) => id !== listingId));
-      await Promise.all([refreshDashboard(), refreshAlerts(), applyFilters(), loadMapListings()]);
+      await Promise.all([refreshDashboard(), refreshListings(), refreshMapListings()]);
     } finally {
       setIsArchivingListing(null);
     }
@@ -1343,7 +1308,7 @@ export function useWorkspaceController() {
       if (!response.ok)
         throw new Error(`Listing media backfill failed with status ${response.status}`);
       await response.json();
-      await Promise.all([refreshDashboard(), applyFilters(), openListing(listingId)]);
+      await Promise.all([refreshDashboard(), refreshListings(), openListing(listingId)]);
     } catch (error) {
       setMediaBackfillError(
         error instanceof Error ? error.message : "Listing media backfill failed.",

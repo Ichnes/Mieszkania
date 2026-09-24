@@ -29,7 +29,7 @@ export function Shell({
         <p className="startup-copy" role={error ? "alert" : "status"}>
           {error
             ? "Nie możemy teraz pobrać danych. Spróbuj połączyć się ponownie."
-            : "Wczytujemy oferty, zapisane kryteria i ustawienia."}
+            : "Wczytujemy zapisane ustawienia i region. Oferty pojawią się na swojej stronie."}
         </p>
         {onRetry ? (
           <button className="action-button" onClick={onRetry}>

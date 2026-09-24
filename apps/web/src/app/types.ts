@@ -1,11 +1,4 @@
-import type {
-  AlertsResponse,
-  DashboardResponse,
-  FamilySettings,
-  ListingFilters,
-  SupportedRegion,
-  UpcomingViewingsResponse,
-} from "@mieszkania/shared";
+import type { FamilySettings, ListingFilters, SupportedRegion } from "@mieszkania/shared";
 
 export type AppTab =
   | "dashboard"
@@ -37,11 +30,8 @@ export type ListingsSession = {
 
 export type ReadyState = {
   status: "ready";
-  dashboard: DashboardResponse;
-  alerts: AlertsResponse;
   region: SupportedRegion;
   settings: FamilySettings;
-  upcomingViewings: UpcomingViewingsResponse;
 };
 
 export type LoadState = { status: "loading" } | { status: "error"; message: string } | ReadyState;

@@ -15,6 +15,18 @@ Adresy można odświeżać i otwierać bezpośrednio. Przyciski Wstecz/Dalej prz
 zmieniają widok. Link z `?listing=UUID` otwiera szczegóły konkretnej lokalnej oferty;
 stare linki zaczynające się od `/` pozostają obsługiwane.
 
+Przy starcie aplikacja czeka na ustawienia i region. Lista ofert, podsumowanie bazy
+i kalendarz wczytują się niezależnie po wejściu na **Oferty**. Kalkulator i porównanie
+nie czekają na ranking ofert ani odczyt kalendarza. Przejście do innej strony anuluje
+oczekujący odczyt listy i podsumowań; powrót odświeża dane z zachowaniem zastosowanych
+filtrów, sortowania i strony wyników.
+
+Błąd podsumowania lub kalendarza pojawia się przy danej sekcji. **Ponów** powtarza
+tylko jej odczyt. Pozostałe części aplikacji nadal działają. Jeśli wcześniejsze dane
+są dostępne, pozostają widoczne z informacją, że mogą być nieaktualne. Brak odczytu
+nie jest prezentowany jako pusta baza ani pusty kalendarz. Błąd ustawień lub regionu
+nadal wymaga użycia **Spróbuj ponownie** na ekranie startowym.
+
 Ustawienia otwiera ikona w górnym pasku. Ręczne oceny, wagi i ranking zostały wycofane.
 Procent dopasowania do profilu wymarzonego mieszkania jest niezależną funkcją.
 Stare pola `weights` i `maxWeightTotal` są usuwane automatycznie przy odczycie

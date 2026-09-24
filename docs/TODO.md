@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Niezależne ładowanie stron (2026-09-25)
+
+- [x] Zakres: start tylko z ustawieniami i regionem; osobne odczyty listy, podsumowania i kalendarza, lokalne błędy i ponawianie; usunięcie nieużywanego odczytu alertów.
+- [x] Start wymaga dwóch odczytów; lista, podsumowanie i kalendarz mają niezależne stany i ponowienia. Odejście anuluje oczekujący odczyt; powrót odświeża dane. Operacje na innych stronach nie uruchamiają zbędnego rankingu. Nieudany pierwszy odczyt nie udaje pustych wyników.
+- [x] 399 testów zaliczonych, 8 pominiętych, 0 błędów; testy renderowania ponowione po korekcie typów danych testowych. Typecheck poprawny, build w Dockerze zaliczony. Regresje: wolna sekcja, błąd kalendarza, ponowienie, stare odpowiedzi, anulowanie i prawidłowe puste stany.
+- [x] Lokalne API/web/db healthy. Odczyt startu: 2 żądania, 50 ms (pomiar API, nie renderowania). Cztery trasy strony oraz health HTTP 200, podsumowanie i kalendarz HTTP 200. Instrukcja i raport zaktualizowane; gotowe do commitu i push na `main`.
+- [ ] Kontrola wizualna PC/laptop/mobile: narzędzie nadal nie udostępnia przeglądarki. Komunikaty wykorzystują istniejący responsywny komponent z zawijaniem tekstu/przycisków.
+- [ ] Następne punkty przeglądu: kompletność ocen, zbiorczy status portali.
+
 ## Rozbudowa porównania (2026-09-24)
 
 - [x] Zakres: tylko różnice, ekspozycja, ustalenia po kontakcie i dojazdy do zapisanych celów; jawne braki danych, układ PC/laptop/mobile.
