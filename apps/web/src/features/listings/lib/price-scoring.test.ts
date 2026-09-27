@@ -183,7 +183,7 @@ test("score reasons describe listing facts instead of repeating rules or timesta
   const detail = (label: string) => result.rows.find((row) => row.label === label)!.detail;
   assert.equal(detail("Wiek oferty"), "1 dzień");
   assert.equal(detail("Układ mieszkania"), "nie spełnia");
-  assert.equal(detail("Parking zewnętrzny"), "brak");
+  assert.equal(detail("Parking zewnętrzny"), "brak danych");
   assert.equal(detail("Klimatyzacja"), "brak danych");
   assert.equal(detail("Wynajem miejsc parkingowych"), "brak danych");
   assert.equal(detail("Dojazd do pracy"), "brak danych");

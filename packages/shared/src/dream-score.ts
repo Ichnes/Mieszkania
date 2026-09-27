@@ -90,6 +90,11 @@ export function computeDreamEvaluation(
   };
   const text = normalizePolish(`${listing.title} ${listing.description ?? ""}`).toLowerCase();
   const descriptionFacts = getDreamDescriptionFacts(text);
+  const garageKnown =
+    typeof listing.amenityEvidence?.garage === "boolean" || listing.hasGarage === true;
+  const liftKnown = typeof listing.amenityEvidence?.lift === "boolean" || listing.hasLift === true;
+  const storageKnown =
+    typeof listing.amenityEvidence?.storage === "boolean" || listing.hasStorage === true;
   const mentions = (...phrases: string[]) =>
     phrases.some((phrase) => text.includes(normalizePolish(phrase).toLowerCase()));
 
@@ -222,7 +227,7 @@ export function computeDreamEvaluation(
   record(
     "Garaż",
     "Wymagany: +24 / brak −36. Niewymagany: +16 / brak −10.",
-    listing.hasGarage ? "Jest" : "brak danych",
+    listing.hasGarage ? "Jest" : garageKnown ? "Potwierdzony brak" : "brak danych",
   );
 
   maxPoints += 8;
@@ -237,7 +242,7 @@ export function computeDreamEvaluation(
       ? listing.hasGarage
         ? "Jest; premia nie łączy się z garażem"
         : "Jest, bez garażu"
-      : "brak",
+      : "brak danych",
   );
 
   maxPoints += 9;
@@ -245,7 +250,11 @@ export function computeDreamEvaluation(
     points += 9;
   }
 
-  record("Komórka", "Jest +9; brak 0.", listing.hasStorage ? "Jest" : "brak danych");
+  record(
+    "Komórka",
+    "Jest +9; brak 0.",
+    listing.hasStorage ? "Jest" : storageKnown ? "Potwierdzony brak" : "brak danych",
+  );
 
   const liftBonus = 21;
   const floor = listing.floor ?? (hasApartmentGroundFloor(text) ? 0 : undefined);
@@ -255,7 +264,13 @@ export function computeDreamEvaluation(
   record(
     "Winda",
     "Jest +21; brak na parterze 0; brak na pozostałych piętrach lub bez danych o piętrze −20.",
-    listing.hasLift ? "Jest" : floor === 0 ? "Parter — bez kary za brak windy" : "brak danych",
+    listing.hasLift
+      ? "Jest"
+      : liftKnown
+        ? "Potwierdzony brak"
+        : floor === 0
+          ? "Parter — bez kary; brak danych o windzie"
+          : "brak danych",
   );
 
   // Having both makes day-to-day use with a family much easier, so it earns an
@@ -560,8 +575,78 @@ export function computeDreamEvaluation(
         : "Do 7500 zł"
       : "Brak ceny do wyliczenia raty",
   );
+  // Coverage describes evidence for the scoring rules, never the number of points earned.
+  // Text-only bonuses stay unknown without a positive signal; silence is not a denial.
+  const known: Record<string, boolean> = {
+    Lokalizacja: Boolean(districtNeedle) && !/brak|nieznan/.test(districtNeedle),
+    Metraż: area !== undefined,
+    "Liczba pokoi": typeof rooms === "number",
+    "Cena zakupu": price !== undefined,
+    "Cena za m²": pricePerSqm !== undefined,
+    "Stan wykończenia":
+      descriptionFacts.unfinished || listing.finishQuality === "to_finish"
+        ? pricePerSqm !== undefined
+        : listing.finishQuality === "ready",
+    Garaż: garageKnown,
+    "Parking zewnętrzny": listing.hasGarage === true || listing.hasOutdoorParking === true,
+    Komórka: storageKnown,
+    Winda: liftKnown,
+    "Garaż i winda razem":
+      (garageKnown && liftKnown) ||
+      listing.amenityEvidence?.garage === false ||
+      listing.amenityEvidence?.lift === false,
+    "Rok budowy": typeof listing.yearBuilt === "number",
+    Piętro: typeof floor === "number" && (typeof listing.totalFloors === "number" || topFloor),
+    Ekspozycja: exposure.directions.length > 0,
+    Balkon: listing.hasBalcony === true,
+    Blat: descriptionFacts.countertopPoints > 0,
+    "Drewniana podłoga": descriptionFacts.woodenFloor,
+    "Stolarka na wymiar": descriptionFacts.customCarpentry,
+    "Co najmniej 2 miejsca parkingowe": descriptionFacts.multipleParking,
+    "Wynajem miejsc parkingowych": descriptionFacts.rentedMultipleParking,
+    Klimatyzacja: listing.hasAirConditioning === true,
+    ...Object.fromEntries(
+      premiumSignals.map(([pattern], index) => [
+        premiumLabels[index],
+        hasPositiveDescriptionFact(text, pattern),
+      ]),
+    ),
+    "Układ mieszkania": typeof rooms === "number" && (rooms !== 3 || area !== undefined),
+    "Obniżka ceny": Number.isFinite(listing.priceChangePercent),
+    "Wiek oferty": Number.isFinite(ageDays) && ageDays >= 0,
+    Metro: Boolean(findNearestWarsawMetroStation(listing.latitude, listing.longitude)),
+    "Dojazd do pracy": workplaces.length > 0 && commuteDistances.length === workplaces.length,
+    "Sprzedający / prowizja": listing.badges.some((badge) =>
+      ["Z prowizją", "Oferta prywatna", "Oferta bezpośrednia", "Bez prowizji"].includes(badge),
+    ),
+    Prysznic: descriptionFacts.shower,
+    "Informacja o czynszu": Boolean(hasMaintenanceFee),
+    "Szacowana rata": Boolean(mortgage),
+  };
+  const evaluatedRows = rows.map((row) => ({
+    ...row,
+    dataStatus: (row.maxPoints === 0 &&
+    !["Informacja o czynszu", "Wynajem miejsc parkingowych"].includes(row.label)
+      ? "inactive"
+      : known[row.label]
+        ? "known"
+        : "unknown") as "inactive" | "known" | "unknown",
+  }));
+  const activeRows = evaluatedRows.filter((row) => row.dataStatus !== "inactive");
+  const knownCount = activeRows.filter((row) => row.dataStatus === "known").length;
+  const coverage = {
+    known: knownCount,
+    total: activeRows.length,
+    percent: activeRows.length ? Math.round((100 * knownCount) / activeRows.length) : 0,
+    unknowns: activeRows
+      .filter((row) => row.dataStatus === "unknown")
+      .sort((a, b) => b.maxPoints - a.maxPoints)
+      .slice(0, 3)
+      .map((row) => row.label),
+  };
   return {
-    rows,
+    rows: evaluatedRows,
+    coverage,
     mortgage,
     points,
     maxPoints,

@@ -14,6 +14,29 @@
   font-size: 2rem;
   color: var(--brand-strong);
 }
+.listing-score-coverage {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+}
+.listing-score-data {
+  margin-block: 16px;
+  padding: 12px 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.listing-score-data p {
+  margin: 0;
+}
+.listing-score-data p + p {
+  margin-top: 8px;
+}
+.listing-score-data-status {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
 .listing-score-table-wrap {
   max-width: 100%;
   overflow-x: auto;

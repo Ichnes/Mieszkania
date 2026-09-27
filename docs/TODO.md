@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Pokrycie kryteriów dopasowania (2026-09-27–28)
+
+- [x] Zakres: pokrycie aktywnych kryteriów w panelu dopasowania i trzy najważniejsze niewiadome, bez zmiany punktacji.
+- [x] Zachowanie rozróżnienia potwierdzonego braku garażu, windy i komórki od braku informacji; status danych przy każdym kryterium. Responsywny blok wyjaśnienia.
+- [x] Weryfikacja: 402 testy zaliczone, 8 środowiskowych pominiętych, 0 błędów. Typecheck poprawny; build API/web w Dockerze zaliczony. Regresje: potwierdzony brak kontra brak danych, wyłączone kryteria, częściowe dane i ręczna korekta ekspozycji. Punktacja bez zmian.
+- [x] API/web przebudowane i uruchomione lokalnie; health HTTP 200. Odczyt listy i szczegółów potwierdza nowe dane, kontrola 30 rzeczywistych ofert sprawdziła pokrycie i 58 wartości cech. Formatowanie i `git diff --check` poprawne.
+- [x] Instrukcja i raport przeglądu uzupełnione; zmiany przygotowane do commitu i push na `main`.
+- [ ] Kontrola wizualna PC/laptop/mobile: narzędzie zwróciło pustą listę przeglądarek i aplikacji. Blok danych zawija tekst; tabela zachowuje przewijanie wewnętrzne.
+- Pozostałe punkty przeglądu: zbiorczy status portali i zaległa kontrola wizualna.
+
 ## Niezależne ładowanie stron (2026-09-25)
 
 - [x] Zakres: start tylko z ustawieniami i regionem; osobne odczyty listy, podsumowania i kalendarza, lokalne błędy i ponawianie; usunięcie nieużywanego odczytu alertów.

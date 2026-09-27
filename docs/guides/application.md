@@ -73,6 +73,16 @@ osobno; nie są potrzebne do przeglądania ani oceny mieszkań.
 
 W szczegółach oferty otwórz zakładkę **Ocena**. Tabela pokazuje każde
 kryterium, zdobyte punkty, jego udział w mianowniku oraz dane/powód oceny.
+Obok wyniku jest **Pokrycie kryteriów**: liczba aktywnych kryteriów z danymi do oceny
+podzielona przez liczbę aktywnych kryteriów. Każde kryterium ma równy udział, także
+osobne reguły premii łącznych i kar. To nie jest procent prawdziwości ani jakość mieszkania.
+Potwierdzony brak garażu, windy lub komórki jest informacją; samo niewykrycie cechy
+nią nie jest. Uwzględniane są ręczne korekty. Przy cechach tekstowych brak pozytywnego
+rozpoznania pozostaje niepotwierdzony. Częściowe dane (np. piętro bez liczby pięter
+budynku lub bez informacji o ostatnim piętrze) nie oznaczają pełnego pokrycia reguły.
+**Najpierw sprawdź** pokazuje do trzech niewiadomych według największej możliwej premii.
+Status przy każdym wierszu wskazuje dane dostępne, niepełne/niepotwierdzone lub wyłączone
+kryterium. Pokrycie nie zmienia punktów, mianownika dopasowania ani sortowania ofert.
 Punkty możliwe to stała suma maksimów wszystkich aktywnych kryteriów dla danych
 preferencji, identyczna dla każdej oferty. Brak danych nie usuwa kryterium z mianownika.
 Uzupełnienie kierunków, roku, piętra, ceny lub wyposażenia zmienia tylko zdobyte punkty.

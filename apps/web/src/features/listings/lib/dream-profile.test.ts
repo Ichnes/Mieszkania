@@ -31,6 +31,84 @@ const base = {
 const evaluate = (changes: Partial<ListingSummary> = {}, profile = settings.dreamProfile) =>
   computeDreamEvaluation({ ...base, ...changes }, profile, [], now);
 
+test("coverage distinguishes missing evidence from confirmed absence without changing scores", () => {
+  const missing = evaluate({ hasGarage: false, hasLift: false, hasStorage: false });
+  const absent = evaluate({
+    hasGarage: false,
+    hasLift: false,
+    hasStorage: false,
+    amenityEvidence: { garage: false, lift: false, storage: false },
+  });
+  for (const label of ["Garaż", "Winda", "Komórka"]) {
+    assert.equal(missing.rows.find((row) => row.label === label)?.dataStatus, "unknown");
+    assert.equal(absent.rows.find((row) => row.label === label)?.dataStatus, "known");
+  }
+  assert.equal(absent.score, missing.score);
+  assert.equal(absent.points, missing.points);
+  assert.equal(absent.maxPoints, missing.maxPoints);
+  assert.ok(absent.coverage.known > missing.coverage.known);
+  assert.equal(absent.coverage.total, missing.coverage.total);
+  assert.equal(missing.coverage.unknowns.length, 3);
+  assert.ok(missing.coverage.unknowns.includes("Winda"));
+  assert.ok(missing.coverage.unknowns.includes("Ekspozycja"));
+});
+
+test("coverage includes known failures, omits disabled rules, and keeps partial inputs unknown", () => {
+  const result = evaluate({
+    roomsCount: 2,
+    priceLabel: "9 000 000 zł",
+    floor: 0,
+    totalFloors: undefined,
+    hasLift: false,
+    exposureDirectionsOverride: [],
+  });
+  const status = (label: string) => result.rows.find((row) => row.label === label)?.dataStatus;
+  assert.equal(status("Liczba pokoi"), "known");
+  assert.equal(status("Cena zakupu"), "known");
+  assert.equal(status("Piętro"), "unknown");
+  assert.equal(status("Winda"), "unknown");
+  assert.equal(status("Ekspozycja"), "unknown");
+  assert.equal(status("Dojazd do pracy"), "unknown");
+  const disabled = evaluate(
+    {},
+    {
+      ...settings.dreamProfile,
+      prefersBalcony: false,
+      maxPrice: 0,
+      maxPricePerSqm: 0,
+      minRooms: 0,
+      minArea: 0,
+      maxArea: 0,
+      preferredDistricts: [],
+      maxMetroDistanceMeters: 0,
+    },
+  );
+  for (const label of [
+    "Balkon",
+    "Cena zakupu",
+    "Cena za m²",
+    "Liczba pokoi",
+    "Metraż",
+    "Lokalizacja",
+    "Metro",
+  ]) {
+    assert.equal(disabled.rows.find((row) => row.label === label)?.dataStatus, "inactive");
+    assert.ok(!disabled.coverage.unknowns.includes(label));
+  }
+  assert.equal(
+    disabled.coverage.total,
+    disabled.rows.filter((row) => row.dataStatus !== "inactive").length,
+  );
+});
+
+test("coverage responds to exposure correction and does not treat absent premium text as a denial", () => {
+  const missing = evaluate({ description: "Brak garderoby", exposureDirectionsOverride: [] });
+  const updated = evaluate({ description: "Brak garderoby", exposureDirectionsOverride: ["N"] });
+  assert.equal(updated.coverage.known, missing.coverage.known + 1);
+  assert.equal(updated.rows.find((row) => row.label === "Ekspozycja")?.dataStatus, "known");
+  assert.equal(updated.rows.find((row) => row.label === "Garderoba")?.dataStatus, "unknown");
+});
+
 test("possible points stay fixed when listing facts are added, changed or cleared", () => {
   const baseline = evaluate();
   const maxima = (result: ReturnType<typeof evaluate>) =>

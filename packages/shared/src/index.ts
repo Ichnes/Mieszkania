@@ -396,6 +396,8 @@ export type ListingSummary = {
   hasLift?: boolean;
   hasBalcony?: boolean;
   hasAirConditioning?: boolean;
+  /** Explicit evidence; missing values mean unknown, including legacy false flags. */
+  amenityEvidence?: { garage?: boolean; lift?: boolean; storage?: boolean };
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
   additionalPurchaseCosts?: {

@@ -27,6 +27,10 @@ export function ListingScorePanel({
         <div>
           <h3>Ocena wymarzonego mieszkania</h3>
           <strong className="listing-score-total">{evaluation.score}%</strong>
+          <p className="listing-score-coverage">
+            Pokrycie kryteriów: <strong>{evaluation.coverage.percent}%</strong> (
+            {evaluation.coverage.known} z {evaluation.coverage.total})
+          </p>
         </div>
         <button
           type="button"
@@ -37,6 +41,21 @@ export function ListingScorePanel({
         >
           {showRules ? "Ukryj zasady punktacji" : "Co ile daje punktów?"}
         </button>
+      </div>
+      <div className="listing-score-data">
+        <p>
+          Pokrycie oznacza, dla ilu aktywnych kryteriów mamy dane do oceny. Potwierdzony brak cechy
+          też jest informacją. Każde kryterium liczy się jednakowo; ten wskaźnik nie zmienia
+          punktacji i nie potwierdza prawdziwości ogłoszenia.
+        </p>
+        {evaluation.coverage.unknowns.length > 0 ? (
+          <p>
+            <strong>Najpierw sprawdź:</strong> {evaluation.coverage.unknowns.join(", ")}. To
+            maksymalnie trzy niewiadome o największej możliwej premii punktowej.
+          </p>
+        ) : (
+          <p>Wszystkie aktywne kryteria mają dane do oceny.</p>
+        )}
       </div>
       <p>
         {evaluation.points} pkt / {evaluation.maxPoints} możliwych pkt × 100%, po zaokrągleniu i
@@ -74,7 +93,16 @@ export function ListingScorePanel({
                   {row.points > 0 ? "+" : ""}
                   {row.points} <span className="score-possible">({row.maxPoints})</span>
                 </td>
-                <td>{row.detail || row.rule}</td>
+                <td>
+                  <span className="listing-score-data-status">
+                    {row.dataStatus === "inactive"
+                      ? "Kryterium wyłączone"
+                      : row.dataStatus === "unknown"
+                        ? "Dane niepełne / niepotwierdzone"
+                        : "Dane dostępne"}
+                  </span>
+                  {row.detail || row.rule}
+                </td>
               </tr>
             ))}
           </tbody>

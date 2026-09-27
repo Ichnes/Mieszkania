@@ -1636,6 +1636,11 @@ function mapListingSummary(
     hasLift,
     hasBalcony,
     hasAirConditioning,
+    amenityEvidence: {
+      garage: amenities.garage,
+      lift: amenities.lift,
+      storage: row.manual_has_storage_override ?? (detectedStorage ? true : undefined),
+    },
     finishQuality: extractedFeatures.some(
       (feature) =>
         feature.key === "finish_quality" &&
