@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Końcowy przegląd wizualny (2026-09-28)
+
+- [x] Zakres: Oferty i archiwalne ulubione, porównanie, panel pokrycia oceny oraz Aktualizacja; PC 1440 px, laptop 1280 px, telefon 390 px, klawiatura, komunikaty i przepełnienia.
+- [x] Sprawdzenie dostępu: lista aplikacji/przeglądarek pusta; bezpośrednie otwarcie IAB i Chrome zwraca „Browser is not available”.
+- [ ] Alternatywa: osobny Chromium przez Playwright; poproszono o wyraźną zgodę wymaganą przez instrukcję narzędzia sterowania przeglądarką.
+- [ ] Obejrzenie ekranów, weryfikacja interakcji, ewentualne poprawki, wyniki i commit/push.
+
 ## Zbiorczy status portali (2026-09-28)
 
 - [x] Zakres: wspólny odczyt ośmiu kolejek, częściowe błędy i ostatni poprawny odczyt; adaptacyjne odświeżanie.
