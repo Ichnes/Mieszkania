@@ -1,4 +1,5 @@
 import { discoveryRequest } from "./discovery-request";
+import { queuePollDelay } from "./lib/queue-monitor";
 import { apiFetch } from "../../shared/lib/http";
 import type {
   CollectorRunResponse,
@@ -6,6 +7,7 @@ import type {
   OtodomDiscoverAllResponse,
   OtodomQueueProcessResponse,
   OtodomQueueStatusResponse,
+  PortalQueueStatusesResponse,
   RcnImportResponse,
   RelistedListingsScanResponse,
 } from "@mieszkania/shared";
@@ -35,6 +37,7 @@ export function useImportController({
   ) => Promise<void>;
 }) {
   const [queueStatusError, setQueueStatusError] = useState<string | null>(null);
+  const queuePollDelayRef = useRef(5_000);
 
   const [queueStatusCheckedAt, setQueueStatusCheckedAt] = useState<Date | null>(null);
 
@@ -762,23 +765,30 @@ export function useImportController({
       ["morizon", "Morizon", setMorizonQueueStatus],
     ] as const;
     try {
-      const results = await Promise.allSettled(
-        portals.map(async ([key]) => {
-          const response = await apiFetch(`${apiBaseUrl}/api/collectors/${key}/queue-status`, {
-            signal: AbortSignal.timeout(12_000),
-          });
-          if (!response.ok) throw new Error(String(response.status));
-          return (await response.json()) as OtodomQueueStatusResponse;
-        }),
-      );
+      const response = await apiFetch(`${apiBaseUrl}/api/collectors/queue-status`, {
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!response.ok) throw new Error(String(response.status));
+      const result = (await response.json()) as PortalQueueStatusesResponse;
       const statuses: OtodomQueueStatusResponse[] = [];
       const unavailable: string[] = [];
-      results.forEach((result, index) => {
-        if (result.status === "fulfilled") {
-          portals[index][2](result.value);
-          statuses.push(result.value);
-        } else unavailable.push(portals[index][1]);
+      portals.forEach(([key, label, setStatus]) => {
+        const item = result.portals.find((portal) => portal.sourceKey === key);
+        if (item?.available) {
+          setStatus(item.status);
+          statuses.push(item.status);
+        } else
+          unavailable.push(
+            item?.lastSuccessfulAt
+              ? `${label} (ostatni odczyt: ${new Date(item.lastSuccessfulAt).toLocaleString("pl-PL")})`
+              : `${label} (brak poprawnego odczytu)`,
+          );
       });
+      queuePollDelayRef.current = queuePollDelay(
+        statuses,
+        unavailable.length > 0,
+        staleListingRefresh?.automationPaused,
+      );
       setQueueStatusError(
         unavailable.length
           ? `Brak aktualnego statusu: ${unavailable.join(", ")}. Liczniki tych portali mogą być nieaktualne; ponawiam odczyt automatycznie.`
@@ -807,6 +817,11 @@ export function useImportController({
             ? `Dłuższe oczekiwanie: ${counts.processing} w toku, ${counts.pending} oczekuje. Pobieranie lub ponowne próby mogą potrwać kilka minut. Możesz zatrzymać automat; rozpoczęte zadania mogą się jeszcze dokończyć.`
             : `Pobieranie trwa: ${counts.processing} w toku, ${counts.pending} oczekuje, ${counts.failed} błędów.`,
       });
+    } catch {
+      queuePollDelayRef.current = 5_000;
+      setQueueStatusError(
+        "Nie udało się odczytać statusu portali. Liczniki mogą być nieaktualne; ponawiam odczyt automatycznie.",
+      );
     } finally {
       queueStatusInFlightRef.current = false;
       if (origin === "manual") setIsRefreshingQueueStatus(false);
@@ -1182,6 +1197,7 @@ export function useImportController({
     }
   }
   return {
+    queuePollDelayRef,
     refreshQueueStatus,
     refreshStaleListingStatus,
     isProcessingAllPortals,

@@ -26,6 +26,7 @@ import { createLatestRequest } from "../shared/lib/latest-request";
 import { DuplicateGroupOverview } from "../features/duplicates/types";
 import { isGratkaUrl, resolveCollectorEndpoint } from "../features/imports/lib/portals";
 import { getNextQueueAttemptAt } from "../features/imports/lib/queue";
+import { startQueueMonitor } from "../features/imports/lib/queue-monitor";
 import { useImportController } from "../features/imports/useImportController";
 import { applyDreamProfile } from "../features/listings/lib/dream-profile";
 import { getOfferStep } from "../features/listings/lib/offer-navigation";
@@ -174,6 +175,7 @@ export function useWorkspaceController() {
   const [isReviewingDuplicatePair, setIsReviewingDuplicatePair] = useState<string | null>(null);
   const {
     refreshQueueStatus,
+    queuePollDelayRef,
     refreshStaleListingStatus,
     isProcessingAllPortals,
     staleListingRefresh,
@@ -314,47 +316,12 @@ export function useWorkspaceController() {
   }, []);
 
   useEffect(() => {
-    if (!isProcessingAllPortals) return;
-    const monitorId = window.setInterval(() => void refreshQueueStatus("monitor"), 3000);
-    return () => window.clearInterval(monitorId);
-  }, [isProcessingAllPortals]);
-
-  useEffect(() => {
-    if (activeTab !== "backfill" || isProcessingAllPortals) return;
-    void refreshQueueStatus("monitor");
-    const automationMonitorId = window.setInterval(() => void refreshQueueStatus("monitor"), 5_000);
-    return () => window.clearInterval(automationMonitorId);
+    if (activeTab !== "backfill" && !isProcessingAllPortals) return;
+    return startQueueMonitor(
+      () => refreshQueueStatus("monitor"),
+      () => (isProcessingAllPortals ? 3_000 : queuePollDelayRef.current),
+    );
   }, [activeTab, isProcessingAllPortals, staleListingRefresh?.automationPaused]);
-
-  useEffect(() => {
-    const statuses = [
-      queueStatus,
-      gratkaQueueStatus,
-      olxQueueStatus,
-      nieruchomosciOnlineQueueStatus,
-      domiportaQueueStatus,
-      maxonQueueStatus,
-      adresowoQueueStatus,
-      morizonQueueStatus,
-    ];
-    const delayedPending = statuses.reduce((sum, status) => sum + (status?.delayedPending ?? 0), 0);
-    if (isProcessingAllPortals || delayedPending === 0) return;
-    const nextAttemptAt = getNextQueueAttemptAt(...statuses);
-    const nextAttemptMs = nextAttemptAt ? new Date(nextAttemptAt).getTime() : Date.now() + 10_000;
-    const delayMs = Math.max(1_000, Math.min(60_000, nextAttemptMs - Date.now() + 750));
-    const timeoutId = window.setTimeout(() => void refreshQueueStatus("passive"), delayMs);
-    return () => window.clearTimeout(timeoutId);
-  }, [
-    adresowoQueueStatus,
-    domiportaQueueStatus,
-    gratkaQueueStatus,
-    isProcessingAllPortals,
-    maxonQueueStatus,
-    morizonQueueStatus,
-    nieruchomosciOnlineQueueStatus,
-    olxQueueStatus,
-    queueStatus,
-  ]);
 
   useEffect(() => {
     if (state.status !== "ready") return;
@@ -486,10 +453,14 @@ export function useWorkspaceController() {
         };
   const listingInsights = buildListingInsights(dashboard.stats, dashboardListings);
   const listingSectionTitle = appliedFilters.archivedOnly
-    ? "Oferty archiwalne"
+    ? appliedFilters.shortlistedOnly
+      ? "Archiwalne ulubione"
+      : "Oferty archiwalne"
     : appliedFilters.hiddenOnly
       ? "Ukryte oferty"
-      : "Wszystkie oferty";
+      : appliedFilters.shortlistedOnly
+        ? "Ulubione oferty"
+        : "Wszystkie oferty";
   const portalQueueRows = [
     { name: "Otodom", status: queueStatus },
     { name: "Gratka", status: gratkaQueueStatus },

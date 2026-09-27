@@ -21,6 +21,12 @@ nie czekają na ranking ofert ani odczyt kalendarza. Przejście do innej strony 
 oczekujący odczyt listy i podsumowań; powrót odświeża dane z zachowaniem zastosowanych
 filtrów, sortowania i strony wyników.
 
+Aby zobaczyć dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
+i naciśnij **Filtruj**. Możesz też najpierw wybrać archiwum, a potem kliknąć
+**Ulubione**. Nagłówek **Archiwalne ulubione** potwierdza połączenie filtrów.
+Ponowne kliknięcie **Ulubione** wyłącza tylko ten warunek, zachowując archiwum.
+**Wszystkie** przywraca aktywne oferty i wyłącza oba ograniczenia.
+
 Błąd podsumowania lub kalendarza pojawia się przy danej sekcji. **Ponów** powtarza
 tylko jej odczyt. Pozostałe części aplikacji nadal działają. Jeśli wcześniejsze dane
 są dostępne, pozostają widoczne z informacją, że mogą być nieaktualne. Brak odczytu
@@ -192,6 +198,17 @@ Synonimy w opisie nie naliczają wielokrotnie tej samej premii (np. „projekt a
 i „architekta”, „dwie łazienki” i „2 łazienki”).
 
 Portale: Otodom, Gratka, OLX, Nieruchomości-online, Domiporta, Maxon, Adresowo i Morizon.
+
+W **Aktualizacji** liczniki kolejek ośmiu portali są pobierane jednym wspólnym odczytem.
+Po zakończeniu odczytu aplikacja czeka 5 sekund, gdy kolejki mają pracę, lub 30 sekund,
+gdy są bezczynne albo automat jest wstrzymany i nic się już nie przetwarza.
+Ręcznie uruchomione pobieranie jest monitorowane co 3 sekundy. Termin zaplanowanej
+próby może skrócić bezczynny odstęp. Ukryta karta wstrzymuje monitoring; powrót
+odświeża go od razu. Ręczne odświeżanie nadal działa.
+Błąd jednego portalu nie blokuje liczników pozostałych. Komunikat wskazuje niedostępne
+portale oraz ostatni poprawny odczyt (w bieżącym procesie API), jeśli jest znany.
+Poprzednie liczniki pozostają widoczne jako potencjalnie nieaktualne. **Ostatni pełny odczyt**
+zmienia się dopiero po poprawnym odczycie wszystkich portali. Błędy są ponawiane co 5 sekund.
 
 W **Aktualizacji** panel **Postęp skanowania portali** pokazuje osobno dla każdego
 portalu sprawdzone strony, limit skanu, liczbę ofert dodanych do kolejki, **Dodano do duplikatów** i stan

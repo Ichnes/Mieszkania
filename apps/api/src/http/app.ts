@@ -12,6 +12,7 @@ import { registerCollectorsMorizonRoutes } from "./routes/collectors/morizon";
 import { registerCollectorsNieruchomosciOnlineRoutes } from "./routes/collectors/nieruchomosci-online";
 import { registerCollectorsOlxRoutes } from "./routes/collectors/olx";
 import { registerCollectorsOtodomRoutes } from "./routes/collectors/otodom";
+import { registerQueueStatusRoutes } from "./routes/collectors/queue-status";
 import { registerCollectorsRcnRoutes } from "./routes/collectors/rcn";
 import { registerDashboardRoutes } from "./routes/dashboard";
 import { registerDuplicatesRoutes } from "./routes/duplicates";
@@ -50,6 +51,7 @@ export function createApp(options: { auth?: Parameters<typeof registerAuth>[1] }
   registerDuplicatesRoutes(app);
   registerViewingsRoutes(app);
   registerCollectorsOtodomRoutes(app, collectors);
+  registerQueueStatusRoutes(app, collectors);
   registerCollectorsGratkaRoutes(app, collectors);
   registerCollectorsOlxRoutes(app, collectors);
   registerCollectorsNieruchomosciOnlineRoutes(app, collectors);

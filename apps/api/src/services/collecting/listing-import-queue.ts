@@ -1,4 +1,5 @@
 import { withDb } from "../../db";
+import type { OtodomQueueStatusResponse } from "@mieszkania/shared";
 import { trackDiscoveryImport } from "../../collectors/discovery-progress";
 import { appendImportFailureLog } from "./import-failure-log";
 
@@ -513,7 +514,9 @@ export async function resetProcessingListingImportsNow(input: {
   });
 }
 
-export async function getListingImportQueueStatus(sourceKey: string) {
+export async function getListingImportQueueStatus(
+  sourceKey: string,
+): Promise<OtodomQueueStatusResponse> {
   return withDb(async (db) => {
     await reviveStaleProcessingListingImportsWithDb(db, sourceKey);
     const counts = await db.query<{ status: string; count: string }>(
@@ -571,14 +574,16 @@ export async function getListingImportQueueStatus(sourceKey: string) {
       [sourceKey],
     );
 
+    const count = (status: string) =>
+      Number(counts.rows.find((row) => row.status === status)?.count ?? "0");
     return {
       sourceKey,
-      counts: Object.fromEntries(
-        ["pending", "processing", "completed", "failed"].map((status) => [
-          status,
-          Number(counts.rows.find((row) => row.status === status)?.count ?? "0"),
-        ]),
-      ),
+      counts: {
+        pending: count("pending"),
+        processing: count("processing"),
+        completed: count("completed"),
+        failed: count("failed"),
+      },
       pendingNew: Number(pendingKinds.rows[0]?.pending_new ?? "0"),
       pendingPriceUpdates: Number(pendingKinds.rows[0]?.pending_price_updates ?? "0"),
       readyPending: Number(pendingAvailability.rows[0]?.ready_pending ?? "0"),

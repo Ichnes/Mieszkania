@@ -126,8 +126,7 @@ export function OffersPage({
                       onClick={() => {
                         const nextFilters = {
                           ...filters,
-                          shortlistedOnly: true as const,
-                          archivedOnly: undefined,
+                          shortlistedOnly: filters.shortlistedOnly ? undefined : (true as const),
                           hiddenOnly: undefined,
                         };
                         setFilters(nextFilters);
@@ -388,9 +387,6 @@ export function OffersPage({
                         setFilters((current) => ({
                           ...current,
                           archivedOnly: event.target.checked || undefined,
-                          shortlistedOnly: event.target.checked
-                            ? undefined
-                            : current.shortlistedOnly,
                           hiddenOnly: event.target.checked ? undefined : current.hiddenOnly,
                         }))
                       }

@@ -686,6 +686,18 @@ export type OtodomQueueStatusResponse = {
   }>;
 };
 
+export type PortalQueueStatusesResponse = {
+  portals: Array<
+    | {
+        sourceKey: string;
+        available: true;
+        status: OtodomQueueStatusResponse;
+        lastSuccessfulAt: string;
+      }
+    | { sourceKey: string; available: false; lastSuccessfulAt?: string }
+  >;
+};
+
 export type OtodomRunAllResponse = {
   discoverAll: OtodomDiscoverAllResponse;
   processedRounds: number;

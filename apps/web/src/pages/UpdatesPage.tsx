@@ -203,10 +203,10 @@ export function UpdatesPage({
               <div>
                 <strong>Automatyczne odświeżanie co 24 godziny</strong>
                 <small className="sync-connection" role="status">
-                  {queueStatusError ??
-                    (queueStatusCheckedAt
-                      ? `Status portali odczytany: ${queueStatusCheckedAt.toLocaleTimeString("pl-PL")}`
-                      : "Odczytuję status portali…")}
+                  {queueStatusError && `${queueStatusError} `}
+                  {queueStatusCheckedAt
+                    ? `Ostatni pełny odczyt: ${queueStatusCheckedAt.toLocaleString("pl-PL")}`
+                    : !queueStatusError && "Odczytuję status portali…"}
                 </small>
                 <small>
                   {staleListingRefresh?.running

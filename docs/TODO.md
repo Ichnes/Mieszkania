@@ -1,5 +1,19 @@
 # Bieżące zadania
 
+## Zbiorczy status portali (2026-09-28)
+
+- [x] Zakres: wspólny odczyt ośmiu kolejek, częściowe błędy i ostatni poprawny odczyt; adaptacyjne odświeżanie.
+- [x] Wspólny endpoint zachowuje osobne wyniki i daty ostatniego sukcesu; timeout 8 s na portal i współdzielenie trwających odczytów. Frontend zachowuje stare liczniki z ostrzeżeniem; jeden harmonogram 3/5/30 s, powrót do widocznej karty odświeża dane.
+- [x] 409 testów zaliczonych, 8 środowiskowych pominiętych, 0 błędów; testy API ponowione po doprecyzowaniu typu liczników. Typecheck i build API/web poprawne. Lokalny zbiorczy odczyt: HTTP 200, 8 dostępnych portali w jednym żądaniu, około 250 ms; health, trasa aktualizacji i stary endpoint Otodomu HTTP 200.
+- [x] Instrukcja i raport uzupełnione; przygotowane do commitu i push na `main` wraz z archiwalnymi ulubionymi.
+- [ ] Kontrola wizualna: brak przeglądarki/aplikacji w narzędziu. Komunikat korzysta z istniejącego zawijania tekstu na małych ekranach.
+
+## Archiwalne ulubione (2026-09-28)
+
+- [x] Dodatkowy zakres użytkownika: łączenie „Ulubione” i „Tylko archiwalne”. Oba filtry zachowują się nawzajem; ponowne kliknięcie „Ulubione” wyłącza tylko ten filtr. Nagłówek wskazuje „Archiwalne ulubione”.
+- [x] Odczyt rzeczywistego API: 12 wyników, wszystkie archiwalne i oznaczone jako ulubione. 130 testów frontendu i typecheck poprawne. Instrukcja opisuje obie kolejności wyboru i wyłączenie filtra; układ PC/laptop/mobile pozostaje ten sam.
+- [x] Końcowy build i uruchomienie web poprawne; dostarczany kod frontendu zawiera nowy nagłówek. Formatowanie i `git diff --check` poprawne; przygotowane do commitu/push razem z monitoringiem.
+
 ## Pokrycie kryteriów dopasowania (2026-09-27–28)
 
 - [x] Zakres: pokrycie aktywnych kryteriów w panelu dopasowania i trzy najważniejsze niewiadome, bez zmiany punktacji.
