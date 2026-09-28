@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Podsumowanie pozostałych prac (2026-09-28)
+
+- [x] Zakres: przegląd otwartych zadań i porównanie z późniejszymi wpisami oraz raportem `docs/review-2026-09-24.md`; bez zmian aplikacji i danych.
+- [x] Zakończone: porównanie i jego trwałość, pokrycie ocen, niezależne ładowanie, zbiorczy monitoring oraz zaległa kontrola wizualna. Starsze wpisy o oczekiwaniu na te prace są historyczne.
+- [ ] Dalsza wydajność: skrócenie pierwszego rankingu (ostatni zapisany pomiar około 8 s; nie wykonywano nowego pomiaru w tym przeglądzie).
+- [ ] Jakość danych: przykłady regresyjne opisów, historyczne kolizje ID i podejrzane duplikaty; zweryfikowane źródło ogrzewania budynków oraz szersze pokrycie sieci miejskich.
+- [ ] Przed udostępnieniem: logowanie/HTTPS/APP_ORIGIN, SSRF/TLS/walidacja API, uprawnienia tylko do odczytu i zaufane proxy — otwarte według wcześniejszego audytu, do ponownej weryfikacji kodu przy realizacji.
+- [ ] Dalszy UX i utrzymanie: uproszczenie Aktualizacji i oznaczeń zdjęć, opcjonalny import RCN, pełna obsługa fokusu/Escape, porządek w nieużywanym kodzie i odtwarzaniu MSI; sprawdzenie fizycznego telefonu i długich importów.
+- Ocena AI nadal wstrzymana; wznowienie wyłącznie na nowe zlecenie użytkownika.
+- Weryfikacja tego podsumowania: odczyt dokumentacji i stanu Git; kontrola diff. Bez ponawiania testów aplikacji przy zmianie wyłącznie dokumentacyjnej.
+
 ## Końcowy przegląd wizualny (2026-09-28)
 
 - [x] Zakres: Oferty i archiwalne ulubione, porównanie, panel pokrycia oceny oraz Aktualizacja; PC 1440 px, laptop 1280 px, telefon 390 px, klawiatura, komunikaty i przepełnienia.
