@@ -4,8 +4,16 @@
 
 - [x] Zakres: Oferty i archiwalne ulubione, porównanie, panel pokrycia oceny oraz Aktualizacja; PC 1440 px, laptop 1280 px, telefon 390 px, klawiatura, komunikaty i przepełnienia.
 - [x] Sprawdzenie dostępu: lista aplikacji/przeglądarek pusta; bezpośrednie otwarcie IAB i Chrome zwraca „Browser is not available”.
-- [ ] Alternatywa: osobny Chromium przez Playwright; poproszono o wyraźną zgodę wymaganą przez instrukcję narzędzia sterowania przeglądarką.
-- [ ] Obejrzenie ekranów, weryfikacja interakcji, ewentualne poprawki, wyniki i commit/push.
+- [x] Użytkownik zatwierdził osobny Chromium przez Playwright; przegląd uruchomiony, zrzuty pozostają lokalnie poza Git.
+- [x] Obejrzano zrzuty Ofert, porównania, panelu Ocena i Aktualizacji przy 1440/1280/390 px. Brak poziomego przepełnienia strony i błędów JavaScript. Osobno sprawdzono rzeczywisty przełącznik ciemnego motywu.
+- [x] Trzy oferty w porównaniu zachowane po odświeżeniu, „Tylko różnice”, otwieranie/zamykanie Oceny, 12 archiwalnych ulubionych i ich filtry po odświeżeniu, przełączanie ulubionych klawiaturą bez kasowania archiwum. Mobilny panel filtrów i przycisk „Ponów” dostępne.
+- [x] Kontrolowane błędy kalendarza oraz częściowe/całkowite błędy statusu portali: lista nadal dostępna, komunikaty czytelne i zawijane; odzyskanie danych po ponowieniu. Bezczynny monitoring nie odpytuje ponownie po 6 s. Podczas przeglądu nie wykonywano zapisów API ani importów.
+- [x] Poprawiono nieaktualną instrukcję dodawania do porównania (przycisk w szczegółach). Zmiany tylko dokumentacyjne; sprawdzenie formatowania i diff zamiast ponownego builda. Zaległy przegląd ostatnich iteracji zakończony; telefon sprawdzony w emulacji Chromium, nie na fizycznym urządzeniu.
+
+## Sieci miejskie i ogrzewanie (2026-09-28)
+
+- [ ] Zakres użytkownika: warstwa sieci na mapie, informacja o miejskim ogrzewaniu/własnej kotłowni przy mieszkaniu i jawne oznaczanie niepewności. Sprawdzić Geoportal i opisy/dane publiczne budynków, zacząć od ciepłownictwa Warszawy.
+- [ ] Rozpoznanie źródeł, implementacja, weryfikacja, dokumentacja i commit/push.
 
 ## Zbiorczy status portali (2026-09-28)
 

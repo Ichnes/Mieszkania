@@ -240,7 +240,7 @@ Przycisk **Wróć do aktualizacji** prowadzi do głównego panelu pobierania ofe
 
 ## Porównanie
 
-Na kartach wybierz **Porównaj** (maksymalnie pięć ofert). W zakładce **Porównanie**
+W szczegółach ofert wybierz **Porównaj** (maksymalnie pięć ofert). W zakładce **Porównanie**
 ceny i cechy znajdują się w tych samych wierszach. Na małym ekranie przewijaj samą tabelę
 w bok. Kliknięcie tytułu otwiera ofertę, krzyżyk usuwa ją z porównania, a **Dodaj oferty**
 wraca do listy. Zmiana filtrów lub strony listy nie usuwa wcześniejszego wyboru.
