@@ -1,8 +1,9 @@
+import { publicFetch as fetch } from "../../services/http/public-fetch";
 import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { adresowoWarsawDistrictIds } from "../location-groups";
 import { createHash } from "node:crypto";
-import { request as httpsRequest } from "node:https";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 import { withDb } from "../../db";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
@@ -325,7 +326,7 @@ function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<strin
   return new Promise((resolvePage, rejectPage) => {
     const request = httpsRequest(
       url,
-      { method: "GET", headers: requestHeaders, rejectUnauthorized: false, timeout: 45_000 },
+      { method: "GET", headers: requestHeaders, rejectUnauthorized: true, timeout: 45_000 },
       (response) => {
         const status = response.statusCode ?? 500;
         const location = response.headers.location;

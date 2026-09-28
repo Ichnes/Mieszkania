@@ -78,6 +78,27 @@ test(
       );
       await db.query("update listings set area_sqm=50.5 where id=$1", [third]);
       assert.equal(await duplicateGroupsCompatible(db, ids[1], third, true), true);
+      await db.query("update listings set rooms=2, floor=1 where id=any($1::uuid[])", [
+        [...ids, third],
+      ]);
+      await db.query("update listings set floor=2 where id=$1", [third]);
+      assert.equal(
+        await duplicateGroupsCompatible(db, ids[1], third, true),
+        false,
+        "conflicting floors require review",
+      );
+      assert.equal(
+        await duplicateGroupsCompatible(db, ids[1], third, false),
+        true,
+        "manual review can resolve portal disagreements",
+      );
+      await db.query("update listings set floor=1, rooms=3 where id=$1", [third]);
+      assert.equal(
+        await duplicateGroupsCompatible(db, ids[1], third, true),
+        false,
+        "conflicting room counts require review",
+      );
+      await db.query("update listings set rooms=2 where id=$1", [third]);
       await db.query(
         `insert into listing_duplicate_reviews(pair_key,listing_id_left,listing_id_right,status) values (concat(least($1::text,$2::text),':',greatest($1::text,$2::text)),least($1::uuid,$2::uuid),greatest($1::uuid,$2::uuid),'different_listing')`,
         [ids[0], third],

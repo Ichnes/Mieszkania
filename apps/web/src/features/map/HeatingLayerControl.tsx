@@ -31,6 +31,7 @@ export function HeatingLayerControl({ mapRef, ready }: { mapRef: RefObject<any>;
       minZoom: 21,
       maxZoom: 22,
       zIndex: 250,
+      className: "heating-network-tile",
       attribution:
         'GESUT / <a href="https://www.geoportal.gov.pl/pl/dane/uzbrojenie-terenu-gesut/">GUGiK i powiaty</a>',
     });

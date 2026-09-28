@@ -31,7 +31,7 @@ for (const { sourceKey, Collector, parse, html } of banners) {
       const page = html + recommendation;
       assert.equal(parse(url, page, page.replace(/<[^>]+>/g, " "), "stored-id").status, "removed");
       let archived = 0;
-      t.mock.method(globalThis, "fetch", async () => new Response(page));
+      t.mock.method(publicHttp, "fetch", async () => new Response(page));
       const collector = new Collector((input) =>
         archiveUnavailableListing(input, async (identity) => {
           archived++;
@@ -48,7 +48,7 @@ for (const { sourceKey, Collector, parse, html } of banners) {
     });
   }
   test(`${sourceKey} does not import an unavailable offer missing from the database`, async (t) => {
-    t.mock.method(globalThis, "fetch", async () => new Response(html));
+    t.mock.method(publicHttp, "fetch", async () => new Response(html));
     const collector = new Collector((input) => archiveUnavailableListing(input, async () => null));
     await assert.rejects(
       collector.collectOne(url, { refreshMode: "price_only" }),
@@ -60,3 +60,4 @@ for (const { sourceKey, Collector, parse, html } of banners) {
     assert.equal(parse(url, page, "Mieszkanie Warszawa", "stored-id").status, "active");
   });
 }
+import { publicHttp } from "../services/http/public-fetch";

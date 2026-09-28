@@ -238,39 +238,6 @@ export type ListingFeature = {
   source?: "payload" | "description" | "derived";
 };
 
-export type EvaluationDimensionKey =
-  | "location"
-  | "layout"
-  | "condition"
-  | "price"
-  | "fees"
-  | "balcony_garden"
-  | "noise"
-  | "sunlight"
-  | "garage"
-  | "building_standard"
-  | "shops"
-  | "neighborhood"
-  | "potential"
-  | "resale"
-  | "child_friendly"
-  | "healthcare"
-  | "amount_to_change";
-
-export type EvaluationDimension = {
-  key: EvaluationDimensionKey;
-  label: string;
-};
-
-export type EvaluationRaterKey = "user" | "spouse" | "assistant";
-
-export type ListingEvaluationEntry = {
-  raterKey: EvaluationRaterKey;
-  dimensionKey: EvaluationDimensionKey;
-  score: number;
-  note?: string;
-};
-
 export type ListingContactStatus =
   | "new"
   | "contacted"
@@ -332,15 +299,6 @@ export type FamilySettings = {
   }>;
   searchContract: SearchContract;
   dreamProfile: DreamListingProfile;
-};
-
-export type ListingEvaluationSummary = {
-  dimensions: EvaluationDimension[];
-  settings: FamilySettings;
-  entries: ListingEvaluationEntry[];
-  totals: Record<EvaluationRaterKey, number>;
-  rankingScore: number;
-  assistantSuggestions: string[];
 };
 
 export type ListingViewingStatus = "scheduled" | "completed" | "cancelled";
@@ -774,26 +732,6 @@ export type ListingFilters = {
     | "area_asc"
     | "dream_desc";
 };
-
-export const evaluationDimensions: EvaluationDimension[] = [
-  { key: "location", label: "Lokalizacja" },
-  { key: "layout", label: "Układ" },
-  { key: "condition", label: "Stan techniczny" },
-  { key: "price", label: "Cena" },
-  { key: "fees", label: "Czynsz" },
-  { key: "balcony_garden", label: "Balkon/ogródek" },
-  { key: "noise", label: "Hałas" },
-  { key: "sunlight", label: "Nasłonecznienie" },
-  { key: "garage", label: "Garaż" },
-  { key: "building_standard", label: "Standard budynku" },
-  { key: "shops", label: "Sklepy" },
-  { key: "neighborhood", label: "Okolica" },
-  { key: "potential", label: "Potencjał" },
-  { key: "resale", label: "Późniejsza sprzedaż" },
-  { key: "child_friendly", label: "Oferta dla dziecka" },
-  { key: "healthcare", label: "Apteka/szpital" },
-  { key: "amount_to_change", label: "Zakres zmian" },
-];
 
 export function createDefaultSearchContract(): SearchContract {
   return {

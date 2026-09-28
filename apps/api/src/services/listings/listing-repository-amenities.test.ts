@@ -509,3 +509,23 @@ test("negated platform keeps an ordinary underground garage", () => {
     assert.equal(buildAmenityBadges(features).includes("Miejsce na platformie"), false);
   }
 });
+test("prepared air conditioning is not installed equipment", () => {
+  for (const description of [
+    "Przygotowana instalacja pod klimatyzację.",
+    "Rozprowadzona instalacja do klimatyzacji.",
+    "Przyłącze pod klimatyzację.",
+    "Możliwość montażu klimatyzacji.",
+  ]) {
+    assert.equal(
+      extractFeatures({ description }).some((feature) => feature.key === "air_conditioning"),
+      false,
+      description,
+    );
+  }
+  assert.equal(
+    extractFeatures({ description: "Zamontowana klimatyzacja w salonie." }).some(
+      (feature) => feature.key === "air_conditioning",
+    ),
+    true,
+  );
+});

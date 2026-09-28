@@ -1,4 +1,4 @@
-import { request as httpsRequest } from "node:https";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 import type { Browser, BrowserContext, Page } from "playwright";
 import { OtodomFetcher } from "../otodom/otodom-fetcher";
 import type { FetchedListingDocument, ListingFetcher } from "../types";
@@ -227,7 +227,7 @@ function fetchTrustedGratkaPage(url: string, redirectsLeft = 4): Promise<Fetched
       url,
       {
         method: "GET",
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
         timeout: 15_000,
         headers: {
           "user-agent":

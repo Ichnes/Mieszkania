@@ -109,3 +109,42 @@ test("disabled auth needs no account and login attempts are limited when enabled
     await app.close();
   }
 });
+test("viewer can read but cannot mutate or start legacy discovery, and can log out", async () => {
+  const app = Fastify();
+  const account = {
+    ...(await createAccount("viewer@example.test", "viewer test password")),
+    role: "viewer" as const,
+  };
+  registerAuth(app, { enabled: true, accounts: [account] });
+  app.get("/api/private", async () => ({ ok: true }));
+  app.post("/api/private", async () => ({ ok: true }));
+  app.delete("/api/private", async () => ({ ok: true }));
+  app.get("/api/collectors/otodom/discover", async () => ({ ok: true }));
+  try {
+    const login = await app.inject({
+      method: "POST",
+      url: "/api/auth/login",
+      headers: { "x-app-request": "1" },
+      payload: { email: account.email, password: "viewer test password" },
+    });
+    assert.equal(login.statusCode, 200);
+    const headers = {
+      cookie: String(login.headers["set-cookie"]).split(";")[0],
+      "x-app-request": "1",
+    };
+    assert.equal((await app.inject({ url: "/api/private", headers })).statusCode, 200);
+    assert.equal((await app.inject({ url: "/api/auth/status", headers })).json().role, "viewer");
+    for (const method of ["POST", "DELETE"] as const)
+      assert.equal((await app.inject({ method, url: "/api/private", headers })).statusCode, 403);
+    assert.equal(
+      (await app.inject({ url: "/api/collectors/otodom/discover", headers })).statusCode,
+      403,
+    );
+    assert.equal(
+      (await app.inject({ method: "POST", url: "/api/auth/logout", headers })).statusCode,
+      200,
+    );
+  } finally {
+    await app.close();
+  }
+});

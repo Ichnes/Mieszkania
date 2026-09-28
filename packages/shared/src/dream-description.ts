@@ -1,9 +1,10 @@
 // Input is lowercase Polish text with diacritics removed.
-export function hasPositiveDescriptionFact(text: string, pattern: RegExp) {
+export function hasPositiveDescriptionFact(text: string, pattern: RegExp, excluded?: RegExp) {
   return Array.from(text.matchAll(new RegExp(pattern.source, "g"))).some((match) => {
     const prefix = text.slice(Math.max(0, match.index! - 70), match.index);
     const clause = prefix.split(/[.!?;\n]/).at(-1) ?? "";
     return (
+      !excluded?.test(match[0]) &&
       !/\b(?:bez|brak|nie ma|nie posiada|nie sa|nie jest|nie zostal\w*|nie wykonano|imitacj\w*|imituj\w*|mozliwosc|planowan\w*)\b[^,]{0,60}$/.test(
         clause,
       ) &&
@@ -57,6 +58,7 @@ export function getDreamDescriptionFacts(text: string) {
     woodenFloor: hasPositiveDescriptionFact(
       text,
       /\b(?:drewnian\w*\s+(?:podlog\w*|parkiet\w*)|podlog\w*[^.!?;\n]{0,70}?(?:drewn\w*|dab\w*\s+wedzon\w*)|egzotyczn\w*\s+drewn\w*|debow\w*\s+des(?:k|ek)\w*|des(?:k|ek)\w*\s+(?:debow\w*|drewnian\w*|podlogow\w*)|merbau\w*|parkiet\w*)\b/,
+      /fornir\w*|fornirowan\w*/,
     ),
     customCarpentry: hasPositiveDescriptionFact(
       text,

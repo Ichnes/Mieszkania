@@ -1,7 +1,8 @@
+import { publicFetch as fetch } from "../../services/http/public-fetch";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { discoverLocationGroups } from "../grouped-discovery";
 import { nieruchomosciOnlineWarsawDistrictIds, splitLocationGroups } from "../location-groups";
-import { request as httpsRequest } from "node:https";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
@@ -403,7 +404,7 @@ function fetchTrustedNieruchomosciOnlinePage(
       {
         method: "GET",
         headers: nieruchomosciOnlineHeaders,
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
         timeout: timeoutMs,
       },
       (response) => {

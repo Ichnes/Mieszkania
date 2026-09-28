@@ -19,7 +19,7 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions = {}) {
   const now = options.now ?? Date.now;
   const cookieName = secure ? "__Host-mieszkania_session" : "mieszkania_session";
   const duration = 8 * 60 * 60 * 1000;
-  const sessions = new Map<string, { email: string; expires: number }>();
+  const sessions = new Map<string, { email: string; expires: number; role: "owner" | "viewer" }>();
   const attempts = new Map<string, { count: number; until: number }>();
   let accounts: LocalAccount[] = options.accounts ?? [];
   let passwordJobs = 0;
@@ -49,7 +49,11 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions = {}) {
       !Array.isArray(data.accounts) ||
       !data.accounts.length ||
       data.accounts.some(
-        (a) => !a.email || !/^[a-f0-9]{48}$/.test(a.salt) || !/^[a-f0-9]{128}$/.test(a.hash),
+        (a) =>
+          !a.email ||
+          !/^[a-f0-9]{48}$/.test(a.salt) ||
+          !/^[a-f0-9]{128}$/.test(a.hash) ||
+          (a.role !== undefined && a.role !== "owner" && a.role !== "viewer"),
       )
     )
       throw new Error("Nieprawidłowy plik kont. Uruchom npm run auth:user.");
@@ -75,11 +79,18 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions = {}) {
       return;
     if (!session(request))
       return reply.code(401).send({ message: "Zaloguj się, aby kontynuować." });
+    if (
+      (unsafe || path.endsWith("/discover")) &&
+      session(request)?.role === "viewer" &&
+      path !== "/api/auth/logout"
+    )
+      return reply.code(403).send({ message: "To konto ma dostęp tylko do odczytu." });
   });
   app.get("/api/auth/status", async (request) => ({
     enabled,
     authenticated: !enabled || Boolean(session(request)),
     email: enabled ? session(request)?.email : undefined,
+    role: enabled ? session(request)?.role : "owner",
   }));
   app.post<{ Body: { email: string; password: string } }>(
     "/api/auth/login",
@@ -126,7 +137,11 @@ export function registerAuth(app: FastifyInstance, options: AuthOptions = {}) {
       for (const [hash, value] of sessions) if (value.expires <= now()) sessions.delete(hash);
       if (sessions.size >= 1000) sessions.delete(sessions.keys().next().value!);
       const newToken = randomBytes(32).toString("hex");
-      sessions.set(key(newToken), { email: account.email, expires: now() + duration });
+      sessions.set(key(newToken), {
+        email: account.email,
+        expires: now() + duration,
+        role: account.role ?? "owner",
+      });
       reply.header("Set-Cookie", cookie(newToken, duration / 1000));
       return { authenticated: true, email: account.email };
     },

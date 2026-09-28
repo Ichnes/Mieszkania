@@ -1,4 +1,5 @@
-import { request as httpsRequest } from "node:https";
+import { publicFetch as fetch } from "../../services/http/public-fetch";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 import type { FetchedListingDocument, ListingFetcher } from "../types";
 
 export class OtodomFetcher implements ListingFetcher {
@@ -71,7 +72,7 @@ function fetchTrustedOtodomPage(
       url,
       {
         method: "GET",
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
         timeout: timeoutMs,
         headers: OTODOM_HEADERS,
       },

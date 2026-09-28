@@ -1,6 +1,6 @@
+import { publicFetch } from "../http/public-fetch";
 import { createHash } from "node:crypto";
 import { mkdir, rename, unlink, writeFile } from "node:fs/promises";
-import { request as httpsRequest } from "node:https";
 import { dirname, extname, resolve } from "node:path";
 import { mediaCacheRoot } from "../../config";
 import { withDb } from "../../db";
@@ -88,86 +88,7 @@ async function writeMediaAtomically(outputPath: string, bytes: Buffer) {
 }
 
 export async function fetchMedia(url: string, headers: Record<string, string>) {
-  try {
-    return await fetch(url, { headers, redirect: "follow", signal: AbortSignal.timeout(20_000) });
-  } catch (error) {
-    const target = new URL(url);
-    if (!isGratkaMediaHost(target.hostname) || !isCertificateError(error)) {
-      throw error;
-    }
-
-    // The cdngr/staticmorizon chain is accepted by browsers but occasionally
-    // lacks an intermediate certificate in Node's trust store. Limit the TLS
-    // fallback strictly to Gratka's known image CDN hosts.
-    return fetchTrustedGratkaMedia(url, headers);
-  }
-}
-
-function fetchTrustedGratkaMedia(
-  url: string,
-  headers: Record<string, string>,
-  redirectsLeft = 4,
-): Promise<Response> {
-  return new Promise((resolveResponse, rejectResponse) => {
-    const request = httpsRequest(
-      url,
-      { method: "GET", headers, rejectUnauthorized: false, timeout: 20_000 },
-      (response) => {
-        const status = response.statusCode ?? 500;
-        const location = response.headers.location;
-        if (location && status >= 300 && status < 400 && redirectsLeft > 0) {
-          response.resume();
-          const redirectedUrl = new URL(location, url);
-          if (!isGratkaMediaHost(redirectedUrl.hostname)) {
-            rejectResponse(
-              new Error(`Refusing untrusted Gratka media redirect to ${redirectedUrl.hostname}`),
-            );
-            return;
-          }
-          void fetchTrustedGratkaMedia(redirectedUrl.toString(), headers, redirectsLeft - 1).then(
-            resolveResponse,
-            rejectResponse,
-          );
-          return;
-        }
-
-        const chunks: Buffer[] = [];
-        response.on("data", (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)));
-        response.on("end", () => {
-          const responseHeaders = new Headers();
-          for (const [key, value] of Object.entries(response.headers)) {
-            if (Array.isArray(value)) value.forEach((item) => responseHeaders.append(key, item));
-            else if (value !== undefined) responseHeaders.set(key, value);
-          }
-          resolveResponse(
-            new Response(Buffer.concat(chunks), { status, headers: responseHeaders }),
-          );
-        });
-      },
-    );
-    request.on("timeout", () => request.destroy(new Error(`Media request timed out for ${url}`)));
-    request.on("error", rejectResponse);
-    request.end();
-  });
-}
-
-function isGratkaMediaHost(hostname: string) {
-  return (
-    hostname === "thumbs.cdngr.pl" ||
-    hostname === "d-gr.cdngr.pl" ||
-    /^img\d*\.staticmorizon\.com\.pl$/i.test(hostname)
-  );
-}
-
-function isCertificateError(error: unknown) {
-  if (!(error instanceof Error)) return false;
-  const cause = error.cause;
-  return (
-    cause instanceof Error &&
-    /certificate|cert_|unable to verify/i.test(
-      `${cause.message} ${(cause as NodeJS.ErrnoException).code ?? ""}`,
-    )
-  );
+  return publicFetch(url, { headers, signal: AbortSignal.timeout(20_000) });
 }
 
 export async function backfillListingMedia(input?: { listingId?: string; limit?: number }) {

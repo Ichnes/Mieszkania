@@ -2,6 +2,7 @@ import { ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { InitialDataSetup } from "../features/imports/InitialDataSetup";
+import { RcnDataStatus } from "../features/imports/RcnDataStatus";
 
 export function ImportPage({
   model,
@@ -96,6 +97,7 @@ export function ImportPage({
 
             <article className="ops-card">
               <h3>Ceny transakcyjne RCN</h3>
+              <RcnDataStatus importing={isImportingRcn} />
               <p className="muted">
                 To jest nadal warstwa robocza. Import próbuje pobrać publiczne dane WFS dla Warszawy
                 i okolic. Jeśli źródło powiatu nic nie zwraca, zobaczysz mało albo zero rekordów.

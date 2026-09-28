@@ -1,3 +1,4 @@
+import { publicFetch as fetch } from "../../services/http/public-fetch";
 import type { FetchedListingDocument, ListingFetcher } from "../types";
 import { normalizeOlxListingUrl } from "./olx-url";
 import { fetchOlxBrowserDocument } from "./olx-browser";

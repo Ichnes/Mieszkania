@@ -58,3 +58,11 @@
     border-radius: 18px;
   }
 }
+.readonly-notice {
+  margin: 0;
+  padding: 10px 16px;
+  text-align: center;
+  background: var(--panel-bg, #f0f4f8);
+  color: var(--text-color, #243449);
+  overflow-wrap: anywhere;
+}

@@ -3,7 +3,12 @@ import { apiBaseUrl } from "../../shared/lib/api";
 import { apiFetch } from "../../shared/lib/http";
 import { Shell } from "../../shared/components/StartupScreen";
 import { LoginPage } from "../../pages/LoginPage";
-type Session = { enabled: boolean; authenticated: boolean; email?: string };
+type Session = {
+  enabled: boolean;
+  authenticated: boolean;
+  email?: string;
+  role?: "owner" | "viewer";
+};
 const AuthContext = createContext<{ session: Session; logout: () => Promise<void> } | null>(null);
 export function useAuth() {
   return useContext(AuthContext);
@@ -43,5 +48,15 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
   if (!session) return <Shell title="Ładowanie" subtitle="Łączymy się z aplikacją" />;
   if (session.enabled && !session.authenticated)
     return <LoginPage onSuccess={() => void check()} />;
-  return <AuthContext.Provider value={{ session, logout }}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ session, logout }}>
+      {session.role === "viewer" && (
+        <p className="readonly-notice" role="status">
+          Tryb tylko do odczytu — możesz przeglądać oferty i porównania; zmiany we wspólnej bazie są
+          zablokowane.
+        </p>
+      )}
+      {children}
+    </AuthContext.Provider>
+  );
 }

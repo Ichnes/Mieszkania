@@ -1,5 +1,26 @@
 # Utrzymanie lokalnych danych
 
+## Audyt tożsamości i historii ofert
+
+`docker compose exec -T api npm run data:audit` sprawdza identyfikatory Otodomu,
+liczbę ofert głównych w grupach duplikatów i rozbieżności metrażu, pokoi oraz pięter.
+Przegląda również duże zmiany metrażu/pokoi w historii. Baza jest czytana w transakcji
+tylko do odczytu. Raport `storage/audits/listing-integrity.json` pozostaje poza Git;
+terminal pokazuje jedynie liczniki. Ostrzeżenie nie jest dowodem błędnego scalenia:
+portale mogą zawierać błędne lub poprawione dane. Skrypt nie rozłącza grup i nie
+przepisuje historii. W widoku Duplikaty rozbieżne grupy pojawiają się pierwsze;
+porównaj fakty i źródła przed ręcznym potwierdzeniem lub rozłączeniem.
+
+## Pobieranie HTTPS
+
+Pobieranie statycznych stron portali i zdjęć sprawdza certyfikat TLS, adresy DNS
+i każdy etap przekierowania. Połączenie korzysta ze sprawdzonego adresu IP, nie
+wykonuje ponownego niezależnego rozwiązania nazwy. Sieci prywatne i zastrzeżone
+są blokowane. Pobieranie zdjęć i statycznych stron ma limit 25 MiB odpowiedzi.
+Nie wyłączaj weryfikacji TLS przy błędach certyfikatu; sprawdź łańcuch źródła lub
+skonfiguruj zaufane CA przez `NODE_EXTRA_CA_CERTS`. Dotyczy to transportu HTTP Node;
+renderowane strony w Chromium wymagają osobnej izolacji sieci przed publikacją internetową.
+
 ## Pomiar czasu listy i rankingu
 
 W działającej instalacji Docker uruchom:
@@ -22,9 +43,13 @@ Lista sprawdza identyfikator i wersję snapshotu w bazie przy każdym odczycie.
 Pamięć payloadów pobiera ponownie dane po dodaniu snapshotu lub jego edycji,
 także przez skrypt utrzymaniowy. Nie wymaga ręcznego czyszczenia po zmianie ofert.
 Ma limit 5000 wpisów i 32 MiB sumy rozmiarów JSON (rzeczywista pamięć obiektów
-JavaScript jest większa). Restart API czyści pamięć; pierwszy ranking może więc
-potrwać dłużej. Zmiany preferencji, ceny, korekt i zdarzeń cenowych nadal wymuszają
-przeliczenie odpowiednich ocen. Wagi i zasady rankingu pozostały takie same.
+JavaScript jest większa). Wyniki punktacji mają dodatkowo trwałą pamięć w
+`storage/cache/dream-scores.json` (do 5000 wpisów): tylko ID, skrót wejścia i wynik,
+bez opisów, adresów i preferencji. Restart odczytuje ją ponownie; dane oferty,
+snapshotu, ceny, korekt, historii cen, preferencji i przedziału wieku oferty muszą
+być identyczne. Zmiana kodu API lub pakietu shared unieważnia plik. Niedostępny lub
+uszkodzony cache nie blokuje listy. Pierwszy ranking po zmianie kodu lub przy pustym
+cache nadal liczy wszystko; po restarcie może ponownie użyć zapisanych ocen.
 
 ## Oceny AI bez wywołań API modelu
 

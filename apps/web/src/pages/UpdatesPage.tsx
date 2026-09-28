@@ -53,8 +53,6 @@ export function UpdatesPage({
     | "isRetryingAnyQueue"
     | "resetAllProcessingQueues"
     | "isResettingProcessingQueue"
-    | "runRcnImport"
-    | "isImportingRcn"
     | "rcnResult"
     | "enrichListingsFromStreets"
     | "isEnrichingListingsFromStreets"
@@ -102,8 +100,6 @@ export function UpdatesPage({
     isRetryingAnyQueue,
     resetAllProcessingQueues,
     isResettingProcessingQueue,
-    runRcnImport,
-    isImportingRcn,
     rcnResult,
     enrichListingsFromStreets,
     isEnrichingListingsFromStreets,
@@ -575,14 +571,14 @@ export function UpdatesPage({
             </div>
           </details>
 
-          <section className="panel data-tools">
-            <div className="data-tools-heading">
+          <details className="panel data-tools">
+            <summary className="data-tools-heading">
               <div>
                 <p className="eyebrow">Dane pomocnicze</p>
                 <h2>Warszawa i porządek w bazie</h2>
               </div>
               <p className="muted">Rzadziej używane operacje zebrane w jednym miejscu.</p>
-            </div>
+            </summary>
             <div className="data-tool-grid">
               <article>
                 <DatabaseZap size={20} aria-hidden="true" />
@@ -590,14 +586,9 @@ export function UpdatesPage({
                   <h3>Ceny transakcyjne RCN</h3>
                   <p>Aktualizuje rzeczywiste ceny sprzedaży mieszkań.</p>
                 </div>
-                <button
-                  className="action-button secondary-button"
-                  type="button"
-                  onClick={() => void runRcnImport()}
-                  disabled={isImportingRcn}
-                >
-                  {isImportingRcn ? "Importuję…" : "Aktualizuj RCN"}
-                </button>
+                <Link className="action-button secondary-button" to="/import">
+                  Otwórz opcjonalny import
+                </Link>
                 {rcnResult ? (
                   <small>{rcnResult.importedTransactions ?? 0} nowych transakcji</small>
                 ) : null}
@@ -726,7 +717,7 @@ export function UpdatesPage({
                 {rcnError || duplicateAutoMergeError || relistingScanError || queueError}
               </p>
             ) : null}
-          </section>
+          </details>
         </section>
       ) : null}
     </>

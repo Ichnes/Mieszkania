@@ -39,7 +39,7 @@ test("remote thumbnails share downloads, cache resized images and reject oversiz
     .png()
     .toBuffer();
   const mocked = t.mock.method(
-    globalThis,
+    publicHttp,
     "fetch",
     async () => new Response(new Uint8Array(source)),
   );
@@ -59,3 +59,4 @@ test("remote thumbnails share downloads, cache resized images and reject oversiz
   await assert.rejects(getRemoteMapThumbnail(url + "large"), /size limit/);
   await assert.rejects(getRemoteMapThumbnail("file:///photo.png"), /protocol/);
 });
+import { publicHttp } from "../http/public-fetch";

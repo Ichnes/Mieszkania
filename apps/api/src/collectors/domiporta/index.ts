@@ -1,5 +1,6 @@
+import { publicFetch as fetch } from "../../services/http/public-fetch";
 import { reportDiscoveryProgress } from "../discovery-progress";
-import { request as httpsRequest } from "node:https";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
@@ -312,7 +313,7 @@ function fetchTrustedDomiportaPage(url: string, redirectsLeft = 4): Promise<stri
       {
         method: "GET",
         headers: requestHeaders,
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
         timeout: 45_000,
       },
       (response) => {

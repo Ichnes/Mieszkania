@@ -1,4 +1,6 @@
 import Fastify from "fastify";
+import { parseTrustedProxies } from "./trusted-proxy";
+import { registerPayloadValidation } from "./payload-validation";
 import { registerAuth } from "./auth";
 import { registerPortalUrlGuard } from "./portal-url-guard";
 import { createListingAutomation } from "../background/listing-refresh";
@@ -25,8 +27,9 @@ import { registerStatisticsRoutes } from "./routes/statistics";
 import { registerViewingsRoutes } from "./routes/viewings";
 
 export function createApp(options: { auth?: Parameters<typeof registerAuth>[1] } = {}) {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ logger: true, trustProxy: parseTrustedProxies() });
   registerAuth(app, options.auth);
+  registerPayloadValidation(app);
   registerPortalUrlGuard(app);
   const collectors = createCollectors();
   const automation = createListingAutomation(app, collectors);

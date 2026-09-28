@@ -1,4 +1,5 @@
-import { request as httpsRequest } from "node:https";
+import { publicFetch as fetch } from "../../services/http/public-fetch";
+import { publicHttpsRequest as httpsRequest } from "../../services/http/public-fetch";
 import { discoverLocationGroups } from "../grouped-discovery";
 import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
@@ -232,7 +233,7 @@ export async function fetchRenderedMorizonPage(
   const { chromium } = await import("playwright");
   const browser = await chromium.launch({ headless: true });
   try {
-    const page = await browser.newPage({ locale: "pl-PL", ignoreHTTPSErrors: true });
+    const page = await browser.newPage({ locale: "pl-PL", ignoreHTTPSErrors: false });
     const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 75_000 });
     if (response && response.status() >= 400) throw new Error(`HTTP ${response.status()}: ${url}`);
     await page
@@ -321,7 +322,7 @@ function fetchTrustedMorizonPage(url: string, redirectsLeft = 4): Promise<string
       {
         method: "GET",
         headers: requestHeaders,
-        rejectUnauthorized: false,
+        rejectUnauthorized: true,
         timeout: 60_000,
       },
       (response) => {

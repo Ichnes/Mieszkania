@@ -7,6 +7,7 @@ type Group = {
   groupId: string;
   primaryListingId: string;
   primaryTitle: string;
+  conflicts?: string[];
   members: Array<{
     id: string;
     title: string;
@@ -15,6 +16,8 @@ type Group = {
     thumbnailUrl?: string;
     priceLabel: string;
     areaLabel: string;
+    floor?: number;
+    rooms?: number;
     isPrimary: boolean;
   }>;
 };
@@ -159,6 +162,12 @@ export function DuplicateGroupsPanel({
                 Porównanie {String((currentPage - 1) * 20 + groupIndex + 1).padStart(2, "0")}
               </p>
               <h3>{group.primaryTitle}</h3>
+              {Boolean(group.conflicts?.length) && (
+                <p className="error-text">
+                  Do sprawdzenia: {group.conflicts!.join(" · ")}. Rozbieżność może wynikać z błędu
+                  ogłoszenia.
+                </p>
+              )}
             </div>
             <span className="pill">
               {group.members.length} ogłoszeń ·{" "}
@@ -202,6 +211,10 @@ export function DuplicateGroupsPanel({
                   <p className="duplicate-price-row">
                     <strong>{member.priceLabel}</strong>
                     <span>{member.areaLabel}</span>
+                    <span>
+                      Piętro: {member.floor ?? "brak danych"} · Pokoje:{" "}
+                      {member.rooms ?? "brak danych"}
+                    </span>
                   </p>
                   <div className="duplicate-member-actions">
                     <button

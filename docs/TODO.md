@@ -1,5 +1,17 @@
 # Bieżące zadania
 
+## Domknięcie zaległości i przegląd potrzeb użytkownika (2026-09-28)
+
+- [x] Przyjęty zakres: wszystkie pozostałe tematy z podsumowania, czytelniejsze linie ciepłownicze, następnie przegląd braków i propozycji dla użytkownika. Ocena AI nadal wstrzymana.
+- [x] Interfejs: grubsza warstwa ciepłownicza, obsługa fokusu/Escape szczegółów i potwierdzenia, prostsza Aktualizacja, mniej nakładek zdjęć i opcjonalny RCN ze statusem istniejących danych. Chromium 1440/1280/390 px: poprawne działanie i brak przepełnienia/JS errors; obejrzane zrzuty. Grubość sieci sprawdzona również na kontrolowanym, niepustym kaflu.
+- [x] Dane: odczytowy audyt ID/duplikatów/historii; 5470 ID Otodomu poprawnych, 1739 grup i 218 historii z sygnałami rozbieżności. Raport lokalny, bez automatycznych zmian danych. Nowe automatyczne scalenia blokują konflikty pięter/pokoi; UI pokazuje konflikty jako pierwsze.
+- [x] Regresje materiałów/klimatyzacji, ograniczona pamięć normalizacji i trwała pamięć ocen z kontrolą wejść oraz wersji kodu. Odtwarzanie MSI dało identyczny JSON 143 obszarów; usunięto nieużywane typy starego rankingu.
+- [x] Bezpieczeństwo: publiczny DNS i przypięcie IP dla statycznych stron/mediów, kontrola przekierowań, TLS bez obejść, walidacja payloadów, role i jawnie zaufane proxy. TLS sprawdzony dla ośmiu portali. Użytkownik wybrał lokalnie/domowe Wi-Fi — konfiguracja kont i publikacji pozostaje bez zmian.
+- [x] Przegląd potrzeb użytkownika zapisany w [raporcie](review-2026-09-28.md): weryfikacja konfliktów, pytania na oglądanie, następny kontakt, eksport dla rodziny i odtwarzanie kopii zapasowych.
+- [x] Trwała pamięć ocen: 2972 oferty, niezależne procesy 8128 ms bez cache → 3380 ms z zapisem po poprzednim procesie; pierwsze 30 ID/ocen/cen identyczne. Zmiana kodu lub danych wymusza przeliczenie. Testy uszkodzonego pliku, braku zapisu i wersji kodu poprawne.
+- [x] Weryfikacja: 420 testów zaliczonych, 8 środowiskowych pominiętych, 0 błędów; osobny test PostgreSQL scalania zaliczony. Typecheck monorepo, build Docker, rzeczywiste formularze i status RCN poprawne; aplikacja wdrożona lokalnie. Dokumentacja i diff sprawdzone; przygotowane do commitu/push na `main`.
+- Pozostają ograniczenia zewnętrzne i następne tematy: potwierdzone źródło ogrzewania budynków/pokrycie sieci, fizyczny telefon, długie partie importu oraz ręczne rozstrzygnięcie historycznych konfliktów. Pełna izolacja sieci renderowanego Chromium wymagana przed ewentualną publikacją internetową; nie jest zapewniana przez ochronę transportu Node.
+
 ## Podsumowanie pozostałych prac (2026-09-28)
 
 - [x] Zakres: przegląd otwartych zadań i porównanie z późniejszymi wpisami oraz raportem `docs/review-2026-09-24.md`; bez zmian aplikacji i danych.

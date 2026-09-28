@@ -1,3 +1,4 @@
+import { publicHttp } from "../../services/http/public-fetch";
 import assert from "node:assert/strict";
 import test from "node:test";
 import { OlxFetcher } from "./olx-fetcher";
@@ -9,7 +10,7 @@ const offer = "https://www.olx.pl/d/oferta/mieszkanie-CID3-ID18LG4K.html";
 
 test("old queued and manual OLX URLs are fetched without search attribution", async (t) => {
   const requested: string[] = [];
-  t.mock.method(globalThis, "fetch", async (url: string, options: RequestInit) => {
+  t.mock.method(publicHttp, "fetch", async (url: string, options: RequestInit) => {
     requested.push(url);
     assert.ok(options.signal);
     return new Response("offer", { status: url.includes("search_reason") ? 403 : 200 });
@@ -40,7 +41,7 @@ test("OLX normalization preserves search filters and other query parameters", ()
 
 test("actual access denial remains an HTTP error response", async (t) => {
   const mocked = t.mock.method(
-    globalThis,
+    publicHttp,
     "fetch",
     async () => new Response("blocked", { status: 403 }),
   );
@@ -54,7 +55,7 @@ test("actual access denial remains an HTTP error response", async (t) => {
 test("403 uses browser; successful and gone HTTP responses do not launch it", async (t) => {
   const statuses = [403, 200, 410];
   const mocked = t.mock.method(
-    globalThis,
+    publicHttp,
     "fetch",
     async () => new Response("body", { status: statuses.shift()! }),
   );
@@ -75,7 +76,7 @@ test("403 uses browser; successful and gone HTTP responses do not launch it", as
 });
 
 test("browser inactive OLX message is unavailable even with HTTP 200", async (t) => {
-  t.mock.method(globalThis, "fetch", async () => new Response("blocked", { status: 403 }));
+  t.mock.method(publicHttp, "fetch", async () => new Response("blocked", { status: 403 }));
   const fetcher = new OlxFetcher(async (url) => ({
     url,
     statusCode: 200,
@@ -85,7 +86,7 @@ test("browser inactive OLX message is unavailable even with HTTP 200", async (t)
 });
 
 test("browser failure preserves the original denial", async (t) => {
-  t.mock.method(globalThis, "fetch", async () => new Response("blocked", { status: 403 }));
+  t.mock.method(publicHttp, "fetch", async () => new Response("blocked", { status: 403 }));
   t.mock.method(console, "warn", () => undefined);
   const fetcher = new OlxFetcher(async () => {
     throw new Error("browser unavailable");
@@ -111,7 +112,7 @@ test("discovery queues one clean URL for organic and promoted copies", async () 
 for (const status of [500, 502, 503, 504]) {
   test(`OLX discovery recovers from HTTP ${status} with filters intact`, async (t) => {
     const requests: string[] = [];
-    const http = t.mock.method(globalThis, "fetch", async (url: string) => {
+    const http = t.mock.method(publicHttp, "fetch", async (url: string) => {
       requests.push(url);
       return new Response("server error", { status });
     });
@@ -140,7 +141,7 @@ for (const status of [500, 502, 503, 504]) {
 }
 
 test("OLX server errors stay errors when browser fails or also returns 5xx", async (t) => {
-  t.mock.method(globalThis, "fetch", async () => new Response("server error", { status: 500 }));
+  t.mock.method(publicHttp, "fetch", async () => new Response("server error", { status: 500 }));
   t.mock.method(console, "warn", () => undefined);
   for (const throws of [true, false]) {
     let browserCalls = 0;

@@ -1,3 +1,4 @@
+import { publicFetch as fetch } from "../../services/http/public-fetch";
 import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { createHash } from "node:crypto";

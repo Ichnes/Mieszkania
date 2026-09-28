@@ -1,9 +1,27 @@
+const normalizedTexts = new Map<string, string>();
+let normalizedCharacters = 0;
 export function normalizePolish(value: string) {
-  return value
+  const cached = normalizedTexts.get(value);
+  if (cached !== undefined) return cached;
+  const normalized = value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/[łŁ]/g, "l")
     .toLowerCase();
+  const size = value.length + normalized.length;
+  if (size <= 100_000) {
+    while (
+      normalizedTexts.size &&
+      (normalizedTexts.size >= 2048 || normalizedCharacters + size > 2_000_000)
+    ) {
+      const oldest = normalizedTexts.keys().next().value!;
+      normalizedCharacters -= oldest.length + normalizedTexts.get(oldest)!.length;
+      normalizedTexts.delete(oldest);
+    }
+    normalizedTexts.set(value, normalized);
+    normalizedCharacters += size;
+  }
+  return normalized;
 }
 
 export function normalizeStreetName(value?: string | null) {

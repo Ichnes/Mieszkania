@@ -22,7 +22,7 @@ relation["boundary"="administrative"]["admin_level"="10"]
 way(r.msi);out geom;
 ```
 
-Dodatkowo Dąbrówka: relacja `11896729`, pobrana z `https://api.openstreetmap.org/api/0.6/relation/11896729/full.json` (ma informację o MSI w `note`, ale nie ma `name:prefix`). Złożyć węzły w drogi, drogi w zamknięte pierścienie przez `buildDistrictGeometry`. Przypisać dzielnicę po pełnej nazwie MSI. Wola Grzybowska → Wesoła; Ursynów Centrum i teren rezerwatu Las Kabacki → Ursynów. Skrypt wykorzystany do jednorazowej konwersji był lokalnym narzędziem, nie należy do repo. Przeniesienie odtwarzania danych do utrzymywanego polecenia jest w TODO.
+Dodatkowo Dąbrówka: relacja `11896729`, pobrana z `https://api.openstreetmap.org/api/0.6/relation/11896729/full.json` (ma informację o MSI w `note`, ale nie ma `name:prefix`). Zapisz odpowiedź Overpass i pełną relację w lokalnych plikach JSON. Polecenie `npm run msi:build -- .local/overpass.json .local/dabrowka-full.json .local/warsaw-msi.geojson` składa geometrię i sprawdza 143 obszary w 18 dzielnicach. Obsługuje pliki z BOM. Dopiero po kontroli wyniku zastąp `apps/web/public/data/warsaw-msi.geojson` i uruchom generator katalogu poniżej. Odtworzenie z zapisanych odpowiedzi z września dało identyczną strukturę JSON; istniejący plik nie został zmieniony.
 
 Niektóre nazwy ogłoszeń oznaczają osiedla lub grupy obszarów, nie MSI. Nie dopasowywać ich do wielokątów przez podobieństwo ani nie dorabiać granic. Mapa pokazuje podział MSI, tabela zachowuje nazwy i statystyki ofert. Kolory odróżniają obszary — nie są skalą cen ani liczby ofert.
 

@@ -34,6 +34,9 @@ async function readPassword() {
   });
 }
 async function main() {
+  const role = process.argv[3];
+  if (role !== undefined && role !== "owner" && role !== "viewer")
+    throw new Error("Rola musi być owner albo viewer.");
   let email = process.argv[2];
   if (!email) {
     const rl = createInterface({ input: process.stdin, output: process.stdout });
@@ -56,6 +59,7 @@ async function main() {
   } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
   }
+  account.role = role ?? accounts.find((item) => item.email === account.email)?.role ?? "owner";
   accounts = accounts.filter((item) => item.email !== account.email);
   accounts.push(account);
   await writeFile(file + ".tmp", JSON.stringify({ version: 1, accounts }, null, 2), {

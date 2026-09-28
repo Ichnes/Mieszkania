@@ -686,6 +686,7 @@ export type DuplicateGroupOverview = {
   groupId: string;
   primaryListingId: string;
   primaryTitle: string;
+  conflicts?: string[];
   members: Array<{
     id: string;
     title: string;
@@ -694,6 +695,9 @@ export type DuplicateGroupOverview = {
     thumbnailUrl?: string;
     priceLabel: string;
     areaLabel: string;
+    floor?: number;
+    rooms?: number;
+    area?: number;
     isPrimary: boolean;
   }>;
 };
@@ -722,10 +726,12 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
       canonical_url: string;
       price_amount: string | null;
       area_sqm: string | null;
+      floor: number | null;
+      rooms: string | null;
       thumbnail_storage_key: string | null;
       thumbnail_source_url: string | null;
     }>(`
-      select gm.group_id::text, gm.listing_id::text, gm.is_primary, l.title, s.name as source_label, l.canonical_url, l.price_amount::text, l.area_sqm::text, preview.storage_key as thumbnail_storage_key, preview.source_url as thumbnail_source_url
+      select gm.group_id::text, gm.listing_id::text, gm.is_primary, l.title, s.name as source_label, l.canonical_url, l.price_amount::text, l.area_sqm::text, l.floor, l.rooms::text, preview.storage_key as thumbnail_storage_key, preview.source_url as thumbnail_source_url
       from listing_duplicate_group_members gm
       join listings l on l.id = gm.listing_id
       join sources s on s.id = l.source_id
@@ -756,6 +762,9 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
           : (row.thumbnail_source_url ?? undefined),
         priceLabel: formatCurrencyLabel(row.price_amount),
         areaLabel: formatAreaLabel(row.area_sqm),
+        floor: row.floor ?? undefined,
+        rooms: row.rooms === null ? undefined : Number(row.rooms),
+        area: row.area_sqm === null ? undefined : Number(row.area_sqm),
         isPrimary: row.is_primary,
       };
       if (existing) {
@@ -776,6 +785,25 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
     const groups = [...grouped.values()].filter(
       (group) => group.primaryListingId && group.members.length > 1,
     );
+    for (const group of groups) {
+      group.conflicts = [];
+      for (const [key, label] of [
+        ["floor", "Różne piętra"],
+        ["rooms", "Różna liczba pokoi"],
+      ] as const) {
+        if (
+          new Set(group.members.map((member) => member[key]).filter((value) => value !== undefined))
+            .size > 1
+        )
+          group.conflicts.push(label);
+      }
+      const areas = group.members.flatMap((member) =>
+        member.area === undefined ? [] : [member.area],
+      );
+      if (areas.length > 1 && Math.max(...areas) - Math.min(...areas) > Math.min(...areas) * 0.02)
+        group.conflicts.push("Rozbieżny metraż");
+    }
+    groups.sort((a, b) => (b.conflicts?.length ?? 0) - (a.conflicts?.length ?? 0));
     const safeLimit = Math.max(1, Number.isFinite(limit) ? Math.floor(limit) : 200);
     const items = groups.slice(0, summary ? safeLimit : Math.min(safeLimit, 500));
     const totalMembers = new Set(
@@ -1128,7 +1156,7 @@ export async function duplicateGroupsCompatible(
   const result = await db.query<{ compatible: boolean }>(
     `
     with members as (
-      select l.id, l.area_sqm from listings l
+      select l.id, l.area_sqm, l.rooms, l.floor from listings l
       where l.id in ($1::uuid, $2::uuid) or l.id in (
         select m.listing_id from listing_duplicate_group_members m
         where m.group_id in (select group_id from listing_duplicate_group_members where listing_id in ($1::uuid, $2::uuid))
@@ -1136,6 +1164,7 @@ export async function duplicateGroupsCompatible(
     )
     select coalesce(max(area_sqm) - min(area_sqm) <= min(area_sqm) * 0.02, not $3::boolean)
       and (not $3::boolean or count(*) filter (where area_sqm > 0) = count(*))
+      and (not $3::boolean or (count(distinct rooms) <= 1 and count(distinct floor) <= 1))
       and (not $3::boolean or not exists (
         select 1 from listing_duplicate_reviews r
         where r.status = 'different_listing'

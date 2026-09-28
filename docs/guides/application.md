@@ -236,7 +236,14 @@ W sekcji **Pierwsze uruchomienie** zobaczysz, czy katalog ulic jest już dostęp
 pozwala go odświeżyć. Pobieranie może potrwać kilka minut. Import aktualizuje istniejące
 odcinki, więc ponowne uruchomienie nie tworzy ich duplikatów.
 Poniżej dodasz pojedynczą ofertę z dowolnego obsługiwanego portalu lub dane cen RCN.
+RCN jest opcjonalne: panel pokazuje liczbę już zapisanych transakcji i datę ostatniego
+zapisu. Odczyt statusu można ponowić po błędzie. W Aktualizacji rozwiń **Warszawa i porządek
+w bazie**, aby zobaczyć rzadziej używane narzędzia; **Otwórz opcjonalny import** prowadzi do RCN.
 Przycisk **Wróć do aktualizacji** prowadzi do głównego panelu pobierania ofert.
+
+W szczegółach oferty **Tab** porusza się po elementach okna, a **Escape** je zamyka
+i przywraca fokus na liście. Jeśli otwarte jest zdjęcie, potwierdzenie odrzucenia lub
+pełny ekran mapy, Escape zamyka najpierw tę warstwę.
 
 ## Porównanie
 
@@ -611,6 +618,8 @@ ofert potrzebny jest zapis notatek.
 Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).
 
 ### Ogrzewanie i sieć ciepłownicza
+
+Linie warstwy są pogrubione na ekranie bez skalowania mapy ani zmiany położenia sieci.
 
 Na mapie ofert i w mapie mieszkania zaznacz **Sieć ciepłownicza (GESUT)**.
 Ustaw środek mapy na interesującym budynku i wybierz **Przybliż do sieci**.

@@ -176,6 +176,12 @@
   color: #17382f;
   cursor: pointer;
 }
+.heating-network-tile {
+  /* WMS is a transparent raster: expand its existing ink, without scaling geography. */
+  filter: drop-shadow(0.65px 0 0 #b54eae) drop-shadow(-0.65px 0 0 #b54eae)
+    drop-shadow(0 0.65px 0 #b54eae) drop-shadow(0 -0.65px 0 #b54eae);
+}
+
 .heating-layer-control,
 .heating-evidence {
   padding: 12px;

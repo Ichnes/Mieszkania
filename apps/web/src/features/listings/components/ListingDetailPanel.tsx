@@ -1,4 +1,5 @@
 import { HeatingEvidence } from "./HeatingEvidence";
+import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
 import { availableAmenities } from "../lib/available-amenities";
 import { getSunExposure } from "../lib/listing-language";
@@ -186,6 +187,10 @@ export function ListingDetailPanel(input: {
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
   const [copiedId, setCopiedId] = useState(false);
   const detailPanelRef = useRef<HTMLElement | null>(null);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  useDialogFocus(dialogRef, input.onClose);
+  const dismissDialogRef = useRef<HTMLElement | null>(null);
+  useDialogFocus(dismissDialogRef, () => setIsDismissConfirmOpen(false), isDismissConfirmOpen);
   const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didSwipeImageRef = useRef(false);
   useEffect(() => {
@@ -372,6 +377,11 @@ export function ListingDetailPanel(input: {
 
   return (
     <aside
+      ref={dialogRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="Szczegóły oferty"
+      tabIndex={-1}
       className={`detail-overlay${input.offerNavigation && !isMobileDetail ? " has-offer-navigation" : ""}`}
       onClick={input.onClose}
     >
@@ -1477,6 +1487,7 @@ export function ListingDetailPanel(input: {
             onClick={() => setIsDismissConfirmOpen(false)}
           >
             <section
+              ref={dismissDialogRef}
               className="dismiss-confirm-dialog"
               role="dialog"
               aria-modal="true"

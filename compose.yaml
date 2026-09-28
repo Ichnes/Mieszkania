@@ -26,6 +26,7 @@ services:
       AUTH_ENABLED: "${AUTH_ENABLED:-false}"
       AUTH_COOKIE_SECURE: "${AUTH_COOKIE_SECURE:-false}"
       APP_ORIGIN: "${APP_ORIGIN:-}"
+      TRUSTED_PROXIES: "${TRUSTED_PROXIES:-}"
     volumes:
       - storage:/app/storage
     depends_on:

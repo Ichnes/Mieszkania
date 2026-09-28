@@ -2,7 +2,7 @@
 
 Domyślnie `AUTH_ENABLED=false`: aplikacja otwiera się bez konta. Włączenie logowania
 chroni całą wspólną bazę, ustawienia, notatki, zdjęcia i operacje importu. Wszystkie
-konta mają te same uprawnienia; nie tworzą osobnych kopii danych.
+konta korzystają ze wspólnej bazy. Role `owner` i `viewer` określają możliwość zapisu.
 
 ## Konto i hasło
 
@@ -16,6 +16,15 @@ Bez Dockera: `npm run auth:user`. Podaj email i dwukrotnie hasło (12–128 znak
 Hasło nie jest wyświetlane ani przekazywane jako argument polecenia. Email służy
 wyłącznie jako login: aplikacja nie wysyła poczty, nie potwierdza adresu i nie wymaga integracji.
 Ponowne uruchomienie polecenia z tym samym emailem ustawia nowe hasło.
+
+Konto tylko do odczytu utworzysz przez `docker compose exec api npm run auth:user -- osoba@example.test viewer`
+(bez Dockera: `npm run auth:user -- osoba@example.test viewer`). Hasło nadal wpisuje się
+interaktywnie. `owner` jest rolą domyślną i rolą starszych kont. Zmiana roli wymaga
+restartu API, który unieważnia sesje. Zmiana hasła bez podania roli zachowuje rolę istniejącego konta.
+`viewer` może czytać dane, ale API odrzuca zapisy,
+usuwanie i uruchamianie importów; aplikacja pokazuje informację o trybie odczytu.
+Przy wyłączonym logowaniu role nie ograniczają dostępu. Dla bieżącego użycia lokalnego
+i domowego Wi-Fi nie zmieniono konfiguracji kont ani sposobu dostępu.
 
 Konta są w lokalnym `storage/auth/accounts.json` jako sole i skróty scrypt, bez
 hasła jawnego. Plik jest poza Git i nie jest dostępny przez endpoint zdjęć. Zabezpiecz
@@ -57,11 +66,13 @@ Przy zmiennym adresie tunelu trzeba zaktualizować również APP_ORIGIN.
 
 Logowanie ma limit 10 prób na 15 minut z jednego adresu widzianego przez API.
 W Dockerze reverse proxy jest jednym adresem dla wszystkich klientów, więc limit
-jest współdzielony. Nie ufamy dowolnemu nagłówkowi X-Forwarded-For.
+jest współdzielony. Opcjonalne `TRUSTED_PROXIES` przyjmuje listę konkretnych adresów IP
+lub zakresów CIDR proxy, oddzielonych przecinkami. Domyślnie jest puste; nagłówki
+X-Forwarded-For nie są wtedy zaufane. Nie wpisuj zakresu obejmującego klientów ani
+całego internetu. Proxy musi nadpisywać nagłówki przekazane przez klienta.
 Cookies są HttpOnly/SameSite=Strict; zapisy wymagają nagłówka aplikacji i zgodnego Origin.
 
-To dostęp do wspólnego panelu z prawem edycji, także dla osoby, której dasz konto.
-Wariant tylko do oglądania jest osobnym zadaniem w [audycie](../audit-2026-09-08.md).
+Konto `owner` daje prawo edycji wspólnej bazy; dla osoby tylko oglądającej wybierz `viewer`.
 Nie wystawiaj serwera Vite ani portu PostgreSQL do internetu. Obecny stan i pozostałe
 problemy bezpieczeństwa są opisane w tym samym raporcie.
 

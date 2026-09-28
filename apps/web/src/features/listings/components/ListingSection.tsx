@@ -107,29 +107,14 @@ export function ListingSection(input: {
                         <RefreshCw size={17} aria-hidden="true" />
                       </span>
                     ) : null}
-                    {Math.abs(listing.priceChangePercent) > 0 ? (
+                    {listing.isActive === false && (
                       <span
-                        className={
-                          listing.priceChangePercent < 0
-                            ? "listing-price-update-chip price-down"
-                            : "listing-price-update-chip price-up"
-                        }
+                        className="listing-status-chip is-inactive"
+                        aria-label="Oferta nieaktywna"
                       >
-                        Nowa cena
+                        ✕
                       </span>
-                    ) : null}
-                    <span
-                      className={
-                        listing.isActive === false
-                          ? "listing-status-chip is-inactive"
-                          : "listing-status-chip is-active"
-                      }
-                      aria-label={
-                        listing.isActive === false ? "Oferta nieaktywna" : "Oferta aktywna"
-                      }
-                    >
-                      {listing.isActive === false ? "✕" : "✓"}
-                    </span>
+                    )}
                   </div>
                   <ListingImageSlide listing={listing} downPayment={input.downPayment} />
                   {listing.sourceLabel ? (

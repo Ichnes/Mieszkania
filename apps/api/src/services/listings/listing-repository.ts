@@ -1,4 +1,7 @@
 import { visibleRelistingCandidateSql } from "./listing-relistings";
+import { join } from "node:path";
+import { storageRoot } from "../../config";
+import { createPersistentScoreCache, scoreSignature } from "./persistent-score-cache";
 import { createListingSnapshotCache, listingSnapshotPayloadSql } from "./listing-snapshot-cache";
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
 import { invalidateMarketStatsCache } from "../market/stats-cache";
@@ -1111,8 +1114,18 @@ async function getListingsPageByScope(
     measure("price-events-query");
     const dreamScores = new Map<string, number>();
     if (isDreamSort) {
+      await dreamScoreCache.load();
+      const preferencesSignature = JSON.stringify([
+        settings.dreamProfile,
+        settings.workplaces,
+        settings.financing,
+        new Date().getFullYear(),
+      ]);
       for (const row of pageRows) {
-        dreamScores.set(row.id, getCachedDreamScore(row, settings, latestPriceEvents.get(row.id)));
+        dreamScores.set(
+          row.id,
+          getCachedDreamScore(row, settings, preferencesSignature, latestPriceEvents.get(row.id)),
+        );
       }
       pageRows = [...pageRows]
         .sort(
@@ -1121,6 +1134,7 @@ async function getListingsPageByScope(
             left.id.localeCompare(right.id),
         )
         .slice(offset, offset + pageSize);
+      await dreamScoreCache.save();
     }
     measure("score-and-sort");
     const listingIds = pageRows.map((row) => row.id);
@@ -2555,7 +2569,20 @@ function inferAmenities(description: string) {
     balcony: balconyMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
     terrace: terraceMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
     garden: gardenMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
-    woodenFloor: woodenFloorMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
+    woodenFloor: woodenFloorMatches.some((match) => {
+      const prefix =
+        text
+          .slice(Math.max(0, (match.index ?? 0) - 60), match.index)
+          .split(/[.!?;\n]/)
+          .at(-1) ?? "";
+      return (
+        !isNegatedAmenity(text, match.index ?? 0) &&
+        !/imitacj\w*|imituj\w*|laminowan\w*|fornir\w*|fornirowan\w*|drewnopodobn\w*|winylow\w*/.test(
+          match[0],
+        ) &&
+        !/\b(?:imitacj\w*|imituj\w*|planowan\w*)\b[^,]{0,60}$/.test(prefix)
+      );
+    }),
     airConditioning: airConditioningMatches.some(
       (match) =>
         !isNegatedAmenity(text, match.index ?? 0) &&
@@ -2633,9 +2660,14 @@ function inferAmenities(description: string) {
 function isOnlyAirConditioningOption(text: string, index: number) {
   const context = text.slice(Math.max(0, index - 90), index + 90);
   return (
+    /(?:przygotowan\w*|rozprowadzon\w*|wyprowadzon\w*)\s+(?:instalacj\w*\s+)?(?:pod|do)\s+klimatyzacj\w*/.test(
+      context,
+    ) ||
+    /(?:instalacj\w*|przylacz\w*)\s+pod\s+klimatyzacj\w*/.test(context) ||
     /(?:opcj\w*|mozliwosc)\s+(?:wykonania\s+|instalacji\s+|zamontowania\s+|montazu\s+)?klimatyzacj\w*/.test(
       context,
-    ) || /klimatyzacj\w*[^.!?;]{0,55}(?:do\s+montazu|mozna\s+zamontowac|opcjonaln\w*)/.test(context)
+    ) ||
+    /klimatyzacj\w*[^.!?;]{0,55}(?:do\s+montazu|mozna\s+zamontowac|opcjonaln\w*)/.test(context)
   );
 }
 
@@ -3122,21 +3154,21 @@ function buildListingOrderBy(sort?: ListingFilters["sort"]) {
 // Cache only the expensive text/feature interpretation, never database results.
 // Row content, preferences and calendar year are part of the key, so changes
 // are reflected on the next request without waiting for a TTL.
-const dreamScoreCache = new Map<string, { signature: string; score: number }>();
+const dreamScoreCache = createPersistentScoreCache(join(storageRoot, "cache", "dream-scores.json"));
 function getCachedDreamScore(
   row: ListingRow,
   settings: FamilySettings,
+  preferencesSignature: string,
   latestEvent?: PriceEventRow,
 ) {
-  const signature = JSON.stringify([
-    row,
-    latestEvent,
-    settings.dreamProfile,
-    settings.workplaces,
-    settings.financing,
-    new Date().getFullYear(),
-    getListingAgePoints(row.first_seen_at ?? row.published_at),
-  ]);
+  const signature = scoreSignature(
+    JSON.stringify([
+      row,
+      latestEvent,
+      preferencesSignature,
+      getListingAgePoints(row.first_seen_at ?? row.published_at),
+    ]),
+  );
   const cached = dreamScoreCache.get(row.id);
   if (cached?.signature === signature) return cached.score;
   const score = computeDreamScore(
@@ -3146,7 +3178,6 @@ function getCachedDreamScore(
     undefined,
     settings.financing,
   );
-  if (dreamScoreCache.size >= 5000) dreamScoreCache.delete(dreamScoreCache.keys().next().value!);
   dreamScoreCache.set(row.id, { signature, score });
   return score;
 }

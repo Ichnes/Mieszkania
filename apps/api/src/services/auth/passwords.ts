@@ -1,5 +1,5 @@
 import { randomBytes, scrypt, timingSafeEqual } from "node:crypto";
-export type LocalAccount = { email: string; salt: string; hash: string };
+export type LocalAccount = { email: string; salt: string; hash: string; role?: "owner" | "viewer" };
 const options = { N: 32768, r: 8, p: 3, maxmem: 64 * 1024 * 1024 };
 function derive(password: string, salt: string): Promise<Buffer> {
   return new Promise((resolve, reject) =>
