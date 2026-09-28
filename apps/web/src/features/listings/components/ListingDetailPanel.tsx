@@ -1,3 +1,4 @@
+import { HeatingEvidence } from "./HeatingEvidence";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
 import { availableAmenities } from "../lib/available-amenities";
 import { getSunExposure } from "../lib/listing-language";
@@ -352,6 +353,7 @@ export function ListingDetailPanel(input: {
 
   const detailMap = (
     <div className="map-block detail-sidebar-box">
+      <HeatingEvidence description={input.listing.description} />
       {isValidMapPoint(input.listing.latitude, input.listing.longitude) ? (
         <ListingTransitMap listing={input.listing} />
       ) : (

@@ -1,3 +1,4 @@
+import { HeatingLayerControl } from "./HeatingLayerControl";
 import { warsawRailwayMap, warsawTramwayMap } from "@mieszkania/shared/transport";
 import { tramStopStyle } from "./lib/tram-style";
 import { selectedTramColor } from "./lib/tram-style";
@@ -46,6 +47,8 @@ export function ListingTransitMap(input: {
         }).setView([latitude, longitude], 14);
         window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap contributors",
+          maxNativeZoom: 19,
+          maxZoom: 22,
         }).addTo(mapRef.current);
         layerRef.current = window.L.layerGroup().addTo(mapRef.current);
         setMapReady(true);
@@ -200,6 +203,7 @@ export function ListingTransitMap(input: {
   useMapResize(mapContainerRef, mapRef, mapReady);
   return (
     <FullscreenFrame label="Mapa otoczenia oferty" className="listing-map-shell">
+      <HeatingLayerControl mapRef={mapRef} ready={mapReady} />
       {selectedTramRoute && (
         <button
           type="button"

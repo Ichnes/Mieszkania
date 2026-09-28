@@ -1,3 +1,4 @@
+import { HeatingLayerControl } from "./HeatingLayerControl";
 import { Select } from "../../components/Select";
 import { tramColor, selectedTramColor, tramStopStyle } from "./lib/tram-style";
 import { createTramStopPopup } from "./lib/tram-popup";
@@ -133,6 +134,8 @@ export function MapView(input: {
         }).setView([52.2297, 21.0122], 11);
         window.L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "&copy; OpenStreetMap contributors",
+          maxNativeZoom: 19,
+          maxZoom: 22,
         }).addTo(mapRef.current);
         layerRef.current = window.L.layerGroup().addTo(mapRef.current);
         setMapReady(true);
@@ -525,6 +528,7 @@ export function MapView(input: {
           ) : null}
         </div>
       </section>
+      <HeatingLayerControl mapRef={mapRef} ready={mapReady} />
       <div className="map-layout">
         <FullscreenFrame label="Mapa ofert" className="map-canvas-wrap">
           {mapError ? (

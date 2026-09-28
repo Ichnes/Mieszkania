@@ -609,3 +609,18 @@ zmianie kierunków lub przywróceniu odczytu z opisu. Do aktualizacji oceny na l
 ofert potrzebny jest zapis notatek.
 
 Dane M1/M2/M3, planowanych odcinków metra oraz 28 stacji WKD są częścią aplikacji: są dostępne także przy pustej lub zaimportowanej bazie ofert. Planowane lokalizacje M4/M5 i przedłużenia M2 do Ursusa są orientacyjne. Źródła: [metro i WKD](../reference/metro-map-sources.md).
+
+### Ogrzewanie i sieć ciepłownicza
+
+Na mapie ofert i w mapie mieszkania zaznacz **Sieć ciepłownicza (GESUT)**.
+Ustaw środek mapy na interesującym budynku i wybierz **Przybliż do sieci**.
+Kafle są pobierane dopiero przy dużym zbliżeniu. W razie błędu użyj **Ponów warstwę**.
+Warstwa pokazuje dane udostępniane przez powiaty, w tym sieci projektowane.
+Pusta mapa nie oznacza braku sieci; linia przy budynku nie potwierdza przyłącza.
+
+Przy mapie mieszkania znajduje się odczyt źródła ogrzewania z opisu ogłoszenia.
+Rozwiń **Źródło: opis ogłoszenia**, aby zobaczyć fragment będący podstawą odczytu.
+Informacja pozostaje **Do potwierdzenia u zarządcy budynku**. Samo „centralne
+ogrzewanie”, brak opisu i niejednoznaczne wzmianki dają **Ogrzewanie nieustalone**.
+Wynik aktualizuje się razem z opisem; nie jest potwierdzeniem urzędowym ani ręczną
+deklaracją użytkownika. Szczegóły: [źródła danych o ogrzewaniu](../reference/heating-networks.md).

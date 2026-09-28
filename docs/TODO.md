@@ -12,8 +12,11 @@
 
 ## Sieci miejskie i ogrzewanie (2026-09-28)
 
-- [ ] Zakres użytkownika: warstwa sieci na mapie, informacja o miejskim ogrzewaniu/własnej kotłowni przy mieszkaniu i jawne oznaczanie niepewności. Sprawdzić Geoportal i opisy/dane publiczne budynków, zacząć od ciepłownictwa Warszawy.
-- [ ] Rozpoznanie źródeł, implementacja, weryfikacja, dokumentacja i commit/push.
+- [x] Pierwszy zakres: opcjonalna warstwa ciepłownicza GESUT na mapie ofert i mieszkania, zbliżenie do sieci, ładowanie, błąd/ponowienie i opis ograniczeń pokrycia.
+- [x] Informacja przy mieszkaniu: ogrzewanie miejskie, kotłownia, gazowe, elektryczne, pompa ciepła albo nieustalone/różne źródła. Ostrożny odczyt opisu z cytatem; zawsze „do potwierdzenia”, bez wnioskowania o przyłączu z bliskości rury.
+- [x] Sprawdzono oficjalny opis GESUT i capabilities KIUT. Rzeczywiste kafle w Chromium: HTTP 200 image/png. Próbka warszawska pusta; GetFeatureInfo nie zwraca opisów obiektu. Nie potwierdzono kompletnego pokrycia Warszawy ani publicznego rejestru ogrzewania na poziomie adresu.
+- [x] Weryfikacja: typecheck monorepo, 132 testy frontendu, build Docker; Chromium 1440/1280/390 px: przełączanie warstwy, brak żądań przed zbliżeniem, kontrolowany błąd i ponowienie, usunięcie kafli po wyłączeniu, panel ogrzewania, brak poziomego przepełnienia i błędów JS. Dokumentacja źródeł i obsługi poniżej.
+- [ ] Dalszy zakres: zweryfikowane dane przyłączy/ogrzewania konkretnych budynków i szersze pokrycie Warszawy. Wymaga źródła adresowego/operatora; obecna warstwa poglądowa nie stanowi takiego potwierdzenia. Pozostałe sieci miejskie poza pierwszą iteracją ciepłownictwa.
 
 ## Zbiorczy status portali (2026-09-28)
 
