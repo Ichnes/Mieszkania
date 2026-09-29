@@ -1,4 +1,5 @@
 import type { FastifyInstance } from "fastify";
+import { validDecisionNote } from "./routes/decision-notes";
 
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const booleans = new Set([
@@ -148,7 +149,11 @@ export function registerPayloadValidation(app: FastifyInstance) {
       !uuid.test(params.id)
     )
       return reply.code(400).send({ message: "Nieprawidłowy identyfikator oferty." });
-    if (request.body !== undefined && !validatePayload(request.body))
+    const decisionNote = /^\/api\/listings\/[0-9a-f-]+\/decision-notes(?:\?|$)/i.test(request.url);
+    if (
+      request.body !== undefined &&
+      !(decisionNote ? validDecisionNote(request.body) : validatePayload(request.body))
+    )
       return reply.code(400).send({ message: "Nieprawidłowy format danych formularza." });
     const body = request.body as Record<string, unknown> | undefined;
     const path = request.url.split("?")[0];

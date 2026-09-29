@@ -51,9 +51,11 @@ export function DuplicateGroupsPanel({
 }) {
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("");
+  const [onlyConflicts, setOnlyConflicts] = useState(false);
   const [page, setPage] = useState(1);
   const filtered = groups.filter(
     (group) =>
+      (!onlyConflicts || Boolean(group.conflicts?.length)) &&
       (!source || group.members.some((member) => member.sourceLabel === source)) &&
       normalizeListingText(group.members.map((member) => member.title).join(" ")).includes(
         normalizeListingText(search),
@@ -104,6 +106,18 @@ export function DuplicateGroupsPanel({
           </article>
         </div>
         <div className="duplicate-toolbar">
+          <label>
+            <span>Rozbieżności danych</span>
+            <input
+              type="checkbox"
+              checked={onlyConflicts}
+              onChange={(event) => {
+                setOnlyConflicts(event.target.checked);
+                setPage(1);
+              }}
+            />
+            Tylko grupy z konfliktami
+          </label>
           <label>
             <span>Szukaj w pobranych grupach</span>
             <input
@@ -156,6 +170,10 @@ export function DuplicateGroupsPanel({
       </section>
       {visible.map((group, groupIndex) => (
         <section className="panel duplicate-review-v2" key={group.groupId}>
+          <details>
+            <summary>Zapisz rozstrzygnięcie i źródło</summary>
+            <LazyGroupNotes listingId={group.primaryListingId} />
+          </details>
           <div className="section-topline">
             <div className="duplicate-group-heading">
               <p className="eyebrow">
@@ -288,3 +306,19 @@ export function DuplicateGroupsPanel({
     </section>
   );
 }
+
+function LazyGroupNotes({ listingId }: { listingId: string }) {
+  const [open, setOpen] = useState(false);
+  if (!listingId)
+    return (
+      <p role="alert">W grupie brakuje głównej oferty. Sprawdź jej skład przed zapisem ustaleń.</p>
+    );
+  return open ? (
+    <DecisionNotebook key={listingId} listingId={listingId} factsOnly />
+  ) : (
+    <button type="button" className="action-button secondary-button" onClick={() => setOpen(true)}>
+      Wczytaj ustalenia tej oferty
+    </button>
+  );
+}
+import { DecisionNotebook } from "../decisions/DecisionNotebook";

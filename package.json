@@ -7,6 +7,9 @@
     "packages/*"
   ],
   "scripts": {
+    "backup:create": "node scripts/backup.mjs create",
+    "backup:verify": "node scripts/backup.mjs verify",
+    "backup:restore": "node scripts/backup.mjs restore",
     "msi:build": "node --import tsx scripts/build-msi.mts",
     "data:audit": "node --import tsx apps/api/src/scripts/maintenance/audit-listing-integrity.ts",
     "docker:up": "node scripts/docker-up.mjs",

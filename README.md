@@ -87,6 +87,11 @@ storage/           lokalne dane, zdjęcia i backupy — poza Git
 
 ## Dokumentacja i dane prywatne
 
+Pełną kopię danych wykonasz przez `npm run backup:create`, a odtwarzanie sprawdzisz
+przez `npm run backup:verify -- "<katalog-kopii>"`.
+[Instrukcja backupu i odzyskiwania danych](docs/guides/backup.md) opisuje także
+bezpieczne odtworzenie do nowej instalacji.
+
 Zacznij od [spisu dokumentacji](docs/README.md), [instrukcji startu](docs/guides/getting-started.md)
 i [architektury](docs/architecture/overview.md). Bieżące zadania są w [docs/TODO.md](docs/TODO.md).
 [Audyt aplikacji](docs/audit-2026-09-08.md) opisuje poprawki i kolejne priorytety;

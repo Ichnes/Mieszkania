@@ -1,9 +1,11 @@
 import { withDb } from "./index";
+import { DECISION_NOTES_SCHEMA } from "../services/listings/decision-notes";
 import { AI_ASSESSMENT_SCHEMA } from "../services/listings/ai-assessment-repository";
 import { syncAllDuplicateGroupPrices } from "../services/duplicates/group-prices";
 
 export async function ensureRuntimeSchema() {
   await withDb(async (db) => {
+    await db.query(DECISION_NOTES_SCHEMA);
     await db.query(AI_ASSESSMENT_SCHEMA);
     await db.query(`do $$ begin
       if not exists(select 1 from information_schema.columns where table_schema=current_schema() and table_name='listings' and column_name='source_price_amount') then

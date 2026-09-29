@@ -971,3 +971,4 @@ export {
   getFloorPoints,
   getExposureEvaluation,
 } from "./dream-building.js";
+export type { DecisionNote, DecisionNoteKind, DecisionReminder } from "./decision-notes";

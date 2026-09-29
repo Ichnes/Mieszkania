@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { comparisonPrintHtml, printComparison } from "./lib/print";
 import type { FamilySettings } from "@mieszkania/shared";
 import { ArrowUpRight, ImageOff, X } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -20,6 +21,7 @@ export function CompareBoard({
   onRemove: (id: string) => void;
 }) {
   const [onlyDifferences, setOnlyDifferences] = useState(false);
+  const [includePrintNotes, setIncludePrintNotes] = useState(false);
   const commutes = useComparisonCommutes(listings, workplaces);
   const rows = buildComparisonRows(listings, workplaces, commutes.values);
   const visibleRows = visibleComparisonRows(rows, onlyDifferences, listings.length);
@@ -55,6 +57,21 @@ export function CompareBoard({
         </p>
       )}
       <div className="comparison-toolbar">
+        <button
+          type="button"
+          className="action-button secondary-button"
+          onClick={() => printComparison(comparisonPrintHtml(listings, rows, includePrintNotes))}
+        >
+          Drukuj / zapisz PDF
+        </button>
+        <label className="comparison-toggle">
+          <input
+            type="checkbox"
+            checked={includePrintNotes}
+            onChange={(event) => setIncludePrintNotes(event.target.checked)}
+          />
+          Dołącz prywatne notatki do wydruku
+        </label>
         <label className="comparison-toggle">
           <input
             type="checkbox"

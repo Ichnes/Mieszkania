@@ -1,4 +1,5 @@
 /* Import order preserves the existing cascade. */
+@import "./decisions.css";
 @import "./base/shell.css";
 @import "./base/listings.css";
 @import "./base/details.css";

@@ -1,0 +1,68 @@
+.decision-notebook,
+.decision-note,
+.decision-form,
+.decision-reminders {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.decision-note {
+  border: 1px solid var(--border-color, #8b929b);
+  border-radius: 10px;
+  padding: 12px;
+  margin: 10px 0;
+}
+.decision-note summary,
+.decision-reminders summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.decision-form {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+}
+.decision-form label {
+  display: grid;
+  gap: 6px;
+}
+.decision-form input:not([type="checkbox"]),
+.decision-form textarea {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  font: inherit;
+  padding: 9px;
+  border: 1px solid #8b929b;
+  border-radius: 6px;
+  color: inherit;
+  background: transparent;
+}
+.decision-form textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+.decision-form .decision-checkbox {
+  display: flex;
+  align-items: center;
+}
+.decision-reminders {
+  margin-bottom: 16px;
+}
+.decision-reminders ul {
+  padding-left: 20px;
+}
+.decision-reminders li {
+  margin: 12px 0;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+@media (max-width: 600px) {
+  .decision-form .action-button {
+    width: 100%;
+  }
+  .decision-reminders li {
+    display: grid;
+  }
+}

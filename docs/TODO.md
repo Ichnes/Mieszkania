@@ -7,11 +7,13 @@
 - [x] Uzgodniony zakres: weryfikacja rozbieżności, pełny backup i próba odtworzenia, pytania na oglądanie, następny kontakt, eksport porównania. Bez wznowienia Oceny AI.
 - [x] Korekta po zgłoszeniu użytkownika: przerwano zbyt długi backup offline, przywrócono API i odświeżono połączenie nginx; health i lista ofert HTTP 200. Usunięto wyłącznie niedokończone archiwa z tej próby.
 - [x] Dalsze wymagania użytkownika: backup przy działającej stronie, kompresja i mały rozmiar. Snapshot PostgreSQL wspólny dla zrzutu i liczników, strumieniowe gzip, pomijanie odtwarzalnego cache i starych kopii technicznych; oryginalne zdjęcia bez strat jakości. Dodano dynamiczne rozwiązywanie adresu API w nginx.
-- [ ] Backup właściwej bazy i storage; izolowana próba odtworzenia oraz instrukcja.
-- [ ] Trwałe rozstrzygnięcia rozbieżności z datą i źródłem, bez automatycznej zmiany historycznych danych.
-- [ ] Pytania na oglądanie z braków danych i zapis odpowiedzi; termin następnej czynności.
-- [ ] Eksport porównania do druku/PDF z kosztami, źródłami i niewiadomymi.
-- [ ] Testy, kontrola PC/laptop/mobile, dokumentacja, commit i push.
+- [x] Próba backupu zakończona zgodnie ze zmianą zakresu użytkownika 2026-09-30: SHA-256 były poprawne, baza odtworzona z identycznymi licznikami tabel. Końcowe porównanie plików przerwano z powodu miejsca na dysku. Usunięto kontener testowy i oba jego wolumeny, a na wyraźne polecenie użytkownika także dzisiejszą kopię około 48 GB. Oryginalna baza i storage zachowane; API/web/db healthy. Pełne odtworzenie plików nie zostało zweryfikowane do końca. Nie wznawiać dużych prób ani tworzenia backupu bez nowego uzgodnienia miejsca.
+- [x] Trwałe rozstrzygnięcia rozbieżności z datą i źródłem, bez automatycznej zmiany historycznych danych. Osobna tabela ustaleń, ochrona wersji przed nadpisaniem i dostęp z Duplikatów oraz szczegółów oferty.
+- [x] Pytania na oglądanie z braków danych i zapis odpowiedzi; termin następnej czynności. Zakładka Ustalenia i lista Następne kroki, także dla ofert archiwalnych.
+- [x] Eksport porównania do druku/PDF z kosztami, źródłami i niewiadomymi. Prywatne notatki opcjonalne, wszystkie cechy niezależnie od filtra różnic, bezpieczne linki i tekst.
+- [x] Weryfikacja po wznowieniu 2026-09-30: 423 testy aplikacji zaliczone, 9 środowiskowych pominiętych; osobno 2 testy PostgreSQL ustaleń oraz 2 testy backupu zaliczone. Build monorepo poprawny po ponowieniu poza ograniczeniami sandboxa. Poprzedni test UI: zapis/odczyt/konflikt/ponowienie, terminy i wydruk na 1440/1280/390 px, bez przepełnień i błędów JS; obejrzano zrzuty formularza i wydruku.
+- [x] Zmieniane pliki przechodzą Prettier i diff check. Pełny format:check nadal zgłasza wcześniejsze problemy w fixtures HTML kolektorów i routes/settings.ts; tych plików nie zmieniano. Instrukcje aplikacji, modelu danych i backupu uzupełnione; postęp odczytu dużych archiwów co 15 sekund.
+- [x] Testy, kontrola PC/laptop/mobile i dokumentacja zakończone; zmiany przygotowane do commitu i push na main. Zewnętrzna kopia i pełna próba jej odtworzenia pozostają osobnym, niewznawianym automatycznie tematem.
 
 ## Aktualny przegląd i priorytety (2026-09-29)
 

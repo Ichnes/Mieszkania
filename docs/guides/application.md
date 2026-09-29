@@ -633,3 +633,38 @@ Informacja pozostaje **Do potwierdzenia u zarządcy budynku**. Samo „centralne
 ogrzewanie”, brak opisu i niejednoznaczne wzmianki dają **Ogrzewanie nieustalone**.
 Wynik aktualizuje się razem z opisem; nie jest potwierdzeniem urzędowym ani ręczną
 deklaracją użytkownika. Szczegóły: [źródła danych o ogrzewaniu](../reference/heating-networks.md).
+
+# Ustalenia, oglądanie i następny kontakt
+
+W szczegółach oferty otwórz **Ustalenia**. Pytania dotyczą brakujących informacji
+oraz rzeczy wymagających potwierdzenia: ogrzewania, dokumentów i remontów.
+Po rozwinięciu pytania wpisz odpowiedź, źródło (osobę, dokument lub link) i datę.
+Zaznaczenie „Potwierdzone na podstawie źródła” wymaga tych trzech informacji.
+Możesz też zapisać niepotwierdzoną odpowiedź jako szkic. Zapisane odpowiedzi
+pozostają widoczne, nawet gdy po odświeżeniu ogłoszenia pytanie przestanie wynikać
+z braków danych. Aktualizacja danych portalu nie weryfikuje ponownie ustaleń użytkownika.
+
+W sekcji **Następny krok** wpisz czynność i termin. Lista **Następne kroki** nad
+ofertami pokazuje do 100 najbliższych niewykonanych czynności, także z ofert
+archiwalnych, i wyróżnia minione terminy. Odświeża się po zapisie i powrocie do okna;
+można ją też odświeżyć przyciskiem. To przypomnienia wewnątrz aplikacji — bez
+powiadomień systemowych ani wiadomości email. Wykonaną lub anulowaną czynność
+oznacz w Ustaleniach; możesz później ustawić w tym samym miejscu kolejny termin.
+
+W **Duplikatach** rozwiń **Zapisz rozstrzygnięcie i źródło**, następnie wczytaj
+ustalenia. Można zapisać poprawną powierzchnię, liczbę pokoi, piętro i wyjaśnienie
+historii/tożsamości mieszkania. Są powiązane z główną ofertą i widoczne również
+w jej Ustaleniach. To zapis weryfikacji, nie automatyczne nadpisanie danych portali
+ani rankingu. Potwierdzenie lub rozdzielenie grupy nadal wykonuje się istniejącymi
+przyciskami po sprawdzeniu ogłoszeń. Sam konflikt nie dowodzi błędnego scalenia.
+Przy równoczesnej edycji starszy formularz zostanie odrzucony; odczytaj aktualny
+zapis przed ponowną zmianą.
+
+W **Porównaniu** przycisk **Drukuj / zapisz PDF** otwiera wydruk wszystkich cech
+wybranych ofert, także gdy na ekranie włączono „Tylko różnice”. W oknie drukowania
+wybierz zapis do PDF. Wydruk zawiera cenę z rozpoznanymi dodatkami, niewiadome,
+datę eksportu i linki do źródeł, również scalonych ofert. Opcja dołączenia prywatnych
+notatek jest domyślnie wyłączona. Eksport odzwierciedla aktualnie wczytane dane;
+nie odświeża ogłoszeń z portali i nie wylicza brakujących kosztów.
+
+Kopie danych i odtwarzanie opisuje [osobna instrukcja](backup.md).

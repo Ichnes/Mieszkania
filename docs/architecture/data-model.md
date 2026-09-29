@@ -40,3 +40,19 @@ i filtrach. `negotiated_price_amount` pozostaje celem negocjacji, zgodnie z doty
 API zwraca `priceSource` i `advertisedPriceLabel`, aby UI nie mieszał źródeł.
 Cena za m² jest wyliczana z aktualnej ceny i powierzchni. Naprawa historycznie niespójnej
 kolumny pochodnej ma osobny skrypt; nie zmienia kwot bazowych ani historii portalu.
+
+# Ustalenia użytkownika i następne czynności
+
+`listing_decision_notes` przechowuje pytania, rozstrzygnięcia faktów i następną
+czynność, oddzielnie od danych portali. Klucz to `(listing_id, key)`; `data` JSONB
+zawiera treść, źródło, datę ustalenia, termin i stan wykonania/potwierdzenia.
+`version` rośnie przy zapisie i chroni przed nadpisaniem przez starszy formularz
+(HTTP 409). Usunięcie oferty usuwa jej ustalenia kaskadowo. Rozdzielenie duplikatów
+nie przenosi ustaleń: pozostają przypisane do konkretnego identyfikatora oferty.
+
+GET/POST `/api/listings/:id/decision-notes` odczytuje lub zapisuje pojedyncze
+ustalenie. GET `/api/decision-reminders` zwraca do 100 niewykonanych czynności
+według terminu, także dla ofert archiwalnych. Obowiązują wspólne reguły logowania
+i roli tylko do odczytu. Potwierdzenie faktu wymaga odpowiedzi, źródła i daty;
+czynność wymaga treści i terminu. Ustalenia nie zmieniają automatycznie rankingu,
+cen ani normalizacji faktów portali.

@@ -1,4 +1,5 @@
 import Fastify from "fastify";
+import { registerDecisionNotesRoutes } from "./routes/decision-notes";
 import { parseTrustedProxies } from "./trusted-proxy";
 import { registerPayloadValidation } from "./payload-validation";
 import { registerAuth } from "./auth";
@@ -49,6 +50,7 @@ export function createApp(options: { auth?: Parameters<typeof registerAuth>[1] }
   registerHealthRoutes(app);
   registerDashboardRoutes(app);
   registerListingsRoutes(app);
+  registerDecisionNotesRoutes(app);
   registerMapsRoutes(app);
   registerSettingsRoutes(app);
   registerDuplicatesRoutes(app);

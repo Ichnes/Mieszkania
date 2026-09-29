@@ -181,7 +181,7 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates"
+    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates" | "decisions"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
@@ -699,7 +699,21 @@ export function ListingDetailPanel(input: {
                 <Link2 size={16} aria-hidden="true" />
                 <span>Duplikaty ({input.listing.relatedListings.length})</span>
               </button>
+              <button
+                type="button"
+                className={tabClass(activeDetailTab === "decisions")}
+                onClick={() => setActiveDetailTab("decisions")}
+              >
+                Ustalenia
+              </button>
             </div>
+            {activeDetailTab === "decisions" && (
+              <DecisionNotebook
+                key={input.listing.id}
+                listingId={input.listing.id}
+                listing={input.listing}
+              />
+            )}
             {activeDetailTab === "ai" && (
               <ListingAiAssessment
                 assessment={input.listing.aiAssessment}
@@ -1625,3 +1639,4 @@ export function ListingDetailPanel(input: {
     setContactEvent(createEmptyContactEventDraft(manual.contactName));
   }
 }
+import { DecisionNotebook } from "../../decisions/DecisionNotebook";
