@@ -1,5 +1,18 @@
 # Bieżące zadania
 
+## Wiarygodność danych i wsparcie decyzji (2026-09-29)
+
+- [x] Odtworzenie stanu po restarcie VS Code: kod funkcji i instrukcje pozostają lokalnie bez commitu; logi potwierdzają typecheck oraz UI 1440/1280/390 px bez błędów. Backup online ukończony (database.dump 562543931 B, storage.tar.gz 47531532390 B); brak verification.json, log próby kończy się na odtwarzaniu izolowanej bazy. Kontener restore-check nadal uruchomiony, API/web/db healthy. Pozostaje sprawdzić postęp odtwarzania, domknąć weryfikację i opublikować zmiany.
+
+- [x] Uzgodniony zakres: weryfikacja rozbieżności, pełny backup i próba odtworzenia, pytania na oglądanie, następny kontakt, eksport porównania. Bez wznowienia Oceny AI.
+- [x] Korekta po zgłoszeniu użytkownika: przerwano zbyt długi backup offline, przywrócono API i odświeżono połączenie nginx; health i lista ofert HTTP 200. Usunięto wyłącznie niedokończone archiwa z tej próby.
+- [x] Dalsze wymagania użytkownika: backup przy działającej stronie, kompresja i mały rozmiar. Snapshot PostgreSQL wspólny dla zrzutu i liczników, strumieniowe gzip, pomijanie odtwarzalnego cache i starych kopii technicznych; oryginalne zdjęcia bez strat jakości. Dodano dynamiczne rozwiązywanie adresu API w nginx.
+- [ ] Backup właściwej bazy i storage; izolowana próba odtworzenia oraz instrukcja.
+- [ ] Trwałe rozstrzygnięcia rozbieżności z datą i źródłem, bez automatycznej zmiany historycznych danych.
+- [ ] Pytania na oglądanie z braków danych i zapis odpowiedzi; termin następnej czynności.
+- [ ] Eksport porównania do druku/PDF z kosztami, źródłami i niewiadomymi.
+- [ ] Testy, kontrola PC/laptop/mobile, dokumentacja, commit i push.
+
 ## Aktualny przegląd i priorytety (2026-09-29)
 
 - [x] Zakres: sprawdzenie pozostałych prac oraz propozycje brakujących funkcji; bez zmian aplikacji i danych.
