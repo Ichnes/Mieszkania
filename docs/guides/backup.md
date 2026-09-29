@@ -54,6 +54,14 @@ liczby wierszy wszystkich tabel, wypakowuje pliki do osobnego wolumenu i porówn
 je z archiwum. Nie łączy się z bazą aplikacji. Po sukcesie zapisuje
 `verification.json`; tymczasowy kontener i wolumeny są usuwane.
 Potrzebne jest dodatkowe miejsce na pełną odtworzoną bazę i pliki.
+Na Windows usunięcie testowych wolumenów może zwolnić miejsce tylko wewnątrz
+dysku Dockera, bez zmniejszenia `docker_data.vhdx` na C:. Odzyskanie miejsca dla
+Windows może wymagać kompaktowania VHDX przy zatrzymanym Docker Desktop i WSL,
+z uprawnieniami administratora; aplikacja jest wtedy niedostępna.
+Nie usuwaj samego VHDX — zawiera również działające kontenery, obrazy i wolumeny.
+Przed pełną próbą odtwarzania sprawdź wolne miejsce na dysku hosta i uwzględnij
+jednocześnie archiwum oraz wypakowane dane. Silna kompresja archiwum nie zmniejsza
+przestrzeni potrzebnej do odtworzenia.
 Podczas sprawdzania dużych plików i przesyłania archiwum skrypt pokazuje co 15 sekund
 procent odczytanych danych oraz ich rozmiar. Zakończenie potwierdza dopiero komunikat
 powodzenia i plik `verification.json`; samo 100% odczytu nie oznacza zakończenia kontroli.

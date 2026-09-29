@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Miejsce po próbie backupu (2026-09-30)
+
+- [x] Ustalono przyczynę: docker_data.vhdx ma 80,3 GiB, system plików w środku zajmuje około 31 GiB. Usunięcie testowych wolumenów nie zmniejszyło pliku VHDX na Windows; około 49 GiB pozostaje pustą przestrzenią wewnątrz niego. Nie jest to pozostawiona aktywna kopia danych.
+- [x] Usunięto także pozostały zrzut 0,52 GiB z wcześniejszej nieukończonej próby backupu. Oryginalne dane aplikacji zachowane. Cache buildów Docker ma około 25,25 GB; nie usuwano go ani istniejących obrazów.
+- [x] Po zgodzie użytkownika: TRIM, zatrzymanie Docker/WSL, DiskPart compact vdisk z uprawnieniami administratora i ponowny start. VHDX zmniejszony z 86224404480 do 35413557248 bajtów (80,3 → 33,0 GiB), odzyskano 47,3 GiB. Na C: po restarcie 138,48 GiB wolnego.
+- [x] API/web/db healthy; health oraz lista ofert HTTP 200. Bez usuwania działających danych, obrazów ani cache buildów. Przewodnik backupu opisuje zapotrzebowanie na miejsce i zachowanie VHDX. Sprawdzenie formatowania i diff zamiast ponownego uruchamiania testów aplikacji przy zmianie tylko dokumentacyjnej.
+
 ## Wiarygodność danych i wsparcie decyzji (2026-09-29)
 
 - [x] Odtworzenie stanu po restarcie VS Code: kod funkcji i instrukcje pozostają lokalnie bez commitu; logi potwierdzają typecheck oraz UI 1440/1280/390 px bez błędów. Backup online ukończony (database.dump 562543931 B, storage.tar.gz 47531532390 B); brak verification.json, log próby kończy się na odtwarzaniu izolowanej bazy. Kontener restore-check nadal uruchomiony, API/web/db healthy. Pozostaje sprawdzić postęp odtwarzania, domknąć weryfikację i opublikować zmiany.
