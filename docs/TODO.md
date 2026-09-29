@@ -1,5 +1,20 @@
 # Bieżące zadania
 
+## Aktualny przegląd i priorytety (2026-09-29)
+
+- [x] Zakres: sprawdzenie pozostałych prac oraz propozycje brakujących funkcji; bez zmian aplikacji i danych.
+- [x] Porównano starsze otwarte punkty z commitem `268b009`, raportem z 28 września i kodem kontaktów, oglądań oraz duplikatów. Starsze checkboxy poniżej są zapisem historycznym; aktualne pozostałości zebrano tutaj.
+- [x] Domknięte wcześniej: trwałość i różnice porównania, pokrycie ocen, niezależne ładowanie, zbiorczy monitoring, uproszczenie Aktualizacji, opcjonalny RCN, fokus/Escape, przegląd wizualny w emulacji, poprawki transportu Node/TLS, role/proxy, regresje opisów i odtwarzanie MSI.
+- [ ] Najwyższy priorytet danych: zweryfikować historyczne konflikty scaleń i historii. Poprzedni audyt wskazał 1739 grup z sygnałami rozbieżności i 218 podejrzanych historii; nie są to potwierdzone błędy ani nowy pomiar. Istnieją rozdzielanie i potwierdzanie grup; przyda się trwały status weryfikacji konkretnej rozbieżności oraz pochodzenie poprawnej wartości.
+- [ ] Wydajność: pierwszy ranking po unieważnieniu cache nadal wymaga obliczeń. Poprzedni pomiar: 8,1 s bez cache i 3,4 s z trwałym cache, bez nowego benchmarku w tym przeglądzie.
+- [ ] Weryfikacja operacyjna: fizyczny telefon i długie partie importów. Potwierdzone ogrzewanie budynków i pokrycie sieci wymagają odpowiedniego źródła danych.
+- [ ] Propozycja utrzymaniowa: pełna kopia bazy i plików oraz sprawdzone odtworzenie na osobnej bazie. Istniejące kopie wybranych danych przy migracjach nie zastępują tego procesu.
+- [ ] Propozycja funkcjonalna: pytania na oglądanie na podstawie braków danych, z odpowiedzią, datą i źródłem; uzupełnia istniejące notatki i kalendarz.
+- [ ] Propozycja funkcjonalna: termin następnego kontaktu i konkretna czynność przy ofercie; uzupełnia istniejącą historię rozmów.
+- [ ] Propozycja funkcjonalna: eksport wybranych ofert/porównania do druku lub PDF, z ceną całkowitą, źródłami i niewiadomymi.
+- Warunkowo, dopiero przy publikacji internetowej: konfiguracja logowania/HTTPS/APP_ORIGIN oraz izolacja sieci renderowanego Chromium. Obecny zakres pozostaje lokalny/domowe Wi-Fi. Ocena AI nadal wstrzymana.
+- Weryfikacja przeglądu: odczyt dokumentacji i wskazanych przepływów kodu, czysty stan Git przed zmianą; kontrola formatowania dokumentu i `git diff --check`. Nie uruchamiano ponownie testów aplikacji ani importów przy zmianie wyłącznie dokumentacyjnej.
+
 ## Domknięcie zaległości i przegląd potrzeb użytkownika (2026-09-28)
 
 - [x] Przyjęty zakres: wszystkie pozostałe tematy z podsumowania, czytelniejsze linie ciepłownicze, następnie przegląd braków i propozycji dla użytkownika. Ocena AI nadal wstrzymana.
