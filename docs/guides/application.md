@@ -38,6 +38,23 @@ Procent dopasowania do profilu wymarzonego mieszkania jest niezależną funkcją
 Stare pola `weights` i `maxWeightTotal` są usuwane automatycznie przy odczycie
 zapisanych ustawień (baza i lokalna kopia family-settings).
 
+## Zapisane wyszukiwania i interpretacja opisów
+
+Na stronie **Oferty** rozwiń **Zapisane wyszukiwania** u góry panelu filtrów.
+Ustaw kryteria i sortowanie, kliknij **Filtruj**, nadaj nazwę i wybierz
+**Zapisz aktualne wyniki**. Kliknięcie nazwy przywraca kryteria i pierwszą stronę
+wyników. Możesz przechowywać 12 zestawów w danej przeglądarce. Usunięcie można
+cofnąć; zestawy nie synchronizują się między urządzeniami i nie wysyłają alertów.
+
+**Brak danych o parkingu** oznacza, że źródło nie potwierdza dostępności miejsca.
+To odrębny stan od **Brak miejsca postojowego**. Sam wynajem lub jawny brak
+przynależności miejsca nie jest traktowany jako własne miejsce. Planowane wyposażenie
+i możliwość jego montażu nie są wykazywane jako istniejące udogodnienia.
+
+W szczegółach i porównaniu **Dopłaty do sprawdzenia** sygnalizują niejednoznaczne
+kwoty, np. „55 000 tysięcy zł”. Nie wliczają się do automatycznej sumy; potwierdź
+wartość u sprzedającego i w razie potrzeby uzupełnij ręczne dane oferty.
+
 ## Punktacja wymarzonego mieszkania
 
 ### Dodatkowa ocena AI

@@ -362,7 +362,9 @@ export function ListingDetailPanel(input: {
       {isValidMapPoint(input.listing.latitude, input.listing.longitude) ? (
         <ListingTransitMap listing={input.listing} />
       ) : (
-        <div className="map-placeholder">Brak geokodu, dostepny link do wyszukiwania OSM.</div>
+        <div className="map-placeholder">
+          Brak dokładnej lokalizacji. Możesz wyszukać adres w OpenStreetMap.
+        </div>
       )}
       {input.listing.coordinateAccuracy === "approximate" ? (
         <p className="muted">
@@ -867,6 +869,18 @@ export function ListingDetailPanel(input: {
                     <th>Metraż</th>
                     <td>{input.listing.areaLabel ?? "-"}</td>
                   </tr>
+                  {Boolean(input.listing.additionalPurchaseCosts?.warnings?.length) && (
+                    <tr>
+                      <th>Dopłaty do sprawdzenia</th>
+                      <td colSpan={3}>
+                        {input.listing.additionalPurchaseCosts!.warnings!.map((warning) => (
+                          <p className="error-text" key={warning}>
+                            {warning}
+                          </p>
+                        ))}
+                      </td>
+                    </tr>
+                  )}
                   {input.listing.additionalPurchaseCosts &&
                   input.listing.additionalPurchaseCosts.total > 0 ? (
                     <tr>
@@ -912,7 +926,7 @@ export function ListingDetailPanel(input: {
                     </tr>
                   ) : null}
                   <tr>
-                    <th>PLN/m2</th>
+                    <th>zł/m²</th>
                     <td>{input.listing.pricePerSqmLabel ?? "-"}</td>
                     <th>Pokoje</th>
                     <td>{input.listing.rooms ?? "-"}</td>
@@ -1197,7 +1211,7 @@ export function ListingDetailPanel(input: {
                   />
                 </label>
                 <label className="detail-field">
-                  <span>Tytul zdarzenia</span>
+                  <span>Tytuł zdarzenia</span>
                   <input
                     className="text-input"
                     value={contactEvent.title}

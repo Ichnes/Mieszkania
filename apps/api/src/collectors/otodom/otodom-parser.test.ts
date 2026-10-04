@@ -54,6 +54,23 @@ test("Otodom finish and maintenance fields are retained independently of the des
   assert.ok(features.some((feature) => feature.key === "fees" && feature.value === "850 zł"));
 });
 
+test("an empty Otodom fee never consumes the next detail across HTML comments", async () => {
+  const parsed = await new OtodomParser().parse({
+    url: "https://www.otodom.pl/pl/oferta/test-ID4emptyfee",
+    statusCode: 200,
+    html: "<title>Mieszkanie</title><div><div>Czynsz<!-- -->:</div><div><span>Zapytaj</span></div></div><div><div>Stan wykończenia<!-- -->:</div><div>do zamieszkania</div></div>",
+  });
+  assert.deepEqual(parsed.rawPayload.portalFeatures, { finishQuality: "do zamieszkania" });
+  const features = extractFeatures({
+    description: "Czynsz wynosi 850 zł.",
+    snapshotPayload: { portalFeatures: { fees: "do zamieszkania" } },
+  });
+  assert.deepEqual(
+    features.filter((f) => f.key === "fees").map((f) => f.value),
+    ["850 PLN"],
+  );
+});
+
 test("reads an explicit Otodom lift value from the detail grid", async () => {
   const parser = new OtodomParser();
   const parsed = await parser.parse({

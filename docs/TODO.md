@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Audyt analizy ogłoszeń i wygody aplikacji (2026-10-04)
+
+- [x] Zakres: przypadki brzegowe opisów, negacje i opcje wyposażenia, koszty, piętra, spójność ocen/filtrów/wyróżnień; przegląd UI oraz porównanie rozwiązań Otodomu.
+- [x] Porównano analizę tych samych 4094 opisów. Poprawiono negacje, plany i imitacje, parking na wynajem, brak danych, odczyt windy, koszty i piętra „3 z 5”. Niejednoznaczne dopłaty mają ostrzeżenie; naprawiono przeskakiwanie pustego pola czynszu w HTML Otodomu i ujednolicono odczyt czynszu ze statystykami.
+- [x] Dodano nazwane wyszukiwania z filtrami/sortowaniem, usuwaniem i cofnięciem; poprawiono język, wyróżnienia opisów i brak danych w porównaniu. Sprawdzono dziewięć widoków na PC/laptop/mobile, zapis i odtworzenie filtrów oraz ostrzeżenie dopłaty na rzeczywistej ofercie.
+- [x] Pełny zestaw: 439 testów OK, 10 pominiętych; końcowe doprecyzowania: 47 testów tematycznych OK. Typecheck i produkcyjne buildy OK; lokalne API/web/db healthy. Raport: [audyt](audit-2026-10-04.md); zaktualizowano przewodnik aplikacji.
+- [x] Na prośbę użytkownika przygotowano prywatne pliki poza Git: `.local/oferty-do-sprawdzenia-2026-10-04.md` (15 przypadków z ID, fragmentem i miejscem na decyzję) oraz `.local/pietra-do-sprawdzenia-2026-10-04.md` (357 historycznych rekordów z ID). Nie zmieniano danych na podstawie domysłów.
+- [ ] Pozostaje wspólnie rozstrzygnąć przypadki z plików; opcjonalnie później dodać synchronizację zapisanych wyszukiwań i alerty. Ocena AI pozostaje wstrzymana.
+
 ## Czytelność ofert, duplikaty i historia cen (2026-10-04)
 
 - [x] Zakres: uproszczenie operacji, zakładki duplikatów i ponownych wystawień, średnia historyczna na wykresie, ciaśniejszy opis, przegląd UI i języka oraz błąd piętra 713/13.

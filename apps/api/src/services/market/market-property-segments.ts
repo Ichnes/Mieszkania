@@ -1,3 +1,5 @@
+import { readMonthlyFee } from "../listings/maintenance-fee";
+export { readMonthlyFee } from "../listings/maintenance-fee";
 import type { Pool } from "pg";
 import type { MarketSegment } from "@mieszkania/shared";
 import { extractFeaturesFromPayload, inferFinishQuality } from "../listings/listing-repository";
@@ -17,30 +19,6 @@ const normalize = (value: string) =>
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/ł/g, "l")
     .toLowerCase();
-
-export function readMonthlyFee(structured: string | undefined, description: string): number | null {
-  // Only an unambiguous single amount: do not turn ranges, yearly or per-m² fees into monthly totals.
-  const amount = "(\\d+(?:[ \\u00a0]\\d{3})*(?:[,.]\\d{1,2})?)";
-  const structuredMatch = structured
-    ?.trim()
-    .match(
-      new RegExp(
-        `^(?:ok\\.?\\s*)?${amount}\\s*(?:(?:zł|PLN)(?:\\s*[/ ]\\s*(?:mies(?:iąc|ięcznie|\\.)?|msc))?)?$`,
-        "i",
-      ),
-    );
-  const match =
-    structuredMatch ??
-    description.match(
-      new RegExp(
-        `\\bczynsz\\s*(?:(?:administracyjny|miesięczny|wynosi|to|około|ok\\.?|w wysokości|obecnie|aktualnie)\\s*)*[:–-]?\\s*${amount}\\s*(?:zł|PLN)(?!\\s*(?:/\\s*(?:m[²2]|rok)|rocznie))`,
-        "i",
-      ),
-    );
-  if (!match) return null;
-  const value = Number(match[1].replace(/[ \u00a0]/g, "").replace(",", "."));
-  return Number.isFinite(value) && value >= 0 ? value : null;
-}
 
 export function classifyProperty(row: PropertySegmentRow) {
   const description = row.description ?? "";

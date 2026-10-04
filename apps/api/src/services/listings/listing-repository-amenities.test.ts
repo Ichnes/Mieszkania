@@ -185,7 +185,7 @@ test("extracts premium finish and equipment variants", () => {
   assert.equal(keys.has("underfloor_heating"), true);
   assert.equal(keys.has("architect_designed"), true);
   assert.equal(keys.has("wooden_floor"), true);
-  assert.deepEqual(buildAmenityBadges(features), ["Brak miejsca postojowego"]);
+  assert.deepEqual(buildAmenityBadges(features), ["Brak danych o parkingu"]);
 });
 
 test("recognizes smoked oak mentioned on floors as a wooden floor", () => {
@@ -428,10 +428,10 @@ test("recognizes ground-floor inflections without confusing building facilities"
   );
 });
 
-test("shows missing parking and does not turn private outdoor spaces into a garage", () => {
+test("distinguishes unknown parking and does not turn private outdoor spaces into a garage", () => {
   assert.ok(
     buildAmenityBadges(extractFeatures({ description: "Jasne mieszkanie z balkonem." })).includes(
-      "Brak miejsca postojowego",
+      "Brak danych o parkingu",
     ),
   );
   const features = extractFeatures({
@@ -462,7 +462,9 @@ test("parking under the block counts, guest-only parking and negations do not", 
     "Miejsce postojowe dla gości.",
   ]) {
     assert.ok(
-      buildAmenityBadges(extractFeatures({ description })).includes("Brak miejsca postojowego"),
+      buildAmenityBadges(extractFeatures({ description })).includes(
+        description.startsWith("Brak") ? "Brak miejsca postojowego" : "Brak danych o parkingu",
+      ),
       description,
     );
   }

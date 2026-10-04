@@ -1,4 +1,5 @@
 import type { ExposureDirection } from "@mieszkania/shared";
+import { getDescriptionMentionStatus } from "@mieszkania/shared";
 export { getSunExposure, type ExposureDirection } from "@mieszkania/shared";
 
 export type DescriptionHighlightPart = {
@@ -10,7 +11,7 @@ export function normalizeListingText(value: string) {
   return value
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/ł/g, "l")
+    .replace(/[łŁ]/g, "l")
     .toLowerCase();
 }
 
@@ -92,21 +93,30 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
   const directionalAdjectivePattern =
     /^(?:zachodni|wschodni|północn|południow)[a-ząćęłńóśźżą-]*$/iu;
 
+  let offset = 0;
   return value
     .split(importantPattern)
     .filter(Boolean)
-    .map((text) => ({
-      text,
-      tone: negativePattern.test(text)
-        ? "negative"
-        : premiumPattern.test(text)
-          ? "premium"
-          : positivePattern.test(text)
-            ? "positive"
-            : (neutralPattern.test(text) ||
-                  (directionalAdjectivePattern.test(text) && hasExposureContext)) &&
-                (!standaloneDirectionPattern.test(text) || hasExposureContext)
+    .map((text) => {
+      const status = getDescriptionMentionStatus(value, offset, text.length);
+      offset += text.length;
+      return {
+        text,
+        tone: negativePattern.test(text)
+          ? "negative"
+          : (premiumPattern.test(text) || positivePattern.test(text)) && status === "absent"
+            ? "negative"
+            : (premiumPattern.test(text) || positivePattern.test(text)) && status === "possible"
               ? "neutral"
-              : undefined,
-    }));
+              : premiumPattern.test(text)
+                ? "premium"
+                : positivePattern.test(text)
+                  ? "positive"
+                  : (neutralPattern.test(text) ||
+                        (directionalAdjectivePattern.test(text) && hasExposureContext)) &&
+                      (!standaloneDirectionPattern.test(text) || hasExposureContext)
+                    ? "neutral"
+                    : undefined,
+      };
+    });
 }

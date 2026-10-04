@@ -1211,6 +1211,86 @@
   gap: 16px;
   min-width: 0;
 }
+.saved-searches {
+  margin: 14px 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  min-width: 0;
+}
+.saved-searches summary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+.saved-searches summary::after {
+  content: "+";
+  margin-left: auto;
+}
+.saved-searches[open] summary::after {
+  content: "−";
+}
+.saved-searches p {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  margin: 10px 0;
+  overflow-wrap: anywhere;
+}
+.saved-searches ul {
+  list-style: none;
+  padding: 0;
+  margin: 12px 0;
+  display: grid;
+  gap: 6px;
+}
+.saved-searches li {
+  display: flex;
+  gap: 5px;
+  min-width: 0;
+}
+.saved-searches button {
+  font: inherit;
+}
+.saved-search-apply,
+.saved-search-delete {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-muted);
+  color: var(--ink);
+  cursor: pointer;
+  min-height: 40px;
+}
+.saved-search-apply {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  font-size: 0.85rem !important;
+}
+.saved-search-delete {
+  flex: 0 0 40px;
+  display: grid;
+  place-items: center;
+}
+.saved-searches form {
+  display: grid;
+  gap: 8px;
+}
+.saved-searches label {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.saved-searches .action-button {
+  white-space: normal;
+}
+.saved-searches :is(button, summary):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 3px;
+}
 .duplicate-workspace .panel {
   margin: 0;
 }

@@ -167,7 +167,7 @@ export class OtodomParser implements ListingParser {
 
 function extractOtodomPortalFeatures(html: string, productNode: JsonRecord | null) {
   const liftFromDetails = html.match(
-    /<div[^>]*>\s*Winda\s*(?:<!--[\s\S]*?-->)?\s*:?\s*<\/div>\s*<div[^>]*>\s*(tak|nie)\s*<\/div>/i,
+    /<div[^>]*>\s*Winda\s*(?:<!--(?:(?!-->)[\s\S])*-->)?\s*:?\s*<\/div>\s*<div[^>]*>\s*(tak|nie)\s*<\/div>/i,
   )?.[1];
   const lift = firstString(liftFromDetails, findAdditionalPropertyValue(productNode, "Winda"));
   const detailValue = (label: string) =>
@@ -176,7 +176,7 @@ function extractOtodomPortalFeatures(html: string, productNode: JsonRecord | nul
         new RegExp(
           "<div[^>]*>\\s*" +
             label +
-            "\\s*(?:<!--[\\s\\S]*?-->)?\\s*:?\\s*</div>\\s*<div[^>]*>\\s*([^<]+)\\s*</div>",
+            "\\s*(?:<!--(?:(?!-->)[\\s\\S])*-->)?\\s*:?\\s*</div>\\s*<div[^>]*>\\s*([^<]+)\\s*</div>",
           "i",
         ),
       )?.[1]

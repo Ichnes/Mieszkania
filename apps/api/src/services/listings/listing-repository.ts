@@ -1,5 +1,7 @@
+import { readMonthlyFee } from "./maintenance-fee";
 import { visibleRelistingCandidateSql } from "./listing-relistings";
 import { hasNoAssignedParking } from "./parking-availability";
+import { getDescriptionMentionStatus } from "@mieszkania/shared";
 import { join } from "node:path";
 import { storageRoot } from "../../config";
 import { createPersistentScoreCache, scoreSignature } from "./persistent-score-cache";
@@ -1583,6 +1585,7 @@ function mapListingSummary(
     Object.keys(detectedCosts).length || hasGarageOverride || hasStorageOverride
       ? {
           garage: garageCost,
+          warnings: detectedCosts.warnings,
           parkingCount: hasGarageOverride ? undefined : detectedCosts.parkingCount,
           parkingUnitPrice: hasGarageOverride ? undefined : detectedCosts.parkingUnitPrice,
           storage: storageCost,
@@ -1813,7 +1816,13 @@ export function buildAmenityBadges(features: ListingFeature[]) {
         : "Naziemne miejsce postojowe",
     );
   if (!garage && !ownedParking && !estateParking && !outdoorParking)
-    badges.push("Brak miejsca postojowego");
+    badges.push(
+      features.some((feature) => feature.key === "no_assigned_parking")
+        ? "Brak miejsca postojowego"
+        : features.some((feature) => feature.key === "no_garage")
+          ? "Brak garażu"
+          : "Brak danych o parkingu",
+    );
   if (noLift) badges.push("Brak windy");
   if (developerStandard) badges.push("Stan deweloperski");
   return badges;
@@ -2190,26 +2199,26 @@ function buildListingSummary(
   manualSummary?: string,
 ) {
   const imageFragment =
-    imageCount > 0 ? ` Zapisane zdjecia: ${imageCount}.` : " Zdjecia jeszcze niezsynchronizowane.";
+    imageCount > 0 ? ` Zapisane zdjęcia: ${imageCount}.` : " Zdjęcia nie zostały jeszcze pobrane.";
   const manualFragment = manualSummary ? ` ${manualSummary}.` : "";
 
   if (row.status === "removed") {
-    return `Oferta archiwalna. Link zrodlowy przestal byc dostepny albo portal oznaczyl ogloszenie jako nieaktualne.${imageFragment}${manualFragment}`;
+    return `Oferta archiwalna. Ogłoszenie jest oznaczone jako nieaktualne.${imageFragment}${manualFragment}`;
   }
 
   if (!latestEvent) {
-    return `Nowa oferta ${row.rooms ?? "?"} pokojowa. Brak jeszcze historii zmian.${imageFragment}${manualFragment}`;
+    return `Nowa oferta. Liczba pokoi: ${row.rooms ?? "brak danych"}. Brak jeszcze historii zmian.${imageFragment}${manualFragment}`;
   }
 
   if (latestEvent.event_type === "price_drop") {
-    return `Wykryto spadek ceny. Ostatnia zmiana oferty zostala zapisana w historii.${imageFragment}${manualFragment}`;
+    return `Wykryto spadek ceny. Ostatnia zmiana oferty została zapisana w historii.${imageFragment}${manualFragment}`;
   }
 
   if (latestEvent.event_type === "price_increase") {
     return `Cena wzrosła od poprzedniego sprawdzenia.${imageFragment}${manualFragment}`;
   }
 
-  return `Oferta aktywna i monitorowana. Ostatni znany status: ${latestEvent.event_type}.${imageFragment}${manualFragment}`;
+  return `Oferta aktywna i monitorowana. Szczegóły ostatniego sprawdzenia znajdziesz w historii.${imageFragment}${manualFragment}`;
 }
 
 function buildManualBadges(row: ListingRow) {
@@ -2305,6 +2314,12 @@ export function extractFeatures(input: {
 }): ListingFeature[] {
   const features: ListingFeature[] = [];
   const descriptionNormalized = normalizePolish(input.description);
+  const hasExistingFeature = (pattern: RegExp) =>
+    [...descriptionNormalized.matchAll(new RegExp(pattern.source, "g"))].some(
+      (match) =>
+        getDescriptionMentionStatus(descriptionNormalized, match.index!, match[0].length) ===
+        "present",
+    );
   // Structured portal details are authoritative; use the description only when
   // the portal did not provide an explicit lift value.
   const explicitlyWithoutLift =
@@ -2320,11 +2335,9 @@ export function extractFeatures(input: {
     "miejsce postojowe",
     "parking",
   ]);
-  const maintenanceFee = extractCurrencyNearKeywords(descriptionNormalized, [
-    "czynsz",
-    "oplata",
-    "opłata",
-  ]);
+  const monthlyFeeAmount = readMonthlyFee(undefined, input.description);
+  const maintenanceFee =
+    monthlyFeeAmount === null ? null : `${wholeNumberFormatter.format(monthlyFeeAmount)} PLN`;
   const street = extractStreet(input.addressText, input.description);
   const amenities = inferAmenities(input.description);
   const developerStandardMatches = [
@@ -2418,9 +2431,7 @@ export function extractFeatures(input: {
   }
 
   if (
-    /\b(?:ogrzewan\w*\s+pod(?:l|ł)ogow\w*|pod(?:l|ł)ogow\w*\s+ogrzewan\w*)\b/.test(
-      descriptionNormalized,
-    )
+    hasExistingFeature(/\b(?:ogrzewan\w*\s+pod(?:l|ł)ogow\w*|pod(?:l|ł)ogow\w*\s+ogrzewan\w*)\b/)
   ) {
     features.push({
       key: "underfloor_heating",
@@ -2431,8 +2442,8 @@ export function extractFeatures(input: {
   }
 
   if (
-    /\b(?:(?:(?:za)?projekt\w*|zaaranz\w*|urzadz\w*)\s+przez\s+(?:renomowan\w*\s+)?architekt\w*|architekt\w*\s+(?:zaprojektow\w*|projektow\w*|zaaranz\w*))\b/.test(
-      descriptionNormalized,
+    hasExistingFeature(
+      /\b(?:(?:(?:za)?projekt\w*|zaaranz\w*|urzadz\w*)\s+przez\s+(?:renomowan\w*\s+)?architekt\w*|architekt\w*\s+(?:zaprojektow\w*|projektow\w*|zaaranz\w*))\b/,
     )
   ) {
     features.push({
@@ -2476,21 +2487,46 @@ export function extractFeatures(input: {
       source: "description",
     });
 
-  if (
-    !structuredWithoutLift &&
-    /\b(?:winda|windy|windzie|windą|windami|dzwig|dźwig)\b/i.test(input.description)
-  ) {
+  const liftMentions = [
+    ...descriptionNormalized.matchAll(/\b(?:wind(?:a|y|zie|e|ami)|dzwig\w*)\b/g),
+  ];
+  const hasExistingLift = liftMentions.some(
+    (match) =>
+      getDescriptionMentionStatus(descriptionNormalized, match.index!, match[0].length) ===
+      "present",
+  );
+  const hasAbsentLift =
+    explicitlyWithoutLift ||
+    liftMentions.some(
+      (match) =>
+        getDescriptionMentionStatus(descriptionNormalized, match.index!, match[0].length) ===
+        "absent",
+    );
+  if (!structuredWithoutLift && hasExistingLift) {
     features.push({ key: "lift", label: "Winda", value: "tak", source: "description" });
   }
-  if (explicitlyWithoutLift && !structuredWithLift) {
+  if (hasAbsentLift && !structuredWithLift && !hasExistingLift) {
     features.push({ key: "no_lift", label: "Brak windy", value: "tak", source: "description" });
   }
 
-  const withoutLift = structuredWithoutLift || (explicitlyWithoutLift && !structuredWithLift);
+  const withoutLift =
+    structuredWithoutLift || (hasAbsentLift && !structuredWithLift && !hasExistingLift);
   const withoutParking = hasNoAssignedParking(input.description);
-  if (withoutParking)
+  const withoutGarage =
+    !payloadFeatures.some((feature) => feature.key === "garage") &&
+    /\b(?:bez|brak|nie\s+(?:ma|posiada))\s+garazu\b|\bgaraz\w*\s*[:—–-]\s*(?:brak|nie)\b/.test(
+      descriptionNormalized,
+    );
+  if (withoutParking || withoutGarage)
     features.push({
       key: "no_garage",
+      label: "Brak garażu",
+      value: "tak",
+      source: "description",
+    });
+  if (withoutParking)
+    features.push({
+      key: "no_assigned_parking",
       label: "Brak miejsca postojowego",
       value: "tak",
       source: "description",
@@ -2498,6 +2534,7 @@ export function extractFeatures(input: {
   return dedupeFeatures(
     [...payloadFeatures, ...features].filter(
       (feature) =>
+        (!withoutGarage || !["garage", "garage_price"].includes(feature.key)) &&
         (!withoutParking ||
           ![
             "garage",
@@ -2560,18 +2597,20 @@ function inferAmenities(description: string) {
   const woodenFloorMatches = [...text.matchAll(woodenFloorPattern)];
   const airConditioningMatches = [...text.matchAll(airConditioningPattern)];
   const hasPositiveGarage = garageMatches.some(
-    (match) => !isNegatedAmenity(text, match.index ?? 0),
+    (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
   );
-  const hasStorage = storageMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0));
+  const hasStorage = storageMatches.some(
+    (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
+  );
   const hasEstateParking = estateParkingMatches.some(
-    (match) => !isNegatedAmenity(text, match.index ?? 0),
+    (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
   );
   const hasOutdoorParking = outdoorParkingMatches.some(
-    (match) => !isNegatedAmenity(text, match.index ?? 0),
+    (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
   );
   const purchaseParking = garageMatches.filter(
     (match) =>
-      !isNegatedAmenity(text, match.index ?? 0) &&
+      !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
       /\b(?:zakup|dokup)\w*\b/.test(text.slice(Math.max(0, (match.index ?? 0) - 85), match.index)),
   );
   const ownedParkingCount = inferMentionCount(text, [...ownedParkingMatches, ...purchaseParking]);
@@ -2583,7 +2622,9 @@ function inferAmenities(description: string) {
   const balconyCount = inferMentionCount(text, balconyMatches);
   const storage = hasStorage
     ? storageMatches.some(
-        (match) => match[0].startsWith("piwnic") && !isNegatedAmenity(text, match.index ?? 0),
+        (match) =>
+          match[0].startsWith("piwnic") &&
+          !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
       )
       ? "basement"
       : "storage_unit"
@@ -2591,9 +2632,15 @@ function inferAmenities(description: string) {
   const commonAmenities = {
     estateParking: hasEstateParking,
     storage,
-    balcony: balconyMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
-    terrace: terraceMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
-    garden: gardenMatches.some((match) => !isNegatedAmenity(text, match.index ?? 0)),
+    balcony: balconyMatches.some(
+      (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
+    ),
+    terrace: terraceMatches.some(
+      (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
+    ),
+    garden: gardenMatches.some(
+      (match) => !isUnavailableAmenity(text, match.index ?? 0, match[0].length),
+    ),
     woodenFloor: woodenFloorMatches.some((match) => {
       const prefix =
         text
@@ -2601,7 +2648,7 @@ function inferAmenities(description: string) {
           .split(/[.!?;\n]/)
           .at(-1) ?? "";
       return (
-        !isNegatedAmenity(text, match.index ?? 0) &&
+        !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
         !/imitacj\w*|imituj\w*|laminowan\w*|fornir\w*|fornirowan\w*|drewnopodobn\w*|winylow\w*/.test(
           match[0],
         ) &&
@@ -2610,7 +2657,7 @@ function inferAmenities(description: string) {
     }),
     airConditioning: airConditioningMatches.some(
       (match) =>
-        !isNegatedAmenity(text, match.index ?? 0) &&
+        !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
         !isOnlyAirConditioningOption(text, match.index ?? 0),
     ),
     ownedParkingCount,
@@ -2621,7 +2668,10 @@ function inferAmenities(description: string) {
     ...text.matchAll(
       /\bparking\w*\s+(?:za\s+szlaban\w*|(?:pod|przed|przy)\s+(?:blok\w*|budynk\w*|dom\w*)|zewnetrzn\w*|naziemn\w*)/g,
     ),
-  ].some((match) => !isNegatedAmenity(text, match.index ?? 0) && !isGuestOnly(match));
+  ].some(
+    (match) =>
+      !isUnavailableAmenity(text, match.index ?? 0, match[0].length) && !isGuestOnly(match),
+  );
   if (!hasPositiveGarage && !ownedParkingCount)
     return {
       garage: undefined,
@@ -2645,7 +2695,7 @@ function inferAmenities(description: string) {
       (match.index ?? 0) + match[0].length + 35,
     );
     return (
-      !isNegatedAmenity(text, match.index ?? 0) &&
+      !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
       !/\b(?:nie(?:\s+jest|\s+sa)?\s+na|bez|zamiast|nie\s+na\s+zadnej)\s*$/.test(before) &&
       !/^\s*(?:nie\s+(?:ma|wystepuje)|brak)/.test(after)
     );
@@ -2653,7 +2703,7 @@ function inferAmenities(description: string) {
   const hasActualGarage =
     garageMatches.some(
       (match) =>
-        !isNegatedAmenity(text, match.index ?? 0) &&
+        !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
         /(?:garaz|podziemn)/.test(
           match[0] +
             text
@@ -2726,21 +2776,16 @@ function inferMentionCount(text: string, matches: RegExpMatchArray[]) {
   return best;
 }
 
-function isNegatedAmenity(text: string, index: number) {
-  const obligationContext = text.slice(Math.max(0, index - 150), index);
+function isUnavailableAmenity(text: string, index: number, length: number) {
+  const status = getDescriptionMentionStatus(text, index, length);
+  // A concrete space offered for purchase is available even when buying it is optional.
   if (
-    /(?:zakup\s+obligatoryjn\w*|obowiazkow\w*\s+zakup|nie\s+ma\s+mozliwosci\s+zakupu[^.]{0,90}\s+bez)\s*$/.test(
-      obligationContext,
-    )
-  ) {
+    status === "possible" &&
+    /^(?:garaz|miejsc|stanowisk)/.test(text.slice(index)) &&
+    /\b(?:zakupu|dokupienia)\b[^.!?;]{0,80}$/.test(text.slice(Math.max(0, index - 110), index))
+  )
     return false;
-  }
-  const before = text.slice(Math.max(0, index - 42), index);
-  return (
-    /\b(?:bez|brak|nie\s+(?:ma|posiada|obejmuje|przysluguje)|nieposiada|nie\s+posiada)\s*$/.test(
-      before,
-    ) || /\b(?:bez|brak|nie\s+posiada|nieposiada)\b[^.]{0,28}$/.test(before)
-  );
+  return status !== "present";
 }
 
 export function extractFeaturesFromPayload(payload?: Record<string, unknown>): ListingFeature[] {
@@ -2766,7 +2811,7 @@ export function extractFeaturesFromPayload(payload?: Record<string, unknown>): L
       value: portalFinish,
       source: "payload",
     });
-  if (portalMaintenanceFee) {
+  if (portalMaintenanceFee && isMaintenanceFeeLabel(portalMaintenanceFee)) {
     features.push({ key: "fees", label: "Czynsz", value: portalMaintenanceFee, source: "payload" });
   }
   const portalLift = normalizePolish(readString(portalFeatures, "lift") ?? "");
@@ -2807,7 +2852,7 @@ export function extractFeaturesFromPayload(payload?: Record<string, unknown>): L
       features.push({ key: "no_lift", label: "Brak windy", value: "tak", source: "payload" });
     } else if (normalized.includes("stan wykonczenia")) {
       features.push({ key: "finish_quality", label: "Stan wykończenia", value, source: "payload" });
-    } else if (normalized.includes("czynsz")) {
+    } else if (normalized.includes("czynsz") && isMaintenanceFeeLabel(value)) {
       features.push({ key: "fees", label: "Czynsz", value, source: "payload" });
     } else if (normalized.includes("pietro")) {
       features.push({ key: "floor", label: "Piętro", value, source: "payload" });
@@ -2821,6 +2866,15 @@ export function extractFeaturesFromPayload(payload?: Record<string, unknown>): L
   }
 
   return features;
+}
+
+function isMaintenanceFeeLabel(value: string) {
+  const normalized = normalizePolish(value).trim();
+  // Historical snapshots may contain an adjacent field due to malformed HTML extraction.
+  return (
+    /^(?:bezczynszowe|bezczynszowy|bez czynszu)$/.test(normalized) ||
+    /^(?:(?:ok\.?|okolo|od)\s*)?\d[\d\s.,–-]*(?:(?:zl|pln)\b.*)?$/.test(normalized)
+  );
 }
 
 function dedupeFeatures(features: ListingFeature[]) {

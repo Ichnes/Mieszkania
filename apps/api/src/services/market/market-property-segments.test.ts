@@ -11,6 +11,14 @@ test("monthly fees accept explicit amounts but not ranges, missing, annual or pe
   assert.equal(readMonthlyFee("0 zł", ""), 0);
   assert.equal(readMonthlyFee(undefined, "Czynsz administracyjny wynosi około 950 zł."), 950);
   for (const description of [
+    "Czynsz: około 1 100 zł.",
+    "Czynsz to niecałe 1.100,00 zł miesięcznie.",
+    "Czynsz: - 1100 zł.",
+    "Czynsz do Wspólnoty Mieszkaniowej wynosi 1100 zł przy 3 osobach.",
+  ]) {
+    assert.equal(readMonthlyFee(undefined, description), 1100, description);
+  }
+  for (const description of [
     "Cena mieszkania 900000 zł",
     "Czynsz 800–1000 zł",
     "Czynsz 12 zł/m²",

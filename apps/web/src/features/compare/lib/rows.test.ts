@@ -10,7 +10,17 @@ const row = (listings: ComparisonListing[], id: string) =>
   buildComparisonRows(listings).find((item) => item.id === id)!;
 
 test("differences distinguish missing facts, false and zero without hiding a single offer", () => {
-  const listings = [base, { ...base, id: "b", hasGarage: false, floor: 0, dreamScore: 0 }];
+  const listings = [
+    base,
+    {
+      ...base,
+      id: "b",
+      hasGarage: false,
+      amenityEvidence: { garage: false },
+      floor: 0,
+      dreamScore: 0,
+    },
+  ];
   const rows = buildComparisonRows(listings);
   assert.deepEqual(row(listings, "garage").values, ["Brak danych", "Nie"]);
   assert.deepEqual(row(listings, "floor").values, ["Brak danych", "Parter"]);
@@ -24,6 +34,18 @@ test("differences distinguish missing facts, false and zero without hiding a sin
   assert.deepEqual(
     visibleComparisonRows(buildComparisonRows([base, { ...base, id: "b" }]), true, 2),
     [],
+  );
+});
+
+test("legacy false flags do not pretend that missing amenity data is confirmed absence", () => {
+  const unknown = { ...base, hasGarage: false, hasLift: false, hasStorage: false };
+  for (const id of ["garage", "lift", "storage"])
+    assert.deepEqual(row([unknown], id).values, ["Brak danych"]);
+  const warning = "Dopłata wymaga potwierdzenia.";
+  assert.deepEqual(
+    row([{ ...base, additionalPurchaseCosts: { total: 0, warnings: [warning] } }], "cost-warnings")
+      .values,
+    [warning],
   );
 });
 

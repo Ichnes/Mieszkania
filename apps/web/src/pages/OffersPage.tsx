@@ -18,6 +18,7 @@ import { ListingSection } from "../features/listings/components/ListingSection";
 import { buildPageNumbers, getActiveFilterBadges } from "../features/listings/lib/filters";
 import { stringValue, toOptionalNumber } from "../shared/lib/input";
 import { LoadError } from "../shared/components/LoadError";
+import { SavedSearches } from "../features/listings/components/SavedSearches";
 
 export function OffersPage({
   model,
@@ -178,6 +179,17 @@ export function OffersPage({
                     </button>
                   </div>
                 </div>
+                <SavedSearches
+                  filters={model.appliedFilters}
+                  sort={model.appliedListingSort}
+                  pending={model.hasUnappliedFilters || isLoadingListings}
+                  onApply={(nextFilters, nextSort) => {
+                    setFilters(nextFilters);
+                    setListingSort(nextSort);
+                    setMobileFiltersOpen(false);
+                    void applyFilters(nextFilters, 1, nextSort);
+                  }}
+                />
                 <form
                   className="filters-grid"
                   onSubmit={(event) => {
@@ -221,7 +233,7 @@ export function OffersPage({
                     />
                   </label>
                   <label className="filter-field">
-                    <span>PLN/m2 od</span>
+                    <span>Cena za m² od (zł)</span>
                     <input
                       className="text-input"
                       inputMode="numeric"
@@ -235,7 +247,7 @@ export function OffersPage({
                     />
                   </label>
                   <label className="filter-field">
-                    <span>PLN/m2 do</span>
+                    <span>Cena za m² do (zł)</span>
                     <input
                       className="text-input"
                       inputMode="numeric"
@@ -249,7 +261,7 @@ export function OffersPage({
                     />
                   </label>
                   <label className="filter-field">
-                    <span>Metraz od</span>
+                    <span>Metraż od</span>
                     <input
                       className="text-input"
                       inputMode="decimal"
@@ -263,7 +275,7 @@ export function OffersPage({
                     />
                   </label>
                   <label className="filter-field">
-                    <span>Metraz do</span>
+                    <span>Metraż do</span>
                     <input
                       className="text-input"
                       inputMode="decimal"
@@ -414,14 +426,14 @@ export function OffersPage({
                         void applyFilters(defaultFilters, 1, "newest");
                       }}
                     >
-                      Reset
+                      Wyczyść filtry
                     </button>
                   </div>
                 </form>
                 <button
                   className="filters-collapse-button"
                   type="button"
-                  aria-label={filtersPanelCollapsed ? "Pokaz filtry" : "Ukryj filtry"}
+                  aria-label={filtersPanelCollapsed ? "Pokaż filtry" : "Ukryj filtry"}
                   onClick={() => setFiltersPanelCollapsed((current) => !current)}
                 >
                   {filtersPanelCollapsed ? (

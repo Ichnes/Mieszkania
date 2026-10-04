@@ -1,6 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { getDescriptionHighlightParts, getSunExposure } from "./listing-language";
+import {
+  getDescriptionHighlightParts,
+  getSunExposure,
+  normalizeListingText,
+} from "./listing-language";
+
+test("highlighting respects absent, planned and imitation amenities", () => {
+  for (const [text, phrase, tone] of [
+    ["Balkon: brak.", "Balkon", "negative"],
+    ["Brak balkonu ani tarasu.", "tarasu", "negative"],
+    ["Brak balkonu, ale jest taras.", "taras", "positive"],
+    ["W budynku planowana jest winda.", "winda", "neutral"],
+    ["Możliwość montażu klimatyzacji.", "klimatyzacji", "neutral"],
+    ["Podłoga z paneli imitujących parkiet.", "parkiet", "neutral"],
+    ["Garaż podziemny wyłącznie do wynajęcia.", "Garaż podziemny", "neutral"],
+  ] as const) {
+    const parts = getDescriptionHighlightParts(text);
+    assert.equal(parts.map((p) => p.text).join(""), text);
+    assert.equal(parts.find((p) => p.text === phrase)?.tone, tone, text);
+  }
+  assert.equal(normalizeListingText("ŁÓDŹ"), "lodz");
+});
 
 test("floor highlights do not consume the preceding room count", () => {
   for (const text of [

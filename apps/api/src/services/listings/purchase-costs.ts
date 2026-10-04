@@ -10,6 +10,7 @@ export type PurchaseCosts = {
   garageAndStorage?: number;
   garageIncluded?: boolean;
   storageIncluded?: boolean;
+  warnings?: string[];
 };
 
 function normalize(text: string) {
@@ -40,12 +41,19 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
   )) {
     const index = match.index!;
-    const before = text
+    let before = text
       .slice(Math.max(previousEnd, index - 400), index)
       .split(/[.!?](?!\d)/)
       .at(-1)!;
     const after = text.slice(index + match[0].length, index + match[0].length + 70);
     previousEnd = index + match[0].length;
+    const includedPrefix = before.match(/^(.*\bw\s+cenie)\s*[,;]\s*(.*)$/);
+    if (includedPrefix && !/\bnie\s+(?:(?:jest|sa)\s+)?w\s+cenie$/.test(includedPrefix[1])) {
+      const included = amenities(includedPrefix[1]);
+      includedInBundle.garage ||= included.garage;
+      includedInBundle.storage ||= included.storage;
+      before = includedPrefix[2];
+    }
     const mentioned = amenities(before);
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
     // Nearby amenity mentions do not turn the apartment price or unit price into a surcharge.
@@ -67,7 +75,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       continue;
     }
     if (
-      !/dodatkow|platn|cen[ayie]|kosztuje|dokup/.test(before) &&
+      !/dodatkow|platn|cen[ayie]|kosztuje|dokup|\bza\s*$/.test(before) &&
       !/(?:garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*)(?:\s+przed\s+budynkiem)?|piwnic\w*|komork\w*(?:\s+lokatorsk\w*)?|ogrod\w*)\s*[:—–-]?\s*$/.test(
         before,
       ) &&
@@ -75,13 +83,20 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     )
       continue;
     if (
-      /^\s*(?:\/\s*(?:mies|msc)|miesieczn|za\s+miesiac)/.test(after) ||
-      /wynaj\w*|czynsz/.test(before)
+      /^\s*(?:\/\s*(?:mies|msc|rok|kwartal)|miesieczn|rocznie|kwartalnie|za\s+(?:miesiac|rok|kwartal))/.test(
+        after,
+      ) ||
+      /wynaj\w*|czynsz|dzierzaw\w*/.test(before)
     )
       continue;
-    const amount =
-      Number(match[1].replace(/[ .]/g, "") + "." + (match[2] ?? "0")) *
-      (/tys/.test(match[3]) ? 1000 : 1);
+    const baseAmount = Number(match[1].replace(/[ .]/g, "") + "." + (match[2] ?? "0"));
+    if (/tys/.test(match[3]) && baseAmount >= 1000) {
+      (result.warnings ??= []).push(
+        `Dopłata „${match[1]} tys.” ma niejednoznaczną kwotę. Potwierdź ją ze sprzedającym; nie doliczono jej do ceny zakupu.`,
+      );
+      continue;
+    }
+    const amount = baseAmount * (/tys/.test(match[3]) ? 1000 : 1);
     if (!Number.isFinite(amount) || amount < 1000) continue;
     if (mentioned.garage && mentioned.storage) result.garageAndStorage = amount;
     else if (mentioned.garage) {

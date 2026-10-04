@@ -1,13 +1,10 @@
+import { getDescriptionMentionStatus } from "./description-context.js";
 // Input is lowercase Polish text with diacritics removed.
 export function hasPositiveDescriptionFact(text: string, pattern: RegExp, excluded?: RegExp) {
   return Array.from(text.matchAll(new RegExp(pattern.source, "g"))).some((match) => {
-    const prefix = text.slice(Math.max(0, match.index! - 70), match.index);
-    const clause = prefix.split(/[.!?;\n]/).at(-1) ?? "";
     return (
       !excluded?.test(match[0]) &&
-      !/\b(?:bez|brak|nie ma|nie posiada|nie sa|nie jest|nie zostal\w*|nie wykonano|imitacj\w*|imituj\w*|mozliwosc|planowan\w*)\b[^,]{0,60}$/.test(
-        clause,
-      ) &&
+      getDescriptionMentionStatus(text, match.index!, match[0].length) === "present" &&
       !/\b(?:imitacj\w*|imituj\w*|laminowan\w*|drewnopodobn\w*|winylow\w*|planowan\w*|nie)\b/.test(
         match[0],
       )

@@ -58,6 +58,11 @@ const fields: Field[] = [
     value: (l) =>
       l.totalAcquisitionPrice === undefined ? missing : formatPln(l.totalAcquisitionPrice),
   },
+  {
+    id: "cost-warnings",
+    label: "Dopłaty do sprawdzenia",
+    value: (l) => l.additionalPurchaseCosts?.warnings?.join(" ") || "Brak wykrytych niejasności",
+  },
   { id: "unit-price", label: "Cena za m²", value: (l) => l.pricePerSqmLabel ?? missing },
   { id: "area", label: "Powierzchnia", value: (l) => l.areaLabel },
   { id: "rooms", label: "Pokoje", value: (l) => l.roomsCount?.toString() ?? missing },
@@ -70,11 +75,23 @@ const fields: Field[] = [
         : `${l.floor === 0 ? "Parter" : l.floor}${l.totalFloors !== undefined ? ` / ${l.totalFloors}` : ""}`,
   },
   { id: "year", label: "Rok budowy", value: (l) => l.yearBuilt?.toString() ?? missing },
-  { id: "garage", label: "Garaż", value: (l) => yesNo(l.hasGarage) },
+  {
+    id: "garage",
+    label: "Garaż",
+    value: (l) => yesNo(l.amenityEvidence?.garage ?? (l.hasGarage === true ? true : undefined)),
+  },
   { id: "parking", label: "Parking naziemny", value: (l) => yesNo(l.hasOutdoorParking) },
-  { id: "lift", label: "Winda", value: (l) => yesNo(l.hasLift) },
+  {
+    id: "lift",
+    label: "Winda",
+    value: (l) => yesNo(l.amenityEvidence?.lift ?? (l.hasLift === true ? true : undefined)),
+  },
   { id: "balcony", label: "Balkon", value: (l) => yesNo(l.hasBalcony) },
-  { id: "storage", label: "Komórka lokatorska", value: (l) => yesNo(l.hasStorage) },
+  {
+    id: "storage",
+    label: "Komórka lokatorska",
+    value: (l) => yesNo(l.amenityEvidence?.storage ?? (l.hasStorage === true ? true : undefined)),
+  },
   { id: "exposure", label: "Ekspozycja", value: exposureLabel },
   {
     id: "score",

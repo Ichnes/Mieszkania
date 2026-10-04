@@ -162,8 +162,9 @@ export function cleanListingDescription(value?: string) {
 export function inferBuildingDetails(description: string) {
   const text = normalize(description);
   const explicitFraction =
-    text.match(/\b(?:pietr(?:o|ze)?|poziom)\s*[:,-]?\s*(parter|\d{1,2})\s*\/\s*(\d{1,2})\b/) ??
-    text.match(/\b(?:na\s+)?(\d{1,2})\.?\s*pietr(?:ze|o)\s+(?:z|w)\s+(\d{1,2})\b/);
+    text.match(
+      /\b(?:pietr(?:o|ze)?|poziom)\s*[:,-]?\s*(parter|\d{1,2})\s*(?:\/|z)\s*(\d{1,2})\b/,
+    ) ?? text.match(/\b(?:na\s+)?(\d{1,2})\.?\s*pietr(?:ze|o)\s+(?:z|w)\s+(\d{1,2})\b/);
   const ordinalFloors: Array<[string, number]> = [
     ["pierwsz", 1],
     ["drug", 2],

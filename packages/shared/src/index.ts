@@ -360,6 +360,7 @@ export type ListingSummary = {
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
   additionalPurchaseCosts?: {
+    warnings?: string[];
     parkingCount?: number;
     parkingUnitPrice?: number;
     garage?: number;
@@ -424,6 +425,10 @@ export type RcnComparableTransaction = {
 };
 
 export { getDreamDescriptionFacts } from "./dream-description.js";
+export {
+  getDescriptionMentionStatus,
+  type DescriptionMentionStatus,
+} from "./description-context.js";
 
 export type ListingDetail = ListingSummary & {
   aiAssessment?: AiAssessment;
