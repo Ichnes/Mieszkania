@@ -1,6 +1,6 @@
 import { readMonthlyFee } from "./maintenance-fee";
 import { visibleRelistingCandidateSql } from "./listing-relistings";
-import { hasNoAssignedParking } from "./parking-availability";
+import { hasNoAssignedParking, readAmenityAccess, hasStreetParking } from "./parking-availability";
 import { getDescriptionMentionStatus } from "@mieszkania/shared";
 import { join } from "node:path";
 import { storageRoot } from "../../config";
@@ -1554,6 +1554,7 @@ function mapListingSummary(
   // A correction made after calling the seller is more reliable than portal text.
   const hasGarage = amenities.garage === true;
   const hasStorage = row.manual_has_storage_override ?? detectedStorage;
+  const access = readAmenityAccess(row.description ?? "");
   const hasLift = amenities.lift === true;
   const hasBalcony = extractedFeatures.some(
     (feature) => feature.key === "balcony" || feature.key === "terrace" || feature.key === "garden",
@@ -1651,6 +1652,10 @@ function mapListingSummary(
     hasGarage,
     hasOutdoorParking,
     hasStorage,
+    garageTenure: hasGarage ? access.garageTenure : undefined,
+    storageTenure: hasStorage ? access.storageTenure : undefined,
+    garageNearby: hasGarage && access.garageNearby,
+    hasStreetParking: extractedFeatures.some((feature) => feature.key === "street_parking"),
     hasLift,
     hasBalcony,
     hasAirConditioning,
@@ -1790,12 +1795,14 @@ export function buildAmenityBadges(features: ListingFeature[]) {
   if (garage)
     badges.push(
       garage.value === "rental"
-        ? "Garaż na wynajem"
-        : garage.value === "platform"
-          ? "Miejsce na platformie"
-          : Number(garage.value) > 1
-            ? `${garage.value} miejsca w garażu`
-            : "Garaż",
+        ? "Garaż — najem"
+        : garage.value === "purchase_option"
+          ? "Garaż — możliwość zakupu"
+          : garage.value === "platform"
+            ? "Miejsce na platformie"
+            : Number(garage.value) > 1
+              ? `${garage.value} miejsca w garażu`
+              : "Garaż",
     );
   else if (ownedParking)
     badges.push(
@@ -1824,6 +1831,9 @@ export function buildAmenityBadges(features: ListingFeature[]) {
           : "Brak danych o parkingu",
     );
   if (noLift) badges.push("Brak windy");
+  if (byKey.get("storage")?.value === "rental") badges.push("Komórka — najem");
+  if (byKey.has("garage_nearby")) badges.push("Garaż w pobliżu");
+  if (byKey.has("street_parking")) badges.push("Parking miejski / przy ulicy");
   if (developerStandard) badges.push("Stan deweloperski");
   return badges;
 }
@@ -2329,12 +2339,13 @@ export function extractFeatures(input: {
   const payloadFeatures = extractFeaturesFromPayload(input.snapshotPayload);
   const structuredWithoutLift = payloadFeatures.some((feature) => feature.key === "no_lift");
   const structuredWithLift = payloadFeatures.some((feature) => feature.key === "lift");
-  const garagePrice = extractCurrencyNearKeywords(descriptionNormalized, ["garaz", "garaż"]);
-  const parkingPrice = extractCurrencyNearKeywords(descriptionNormalized, [
-    "miejsce parkingowe",
-    "miejsce postojowe",
-    "parking",
-  ]);
+  const parsedCosts = extractAdditionalPurchaseCosts(input.description);
+  const parkingCost =
+    parsedCosts.garage === undefined
+      ? null
+      : `${wholeNumberFormatter.format(parsedCosts.garage)} PLN`;
+  const garagePrice = /garaz|podziemn/.test(descriptionNormalized) ? parkingCost : null;
+  const parkingPrice = garagePrice ? null : parkingCost;
   const monthlyFeeAmount = readMonthlyFee(undefined, input.description);
   const maintenanceFee =
     monthlyFeeAmount === null ? null : `${wholeNumberFormatter.format(monthlyFeeAmount)} PLN`;
@@ -2512,11 +2523,48 @@ export function extractFeatures(input: {
   const withoutLift =
     structuredWithoutLift || (hasAbsentLift && !structuredWithLift && !hasExistingLift);
   const withoutParking = hasNoAssignedParking(input.description);
+  const access = readAmenityAccess(input.description);
+  if (!withoutParking && access.garageTenure && /garaz|podziemn/.test(descriptionNormalized)) {
+    for (let i = features.length - 1; i >= 0; i--)
+      if (features[i].key === "garage") features.splice(i, 1);
+    features.push({
+      key: "garage",
+      label: "Garaż",
+      value: access.garageTenure,
+      source: "description",
+    });
+    if (access.garageNearby)
+      features.push({
+        key: "garage_nearby",
+        label: "Położenie garażu",
+        value: "W pobliżu, poza budynkiem mieszkania",
+        source: "description",
+      });
+  }
+  if (access.storageTenure) {
+    for (let i = features.length - 1; i >= 0; i--)
+      if (features[i].key === "storage") features.splice(i, 1);
+    features.push({
+      key: "storage",
+      label: "Komórka / piwnica",
+      value: "rental",
+      source: "description",
+    });
+  }
   const withoutGarage =
     !payloadFeatures.some((feature) => feature.key === "garage") &&
-    /\b(?:bez|brak|nie\s+(?:ma|posiada))\s+garazu\b|\bgaraz\w*\s*[:—–-]\s*(?:brak|nie)\b/.test(
-      descriptionNormalized,
-    );
+    ((hasStreetParking(input.description) &&
+      !features.some((feature) => feature.key === "garage" || feature.key === "garage_price")) ||
+      /\b(?:bez|brak|nie\s+(?:ma|posiada))\s+garazu\b|\bgaraz\w*\s*[:—–-]\s*(?:brak|nie)\b/.test(
+        descriptionNormalized,
+      ));
+  if (hasStreetParking(input.description))
+    features.push({
+      key: "street_parking",
+      label: "Parkowanie",
+      value: "Parking miejski / przy ulicy",
+      source: "description",
+    });
   if (withoutParking || withoutGarage)
     features.push({
       key: "no_garage",
@@ -2532,7 +2580,10 @@ export function extractFeatures(input: {
       source: "description",
     });
   return dedupeFeatures(
-    [...payloadFeatures, ...features].filter(
+    [
+      ...payloadFeatures.filter((feature) => !(access.garageTenure && feature.key === "garage")),
+      ...features,
+    ].filter(
       (feature) =>
         (!withoutGarage || !["garage", "garage_price"].includes(feature.key)) &&
         (!withoutParking ||
@@ -2582,13 +2633,28 @@ function inferAmenities(description: string) {
           .slice(match.index ?? 0, (match.index ?? 0) + match[0].length + 45)
           .split(/[.!?;\n]/)[0],
     );
-  const garageMatches = [...text.matchAll(garagePattern)].filter((match) => !isGuestOnly(match));
+  const isPublicParking = (match: RegExpMatchArray) => {
+    const before =
+      text
+        .slice(0, match.index)
+        .split(/[.!?;\n|]/)
+        .at(-1) ?? "";
+    const after = text.slice(match.index! + match[0].length).split(/[.!?;\n|]/)[0];
+    const context = before + match[0] + after;
+    return (
+      hasStreetParking(context) &&
+      !/\b(?:przynalez\w*|prywatn\w*|osiedl\w*|szlaban\w*|dokup\w*|odkup\w*)\b/.test(context)
+    );
+  };
+  const garageMatches = [...text.matchAll(garagePattern)].filter(
+    (match) => !isGuestOnly(match) && !isPublicParking(match),
+  );
   const storageMatches = [...text.matchAll(storagePattern)];
   const estateParkingMatches = [...text.matchAll(estateParkingPattern)].filter(
-    (match) => !isGuestOnly(match),
+    (match) => !isGuestOnly(match) && !isPublicParking(match),
   );
   const outdoorParkingMatches = [...text.matchAll(outdoorParkingPattern)].filter(
-    (match) => !isGuestOnly(match),
+    (match) => !isGuestOnly(match) && !isPublicParking(match),
   );
   const ownedParkingMatches = [...text.matchAll(ownedParkingPattern)];
   const balconyMatches = [...text.matchAll(balconyPattern)];
@@ -2670,7 +2736,9 @@ function inferAmenities(description: string) {
     ),
   ].some(
     (match) =>
-      !isUnavailableAmenity(text, match.index ?? 0, match[0].length) && !isGuestOnly(match),
+      !isUnavailableAmenity(text, match.index ?? 0, match[0].length) &&
+      !isGuestOnly(match) &&
+      !isPublicParking(match),
   );
   if (!hasPositiveGarage && !ownedParkingCount)
     return {
@@ -2887,29 +2955,6 @@ function dedupeFeatures(features: ListingFeature[]) {
     seen.add(key);
     return true;
   });
-}
-
-function extractCurrencyNearKeywords(normalizedDescription: string, keywords: string[]) {
-  for (const keyword of keywords) {
-    const normalizedKeyword = escapeRegExp(normalizePolish(keyword));
-    const pattern = new RegExp(
-      `${normalizedKeyword}[\\s\\S]{0,64}?(?<!\\d)((?:\\d{1,3}(?:[\\s.]\\d{3})+|\\d{1,6})(?:,\\d{2})?)(?!\\d)\\s*(tys(?:iecy|ięcy)?|pln|zl|zł)`,
-      "i",
-    );
-    const match = normalizedDescription.match(pattern);
-
-    if (match?.[1]) {
-      const numeric = Number(match[1].replace(/\s+/g, "").replace(",", "."));
-      if (!Number.isFinite(numeric)) {
-        continue;
-      }
-
-      const finalValue = /tys/i.test(match[2] ?? "") ? numeric * 1000 : numeric;
-      return `${wholeNumberFormatter.format(finalValue)} PLN`;
-    }
-  }
-
-  return null;
 }
 
 function extractStreet(addressText?: string, description?: string) {

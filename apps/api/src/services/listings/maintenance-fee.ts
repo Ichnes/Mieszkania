@@ -1,4 +1,4 @@
-export function readMonthlyFee(structured: string | undefined, description: string): number | null {
+﻿export function readMonthlyFee(structured: string | undefined, description: string): number | null {
   // Only an unambiguous single amount: do not turn ranges, yearly or per-m² fees into monthly totals.
   const amount = "(\\d+(?:[ .\\u00a0]\\d{3})*(?:[,.]\\d{1,2})?)";
   const structuredMatch = structured
@@ -13,7 +13,7 @@ export function readMonthlyFee(structured: string | undefined, description: stri
     structuredMatch ??
     description.match(
       new RegExp(
-        `\\bczynsz\\s*(?:(?:administracyjny|miesięczny|wynosi|to|około|ok\\.?|w wysokości|obecnie|aktualnie|niecałe|zaledwie|jedynie|do wspólnoty(?: mieszkaniowej)?|do spółdzielni|z funduszem remontowym|z zaliczkami|za mieszkanie|przy \\d+ osob(?:ie|ach)|[:–—*\\-])\\s*)*${amount}\\s*(?:zł|PLN)(?!\\s*(?:/\\s*(?:m[²2]|rok)|rocznie))`,
+        `(?:czynsz(?:u)?(?!ow)|opłaty\\s+czynszowe)\\s*(?:(?:administracyjny|administracyjnego|miesięczny|nieruchomości|wynosi|to|około|ok\\.?|w wysokości|obecnie|aktualnie|niecałe|zaledwie|jedynie|do wspólnoty(?: mieszkaniowej)?|do spółdzielni|z funduszem remontowym|z zaliczkami|za mieszkanie|łącznie z miejscem postojowym|przy \\d+ osob(?:ie|ach)|[:–—*\\-])\\s*)*${amount}\\s*(?:zł|PLN)(?!\\s*(?:/\\s*(?:m[²2]|rok)|rocznie))`,
         "i",
       ),
     );

@@ -9,6 +9,25 @@ const base = { id: "a", priceLabel: "900 000 zł", areaLabel: "60 m²" } as Comp
 const row = (listings: ComparisonListing[], id: string) =>
   buildComparisonRows(listings).find((item) => item.id === id)!;
 
+test("comparison distinguishes rental, purchase options and public parking", () => {
+  assert.deepEqual(
+    row([{ ...base, hasGarage: true, garageTenure: "rental", garageNearby: true }], "garage")
+      .values,
+    ["Najem — w pobliżu"],
+  );
+  assert.deepEqual(
+    row([{ ...base, hasGarage: true, garageTenure: "purchase_option" }], "garage").values,
+    ["Możliwość zakupu"],
+  );
+  assert.deepEqual(
+    row([{ ...base, hasStorage: true, storageTenure: "rental" }], "storage").values,
+    ["Najem"],
+  );
+  assert.deepEqual(row([{ ...base, hasStreetParking: true }], "street-parking").values, [
+    "Tak — ogólnodostępny",
+  ]);
+});
+
 test("differences distinguish missing facts, false and zero without hiding a single offer", () => {
   const listings = [
     base,

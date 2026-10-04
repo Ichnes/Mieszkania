@@ -51,6 +51,39 @@ test("matches a newly added active offer to an older archived version and calcul
   assert.equal(matches[0].priceDifferencePercent, -5);
 });
 
+test("weak or conflicting matches require review, and manual decisions survive future scans", () => {
+  const old = row({ id: "old", status: "removed" });
+  const current = row({ id: "new", status: "active", firstSeenAt: "2026-03-01T10:00:00Z" });
+  const weak = findRelistedListingRows([
+    { ...old, addressText: null, latitude: null, longitude: null, floor: null },
+    { ...current, addressText: null, latitude: null, longitude: null, floor: null },
+  ]);
+  assert.equal(weak.matches.length, 0);
+  assert.equal(weak.candidates.length, 1);
+  assert.ok(weak.candidates[0].confidenceScore < 90);
+  const conflicting = findRelistedListingRows([old, { ...current, floor: 9 }]);
+  assert.equal(conflicting.matches.length, 0);
+  assert.ok(conflicting.candidates[0].confidenceScore < 80);
+  const match = findRelistedListingRows([old, current]).matches[0];
+  const rejected = {
+    current_listing_id: current.id,
+    previous_listing_id: old.id,
+    decision: "rejected" as const,
+    match_payload: match,
+  };
+  assert.deepEqual(findRelistedListingRows([old, current], [rejected]), {
+    matches: [],
+    candidates: [],
+  });
+  const manual = findRelistedListingRows(
+    [old, { ...old, id: "newer-archive" }, current],
+    [{ ...rejected, decision: "confirmed" }],
+  );
+  assert.equal(manual.matches[0].previous.id, old.id);
+  assert.equal(manual.matches[0].manuallyConfirmed, true);
+  assert.equal(manual.candidates.length, 0);
+});
+
 test("does not call an overlapping or later archive a relisting", () => {
   const matches = matchRelistedListingRows([
     row({ id: "old", status: "removed", removedAt: "2026-04-01T10:00:00.000Z" }),

@@ -224,10 +224,24 @@ export function computeDreamEvaluation(
   const garagePenalty = profile.requiresGarage ? 36 : 10;
   maxPoints += garageBonus;
   points += listing.hasGarage ? garageBonus : -garagePenalty;
+  if (
+    listing.hasGarage &&
+    listing.garageTenure === "rental" &&
+    !descriptionFacts.rentedMultipleParking
+  )
+    points -= 2;
   record(
     "Garaż",
-    "Wymagany: +24 / brak −36. Niewymagany: +16 / brak −10.",
-    listing.hasGarage ? "Jest" : garageKnown ? "Potwierdzony brak" : "brak danych",
+    "Wymagany: +24 / brak −36. Niewymagany: +16 / brak −10. Najem: −2 pkt, chyba że naliczono już −5 za wiele wynajmowanych miejsc.",
+    listing.hasGarage
+      ? listing.garageTenure === "rental"
+        ? "Najem"
+        : listing.garageTenure === "purchase_option"
+          ? "Możliwość zakupu"
+          : "Jest"
+      : garageKnown
+        ? "Potwierdzony brak"
+        : "brak danych",
   );
 
   maxPoints += 8;
@@ -247,13 +261,19 @@ export function computeDreamEvaluation(
 
   maxPoints += 9;
   if (listing.hasStorage) {
-    points += 9;
+    points += listing.storageTenure === "rental" ? 8 : 9;
   }
 
   record(
     "Komórka",
-    "Jest +9; brak 0.",
-    listing.hasStorage ? "Jest" : storageKnown ? "Potwierdzony brak" : "brak danych",
+    "Jest +9; najem +8 (−1 pkt); brak 0.",
+    listing.hasStorage
+      ? listing.storageTenure === "rental"
+        ? "Najem"
+        : "Jest"
+      : storageKnown
+        ? "Potwierdzony brak"
+        : "brak danych",
   );
 
   const liftBonus = 21;

@@ -99,6 +99,7 @@ export function useWorkspaceController() {
     propertyTotal: 0,
   });
   const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroupOverview[]>([]);
+  const [duplicateGroupSort, setDuplicateGroupSort] = useState("conflicts");
   const [isLoadingDuplicateGroups, setIsLoadingDuplicateGroups] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [duplicateAction, setDuplicateAction] = useState<string | null>(null);
@@ -524,6 +525,7 @@ export function useWorkspaceController() {
     removeFromCompare,
     mortgageDraft,
     duplicateGroups,
+    duplicateGroupSort,
     duplicateTotal,
     duplicateTotals,
     duplicateError,
@@ -762,12 +764,13 @@ export function useWorkspaceController() {
     );
   }
 
-  async function loadDuplicateGroups(limit = 100) {
+  async function loadDuplicateGroups(limit = 100, sort = duplicateGroupSort) {
+    setDuplicateGroupSort(sort);
     setIsLoadingDuplicateGroups(true);
     setDuplicateError(null);
     try {
       const response = await apiFetch(
-        `${apiBaseUrl}/api/duplicates/groups?limit=${Math.max(limit, duplicateGroups.length)}&summary=true`,
+        `${apiBaseUrl}/api/duplicates/groups?limit=${sort === duplicateGroupSort ? Math.max(limit, duplicateGroups.length) : limit}&summary=true&sort=${encodeURIComponent(sort)}`,
       );
       if (!response.ok) throw new Error("Nie udało się pobrać grup duplikatów.");
       const data = (await response.json()) as {

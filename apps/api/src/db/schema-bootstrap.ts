@@ -407,6 +407,20 @@ export async function ensureRuntimeSchema() {
     `);
 
     await db.query(`
+      create table if not exists listing_relisting_reviews (
+        current_listing_id uuid not null references listings(id) on delete cascade,
+        previous_listing_id uuid not null references listings(id) on delete cascade,
+        decision text not null check (decision in ('confirmed', 'rejected')),
+        match_payload jsonb not null,
+        reviewed_at timestamptz not null default now(),
+        primary key (current_listing_id, previous_listing_id),
+        check (current_listing_id <> previous_listing_id)
+      );
+      create unique index if not exists idx_relisting_manual_current
+        on listing_relisting_reviews(current_listing_id) where decision = 'confirmed';
+    `);
+
+    await db.query(`
       alter table listing_manual_overrides
       add column if not exists contact_status text;
     `);

@@ -31,7 +31,10 @@ function amenities(text: string) {
 }
 
 export function extractAdditionalPurchaseCosts(description: string): PurchaseCosts {
-  const text = normalize(description.replace(/<[^>]*>/g, " ")).replace(/\s+/g, " ");
+  const text = normalize(description.replace(/<[^>]*>/g, " "))
+    .replace(/\s+/g, " ")
+    .replace(/\bok\./g, "ok")
+    .replace(/(\d)\s*m\.(?=\s)/g, "$1 m");
   const result: PurchaseCosts = {};
   let previousEnd = 0;
   let indoorParking: number | undefined;
@@ -55,6 +58,9 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       before = includedPrefix[2];
     }
     const mentioned = amenities(before);
+    // A price directly attached to the parking space is not a joint storage price.
+    if (/\bprzy\s+miejscu\s+postojowym\s*\(?\s*(?:dodatkowo\s+platne)?\s*$/.test(before))
+      mentioned.storage = false;
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
     // Nearby amenity mentions do not turn the apartment price or unit price into a surcharge.
     if (/\bcena\s+(?:mieszkania|apartamentu|lokalu|za\s+m[²2])\s*[:=—–-]?\s*$/.test(before))
@@ -75,7 +81,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       continue;
     }
     if (
-      !/dodatkow|platn|cen[ayie]|kosztuje|dokup|\bza\s*$/.test(before) &&
+      !/dodatkow|platn|cen[ayie]|kosztuje|dokup|\bza\s*$|\+\s*$/.test(before) &&
       !/(?:garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*)(?:\s+przed\s+budynkiem)?|piwnic\w*|komork\w*(?:\s+lokatorsk\w*)?|ogrod\w*)\s*[:—–-]?\s*$/.test(
         before,
       ) &&
@@ -90,13 +96,14 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     )
       continue;
     const baseAmount = Number(match[1].replace(/[ .]/g, "") + "." + (match[2] ?? "0"));
-    if (/tys/.test(match[3]) && baseAmount >= 1000) {
+    if (/tys/.test(match[3]) && baseAmount > 1000000) {
       (result.warnings ??= []).push(
         `Dopłata „${match[1]} tys.” ma niejednoznaczną kwotę. Potwierdź ją ze sprzedającym; nie doliczono jej do ceny zakupu.`,
       );
       continue;
     }
-    const amount = baseAmount * (/tys/.test(match[3]) ? 1000 : 1);
+    // Full zł amounts followed by a redundant "tys." are a common listing typo.
+    const amount = baseAmount * (/tys/.test(match[3]) && baseAmount < 1000 ? 1000 : 1);
     if (!Number.isFinite(amount) || amount < 1000) continue;
     if (mentioned.garage && mentioned.storage) result.garageAndStorage = amount;
     else if (mentioned.garage) {

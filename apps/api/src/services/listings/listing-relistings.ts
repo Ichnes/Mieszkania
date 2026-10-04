@@ -1,6 +1,7 @@
 import type { RelistedListingMatch, RelistedListingsScanResponse } from "@mieszkania/shared";
 import { pool } from "../../db";
 import type { Pool } from "pg";
+import type { RelistingReview } from "./relisting-review";
 import { activeRegion } from "../../domain/region";
 import { normalizePolish, normalizeWarsawStreetAddress } from "../geography/address-normalization";
 import {
@@ -48,6 +49,7 @@ export const visibleRelistingCandidateSql = `
     and archived.status = 'removed' and archived.hidden_duplicate_of_id is null
     and coalesce(archived.exclusion_reason, '') <> 'manual_rejected'
     and not exists (select 1 from listing_relistings confirmed where confirmed.current_listing_id = l.id)
+    and not exists (select 1 from listing_relisting_reviews review where review.current_listing_id=rc.current_listing_id and review.previous_listing_id=rc.previous_listing_id and review.decision='rejected')
 `;
 
 export async function getPotentialRelistings(
@@ -141,19 +143,37 @@ export async function scanRelistedListings(
     lastSeenAt: row.last_seen_at,
     removedAt: row.removed_at,
   }));
-  const { matches, candidates } = findRelistedListingRows(rows);
+  const reviews = (await db.query<RelistingReview>("select * from listing_relisting_reviews")).rows;
+  const { matches, candidates } = findRelistedListingRows(rows, reviews);
 
-  if (matches.length > 0) {
-    const persistedMatches = matches.map((match) => ({
-      current_listing_id: match.current.id,
-      previous_listing_id: match.previous.id,
-      confidence_score: match.confidenceScore,
-      reason_summary: match.reasons.join(", "),
-      previous_price_amount: match.previous.priceAmount ?? null,
-      relisted_price_amount: match.current.priceAmount ?? null,
-    }));
-    await db.query(
-      `
+  const client = await db.connect();
+  try {
+    await client.query("begin");
+    await client.query("select pg_advisory_xact_lock(hashtext('relisting-candidates'))");
+    // A former automatic match which no longer meets the rules returns to review.
+    // Explicit user decisions remain authoritative across every scan.
+    await client.query(
+      `delete from listing_relistings relation
+      where relation.current_listing_id=any($1::uuid[])
+        and not (relation.current_listing_id=any($2::uuid[]))
+        and not exists(select 1 from listing_relisting_reviews review
+          where review.current_listing_id=relation.current_listing_id and review.decision='confirmed')`,
+      [
+        rows.filter((row) => row.status === "active").map((row) => row.id),
+        matches.map((match) => match.current.id),
+      ],
+    );
+    if (matches.length > 0) {
+      const persistedMatches = matches.map((match) => ({
+        current_listing_id: match.current.id,
+        previous_listing_id: match.previous.id,
+        confidence_score: match.confidenceScore,
+        reason_summary: match.reasons.join(", "),
+        previous_price_amount: match.previous.priceAmount ?? null,
+        relisted_price_amount: match.current.priceAmount ?? null,
+      }));
+      await client.query(
+        `
           insert into listing_relistings (
             current_listing_id,
             previous_listing_id,
@@ -179,6 +199,9 @@ export async function scanRelistedListings(
             previous_price_amount numeric,
             relisted_price_amount numeric
           )
+          where not exists (select 1 from listing_relisting_reviews review
+            where review.current_listing_id=match.current_listing_id
+              and (review.decision='confirmed' or review.previous_listing_id=match.previous_listing_id))
           on conflict (current_listing_id)
           do update set
             previous_listing_id = excluded.previous_listing_id,
@@ -194,15 +217,11 @@ export async function scanRelistedListings(
             end,
             last_detected_at = now()
         `,
-      [JSON.stringify(persistedMatches)],
-    );
-  }
+        [JSON.stringify(persistedMatches)],
+      );
+    }
 
-  // Replace suggestions atomically. They never become confirmed relistings.
-  const client = await db.connect();
-  try {
-    await client.query("begin");
-    await client.query("select pg_advisory_xact_lock(hashtext('relisting-candidates'))");
+    // Replace suggestions atomically. They never become confirmed relistings.
     await client.query("delete from listing_relisting_candidates");
     if (candidates.length) {
       await client.query(
@@ -210,6 +229,9 @@ export async function scanRelistedListings(
           insert into listing_relisting_candidates (current_listing_id, previous_listing_id, match_payload)
           select (item->'current'->>'id')::uuid, (item->'previous'->>'id')::uuid, item
           from jsonb_array_elements($1::jsonb) item
+          where not exists (select 1 from listing_relisting_reviews review
+            where review.current_listing_id=(item->'current'->>'id')::uuid
+              and (review.decision='confirmed' or review.previous_listing_id=(item->'previous'->>'id')::uuid))
         `,
         [JSON.stringify(candidates)],
       );
@@ -236,7 +258,10 @@ export function matchRelistedListingRows(rows: RelistingMatchRow[]): RelistedLis
   return findRelistedListingRows(rows).matches;
 }
 
-export function findRelistedListingRows(rows: RelistingMatchRow[]): {
+export function findRelistedListingRows(
+  rows: RelistingMatchRow[],
+  reviews: RelistingReview[] = [],
+): {
   matches: RelistedListingMatch[];
   candidates: RelistedListingMatch[];
 } {
@@ -255,6 +280,14 @@ export function findRelistedListingRows(rows: RelistingMatchRow[]): {
   const matches: RelistedListingMatch[] = [];
   const potential: RelistedListingMatch[] = [];
   for (const current of active) {
+    const confirmed = reviews.find(
+      (review) => review.current_listing_id === current.id && review.decision === "confirmed",
+    );
+    if (confirmed) {
+      if (rows.some((row) => row.id === confirmed.previous_listing_id && row.status === "removed"))
+        matches.push({ ...confirmed.match_payload, manuallyConfirmed: true });
+      continue;
+    }
     const candidates = new Map<string, PreparedRelistingRow>();
     const areaBucket = Math.floor(current.areaSqm);
     for (let bucket = areaBucket - 3; bucket <= areaBucket + 3; bucket += 1) {
@@ -264,6 +297,15 @@ export function findRelistedListingRows(rows: RelistingMatchRow[]): {
     }
 
     const scored = [...candidates.values()]
+      .filter(
+        (previous) =>
+          !reviews.some(
+            (review) =>
+              review.current_listing_id === current.id &&
+              review.previous_listing_id === previous.id &&
+              review.decision === "rejected",
+          ),
+      )
       .map((previous) => scoreRelisting(previous, current))
       .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
       .sort(
@@ -367,6 +409,11 @@ function scoreRelisting(
   }
   if (!strong && descriptionSimilarity >= 0.55) confidenceScore += 10;
   confidenceScore = Math.min(strong ? 100 : 79, confidenceScore);
+  if (conflictingFloors || conflictingNumbers) {
+    confidenceScore = Math.min(confidenceScore, 79);
+    if (conflictingFloors) reasons.push("różne piętra — wymaga sprawdzenia");
+    if (conflictingNumbers) reasons.push("różne numery budynków — wymaga sprawdzenia");
+  }
 
   const previousPrice = previous.priceAmount ?? undefined;
   const currentPrice = current.priceAmount ?? undefined;
@@ -380,7 +427,7 @@ function scoreRelisting(
       : undefined;
 
   return {
-    strong,
+    strong: strong && !conflictingFloors && !conflictingNumbers && confidenceScore >= 90,
     match: {
       previous: {
         id: previous.id,

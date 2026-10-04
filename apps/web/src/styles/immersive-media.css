@@ -176,6 +176,29 @@
   object-fit: contain;
   background: var(--surface-muted);
 }
+.duplicate-preview-retry {
+  align-content: center;
+  gap: 0.5rem;
+  padding: 2.5rem 0.75rem 0.75rem;
+  min-height: 220px;
+  height: auto;
+  text-align: center;
+}
+.duplicate-preview-retry small {
+  overflow-wrap: anywhere;
+}
+.duplicate-candidates-page {
+  display: grid;
+  gap: 1rem;
+}
+.duplicate-candidates-page .duplicate-member-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+@media (max-width: 700px) {
+  .duplicate-candidates-page .duplicate-member-grid {
+    grid-template-columns: 1fr;
+  }
+}
 .duplicate-preview-empty {
   display: grid;
   place-items: center;

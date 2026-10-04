@@ -16,6 +16,7 @@ export function PotentialRelistings({
   const [result, setResult] = useState<{ id: string; items: RelistedListingMatch[] } | null>(null);
   const [error, setError] = useState(false);
   const [retry, setRetry] = useState(0);
+  const [reviewNotice, setReviewNotice] = useState("");
   useEffect(() => {
     const controller = new AbortController();
     setResult(null);
@@ -38,7 +39,8 @@ export function PotentialRelistings({
   const items = result?.id === listingId ? result.items : null;
   return (
     <section className="potential-relistings" aria-label="Potencjalne wcześniejsze oferty">
-      <h3>Potencjalne wcześniejsze oferty ({count})</h3>
+      <h3>Potencjalne wcześniejsze oferty ({items?.length ?? count})</h3>
+      {reviewNotice && <p role="status">{reviewNotice}</p>}
       <p className="muted">
         Ta oferta mogła już być w naszej bazie. Poniżej podobne ogłoszenia z archiwum — powiązanie
         wymaga sprawdzenia.
@@ -57,7 +59,29 @@ export function PotentialRelistings({
       ) : !items ? (
         <p role="status">Wczytywanie propozycji…</p>
       ) : items.length ? (
-        <RelistingMatches items={items} potential onOpenListing={onOpenListing} />
+        <RelistingMatches
+          items={items}
+          potential
+          onOpenListing={onOpenListing}
+          onReviewed={(match, decision) => {
+            setResult((current) =>
+              current
+                ? {
+                    ...current,
+                    items:
+                      decision === "confirmed"
+                        ? []
+                        : current.items.filter((item) => item.previous.id !== match.previous.id),
+                  }
+                : current,
+            );
+            setReviewNotice(
+              decision === "confirmed"
+                ? "Połączono jako ponowne wystawienie. Zachowano historię i ceny obu ogłoszeń."
+                : "Odrzucono parę. Kolejne skany nie zaproponują jej ponownie.",
+            );
+          }}
+        />
       ) : (
         <p className="muted">Brak aktualnych propozycji z archiwum.</p>
       )}

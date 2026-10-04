@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import { reviewRelisting } from "./relisting-review";
 import {
   getPotentialRelistings,
   scanRelistedListings,
@@ -25,6 +26,7 @@ test(
         "listings",
         "listing_relistings",
         "listing_relisting_candidates",
+        "listing_relisting_reviews",
       ]) {
         await db.query(
           `create table ${table} (like public.${table} including defaults including indexes)`,
@@ -71,10 +73,31 @@ test(
         );
         assert.equal(count.rows[0].n, 1);
       }
+      for (let run = 0; run < 2; run++) await reviewRelisting(ids[1], ids[0], "confirmed", db);
+      assert.equal((await getPotentialRelistings(ids[1], db)).length, 0);
+      const manual = await scanRelistedListings(100, db);
+      assert.equal(manual.matched, 1);
+      assert.equal(manual.items[0].manuallyConfirmed, true);
+      assert.equal((await db.query("select count(*)::int n from listings")).rows[0].n, 2);
+      assert.equal(
+        (await db.query("select previous_price_amount::int price from listing_relistings")).rows[0]
+          .price,
+        1200000,
+      );
+      await reviewRelisting(ids[1], ids[0], "rejected", db);
+      await reviewRelisting(ids[1], ids[0], "rejected", db);
+      const rejected = await scanRelistedListings(100, db);
+      assert.equal(rejected.matched, 0);
+      assert.equal(rejected.potentialCount, 0);
+      assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 0);
+      // Reset only this isolated test schema to exercise the remaining stale-source cases.
+      await db.query("delete from listing_relisting_reviews");
+      await scanRelistedListings(100, db);
       await db.query("update listings set exclusion_reason='manual_rejected' where id=$1", [
         ids[0],
       ]);
       assert.deepEqual(await getPotentialRelistings(ids[1], db), []);
+      await assert.rejects(reviewRelisting(ids[1], ids[0], "confirmed", db), /zmieniła status/);
       assert.equal((await scanRelistedListings(100, db)).potentialCount, 0);
       assert.equal(
         (await db.query("select count(*)::int n from listing_relisting_candidates")).rows[0].n,
@@ -87,6 +110,11 @@ test(
       assert.equal(strong.matched, 1);
       assert.equal(strong.potentialCount, 0);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 1);
+      await db.query("update listings set description='Changed description' where id=$1", [ids[1]]);
+      const downgraded = await scanRelistedListings(100, db);
+      assert.equal(downgraded.matched, 0);
+      assert.equal(downgraded.potentialCount, 1);
+      assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 0);
     } finally {
       await db.end();
       await admin.query(`drop schema if exists ${schema} cascade`);

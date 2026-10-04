@@ -116,6 +116,17 @@ create table listing_relistings (
 
 create index idx_listing_relistings_previous on listing_relistings(previous_listing_id, detected_at desc);
 
+create table listing_relisting_reviews (
+  current_listing_id uuid not null references listings(id) on delete cascade,
+  previous_listing_id uuid not null references listings(id) on delete cascade,
+  decision text not null check (decision in ('confirmed', 'rejected')),
+  match_payload jsonb not null,
+  reviewed_at timestamptz not null default now(),
+  primary key (current_listing_id, previous_listing_id),
+  check (current_listing_id <> previous_listing_id)
+);
+create unique index idx_relisting_manual_current on listing_relisting_reviews(current_listing_id) where decision = 'confirmed';
+
 create table geocode_cache (
   cache_key text primary key,
   query_text text not null,

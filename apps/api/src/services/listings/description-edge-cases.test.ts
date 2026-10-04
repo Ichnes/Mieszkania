@@ -67,14 +67,14 @@ test("planned, absent and existing lifts remain distinct", () => {
   }
 });
 
-test("rental parking is not a purchased garage and unknown parking is not confirmed absence", () => {
+test("rental garages are available with rental tenure and unknown parking is not confirmed absence", () => {
   for (const description of [
     "Garaż podziemny wyłącznie do wynajęcia za 1500 zł miesięcznie.",
-    "Miejsce postojowe do wynajęcia. Cena 1200 zł rocznie.",
+    "Miejsce postojowe w garażu do wynajęcia. Cena 1200 zł rocznie.",
   ]) {
     const f = extractFeatures({ description });
-    assert.equal(resolveListingAmenities(f, {}, description).garage, false);
-    assert.ok(buildAmenityBadges(f).includes("Brak miejsca postojowego"));
+    assert.equal(resolveListingAmenities(f, {}, description).garage, true);
+    assert.ok(buildAmenityBadges(f).includes("Garaż — najem"));
     assert.deepEqual(costs(description), {});
   }
   const f = extractFeatures({ description: "Jasne mieszkanie w centrum." });
@@ -145,10 +145,10 @@ test("premium tags do not promote absent or merely planned equipment", () => {
   );
 });
 
-test("ambiguous thousands are flagged instead of becoming a multimillion surcharge", () => {
+test("redundant thousands are corrected according to the user-confirmed convention", () => {
   const result = costs("Komórka lokatorska za 25000 tys. zł.");
-  assert.equal(result.storage, undefined);
-  assert.equal(result.warnings?.length, 1);
+  assert.equal(result.storage, 25000);
+  assert.equal(result.warnings, undefined);
   assert.deepEqual(costs("Komórka lokatorska za 25 tys. zł."), { storage: 25000 });
 });
 

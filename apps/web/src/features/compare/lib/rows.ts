@@ -78,9 +78,17 @@ const fields: Field[] = [
   {
     id: "garage",
     label: "Garaż",
-    value: (l) => yesNo(l.amenityEvidence?.garage ?? (l.hasGarage === true ? true : undefined)),
+    value: (l) =>
+      l.hasGarage && l.garageTenure
+        ? `${l.garageTenure === "rental" ? "Najem" : "Możliwość zakupu"}${l.garageNearby ? " — w pobliżu" : ""}`
+        : yesNo(l.amenityEvidence?.garage ?? (l.hasGarage === true ? true : undefined)),
   },
   { id: "parking", label: "Parking naziemny", value: (l) => yesNo(l.hasOutdoorParking) },
+  {
+    id: "street-parking",
+    label: "Parking miejski / przy ulicy",
+    value: (l) => (l.hasStreetParking ? "Tak — ogólnodostępny" : missing),
+  },
   {
     id: "lift",
     label: "Winda",
@@ -90,7 +98,10 @@ const fields: Field[] = [
   {
     id: "storage",
     label: "Komórka lokatorska",
-    value: (l) => yesNo(l.amenityEvidence?.storage ?? (l.hasStorage === true ? true : undefined)),
+    value: (l) =>
+      l.hasStorage && l.storageTenure === "rental"
+        ? "Najem"
+        : yesNo(l.amenityEvidence?.storage ?? (l.hasStorage === true ? true : undefined)),
   },
   { id: "exposure", label: "Ekspozycja", value: exposureLabel },
   {

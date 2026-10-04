@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Rozstrzygnięcia opisów użytkownika (2026-10-04)
+
+- [x] Zakres: nadmiarowe „tys.”, dopłaty oddzielne i wspólne, pięć wariantów czynszu, najem garażu/komórki, konkretna możliwość zakupu i pobliski garaż.
+- [x] Rozszerzenie użytkownika: parking miejski dla 1e060402; ręczne potwierdzanie i odrzucanie ponownych wystawień, automatyczne mocne dopasowania; niższe podobieństwo i sortowanie duplikatów po liczbie ofert; odporne miniatury i ponowienie pobrania zdjęć.
+- [x] Wdrożono reguły i testy wszystkich przykładów. Najem: garaż −2 pkt, komórka −1 pkt; zachowano istniejące −5 za wiele wynajmowanych miejsc bez podwójnej kary. Poprawiono kwoty z nadmiarowym „tys.”, przypisanie dopłat, czynsz i parking miejski.
+- [x] Ponowne wystawienia: automatycznie tylko mocne dopasowania ≥90% bez sprzeczności piętra/numeru budynku; ręczne potwierdzenie/odrzucenie utrzymuje się po skanie. Słabsze stare automatyczne powiązanie wraca do weryfikacji. Historia ofert pozostaje zachowana.
+- [x] Duplikaty: osobna kolejka potencjalnych powiązań, zakres 60–79% / 80–100% / wszystkie, sortowanie zgodnością lub liczbą powiązań i paginacja; grupy sortowane globalnie po liczbie ofert. Miniatury próbują kolejnych zdjęć danej oferty; przy braku można ponowić pobranie.
+- [x] Sprawdzono 16 rzeczywistych ofert i uzupełniono prywatny plik `.local/oferty-do-sprawdzenia-2026-10-04.md` z ID oraz decyzjami. Pełny zestaw: 447 testów OK, 10 środowiskowych pominiętych; dodatkowy test PostgreSQL OK. Typecheck/build OK, wdrożono lokalnie. UI 1440/1280/390 px: ręczne decyzje, błąd i ponowienie, zdjęcia, sortowanie oraz brak przepełnień.
+- [x] Przyspieszono globalne wyszukiwanie duplikatów: lokalny pomiar około 55 → 7 s, identyczne pierwsze 500 par, ich kolejność, punktacja i uzasadnienia. Zaktualizowano przewodnik aplikacji; przygotowano zmiany do commitu i publikacji na `main`.
+
 ## Audyt analizy ogłoszeń i wygody aplikacji (2026-10-04)
 
 - [x] Zakres: przypadki brzegowe opisów, negacje i opcje wyposażenia, koszty, piętra, spójność ocen/filtrów/wyróżnień; przegląd UI oraz porównanie rozwiązań Otodomu.
@@ -7,7 +17,7 @@
 - [x] Dodano nazwane wyszukiwania z filtrami/sortowaniem, usuwaniem i cofnięciem; poprawiono język, wyróżnienia opisów i brak danych w porównaniu. Sprawdzono dziewięć widoków na PC/laptop/mobile, zapis i odtworzenie filtrów oraz ostrzeżenie dopłaty na rzeczywistej ofercie.
 - [x] Pełny zestaw: 439 testów OK, 10 pominiętych; końcowe doprecyzowania: 47 testów tematycznych OK. Typecheck i produkcyjne buildy OK; lokalne API/web/db healthy. Raport: [audyt](audit-2026-10-04.md); zaktualizowano przewodnik aplikacji.
 - [x] Na prośbę użytkownika przygotowano prywatne pliki poza Git: `.local/oferty-do-sprawdzenia-2026-10-04.md` (15 przypadków z ID, fragmentem i miejscem na decyzję) oraz `.local/pietra-do-sprawdzenia-2026-10-04.md` (357 historycznych rekordów z ID). Nie zmieniano danych na podstawie domysłów.
-- [ ] Pozostaje wspólnie rozstrzygnąć przypadki z plików; opcjonalnie później dodać synchronizację zapisanych wyszukiwań i alerty. Ocena AI pozostaje wstrzymana.
+- [ ] Przypadki opisów rozstrzygnięto i wdrożono powyżej; pozostaje 357 historycznych rekordów pięter z niepełnymi/sprzecznymi źródłami w prywatnym pliku. Opcjonalnie później synchronizacja zapisanych wyszukiwań i alerty. Ocena AI pozostaje wstrzymana.
 
 ## Czytelność ofert, duplikaty i historia cen (2026-10-04)
 

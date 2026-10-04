@@ -26,6 +26,11 @@ export function filterImageAmenityBadge(badge: string) {
     badge === "Garaż (platforma)" ||
     badge === "Miejsce na platformie" ||
     badge === "Garaż na wynajem" ||
+    badge === "Garaż — najem" ||
+    badge === "Garaż — możliwość zakupu" ||
+    badge === "Garaż w pobliżu" ||
+    badge === "Komórka — najem" ||
+    badge === "Parking miejski / przy ulicy" ||
     badge === "Miejsce postojowe na terenie osiedla" ||
     badge === "Naziemne miejsce postojowe" ||
     /^\d+\s+miejsca w garażu$/.test(badge) ||

@@ -949,6 +949,13 @@ export function ListingDetailPanel(input: {
                         : "Garaż / parking"}
                     </th>
                     <td>
+                      {input.listing.garageTenure && (
+                        <span>
+                          {input.listing.garageTenure === "rental" ? "Najem" : "Możliwość zakupu"}
+                          {input.listing.garageNearby ? " — w pobliżu" : ""}
+                          <br />
+                        </span>
+                      )}
                       {input.listing.additionalPurchaseCosts?.garageAndStorage
                         ? `${formatPln(input.listing.additionalPurchaseCosts.garageAndStorage)} łącznie`
                         : input.listing.additionalPurchaseCosts?.garageIncluded
@@ -958,10 +965,15 @@ export function ListingDetailPanel(input: {
                             : "—"}
                     </td>
                   </tr>
-                  {input.listing.additionalPurchaseCosts &&
-                  (input.listing.additionalPurchaseCosts.storage !== undefined ||
-                    input.listing.additionalPurchaseCosts.storageIncluded) &&
-                  !input.listing.additionalPurchaseCosts.garageAndStorage ? (
+                  {input.listing.storageTenure === "rental" ? (
+                    <tr>
+                      <th>Komórka / piwnica</th>
+                      <td colSpan={3}>Najem</td>
+                    </tr>
+                  ) : input.listing.additionalPurchaseCosts &&
+                    (input.listing.additionalPurchaseCosts.storage !== undefined ||
+                      input.listing.additionalPurchaseCosts.storageIncluded) &&
+                    !input.listing.additionalPurchaseCosts.garageAndStorage ? (
                     <tr>
                       <th>Komórka / piwnica</th>
                       <td colSpan={3}>
@@ -1275,7 +1287,13 @@ export function ListingDetailPanel(input: {
                 {input.listing.features.map((feature) => (
                   <article key={`${feature.key}-${feature.value}`} className="feature-card">
                     <span>{feature.label}</span>
-                    <strong>{feature.value}</strong>
+                    <strong>
+                      {feature.value === "rental"
+                        ? "Najem"
+                        : feature.value === "purchase_option"
+                          ? "Możliwość zakupu"
+                          : feature.value}
+                    </strong>
                   </article>
                 ))}
               </div>

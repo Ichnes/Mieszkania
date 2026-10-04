@@ -361,6 +361,26 @@ details.data-tools > summary:focus-visible {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
 }
+
+.relisting-review-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+}
+.relisting-review-actions button {
+  white-space: normal;
+  min-width: 0;
+}
+.relisting-review-notice {
+  grid-column: 1 / -1;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 700px) {
+  .relisting-review-actions {
+    flex-direction: column;
+  }
+}
 .relisting-result-card {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

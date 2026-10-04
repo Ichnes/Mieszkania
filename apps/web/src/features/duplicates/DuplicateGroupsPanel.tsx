@@ -2,6 +2,7 @@ import { Select } from "../../components/Select";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 import { normalizeListingText } from "../listings/lib/listing-language";
+import { DuplicatePreview } from "./DuplicatePreview";
 
 type Group = {
   groupId: string;
@@ -14,6 +15,7 @@ type Group = {
     sourceLabel: string;
     canonicalUrl?: string;
     thumbnailUrl?: string;
+    thumbnailUrls?: string[];
     priceLabel: string;
     areaLabel: string;
     floor?: number;
@@ -35,6 +37,8 @@ export function DuplicateGroupsPanel({
   onOpen,
   onUnmerge,
   onConfirm,
+  sort,
+  onSortChange,
 }: {
   groups: Group[];
   total: number;
@@ -48,6 +52,8 @@ export function DuplicateGroupsPanel({
   onOpen: (id: string) => void;
   onUnmerge: (primaryListingId: string, duplicateListingId: string) => void;
   onConfirm: (primaryListingId: string) => void;
+  sort: string;
+  onSortChange: (sort: string) => void;
 }) {
   const [search, setSearch] = useState("");
   const [source, setSource] = useState("");
@@ -106,6 +112,21 @@ export function DuplicateGroupsPanel({
           </article>
         </div>
         <div className="duplicate-toolbar">
+          <label>
+            <span>Kolejność grup</span>
+            <Select
+              label="Kolejność grup"
+              value={sort}
+              onChange={(value) => {
+                setPage(1);
+                onSortChange(value);
+              }}
+            >
+              <option value="conflicts">Najwięcej rozbieżności</option>
+              <option value="members_desc">Najwięcej powiązanych ofert</option>
+              <option value="members_asc">Najmniej powiązanych ofert</option>
+            </Select>
+          </label>
           <label className="duplicate-conflict-toggle">
             <input
               type="checkbox"
@@ -203,22 +224,14 @@ export function DuplicateGroupsPanel({
               >
                 <div className="duplicate-photo-frame">
                   <span className="duplicate-source-tag">{member.sourceLabel}</span>
-                  {member.thumbnailUrl ? (
-                    <button
-                      className="duplicate-photo-button"
-                      onClick={() => onOpen(member.id)}
-                      aria-label={`Otwórz ofertę: ${member.title}`}
-                    >
-                      <img
-                        src={member.thumbnailUrl}
-                        alt={member.title}
-                        loading="lazy"
-                        decoding="async"
-                      />
-                    </button>
-                  ) : (
-                    <div className="duplicate-preview-empty">Brak zdjęcia</div>
-                  )}
+                  <DuplicatePreview
+                    id={member.id}
+                    title={member.title}
+                    urls={
+                      member.thumbnailUrls ?? (member.thumbnailUrl ? [member.thumbnailUrl] : [])
+                    }
+                    onOpen={onOpen}
+                  />
                 </div>
                 <div className="duplicate-member-content">
                   <span className="duplicate-role">

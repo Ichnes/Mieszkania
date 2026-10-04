@@ -11,19 +11,34 @@ import {
 
 export function registerDuplicatesRoutes(app: FastifyInstance) {
   app.get("/api/duplicates/candidates", async (request) => {
-    const query = request.query as { limit?: string; listingId?: string };
+    const query = request.query as {
+      limit?: string;
+      listingId?: string;
+      minConfidence?: string;
+      maxConfidence?: string;
+      sort?: string;
+      offset?: string;
+    };
+    const numeric = (value: string | undefined, fallback: number) =>
+      Number.isFinite(Number(value)) ? Math.floor(Number(value)) : fallback;
     return getDuplicateCandidates(
       query.limit ? Number(query.limit) : undefined,
       query.listingId || undefined,
+      {
+        minConfidence: numeric(query.minConfidence, 60),
+        maxConfidence: numeric(query.maxConfidence, 100),
+        sort: query.sort,
+        offset: numeric(query.offset, 0),
+      },
     );
   });
 
   app.get("/api/duplicates/groups", async (request) => {
-    const query = request.query as { limit?: string; summary?: string };
+    const query = request.query as { limit?: string; summary?: string; sort?: string };
     const limit = Number(query.limit ?? 200);
     return query.summary === "true"
-      ? getDuplicateGroupOverviews(limit, true)
-      : getDuplicateGroupOverviews(limit);
+      ? getDuplicateGroupOverviews(limit, true, query.sort)
+      : getDuplicateGroupOverviews(limit, false, query.sort);
   });
 
   app.post<{ Body: { primaryListingId?: string; duplicateListingId?: string } }>(

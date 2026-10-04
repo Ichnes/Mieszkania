@@ -47,13 +47,19 @@ wyników. Możesz przechowywać 12 zestawów w danej przeglądarce. Usunięcie m
 cofnąć; zestawy nie synchronizują się między urządzeniami i nie wysyłają alertów.
 
 **Brak danych o parkingu** oznacza, że źródło nie potwierdza dostępności miejsca.
-To odrębny stan od **Brak miejsca postojowego**. Sam wynajem lub jawny brak
-przynależności miejsca nie jest traktowany jako własne miejsce. Planowane wyposażenie
+To odrębny stan od **Brak miejsca postojowego**. Dostępny najem ma oznaczenie
+**Garaż — najem** lub **Komórka — najem**; nie jest traktowany jako własność.
+Konkretna możliwość dokupienia/odkupienia miejsca ma oznaczenie **Garaż — możliwość zakupu**,
+również od firmy zewnętrznej. Ogólna wzmianka o dostępnych miejscach „do wynajmu lub zakupu”
+bez konkretnego miejsca i ceny nie potwierdza garażu. **Parking miejski / przy ulicy**
+nie oznacza parkingu osiedlowego ani własnego miejsca i nie daje premii za parking zewnętrzny.
+Planowane wyposażenie
 i możliwość jego montażu nie są wykazywane jako istniejące udogodnienia.
 
-W szczegółach i porównaniu **Dopłaty do sprawdzenia** sygnalizują niejednoznaczne
-kwoty, np. „55 000 tysięcy zł”. Nie wliczają się do automatycznej sumy; potwierdź
-wartość u sprzedającego i w razie potrzeby uzupełnij ręczne dane oferty.
+Zgodnie z uzgodnioną interpretacją pełne kwoty dopłat od 1000 do 1 000 000 zł
+z nadmiarowym „tys.” są odczytywane bez ponownego mnożenia: „55 000 tysięcy” to 55 000 zł,
+a „30 tysięcy” to 30 000 zł. Jeszcze większe niejednoznaczne dopłaty mają ostrzeżenie
+**Dopłaty do sprawdzenia** i nie wliczają się do sumy.
 
 ## Punktacja wymarzonego mieszkania
 
@@ -174,6 +180,9 @@ liczy się jako drewniana podłoga (+6, raz za tę cechę).
 Co najmniej dwa miejsca parkingowe/postojowe/garażowe dają dodatkowe +5 pkt.
 Jeśli te miejsca są wynajmowane/dzierżawione lub wymagają opłaty miesięcznej,
 naliczane jest dodatkowe −5 pkt w osobnym wierszu **Wynajem miejsc parkingowych**.
+Pojedynczy garaż w najmie zachowuje premię za dostępny garaż, pomniejszoną o 2 pkt.
+Ta kara nie dodaje się do powyższych −5 pkt. Komórka w najmie otrzymuje 8 zamiast 9 pkt
+(potrącenie 1 pkt). Punkty są następnie przeliczane na procent dopasowania.
 Premia za liczbę miejsc pozostaje (+5 −5 = 0 pkt łącznie za te dwa kryteria).
 Jednorazowa cena zakupu miejsca ani sam czynsz mieszkania nie uruchamiają tej kary.
 Meble, kuchnia, szafy lub zabudowa na/pod wymiar albo na zamówienie dają +5 pkt,
@@ -546,7 +555,8 @@ z archiwum. Wyniki obejmują mocne dopasowania oraz osobną sekcję
 **Potencjalne wcześniejsze oferty**. Propozycja może pojawić się mimo zmienionego
 opisu, gdy zgadzają się ulica, metraż, pokoje i piętro albo opis i lokalizacja są
 dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobieństwo
-dzielnicy nie wystarcza; sprzeczne piętra lub numery budynków wykluczają propozycję.
+dzielnicy nie wystarcza. Sprzeczne piętra lub numery budynków wykluczają automatyczne
+połączenie; przy mocnej zgodności opisu para może trafić do ręcznej weryfikacji.
 
 Karty pokazują obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
 tytułu otwiera odpowiednią ofertę. Różnica cen propozycji jest porównaniem dwóch
@@ -557,6 +567,28 @@ Propozycje zapisują się po skanie. Na aktywnej ofercie pojawia się oznaczenie
 także po odświeżeniu strony. Pokazujemy do pięciu najlepszych propozycji na ofertę.
 Nie są automatycznie łączone ani oznaczane jako potwierdzone ponowne wystawienia.
 Ponowny skan odświeża propozycje; ręcznie odrzucone i ukryte duplikaty są pomijane.
+
+Automatyczne powiązanie wymaga mocnych zgodności, wyniku co najmniej 90% i braku
+sprzeczności w piętrze/numerze budynku. Niższe wyniki, np. 70%, sprawdź przyciskami
+**Połącz jako ponowne wystawienie** albo **To inne mieszkania**. Decyzje są trwałe:
+skan nie nadpisuje ręcznego potwierdzenia ani nie przywraca odrzuconej pary.
+Połączenie wiąże aktywną ofertę z archiwalną i zachowuje oba rekordy oraz ich ceny.
+Nie usuwa wcześniejszego ogłoszenia ani jego historii.
+
+### Kolejka duplikatów i zdjęcia
+
+W zakładce **Duplikaty** wybierz **Połączone grupy do sprawdzenia** albo
+**Potencjalne powiązania**. Grupy można sortować według liczby rozbieżności lub
+liczby powiązanych ofert. W potencjalnych powiązaniach wybierz zakres **60–79%**,
+**80–100%** lub wszystkie, a następnie kolejność od najniższego/najwyższego podobieństwa
+lub największej liczby powiązanych ogłoszeń. Sortowanie obejmuje całą kolejkę,
+nie tylko aktualnie pobraną stronę.
+
+Miniatury korzystają ze zdjęć danej oferty: najpierw z dostępnych plików lokalnych,
+potem z adresów źródłowych. Niedostępne zdjęcie jest zastępowane kolejnym.
+**Pobierz zdjęcia** ponawia pobranie kilku obrazów. Jeśli nie ma zapisanych adresów,
+otwórz ofertę i wybierz **Pobierz dane**. Panel nie podstawia zdjęcia innego ogłoszenia
+w miejsce brakującego — mogłoby to ukryć błędne połączenie.
 
 ## Notatki i przeglądanie ofert
 

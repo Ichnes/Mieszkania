@@ -8,6 +8,7 @@ export type DuplicateGroupOverview = {
     sourceLabel: string;
     canonicalUrl?: string;
     thumbnailUrl?: string;
+    thumbnailUrls?: string[];
     priceLabel: string;
     areaLabel: string;
     isPrimary: boolean;

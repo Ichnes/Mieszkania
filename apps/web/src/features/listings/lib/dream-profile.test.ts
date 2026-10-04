@@ -31,6 +31,36 @@ const base = {
 const evaluate = (changes: Partial<ListingSummary> = {}, profile = settings.dreamProfile) =>
   computeDreamEvaluation({ ...base, ...changes }, profile, [], now);
 
+test("rented garage and storage lose two and one points without duplicating the existing multiple-space penalty", () => {
+  const owned = evaluate({ hasGarage: true, hasStorage: true });
+  const rented = evaluate({
+    hasGarage: true,
+    hasStorage: true,
+    garageTenure: "rental",
+    storageTenure: "rental",
+  });
+  assert.equal(rented.points, owned.points - 3);
+  for (const [label, penalty] of [
+    ["Garaż", 2],
+    ["Komórka", 1],
+  ] as const)
+    assert.equal(
+      rented.rows.find((r) => r.label === label)?.points,
+      owned.rows.find((r) => r.label === label)!.points - penalty,
+    );
+  const description = "Dwa miejsca parkingowe wynajmowane od wspólnoty.";
+  const multiple = evaluate({ description, hasGarage: true, garageTenure: "rental" });
+  assert.equal(multiple.rows.find((r) => r.label === "Wynajem miejsc parkingowych")?.points, -5);
+  assert.equal(
+    multiple.rows.find((r) => r.label === "Garaż")?.points,
+    owned.rows.find((r) => r.label === "Garaż")?.points,
+  );
+  assert.equal(
+    evaluate({ hasGarage: false, garageTenure: "rental" }).points,
+    evaluate({ hasGarage: false }).points,
+  );
+});
+
 test("coverage distinguishes missing evidence from confirmed absence without changing scores", () => {
   const missing = evaluate({ hasGarage: false, hasLift: false, hasStorage: false });
   const absent = evaluate({

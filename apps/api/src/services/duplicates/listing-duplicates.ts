@@ -7,12 +7,13 @@ import type {
 } from "@mieszkania/shared";
 import type { Pool, PoolClient } from "pg";
 import { withDb } from "../../db";
-import { getMediaResponsePath } from "../media/image-repository";
+import { getOwnListingPreviewUrls } from "../media/listing-preview";
 import { syncDuplicateGroupPrice, restoreSourcePrice } from "./group-prices";
 
 type QueryableDb = Pick<Pool | PoolClient, "query">;
 
 type DuplicateCandidateRow = {
+  total_count?: string;
   left_id: string;
   left_title: string;
   left_canonical_url: string;
@@ -88,22 +89,28 @@ const sourcePriority = [
 export async function getDuplicateCandidates(
   limit = 50,
   listingId?: string,
+  options: { minConfidence?: number; maxConfidence?: number; sort?: string; offset?: number } = {},
 ): Promise<DuplicateCandidatesResponse> {
-  const leftAddressKey = normalizedAddressKeySql("coalesce(l1.address_text, '')");
-  const rightAddressKey = normalizedAddressKeySql("coalesce(l2.address_text, '')");
-  const leftDistrictKey = normalizedTextKeySql("coalesce(l1.district, '')");
-  const rightDistrictKey = normalizedTextKeySql("coalesce(l2.district, '')");
-  const leftStreetKey = normalizedStreetKeySql("coalesce(l1.address_text, '')");
-  const rightStreetKey = normalizedStreetKeySql("coalesce(l2.address_text, '')");
-  const descriptionOverlap = descriptionTokenOverlapSql(
-    "coalesce(l1.description, '')",
-    "coalesce(l2.description, '')",
-  );
+  const leftAddressKey = "l1.match_address_key";
+  const rightAddressKey = "l2.match_address_key";
+  const leftDistrictKey = "l1.match_district_key";
+  const rightDistrictKey = "l2.match_district_key";
+  const leftStreetKey = "l1.match_street_key";
+  const rightStreetKey = "l2.match_street_key";
+  const descriptionOverlap = `(select count(*)::int from (select unnest(l1.match_tokens) intersect select unnest(l2.match_tokens)) common_tokens)`;
 
   return withDb(async (db) => {
     const result = await db.query<DuplicateCandidateRow>(
       `
-        with pair_base as (
+        with normalized_listings as materialized (
+          select l.*,
+            ${normalizedAddressKeySql("coalesce(l.address_text, '')")} as match_address_key,
+            ${normalizedStreetKeySql("coalesce(l.address_text, '')")} as match_street_key,
+            ${normalizedTextKeySql("coalesce(l.district, '')")} as match_district_key,
+            array(select distinct token from unnest(regexp_split_to_array(substring(${normalizedTextKeySql("coalesce(l.description, '')")} from 1 for 300), '\\s+')) token
+              where length(token)>=4 and token not in ('mieszkanie','sprzedaz','oferta','nieruchomosci','warszawa','lokalizacja','pokojowe','pokojowy')) as match_tokens
+          from listings l where l.status='active' and l.hidden_duplicate_of_id is null
+        ), pair_base as (
           select
             l1.id as left_id,
             l1.title as left_title,
@@ -214,8 +221,8 @@ export async function getDuplicateCandidates(
                 then 'prawie ten sam punkt na mapie' end
             ) as reason_summary,
             r.status as review_status
-          from listings l1
-          join listings l2 on l1.id < l2.id
+          from normalized_listings l1
+          join normalized_listings l2 on l1.id < l2.id
           join sources s1 on s1.id = l1.source_id
           join sources s2 on s2.id = l2.source_id
           left join (
@@ -263,23 +270,41 @@ export async function getDuplicateCandidates(
               )
             )
         )
-        select *
+        select *, count(*) over()::text as total_count
         from pair_base
-        where confidence_score >= 60
+        where confidence_score >= $3 and confidence_score <= $4
           and ($1::uuid is null or left_id = $1::uuid or right_id = $1::uuid)
           and coalesce(review_status, 'pending') <> 'different_listing'
         order by
           case when coalesce(review_status, 'pending') = 'pending' then 0 else 1 end,
+          case when $5::text='confidence_asc' then confidence_score end asc,
+          case when $5::text='related_desc' then coalesce(left_group_size,'0')::int+coalesce(right_group_size,'0')::int end desc,
           confidence_score desc,
-          left_title asc
-        limit $2
+          left_title asc, left_id, right_id
+        limit $2 offset $6
       `,
-      [listingId ?? null, Math.max(10, Math.min(limit, 500))],
+      [
+        listingId ?? null,
+        Math.max(1, Math.min(Number.isFinite(limit) ? limit : 50, 500)),
+        Math.max(60, Math.min(100, options.minConfidence ?? 60)),
+        Math.max(60, Math.min(100, options.maxConfidence ?? 100)),
+        options.sort ?? "confidence_desc",
+        Math.max(0, options.offset ?? 0),
+      ],
     );
 
     const items = result.rows.map(mapDuplicateCandidateRow);
+    const previews = await getOwnListingPreviewUrls(
+      [...new Set(items.flatMap((item) => [item.left.id, item.right.id]))],
+      db,
+    );
+    for (const item of items)
+      for (const offer of [item.left, item.right]) {
+        offer.thumbnailUrls = previews.get(offer.id) ?? [];
+        offer.thumbnailUrl = offer.thumbnailUrls[0];
+      }
     return {
-      total: items.length,
+      total: Number(result.rows[0]?.total_count ?? 0),
       items,
     };
   });
@@ -693,6 +718,7 @@ export type DuplicateGroupOverview = {
     sourceLabel: string;
     canonicalUrl?: string;
     thumbnailUrl?: string;
+    thumbnailUrls?: string[];
     priceLabel: string;
     areaLabel: string;
     floor?: number;
@@ -705,17 +731,19 @@ export type DuplicateGroupOverview = {
 export async function getDuplicateGroupOverviews(
   limit?: number,
   summary?: false,
+  sort?: string,
 ): Promise<DuplicateGroupOverview[]>;
 export async function getDuplicateGroupOverviews(
   limit: number,
   summary: true,
+  sort?: string,
 ): Promise<{
   items: DuplicateGroupOverview[];
   total: number;
   totalMembers: number;
   totalCopies: number;
 }>;
-export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
+export async function getDuplicateGroupOverviews(limit = 200, summary = false, sort = "conflicts") {
   return withDb(async (db) => {
     const result = await db.query<{
       group_id: string;
@@ -728,22 +756,11 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
       area_sqm: string | null;
       floor: number | null;
       rooms: string | null;
-      thumbnail_storage_key: string | null;
-      thumbnail_source_url: string | null;
     }>(`
-      select gm.group_id::text, gm.listing_id::text, gm.is_primary, l.title, s.name as source_label, l.canonical_url, l.price_amount::text, l.area_sqm::text, l.floor, l.rooms::text, preview.storage_key as thumbnail_storage_key, preview.source_url as thumbnail_source_url
+      select gm.group_id::text, gm.listing_id::text, gm.is_primary, l.title, s.name as source_label, l.canonical_url, l.price_amount::text, l.area_sqm::text, l.floor, l.rooms::text
       from listing_duplicate_group_members gm
       join listings l on l.id = gm.listing_id
       join sources s on s.id = l.source_id
-      left join lateral (
-        select asset.storage_key, image.source_url
-        from listing_duplicate_group_members image_member
-        join listing_images image on image.listing_id = image_member.listing_id
-        left join listing_media_assets asset on asset.id = image.asset_id
-        where image_member.listing_id = l.id
-        order by (image_member.listing_id = l.id) desc, image.is_primary desc, image.position asc
-        limit 1
-      ) preview on true
       join listing_duplicate_groups dg on dg.id = gm.group_id
       where dg.manually_confirmed = false
         and exists (select 1 from listing_duplicate_group_members x where x.group_id = gm.group_id having count(*) > 1)
@@ -757,9 +774,6 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
         title: row.title,
         sourceLabel: row.source_label ?? "Portal",
         canonicalUrl: row.canonical_url ?? undefined,
-        thumbnailUrl: row.thumbnail_storage_key
-          ? getMediaResponsePath(row.thumbnail_storage_key)
-          : (row.thumbnail_source_url ?? undefined),
         priceLabel: formatCurrencyLabel(row.price_amount),
         areaLabel: formatAreaLabel(row.area_sqm),
         floor: row.floor ?? undefined,
@@ -804,8 +818,19 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false) {
         group.conflicts.push("Rozbieżny metraż");
     }
     groups.sort((a, b) => (b.conflicts?.length ?? 0) - (a.conflicts?.length ?? 0));
+    if (sort === "members_desc") groups.sort((a, b) => b.members.length - a.members.length);
+    if (sort === "members_asc") groups.sort((a, b) => a.members.length - b.members.length);
     const safeLimit = Math.max(1, Number.isFinite(limit) ? Math.floor(limit) : 200);
     const items = groups.slice(0, summary ? safeLimit : Math.min(safeLimit, 500));
+    const previews = await getOwnListingPreviewUrls(
+      items.flatMap((group) => group.members.map((member) => member.id)),
+      db,
+    );
+    for (const group of items)
+      for (const member of group.members) {
+        member.thumbnailUrls = previews.get(member.id) ?? [];
+        member.thumbnailUrl = member.thumbnailUrls[0];
+      }
     const totalMembers = new Set(
       groups.flatMap((group) => group.members.map((member) => member.id)),
     ).size;

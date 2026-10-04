@@ -7,6 +7,7 @@ import type { FastifyInstance } from "fastify";
 import "../../config";
 import { getListingParcelContext } from "../../services/insights/listing-parcel-context";
 import { getListingPlanningContext } from "../../services/insights/listing-planning-context";
+import { reviewRelisting } from "../../services/listings/relisting-review";
 import {
   getPotentialRelistings,
   scanRelistedListings,
@@ -259,6 +260,29 @@ export function registerListingsRoutes(app: FastifyInstance) {
   app.post<{ Body: { limit?: number } }>("/api/listings/relistings/scan", async (request) => {
     return scanRelistedListings(request.body?.limit);
   });
+
+  app.post<{ Params: { id: string }; Body: { previousId?: string; decision?: string } }>(
+    "/api/listings/:id/relisting-review",
+    async (request, reply) => {
+      const { previousId, decision } = request.body ?? {};
+      const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
+      if (
+        !uuid.test(request.params.id) ||
+        !previousId ||
+        !uuid.test(previousId) ||
+        previousId === request.params.id ||
+        (decision !== "confirmed" && decision !== "rejected")
+      )
+        return reply.code(400).send({ message: "Nieprawidłowe połączenie lub decyzja." });
+      try {
+        return await reviewRelisting(request.params.id, previousId, decision);
+      } catch (error) {
+        return reply.code(409).send({
+          message: error instanceof Error ? error.message : "Nie udało się zapisać decyzji.",
+        });
+      }
+    },
+  );
 
   app.get<{ Params: { id: string } }>(
     "/api/listings/:id/relisting-candidates",

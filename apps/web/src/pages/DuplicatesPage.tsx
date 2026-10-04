@@ -1,8 +1,10 @@
 import { Link, useSearchParams } from "react-router-dom";
+import { useState } from "react";
 import { GitCompareArrows } from "lucide-react";
 import { RelistingMatches } from "../features/relistings/RelistingMatches";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { DuplicateGroupsPanel } from "../features/duplicates/DuplicateGroupsPanel";
+import { DuplicateCandidatesPanel } from "../features/duplicates/DuplicateCandidatesPanel";
 
 export function DuplicatesPage({
   model,
@@ -19,6 +21,7 @@ export function DuplicatesPage({
     | "relistingScanError"
     | "activeTab"
     | "duplicateGroups"
+    | "duplicateGroupSort"
     | "duplicateTotal"
     | "duplicateTotals"
     | "duplicateError"
@@ -53,6 +56,8 @@ export function DuplicatesPage({
   } = model;
   const [params, setParams] = useSearchParams();
   const relistings = params.get("tab") === "relistings";
+  const candidatesView = params.get("view") === "candidates";
+  const [reviewNotice, setReviewNotice] = useState("");
   return (
     <div className="duplicate-workspace">
       <Link className="duplicate-back-link" to="/oferty">
@@ -107,7 +112,7 @@ export function DuplicatesPage({
             <section className="relisting-results" aria-live="polite">
               <div className="relisting-results-heading">
                 <div>
-                  <h3>Rozpoznane ponowne wystawienia</h3>
+                  <h3>Połączone ponowne wystawienia</h3>
                   <p className="muted">
                     Sprawdzono {relistingScanResult.checkedActive} aktywnych i{" "}
                     {relistingScanResult.checkedArchived} archiwalnych ofert.
@@ -126,8 +131,9 @@ export function DuplicatesPage({
                 <div>
                   <h3>Potencjalne wcześniejsze oferty</h3>
                   <p className="muted">
-                    Te oferty mogły już być w naszej bazie. Porównaj je z archiwum — podobieństwo
-                    nie potwierdza ponownego wystawienia.
+                    Automatyczne połączenie wymaga mocnych zgodności, wyniku co najmniej 90% i braku
+                    sprzeczności w piętrze lub numerze budynku. Pozostałe propozycje, np. z wynikiem
+                    70%, sprawdź ręcznie. Połączenie zachowuje oba ogłoszenia i ich ceny.
                   </p>
                 </div>
                 <span>Propozycje: {relistingScanResult.potentialCount}</span>
@@ -138,6 +144,14 @@ export function DuplicatesPage({
                     items={relistingScanResult.potentialItems}
                     potential
                     onOpenListing={openListing}
+                    onReviewed={(_, decision) => {
+                      setReviewNotice(
+                        decision === "confirmed"
+                          ? "Połączono oferty. Powiązanie jest widoczne w sekcji powyżej."
+                          : "Odrzucono parę. Nie pojawi się ponownie po kolejnym skanie.",
+                      );
+                      void runRelistingScan();
+                    }}
                   />
                   {relistingScanResult.potentialCount >
                     relistingScanResult.potentialItems.length && (
@@ -151,42 +165,70 @@ export function DuplicatesPage({
               ) : (
                 <p className="muted relisting-empty">Brak dodatkowych propozycji z archiwum.</p>
               )}
+              {reviewNotice && <p role="status">{reviewNotice}</p>}
             </section>
           ) : null}
         </section>
       ) : (
         <>
-          <section className="panel duplicate-scan-actions">
-            <GitCompareArrows size={20} aria-hidden="true" />
-            <div>
-              <h3>Połącz duplikaty</h3>
-              <p>
-                Łączy oferty z identycznymi pierwszymi 25 słowami opisu, także z jednego portalu.
-              </p>
-            </div>
+          <div className="duplicate-tabs" aria-label="Rodzaj powiązań">
             <button
-              className="action-button secondary-button"
               type="button"
-              onClick={() => void runDuplicateAutoMerge()}
-              disabled={isRunningDuplicateAutoMerge}
+              className="text-link-button"
+              aria-current={!candidatesView ? "page" : undefined}
+              onClick={() => setParams({})}
             >
-              {isRunningDuplicateAutoMerge ? "Porównuję…" : "Znajdź i połącz"}
+              Połączone grupy do sprawdzenia
             </button>
-            {duplicateAutoMergeResult ? (
-              <small>
-                {duplicateAutoMergeResult.merged} połączonych z {duplicateAutoMergeResult.checked}{" "}
-                sprawdzonych
-              </small>
-            ) : null}
-          </section>
-          {duplicateAutoMergeError && (
+            <button
+              type="button"
+              className="text-link-button"
+              aria-current={candidatesView ? "page" : undefined}
+              onClick={() => setParams({ view: "candidates" })}
+            >
+              Potencjalne powiązania
+            </button>
+          </div>
+          {!candidatesView && (
+            <section className="panel duplicate-scan-actions">
+              <GitCompareArrows size={20} aria-hidden="true" />
+              <div>
+                <h3>Połącz duplikaty</h3>
+                <p>
+                  Łączy oferty z identycznymi pierwszymi 25 słowami opisu, także z jednego portalu.
+                </p>
+              </div>
+              <button
+                className="action-button secondary-button"
+                type="button"
+                onClick={() => void runDuplicateAutoMerge()}
+                disabled={isRunningDuplicateAutoMerge}
+              >
+                {isRunningDuplicateAutoMerge ? "Porównuję…" : "Znajdź i połącz"}
+              </button>
+              {duplicateAutoMergeResult ? (
+                <small>
+                  {duplicateAutoMergeResult.merged} połączonych z {duplicateAutoMergeResult.checked}{" "}
+                  sprawdzonych
+                </small>
+              ) : null}
+            </section>
+          )}
+          {!candidatesView && duplicateAutoMergeError && (
             <p className="error-text" role="alert">
               {duplicateAutoMergeError}
             </p>
           )}
-          {activeTab === "duplicates" ? (
+          {candidatesView ? (
+            <DuplicateCandidatesPanel
+              onOpen={(id) => void openListing(id)}
+              onChanged={() => void loadDuplicateGroups()}
+            />
+          ) : activeTab === "duplicates" ? (
             <DuplicateGroupsPanel
               groups={duplicateGroups}
+              sort={model.duplicateGroupSort}
+              onSortChange={(sort) => void loadDuplicateGroups(100, sort)}
               total={duplicateTotal}
               totalMembers={duplicateTotals.members}
               totalCopies={duplicateTotals.copies}

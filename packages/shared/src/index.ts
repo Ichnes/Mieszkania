@@ -357,6 +357,10 @@ export type ListingSummary = {
   hasAirConditioning?: boolean;
   /** Explicit evidence; missing values mean unknown, including legacy false flags. */
   amenityEvidence?: { garage?: boolean; lift?: boolean; storage?: boolean };
+  garageTenure?: "rental" | "purchase_option";
+  storageTenure?: "rental";
+  garageNearby?: boolean;
+  hasStreetParking?: boolean;
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
   additionalPurchaseCosts?: {
@@ -480,6 +484,8 @@ export type ListingDetail = ListingSummary & {
 export type DuplicateReviewStatus = "pending" | "same_listing" | "different_listing";
 
 export type DuplicateListingPreview = {
+  thumbnailUrl?: string;
+  thumbnailUrls?: string[];
   id: string;
   title: string;
   canonicalUrl?: string;
@@ -525,6 +531,7 @@ export type RelistedListingPreview = {
 };
 
 export type RelistedListingMatch = {
+  manuallyConfirmed?: boolean;
   previous: RelistedListingPreview;
   current: RelistedListingPreview;
   priceDifferenceAmount?: number;
