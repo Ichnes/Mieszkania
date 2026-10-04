@@ -1185,12 +1185,15 @@ export function useImportController({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ limit: 100 }),
       });
-      if (!response.ok) throw new Error(`Relisting scan failed with status ${response.status}`);
+      if (!response.ok)
+        throw new Error(
+          `Nie udało się porównać ofert z archiwum (błąd ${response.status}). Spróbuj ponownie.`,
+        );
       setRelistingScanResult((await response.json()) as RelistedListingsScanResponse);
       await Promise.all([refreshDashboard(), applyFilters()]);
     } catch (error) {
       setRelistingScanError(
-        error instanceof Error ? error.message : "Nie udało się sprawdzić ponownie dodanych ofert.",
+        error instanceof Error ? error.message : "Nie udało się sprawdzić ponownych wystawień.",
       );
     } finally {
       setIsScanningRelistedListings(false);

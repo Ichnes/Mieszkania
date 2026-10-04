@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Czytelność ofert, duplikaty i historia cen (2026-10-04)
+
+- [x] Zakres: uproszczenie operacji, zakładki duplikatów i ponownych wystawień, średnia historyczna na wykresie, ciaśniejszy opis, przegląd UI i języka oraz błąd piętra 713/13.
+- [x] Operacje scalania i skanowania przeniesiono do zakładek Duplikaty / Oferty wystawione ponownie. Aktualizacja ma prostą sekcję Ulice i ceny transakcyjne. Poprawiono odstępy, filtr rozbieżności, komunikaty i etykiety.
+- [x] Opis zachowuje źródłowe akapity, nie dzieli zdań ani skrótu „ul.”; zmniejszono interlinię do 1,4. Wykres zawiera średnią cen za m² aktywnych na koniec tygodnia, z historią cen i pustymi wartościami zamiast zera.
+- [x] Parser Domiporty poprawnie odczytuje 7/13. Skrypt z raportem przed zmianą potwierdził w archiwalnym HTML/opisie i poprawił 1975 zapisów (1421 + 554); zgłoszona oferta ma 7/13. Pozostałe 357 podejrzanych rekordów ma niepełne/sprzeczne źródła i wymaga osobnej weryfikacji; nie zgadywano wartości.
+- [x] Jawny brak przynależnego miejsca wygrywa z ogólnym tagiem garażu i wzmianką o przyszłym zakupie/wynajmie. Brak premii garażu i dopłaty za zakup; ręczna korekta zachowuje pierwszeństwo. Potwierdzono na rzeczywistej ofercie z cytowanym opisem przez API.
+- [x] Testy aplikacji: 426 zaliczonych, 10 środowiskowych pominiętych; nowy test historycznej średniej wykonano dodatkowo na PostgreSQL (zaliczony, tabele tymczasowe). Typecheck i build Docker poprawne. Przegląd dziewięciu ekranów 1440/1280/390 px: brak przepełnień poziomych i błędów JS; osobno skan z kontrolowanym błędem/ponowieniem/wynikami, widok wykresu i opis. Zrzuty i logi lokalne poza Git.
+- [x] Przewodniki aplikacji i naprawy danych zaktualizowane. Poprawki uruchomione lokalnie w Dockerze.
+- [x] Końcowa kontrola formatowania/diff i ponowna weryfikacja układu Duplikatów 1440/1280/390 px poprawne; zmiany przygotowane do commitu i publikacji na `main`.
+
 ## Miejsce po próbie backupu (2026-09-30)
 
 - [x] Ustalono przyczynę: docker_data.vhdx ma 80,3 GiB, system plików w środku zajmuje około 31 GiB. Usunięcie testowych wolumenów nie zmniejszyło pliku VHDX na Windows; około 49 GiB pozostaje pustą przestrzenią wewnątrz niego. Nie jest to pozostawiona aktywna kopia danych.

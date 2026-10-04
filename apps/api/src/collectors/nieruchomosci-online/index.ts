@@ -31,6 +31,7 @@ import { getFamilySettings } from "../../services/settings/family-settings";
 import { OtodomStorage } from "../otodom/otodom-storage";
 import type { ParsedListing, SourceListingReference } from "../types";
 import { extractPortalCoordinates } from "../portal-coordinates";
+import { parsePortalFloor } from "../../services/listings/portal-building-facts";
 
 const sourceKey = "nieruchomosci_online";
 const detailRequestIntervalMs = 5_000;
@@ -786,7 +787,7 @@ function extractPortalListingDetails(url: string, html: string) {
     const yearBuilt = extractDomiportaConstructionYear(html);
     return {
       maintenanceFee: fee ? `${new Intl.NumberFormat("pl-PL").format(fee)} PLN` : undefined,
-      floor: /^parter$/i.test(floorValue ?? "") ? 0 : parsePortalAmount(floorValue),
+      floor: parsePortalFloor(floorValue) ?? undefined,
       totalFloors,
       yearBuilt,
     };

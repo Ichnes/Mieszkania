@@ -3,7 +3,8 @@ import { getDescriptionHighlightParts } from "../lib/listing-language";
 export function ListingDescription({ value }: { value?: string }) {
   const paragraphs = (value ?? "Brak opisu.")
     .replace(/\r\n/g, "\n")
-    .split(/\n{2,}|(?<=[.!?])\s+(?=[A-ZĄĆĘŁŃÓŚŹŻ])/u)
+    .replace(/\b(ul|al|os|im|św)\.\s*\n+\s*/giu, "$1. ")
+    .split(/\n{2,}/u)
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 

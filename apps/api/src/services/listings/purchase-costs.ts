@@ -1,4 +1,5 @@
 import { extractParkingSpaceCount } from "./parking-count";
+import { hasNoAssignedParking } from "./parking-availability";
 
 export type PurchaseCosts = {
   parkingCount?: number;
@@ -136,5 +137,12 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     result.garageAndStorage === undefined
   )
     result.storageIncluded = true;
+  if (hasNoAssignedParking(description)) {
+    delete result.garage;
+    delete result.garageIncluded;
+    delete result.garageAndStorage;
+    delete result.parkingCount;
+    delete result.parkingUnitPrice;
+  }
   return result;
 }

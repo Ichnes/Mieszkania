@@ -6,15 +6,16 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
     <div className="panel stats-activity">
       <div className="stats-card-heading">
         <div>
-          <p className="eyebrow">Przepływ ofert</p>
-          <h3>Wykryte i zarchiwizowane tygodniowo</h3>
+          <p className="eyebrow">Rynek w czasie</p>
+          <h3>Ceny i liczba ofert — tygodniowo</h3>
         </div>
         <span>{stats.periodDays} dni</span>
       </div>
       <div className="stats-chart-legend">
         <span className="is-new">Wykryte przez aplikację</span>
         <span className="is-archived">Zarchiwizowane</span>
-        <span className="is-price">Mediana ceny wykrytych</span>
+        <span className="is-price">Mediana cen wykrytych</span>
+        <span className="is-average">Średnia cen wszystkich aktywnych</span>
       </div>
       <ResponsiveContainer width="100%" height={230}>
         <LineChart data={stats.activity}>
@@ -45,7 +46,9 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
                 ? "Wykryte"
                 : name === "archivedListings"
                   ? "Zarchiwizowane"
-                  : "Mediana zł/m²",
+                  : name === "averagePricePerSqm"
+                    ? "Średnia aktywnych (zł/m²)"
+                    : "Mediana wykrytych (zł/m²)",
             ]}
           />
           <Line
@@ -71,10 +74,22 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
             stroke="#df9a3f"
             strokeWidth={2}
             dot={false}
-            connectNulls
+          />
+          <Line
+            yAxisId="price"
+            type="monotone"
+            dataKey="averagePricePerSqm"
+            stroke="#6e72cd"
+            strokeWidth={2}
+            dot={false}
           />
         </LineChart>
       </ResponsiveContainer>
+      <p className="muted">
+        Ceny za m². Średnia obejmuje oferty aktywne na koniec tygodnia (w bieżącym — do teraz), w
+        wybranym zakresie filtrów. Korzysta z zapisanej historii cen; bez historii używa dostępnej
+        ceny. Mediana dotyczy ofert wykrytych w danym tygodniu.
+      </p>
     </div>
   );
 }

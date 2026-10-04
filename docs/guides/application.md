@@ -237,8 +237,8 @@ pozwala go odświeżyć. Pobieranie może potrwać kilka minut. Import aktualizu
 odcinki, więc ponowne uruchomienie nie tworzy ich duplikatów.
 Poniżej dodasz pojedynczą ofertę z dowolnego obsługiwanego portalu lub dane cen RCN.
 RCN jest opcjonalne: panel pokazuje liczbę już zapisanych transakcji i datę ostatniego
-zapisu. Odczyt statusu można ponowić po błędzie. W Aktualizacji rozwiń **Warszawa i porządek
-w bazie**, aby zobaczyć rzadziej używane narzędzia; **Otwórz opcjonalny import** prowadzi do RCN.
+zapisu. Odczyt statusu można ponowić po błędzie. W Aktualizacji sekcja **Ulice i ceny transakcyjne**
+zawiera dopasowanie ulic i przycisk **Importuj transakcje**, prowadzący do RCN.
 Przycisk **Wróć do aktualizacji** prowadzi do głównego panelu pobierania ofert.
 
 W szczegółach oferty **Tab** porusza się po elementach okna, a **Escape** je zamyka
@@ -476,7 +476,11 @@ Koszt parkingu „dwa miejsca po 35 000 zł” to 70 000 zł, a „dwóch miejsc
 W szczegółach oferty **Łączna cena zakupu** pokazuje cenę mieszkania z dodatkami,
 a **Cena całkowita / m²** dzieli tę kwotę przez metraż mieszkania. Zwykłe **PLN/m2**
 nadal pokazuje cenę samego mieszkania za metr; brak metrażu daje kreskę.
-Opcjonalny zakup miejsc oznacza ich dostępność. Mieszkanie narożne jest traktowane
+Opcjonalny zakup konkretnego miejsca oferowanego z mieszkaniem oznacza jego dostępność.
+Jednoznaczna informacja, że miejsce nie przynależy do mieszkania, oznacza **Brak miejsca postojowego**,
+także gdy opis wspomina możliwość późniejszego dokupienia lub wynajęcia miejsca w inwestycji.
+Taka możliwość nie daje punktów za garaż i nie dolicza ceny miejsca do zakupu.
+Ręczne ustalenie po rozmowie ze sprzedawcą zachowuje pierwszeństwo. Mieszkanie narożne jest traktowane
 jako co najmniej dwustronne, ale konkretne kierunki muszą wynikać z opisu.
 W punktacji wymarzonego mieszkania brak windy na parterze daje 0 pkt zamiast −20;
 obecna winda nadal daje +21 pkt. Reguła obejmuje też parter rozpoznany z opisu.
@@ -508,9 +512,19 @@ zmienia zdjęcie. Dwuklik przełącza powiększenie. Obrót telefonu dopasowuje 
 nowego ekranu i resetuje powiększenie. Na telefonie pełny ekran zajmuje obszar aplikacji;
 paski systemowe przeglądarki mogą pozostać widoczne.
 
+## Historyczna średnia cen
+
+W statystykach wykres **Ceny i liczba ofert — tygodniowo** pokazuje wykryte oferty,
+archiwizacje, medianę cen wykrytych oraz średnią cen wszystkich ofert aktywnych
+na koniec danego tygodnia (dla bieżącego tygodnia: do teraz). Obie ceny są za m².
+Średnia uwzględnia zapisane zmiany cen, daty wykrycia i archiwizacji oraz zakres filtrów.
+Jeśli oferta nie ma historii cen, używana jest jej dostępna cena; nie odtwarzamy
+niezapisanych okresów wcześniejszej aktywności. Brak danych pozostaje przerwą na wykresie.
+
 ## Potencjalne wcześniejsze oferty
 
-W **Aktualizacji** przycisk **Sprawdź ponownie dodane** porównuje aktywne ogłoszenia
+W **Duplikatach** są zakładki **Duplikaty** i **Oferty wystawione ponownie**.
+Pierwsza zawiera weryfikację grup oraz **Znajdź i połącz**; w drugiej przycisk **Sprawdź oferty** porównuje aktywne ogłoszenia
 z archiwum. Wyniki obejmują mocne dopasowania oraz osobną sekcję
 **Potencjalne wcześniejsze oferty**. Propozycja może pojawić się mimo zmienionego
 opisu, gdy zgadzają się ulica, metraż, pokoje i piętro albo opis i lokalizacja są
@@ -590,7 +604,7 @@ liter i interpunkcję. Różnica metrażu nie może przekroczyć 2% mniejszego m
 Bez znanego dodatniego metrażu automat nie łączy ofert. Limit 2% znanych metraży
 obowiązuje także przy ręcznym zatwierdzaniu duplikatu.
 Pary oznaczone jako różne oferty pozostają rozdzielone.
-Reguła działa podczas przetwarzania ofert i skanowania duplikatów w Aktualizacji.
+Reguła działa podczas przetwarzania ofert i skanowania w zakładce **Duplikaty**.
 
 W szczegółach oferty zakładka **Duplikaty** pokazuje połączone ogłoszenia i kandydatów.
 **Potencjalne duplikaty** są też dostępne w **Przeglądzie**, nad dojazdami do pracy,

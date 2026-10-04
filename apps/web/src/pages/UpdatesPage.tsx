@@ -3,7 +3,6 @@ import {
   ClipboardCheck,
   Columns3,
   DatabaseZap,
-  GitCompareArrows,
   LoaderCircle,
   MapPin,
   RefreshCw,
@@ -16,7 +15,6 @@ import { OtodomResume } from "../features/imports/OtodomResume";
 import { DiscoveryProgress } from "../features/imports/DiscoveryProgress";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatQueueAttemptTime, formatStaleRefreshTime } from "../features/imports/lib/queue";
-import { RelistingMatches } from "../features/relistings/RelistingMatches";
 
 export function UpdatesPage({
   model,
@@ -57,16 +55,7 @@ export function UpdatesPage({
     | "enrichListingsFromStreets"
     | "isEnrichingListingsFromStreets"
     | "streetEnrichmentResult"
-    | "runDuplicateAutoMerge"
-    | "isRunningDuplicateAutoMerge"
-    | "duplicateAutoMergeResult"
-    | "runRelistingScan"
-    | "isScanningRelistedListings"
-    | "relistingScanResult"
-    | "openListing"
     | "rcnError"
-    | "duplicateAutoMergeError"
-    | "relistingScanError"
   >;
 }) {
   const {
@@ -104,16 +93,7 @@ export function UpdatesPage({
     enrichListingsFromStreets,
     isEnrichingListingsFromStreets,
     streetEnrichmentResult,
-    runDuplicateAutoMerge,
-    isRunningDuplicateAutoMerge,
-    duplicateAutoMergeResult,
-    runRelistingScan,
-    isScanningRelistedListings,
-    relistingScanResult,
-    openListing,
     rcnError,
-    duplicateAutoMergeError,
-    relistingScanError,
   } = model;
   return (
     <>
@@ -571,14 +551,13 @@ export function UpdatesPage({
             </div>
           </details>
 
-          <details className="panel data-tools">
-            <summary className="data-tools-heading">
+          <section className="panel data-tools">
+            <div className="data-tools-heading">
               <div>
-                <p className="eyebrow">Dane pomocnicze</p>
-                <h2>Warszawa i porządek w bazie</h2>
+                <p className="eyebrow">Dane lokalne</p>
+                <h2>Ulice i ceny transakcyjne</h2>
               </div>
-              <p className="muted">Rzadziej używane operacje zebrane w jednym miejscu.</p>
-            </summary>
+            </div>
             <div className="data-tool-grid">
               <article>
                 <DatabaseZap size={20} aria-hidden="true" />
@@ -587,7 +566,7 @@ export function UpdatesPage({
                   <p>Aktualizuje rzeczywiste ceny sprzedaży mieszkań.</p>
                 </div>
                 <Link className="action-button secondary-button" to="/import">
-                  Otwórz opcjonalny import
+                  Importuj transakcje
                 </Link>
                 {rcnResult ? (
                   <small>{rcnResult.importedTransactions ?? 0} nowych transakcji</small>
@@ -613,111 +592,9 @@ export function UpdatesPage({
                   <small>{streetEnrichmentResult.matched} dopasowanych ofert</small>
                 ) : null}
               </article>
-              <article>
-                <GitCompareArrows size={20} aria-hidden="true" />
-                <div>
-                  <h3>Połącz duplikaty</h3>
-                  <p>
-                    Łączy oferty z identycznymi pierwszymi 25 słowami opisu, także z jednego
-                    portalu.
-                  </p>
-                </div>
-                <button
-                  className="action-button secondary-button"
-                  type="button"
-                  onClick={() => void runDuplicateAutoMerge()}
-                  disabled={isRunningDuplicateAutoMerge}
-                >
-                  {isRunningDuplicateAutoMerge ? "Porównuję…" : "Znajdź i połącz"}
-                </button>
-                {duplicateAutoMergeResult ? (
-                  <small>
-                    {duplicateAutoMergeResult.merged} połączonych z{" "}
-                    {duplicateAutoMergeResult.checked} sprawdzonych
-                  </small>
-                ) : null}
-              </article>
-              <article>
-                <RotateCcw size={20} aria-hidden="true" />
-                <div>
-                  <h3>Sprawdź ponownie dodane oferty</h3>
-                  <p>
-                    Porównuje aktywne ogłoszenia z archiwum, rozpoznaje ponowne wystawienia i
-                    pokazuje potencjalne wcześniejsze oferty do sprawdzenia.
-                  </p>
-                </div>
-                <button
-                  className="action-button secondary-button"
-                  type="button"
-                  onClick={() => void runRelistingScan()}
-                  disabled={isScanningRelistedListings}
-                >
-                  {isScanningRelistedListings ? "Sprawdzam…" : "Sprawdź ponownie dodane"}
-                </button>
-                {relistingScanResult ? (
-                  <small>
-                    {relistingScanResult.matched} dopasowań · {relistingScanResult.potentialCount}{" "}
-                    propozycji z archiwum
-                  </small>
-                ) : null}
-              </article>
             </div>
-            {relistingScanResult ? (
-              <section className="relisting-results" aria-live="polite">
-                <div className="relisting-results-heading">
-                  <div>
-                    <h3>Ponownie dodane oferty</h3>
-                    <p className="muted">
-                      Sprawdzono {relistingScanResult.checkedActive} aktywnych i{" "}
-                      {relistingScanResult.checkedArchived} archiwalnych ofert.
-                    </p>
-                  </div>
-                  <span>{relistingScanResult.matched} dopasowań</span>
-                </div>
-                {relistingScanResult.items.length > 0 ? (
-                  <RelistingMatches items={relistingScanResult.items} onOpenListing={openListing} />
-                ) : (
-                  <p className="muted relisting-empty">
-                    Nie znaleziono mocnych dopasowań do wcześniejszych ofert.
-                  </p>
-                )}
-                <div className="relisting-results-heading">
-                  <div>
-                    <h3>Potencjalne wcześniejsze oferty</h3>
-                    <p className="muted">
-                      Te oferty mogły już być w naszej bazie. Porównaj je z archiwum — podobieństwo
-                      nie potwierdza ponownego wystawienia.
-                    </p>
-                  </div>
-                  <span>{relistingScanResult.potentialCount} propozycji</span>
-                </div>
-                {relistingScanResult.potentialItems.length > 0 ? (
-                  <>
-                    <RelistingMatches
-                      items={relistingScanResult.potentialItems}
-                      potential
-                      onOpenListing={openListing}
-                    />
-                    {relistingScanResult.potentialCount >
-                      relistingScanResult.potentialItems.length && (
-                      <p className="muted">
-                        Pokazano {relistingScanResult.potentialItems.length} z{" "}
-                        {relistingScanResult.potentialCount} propozycji. Pozostałe są dostępne w
-                        szczegółach odpowiednich ofert.
-                      </p>
-                    )}
-                  </>
-                ) : (
-                  <p className="muted relisting-empty">Brak dodatkowych propozycji z archiwum.</p>
-                )}
-              </section>
-            ) : null}
-            {rcnError || duplicateAutoMergeError || relistingScanError || queueError ? (
-              <p className="error-text">
-                {rcnError || duplicateAutoMergeError || relistingScanError || queueError}
-              </p>
-            ) : null}
-          </details>
+            {rcnError || queueError ? <p className="error-text">{rcnError || queueError}</p> : null}
+          </section>
         </section>
       ) : null}
     </>

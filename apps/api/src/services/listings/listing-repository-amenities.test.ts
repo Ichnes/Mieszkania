@@ -1,5 +1,40 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { extractAdditionalPurchaseCosts } from "./purchase-costs";
+
+test("unassigned parking with a rental or future purchase option is not owned parking", () => {
+  const description =
+    "Do mieszkania nie przynależy na stałe miejsce postojowe, jednak na terenie inwestycji istnieje możliwość bezproblemowego dokupienia lub wynajęcia miejsca w dogodnym garażu podziemnym.";
+  for (const text of [
+    description,
+    "Brak własnego miejsca postojowego. Można wynająć miejsce w garażu.",
+  ]) {
+    const features = extractFeatures({
+      description: text,
+      snapshotPayload: { jsonLd: { additionalProperty: [{ name: "Garaż", value: "tak" }] } },
+    });
+    assert.equal(resolveListingAmenities(features, {}, text).garage, false);
+    assert.equal(
+      features.some((f) =>
+        ["garage", "owned_parking", "outdoor_parking", "estate_parking"].includes(f.key),
+      ),
+      false,
+    );
+    assert.ok(buildAmenityBadges(features).includes("Brak miejsca postojowego"));
+    assert.equal(resolveListingAmenities(features, { garage: true }, text).garage, true);
+  }
+  assert.equal(
+    extractAdditionalPurchaseCosts(description + " Miejsce w garażu można dokupić za 50000 zł.")
+      .garage,
+    undefined,
+  );
+  const owned =
+    "Do mieszkania przynależy miejsce w garażu podziemnym. Dodatkowo można wynająć drugie miejsce.";
+  assert.equal(
+    resolveListingAmenities(extractFeatures({ description: owned }), {}, owned).garage,
+    true,
+  );
+});
 
 test("declined optional parking spaces are available and counted", () => {
   const features = extractFeatures({

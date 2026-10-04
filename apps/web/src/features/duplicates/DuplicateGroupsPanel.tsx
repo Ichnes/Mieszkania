@@ -106,8 +106,7 @@ export function DuplicateGroupsPanel({
           </article>
         </div>
         <div className="duplicate-toolbar">
-          <label>
-            <span>Rozbieżności danych</span>
+          <label className="duplicate-conflict-toggle">
             <input
               type="checkbox"
               checked={onlyConflicts}
@@ -116,7 +115,7 @@ export function DuplicateGroupsPanel({
                 setPage(1);
               }}
             />
-            Tylko grupy z konfliktami
+            <span>Tylko grupy z rozbieżnościami</span>
           </label>
           <label>
             <span>Szukaj w pobranych grupach</span>

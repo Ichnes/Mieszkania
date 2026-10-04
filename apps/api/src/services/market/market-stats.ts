@@ -1,3 +1,4 @@
+import { marketActivitySql } from "./market-activity";
 import { normalizeMarketLocation, marketLocationJoinSql } from "./market-locations";
 import {
   mapPriceSample,
@@ -145,20 +146,8 @@ async function computeMarketStats(
         new_listings: string;
         archived_listings: string;
         median_price: string | null;
-      }>(`
-      select
-        to_char(w::date, 'YYYY-MM-DD') week,
-        count(l.id) filter (where l.first_seen_at >= w and l.first_seen_at < w + interval '1 week')::text new_listings,
-        count(l.id) filter (where l.removed_at >= w and l.removed_at < w + interval '1 week' and coalesce(l.exclusion_reason,'') <> 'manual_rejected')::text archived_listings,
-        percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= w and l.first_seen_at < w + interval '1 week' and l.price_amount>0 and l.area_sqm > 0)::text median_price
-      from generate_series(date_trunc('week', current_date - make_interval(days => ${periodDays - 1})), date_trunc('week', current_date), interval '1 week') w
-      left join listings l
-        on lower(l.city) = 'warszawa'
-        and ${aliasedStatsFilters}
-        and ((l.first_seen_at >= w and l.first_seen_at < w + interval '1 week') or (l.removed_at >= w and l.removed_at < w + interval '1 week'))
-      group by w
-      order by w
-    `),
+        average_price: string | null;
+      }>(marketActivitySql(aliasedStatsFilters, periodDays)),
       db.query<{ label: string; count: string } & PriceSampleRow>(
         `select bucket.label, count(*)::text count from (select case when l.price_amount/nullif(l.area_sqm,0) < 15000 then 'poniżej 15 tys.' when l.price_amount/nullif(l.area_sqm,0) < 18000 then '15–18 tys.' when l.price_amount/nullif(l.area_sqm,0) < 21000 then '18–21 tys.' when l.price_amount/nullif(l.area_sqm,0) < 24000 then '21–24 tys.' when l.price_amount/nullif(l.area_sqm,0) < 28000 then '24–28 tys.' else '28 tys. i więcej' end label, case when l.price_amount/nullif(l.area_sqm,0) < 15000 then 1 when l.price_amount/nullif(l.area_sqm,0) < 18000 then 2 when l.price_amount/nullif(l.area_sqm,0) < 21000 then 3 when l.price_amount/nullif(l.area_sqm,0) < 24000 then 4 when l.price_amount/nullif(l.area_sqm,0) < 28000 then 5 else 6 end position from listings l where lower(l.city)='warszawa' and l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0 and ${aliasedStatsFilters}) bucket group by bucket.label order by min(bucket.position)`,
       ),
@@ -286,7 +275,8 @@ async function computeMarketStats(
         week: row.week,
         newListings: Number(row.new_listings ?? 0),
         archivedListings: Number(row.archived_listings ?? 0),
-        medianPricePerSqm: Number(row.median_price ?? 0),
+        medianPricePerSqm: row.median_price === null ? null : Number(row.median_price),
+        averagePricePerSqm: row.average_price === null ? null : Number(row.average_price),
       })),
       priceDistribution: distribution.rows.map((row) => ({
         label: row.label,

@@ -91,7 +91,8 @@ export type MarketStatsResponse = {
     week: string;
     newListings: number;
     archivedListings: number;
-    medianPricePerSqm: number;
+    medianPricePerSqm: number | null;
+    averagePricePerSqm: number | null;
   }>;
   priceDistribution: Array<{ label: string; count: number; sharePercent: number }>;
   segments: {

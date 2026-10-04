@@ -1,4 +1,5 @@
 import { visibleRelistingCandidateSql } from "./listing-relistings";
+import { hasNoAssignedParking } from "./parking-availability";
 import { join } from "node:path";
 import { storageRoot } from "../../config";
 import { createPersistentScoreCache, scoreSignature } from "./persistent-score-cache";
@@ -1737,13 +1738,15 @@ export function resolveListingAmenities(
     lift: manual.lift ?? (has("no_lift") ? false : has("lift") ? true : undefined),
     garage:
       manual.garage ??
-      (portalGarage
-        ? true
-        : noGarage || has("no_garage")
-          ? false
-          : has("garage") || has("garage_price")
-            ? true
-            : undefined),
+      (hasNoAssignedParking(description)
+        ? false
+        : portalGarage
+          ? true
+          : noGarage || has("no_garage")
+            ? false
+            : has("garage") || has("garage_price")
+              ? true
+              : undefined),
   };
 }
 
@@ -2203,7 +2206,7 @@ function buildListingSummary(
   }
 
   if (latestEvent.event_type === "price_increase") {
-    return `Cena wzrosla wzgledem poprzedniego snapshotu.${imageFragment}${manualFragment}`;
+    return `Cena wzrosła od poprzedniego sprawdzenia.${imageFragment}${manualFragment}`;
   }
 
   return `Oferta aktywna i monitorowana. Ostatni znany status: ${latestEvent.event_type}.${imageFragment}${manualFragment}`;
@@ -2349,7 +2352,7 @@ export function extractFeatures(input: {
   if (garagePrice) {
     features.push({
       key: "garage_price",
-      label: "Cena garazu",
+      label: "Cena garażu",
       value: garagePrice,
       source: "description",
     });
@@ -2367,7 +2370,7 @@ export function extractFeatures(input: {
   if (maintenanceFee) {
     features.push({
       key: "fees",
-      label: "Czynsz / oplaty",
+      label: "Czynsz / opłaty",
       value: maintenanceFee,
       source: "description",
     });
@@ -2484,9 +2487,31 @@ export function extractFeatures(input: {
   }
 
   const withoutLift = structuredWithoutLift || (explicitlyWithoutLift && !structuredWithLift);
+  const withoutParking = hasNoAssignedParking(input.description);
+  if (withoutParking)
+    features.push({
+      key: "no_garage",
+      label: "Brak miejsca postojowego",
+      value: "tak",
+      source: "description",
+    });
   return dedupeFeatures(
-    [...payloadFeatures, ...features].filter((feature) =>
-      withoutLift ? feature.key !== "lift" : structuredWithLift ? feature.key !== "no_lift" : true,
+    [...payloadFeatures, ...features].filter(
+      (feature) =>
+        (!withoutParking ||
+          ![
+            "garage",
+            "garage_price",
+            "parking_price",
+            "owned_parking",
+            "estate_parking",
+            "outdoor_parking",
+          ].includes(feature.key)) &&
+        (withoutLift
+          ? feature.key !== "lift"
+          : structuredWithLift
+            ? feature.key !== "no_lift"
+            : true),
     ),
   );
 }
@@ -2785,7 +2810,7 @@ export function extractFeaturesFromPayload(payload?: Record<string, unknown>): L
     } else if (normalized.includes("czynsz")) {
       features.push({ key: "fees", label: "Czynsz", value, source: "payload" });
     } else if (normalized.includes("pietro")) {
-      features.push({ key: "floor", label: "Pietro", value, source: "payload" });
+      features.push({ key: "floor", label: "Piętro", value, source: "payload" });
     } else if (normalized.includes("informacje dodatkowe")) {
       features.push({ key: "extras", label: "Informacje dodatkowe", value, source: "payload" });
     } else if (normalized.includes("rodzaj zabudowy")) {

@@ -1174,10 +1174,15 @@
 .listing-description {
   min-width: 0;
   overflow: hidden;
-  line-height: 1.62;
+  line-height: 1.4;
 }
 .listing-description p {
   white-space: normal;
+  margin: 0;
+  line-height: 1.4;
+}
+.listing-description {
+  gap: 5px;
 }
 @media (max-width: 600px) {
   .stats-filter-diff {
@@ -1199,4 +1204,107 @@
   color: var(--ink);
   background: var(--surface-muted);
   border-color: var(--line);
+}
+
+.duplicate-workspace {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+.duplicate-workspace .panel {
+  margin: 0;
+}
+.duplicate-back-link {
+  color: var(--brand-strong);
+  text-decoration: none;
+  width: fit-content;
+  font-size: 0.85rem;
+}
+.duplicate-back-link:hover {
+  text-decoration: underline;
+}
+.duplicate-workspace .duplicate-toolbar {
+  grid-template-columns: minmax(180px, 0.8fr) minmax(180px, 1fr) minmax(180px, 1fr);
+  align-items: end;
+}
+.duplicate-workspace .duplicate-toolbar .duplicate-conflict-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+}
+.duplicate-conflict-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  flex: 0 0 auto;
+}
+@media (max-width: 750px) {
+  .duplicate-workspace .duplicate-toolbar {
+    grid-template-columns: 1fr;
+  }
+}
+.duplicate-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 8px;
+}
+.duplicate-tabs button {
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--surface-muted);
+  color: var(--ink);
+  cursor: pointer;
+  font: inherit;
+}
+.duplicate-tabs button[aria-current="page"] {
+  background: var(--brand);
+  color: white;
+}
+.duplicate-scan-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+.duplicate-scan-actions > div {
+  flex: 1;
+  min-width: 200px;
+}
+.duplicate-scan-actions h3,
+.duplicate-scan-actions p {
+  margin: 0;
+}
+.duplicate-scan-actions p {
+  color: var(--ink-soft);
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+.duplicate-scan-actions > small {
+  flex-basis: 100%;
+}
+section.data-tools .data-tools-heading {
+  cursor: default;
+}
+section.data-tools .data-tool-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.stats-chart-legend .is-average::before {
+  background: #6e72cd;
+}
+@media (max-width: 650px) {
+  section.data-tools .data-tool-grid {
+    grid-template-columns: 1fr;
+  }
+  .duplicate-tabs button {
+    flex: 1;
+    font-size: 0.85rem;
+    padding: 10px;
+  }
+  .duplicate-scan-actions > .action-button {
+    width: 100%;
+  }
 }

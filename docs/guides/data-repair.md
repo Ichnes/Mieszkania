@@ -1,5 +1,21 @@
 # Uzupełnianie danych z portali i duplikatów
 
+## Korekta sklejonych pięter
+
+Parser Domiporty odczytuje `7/13` jako piętro 7, zamiast sklejać liczby do 713.
+Zachowane błędne piętra można zweryfikować z archiwalnym HTML i opisem:
+
+```powershell
+node --import tsx apps/api/src/scripts/maintenance/repair-listing-floors.ts
+node --import tsx apps/api/src/scripts/maintenance/repair-listing-floors.ts --apply
+```
+
+Pierwsze polecenie zapisuje raport, drugie stosuje potwierdzone poprawki w transakcji.
+Wymagane jest połączenie `DATABASE_URL` z bazą aplikacji. W Dockerze użyj
+`docker compose exec -T api` przed poleceniem. Raport z wartościami przed zmianą
+i źródłem potwierdzenia zostaje w `storage/maintenance/`. Niejednoznaczne rekordy
+pozostają bez zmian; skrypt nie rozdziela cyfr na podstawie domysłu.
+
 Nowy import i pełna aktualizacja czytają piętro z tabeli/nagłówka Gratki, parametry `ad.ad`
 OLX oraz współrzędne JSON-LD, mikroformatów i mapy Domiporta/Nieruchomości-online.
 Punkt portalu może być przybliżony; samo jego odczytanie nie potwierdza położenia budynku.
