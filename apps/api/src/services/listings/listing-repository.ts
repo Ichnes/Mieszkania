@@ -1,4 +1,12 @@
 import { readMonthlyFee } from "./maintenance-fee";
+import { dashboardPriceChangesSql } from "./dashboard-price-changes";
+import {
+  dashboardPeriods,
+  dashboardNewListingsSql,
+  dashboardBaselineSql,
+  type DashboardBaseline,
+  type DashboardPeriodCounts,
+} from "./dashboard-periods";
 import { visibleRelistingCandidateSql } from "./listing-relistings";
 import { hasNoAssignedParking, readAmenityAccess, hasStreetParking } from "./parking-availability";
 import { getDescriptionMentionStatus } from "@mieszkania/shared";
@@ -1194,10 +1202,10 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
   return withDb(async (db) => {
     const [
       activeListingsResult,
-      weeklyNewListingsResult,
+      newListingsResult,
       priceChangedListingsResult,
       averageWarsawPricePerSqmResult,
-      weeklyBaselineResult,
+      baselineResults,
     ] = await Promise.all([
       db.query<{ count: string }>(
         `
@@ -1212,36 +1220,16 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
         `,
         [[settings.searchContract.city]],
       ),
-      db.query<{ count: string }>(
-        `
-          select count(*)::text as count
-          from listings l
-          where l.status = 'active'
-            and l.city = any($1::text[])
-            and l.hidden_duplicate_of_id is null
-            and coalesce(l.rooms, 0) <> 2
-            and (l.price_amount is null or l.price_amount <= ${maximumVisiblePrice})
-            and (l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})
-            and l.first_seen_at >= now() - interval '7 days'
-        `,
-        [[settings.searchContract.city]],
-      ),
-      db.query<{ count: string }>(
-        `
-          select count(distinct pe.listing_id)::text as count
-          from price_events pe
-          join listings l on l.id = pe.listing_id
-          where pe.event_type in ('price_drop', 'price_increase')
-            and l.status = 'active'
-            and l.city = any($1::text[])
-            and l.hidden_duplicate_of_id is null
-            and coalesce(l.rooms, 0) <> 2
-            and (l.price_amount is null or l.price_amount <= ${maximumVisiblePrice})
-            and (l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})
-            and pe.changed_at >= now() - interval '7 days'
-        `,
-        [[settings.searchContract.city]],
-      ),
+      db.query<DashboardPeriodCounts>(dashboardNewListingsSql, [
+        settings.searchContract.city,
+        maximumVisiblePrice,
+        minimumVisibleArea,
+      ]),
+      db.query<{ days7: string; days30: string; days180: string }>(dashboardPriceChangesSql, [
+        settings.searchContract.city,
+        maximumVisiblePrice,
+        minimumVisibleArea,
+      ]),
       db.query<{ average: string | null }>(
         `
           select round(avg(price_amount / nullif(area_sqm, 0)))::text as average
@@ -1255,88 +1243,64 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
             and area_sqm >= ${minimumVisibleArea}
         `,
       ),
-      db.query<{ active_count: string; average: string | null; has_history: boolean }>(
-        `
-          with cutoff as (
-            select now() - interval '7 days' as at
-          ),
-          historical as (
-            select
-              l.*,
-              coalesce(
-                (
-                  select pe.previous_price_amount
-                  from price_events pe, cutoff
-                  where pe.listing_id = l.id
-                    and pe.changed_at > cutoff.at
-                  order by pe.changed_at asc
-                  limit 1
-                ),
-                l.price_amount
-              ) as historical_price
-            from listings l, cutoff
-            where l.first_seen_at <= cutoff.at
-              and (l.removed_at is null or l.removed_at > cutoff.at)
-              and (l.hidden_at is null or l.hidden_at > cutoff.at)
-          )
-          select
-            count(*) filter (
-              where history.city = any($1::text[])
-                and coalesce(history.rooms, 0) <> 2
-                and (history.historical_price is null or history.historical_price <= ${maximumVisiblePrice})
-                and (history.area_sqm is null or history.area_sqm >= ${minimumVisibleArea})
-            )::text as active_count,
-            round(avg(history.historical_price / nullif(history.area_sqm, 0)) filter (
-              where lower(history.city) = 'warszawa'
-                and coalesce(history.rooms, 0) <> 2
-                and history.historical_price > 0
-                and history.historical_price <= ${maximumVisiblePrice}
-                and history.area_sqm >= ${minimumVisibleArea}
-            ))::text as average,
-            exists (select 1 from historical) as has_history
-          from historical history
-        `,
-        [[settings.searchContract.city]],
+      Promise.all(
+        dashboardPeriods.map(async (days) => {
+          const result = await db.query<DashboardBaseline>(dashboardBaselineSql, [
+            settings.searchContract.city,
+            maximumVisiblePrice,
+            minimumVisibleArea,
+            days,
+          ]);
+          return result.rows[0];
+        }),
       ),
     ]);
 
-    const weeklyBaseline = weeklyBaselineResult.rows[0];
     const currentActiveCount = Number(activeListingsResult.rows[0]?.count ?? 0);
     const currentAveragePricePerSqm = Number(averageWarsawPricePerSqmResult.rows[0]?.average ?? 0);
-    const activeTrend = weeklyBaseline?.has_history
-      ? formatWeeklyDelta(currentActiveCount - Number(weeklyBaseline.active_count ?? 0), "ofert")
-      : "historia krótsza niż 7 dni";
-    const averageTrend =
-      weeklyBaseline?.has_history && weeklyBaseline.average !== null
-        ? formatWeeklyDelta(currentAveragePricePerSqm - Number(weeklyBaseline.average), "zł/m²")
-        : "historia krótsza niż 7 dni";
-
-    return [
-      {
-        label: "Aktywne oferty",
-        value: formatInteger(activeListingsResult.rows[0]?.count ?? "0"),
-        description:
-          "po normalizacji i deduplikacji w regionie warszawskim, z porównaniem do stanu sprzed 7 dni",
-        trend: activeTrend,
+    const statsByPeriod = dashboardPeriods.map((days, index): DashboardStat[] => {
+      const baseline = baselineResults[index];
+      const activeTrend = baseline?.has_history
+        ? formatPeriodDelta(currentActiveCount - Number(baseline.active_count ?? 0), "ofert", days)
+        : `historia krótsza niż ${days} dni`;
+      const averageTrend =
+        baseline?.has_history && baseline.average !== null
+          ? formatPeriodDelta(currentAveragePricePerSqm - Number(baseline.average), "zł/m²", days)
+          : `brak porównania sprzed ${days} dni`;
+      const key = `days${days}` as keyof DashboardPeriodCounts;
+      return [
+        {
+          label: "Aktywne oferty",
+          value: formatInteger(String(currentActiveCount)),
+          description: `aktywne, niezdublowane oferty w zakresie poszukiwań, z porównaniem do stanu sprzed ${days} dni`,
+          trend: activeTrend,
+        },
+        {
+          label: `Nowe / ${days} dni`,
+          value: formatInteger(newListingsResult.rows[0]?.[key] ?? "0"),
+          description: `aktywne, niezdublowane oferty pierwszy raz znalezione w ostatnich ${days} dniach`,
+        },
+        {
+          label: `Zmiany cen / ${days} dni`,
+          value: formatInteger(priceChangedListingsResult.rows[0]?.[key] ?? "0"),
+          description: `aktywne, niezdublowane oferty, których cena zmieniła się w ostatnich ${days} dniach`,
+        },
+        {
+          label: "Średnia cena / m²",
+          value: `${formatInteger(String(currentAveragePricePerSqm))} zł`,
+          description: `aktywne, niezdublowane oferty z Warszawy, z porównaniem do stanu sprzed ${days} dni`,
+          trend: averageTrend,
+        },
+      ];
+    });
+    return statsByPeriod[0].map((stat, index) => ({
+      ...stat,
+      periodValues: {
+        7: statsByPeriod[0][index],
+        30: statsByPeriod[1][index],
+        180: statsByPeriod[2][index],
       },
-      {
-        label: "Nowe / 7 dni",
-        value: formatInteger(weeklyNewListingsResult.rows[0]?.count ?? "0"),
-        description: "aktywne, niezdublowane oferty pierwszy raz znalezione w ostatnich 7 dniach",
-      },
-      {
-        label: "Zmiany cen / 7 dni",
-        value: formatInteger(priceChangedListingsResult.rows[0]?.count ?? "0"),
-        description: "aktywne oferty, których cena zmieniła się w ostatnich 7 dniach",
-      },
-      {
-        label: "Średnia cena / m²",
-        value: `${formatInteger(averageWarsawPricePerSqmResult.rows[0]?.average ?? "0")} zł`,
-        description:
-          "aktywne, niezdublowane oferty z Warszawy, z porównaniem do stanu sprzed 7 dni",
-        trend: averageTrend,
-      },
-    ];
+    }));
   });
 }
 
@@ -3107,10 +3071,10 @@ function formatInteger(value: string) {
   return integerFormatter.format(Number(value));
 }
 
-function formatWeeklyDelta(delta: number, unit: string) {
+function formatPeriodDelta(delta: number, unit: string, days: number) {
   if (!Number.isFinite(delta) || delta === 0) return "bez zmian vs 7 dni temu";
   const arrow = delta > 0 ? "↑" : "↓";
-  return `${arrow} ${formatInteger(String(Math.abs(Math.round(delta))))} ${unit} vs 7 dni temu`;
+  return `${arrow} ${formatInteger(String(Math.abs(Math.round(delta))))} ${unit} vs ${days} dni temu`;
 }
 
 function normalizeListingContactStatus(value?: string | null): ListingContactStatus | null {

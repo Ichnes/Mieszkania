@@ -21,7 +21,7 @@ Identyczne przebiegi w obu kierunkach są deduplikowane. Kierunki tramwaju są g
 
 ## Aktualizacja zestawu przez programistę
 
-Zapisz kompletną odpowiedź Overpass kolei i eksport tramwajów w `.local/`.
+Zapisz kompletną odpowiedź Overpass kolei i eksport tramwajów w `.local/reference/maps/`.
 Zapytanie kolei:
 
 ```text
@@ -38,7 +38,7 @@ Tramwaje muszą zawierać `routes` z geometrią i `stops` (obsługiwany jest tak
 Następnie uruchom w katalogu projektu:
 
 ```sh
-node scripts/build-transport-snapshot.mjs .local/rail-osm.json .local/tramway.json
+node scripts/build-transport-snapshot.mjs .local/reference/maps/rail-osm.json .local/reference/maps/tramway.json
 npm run build
 ```
 

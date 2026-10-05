@@ -21,6 +21,17 @@ nie czekają na ranking ofert ani odczyt kalendarza. Przejście do innej strony 
 oczekujący odczyt listy i podsumowań; powrót odświeża dane z zachowaniem zastosowanych
 filtrów, sortowania i strony wyników.
 
+Każdy z czterech kafelków podsumowania ma własne przyciski **7 dni**, **30 dni**
+i **180 dni** (domyślnie 7). **Nowe** pokazuje aktywne oferty pierwszy raz znalezione
+w wybranym okresie, a **Zmiany cen** — aktywne oferty ze zmianą ceny; kilka zmian
+ceny jednej oferty liczy się raz. Oba wskaźniki pomijają duplikaty i uwzględniają
+miasto, cenę i metraż ustawione dla poszukiwań.
+
+W **Aktywnych ofertach** i **Średniej cenie / m²** główna liczba nadal opisuje
+obecny stan, a wybrany okres określa porównanie do stanu sprzed 7, 30 lub 180 dni.
+Średnia dotyczy Warszawy. Przy zbyt krótkiej historii pojawia się informacja
+o braku porównania. Okresy poszczególnych kafelków i strony Statystyki są niezależne.
+
 Aby zobaczyć dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
 i naciśnij **Filtruj**. Możesz też najpierw wybrać archiwum, a potem kliknąć
 **Ulubione**. Nagłówek **Archiwalne ulubione** potwierdza połączenie filtrów.

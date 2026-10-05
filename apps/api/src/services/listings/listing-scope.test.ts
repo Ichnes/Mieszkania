@@ -4,6 +4,8 @@ import fs from "node:fs";
 import { createDefaultFamilySettings } from "@mieszkania/shared";
 import { pool } from "../../db";
 import { getDashboardContext, getListingsPage, getMapListings } from "./listing-repository";
+import { dashboardPriceChangesSql } from "./dashboard-price-changes";
+import { dashboardNewListingsSql, dashboardBaselineSql } from "./dashboard-periods";
 
 test("unit price sorting uses current price divided by area before pagination with nulls last", async (t) => {
   const queries: string[] = [];
@@ -26,11 +28,11 @@ test("unit price sorting uses current price divided by area before pagination wi
 
 test("list, map and dashboard use current configured area, price and city", async (t) => {
   const settings = createDefaultFamilySettings();
-  const queries: string[] = [];
+  const queries: { sql: string; params?: unknown[] }[] = [];
   t.mock.method(fs, "existsSync", () => true);
-  t.mock.method(pool, "query", async (sql: string) => {
+  t.mock.method(pool, "query", async (sql: string, params?: unknown[]) => {
     if (sql.includes("select value from app_settings")) return { rows: [{ value: settings }] };
-    queries.push(sql);
+    queries.push({ sql, params });
     return { rows: [] };
   });
   for (const [area, price] of [
@@ -43,9 +45,14 @@ test("list, map and dashboard use current configured area, price and city", asyn
     await getListingsPage();
     await getMapListings();
     await getDashboardContext();
-    const scoped = queries.filter((sql) => sql.includes("area_sqm >="));
+    const scoped = queries.filter(({ sql }) => sql.includes("area_sqm >="));
     assert.ok(scoped.length >= 7);
-    for (const sql of scoped) {
+    for (const { sql, params } of scoped) {
+      if ([dashboardPriceChangesSql, dashboardNewListingsSql, dashboardBaselineSql].includes(sql)) {
+        assert.deepEqual(params?.slice(0, 3), [settings.searchContract.city, price, area]);
+        if (sql === dashboardBaselineSql) assert.ok([7, 30, 180].includes(Number(params?.[3])));
+        continue;
+      }
       assert.ok(sql.includes(`area_sqm >= ${area}`), sql.slice(0, 180));
       assert.ok(sql.includes(`<= ${price}`), sql.slice(0, 180));
     }

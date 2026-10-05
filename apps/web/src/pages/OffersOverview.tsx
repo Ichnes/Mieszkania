@@ -2,6 +2,7 @@ import { GitCompareArrows, Search } from "lucide-react";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatViewingDate } from "../shared/lib/format";
 import { LoadError } from "../shared/components/LoadError";
+import { OverviewStat } from "../features/listings/components/OverviewStat";
 
 export function OffersOverview({
   model,
@@ -95,11 +96,7 @@ export function OffersOverview({
             aria-busy={dashboardSection.status === "loading"}
           >
             {listingInsights.map((stat) => (
-              <div key={stat.label} className="hero-stat" title={stat.description}>
-                <span>{stat.label}</span>
-                <strong>{stat.value}</strong>
-                {stat.trend ? <small>{stat.trend}</small> : null}
-              </div>
+              <OverviewStat key={stat.label} stat={stat} />
             ))}
           </div>
 

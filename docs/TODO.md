@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Sprzątanie `.local` i okres zmian cen (2026-10-05)
+
+- [x] Zakres: usunąć zbędne artefakty, wydobyć wartościowe źródła i raporty, zachować profil OLX oraz możliwość obróbki PDF; dodatkowo przełącznik 7/30/180 dni w kafelku Zmiany cen na stronie głównej.
+- [x] Usunięto 20 964 pliki z planu sprzątania i dwie odpowiedzi błędów HTML mylnie nazwane JSON. `fresh-start` nie miał aktywnego procesu ani unikalnego kodu poza historią Git; jego lokalne ustawienia i TODO zachowano. Usunięto stare logi, zrzuty, rendery, zbędne skrypty i bibliotekę walidacji skilli.
+- [x] Zebrano 771 plików GIS do jednego pliku z 11 unikalnymi odpowiedziami. Zachowano cztery zweryfikowane archiwa ZIP: raporty napraw (21 plików), katalogi portali (5), próbki parserów (11), przydatne skrypty (34). Źródła map/PDF przeniesiono do `reference/`, bieżące wyniki do `runs/`; w głównym `.local` zostały dwie prywatne listy.
+- [x] Sprawdzono SHA-256 wszystkich 988 chronionych plików, przenosin i wpisów ZIP. Skorygowano ścieżki narzędzi PDF i dokumentacji. Odtworzenie MSI z zachowanych źródeł dało identyczny JSON mapy (143 obszary). Zasady kolejnych sesji dodano do AGENTS i [przewodnika](guides/local-artifacts.md).
+- [x] Rozszerzenie użytkownika: osobny przełącznik 7/30/180 dni w każdym z czterech kafelków. Nowe i zmiany cen liczą oferty z okresu; aktywne i średnia zachowują bieżącą wartość i zmieniają historyczny punkt porównania. Przełączanie bez dodatkowych odczytów API; dostępność, fokus i mobilne rozmiary przycisków.
+- [x] Weryfikacja: 447 testów zaliczonych, 12 środowiskowych pominiętych; oba nowe testy PostgreSQL zaliczone osobno na tabelach tymczasowych (okresy, granice, unikalne oferty, filtry, historyczne ceny/ukrycia/usunięcia i brak historii). Typecheck i build Docker poprawne. Playwright: wszystkie cztery kafelki, niezależność zakresów, brak dodatkowych żądań po kliknięciu, klawiatura, 1440/1280/390 px i ciemny motyw; brak przepełnień i błędów JS. Zmiana uruchomiona lokalnie.
+- [ ] Nadal pozostają wcześniejsze sprawy danych (357 pięter i konflikty historyczne); zachowano ich materiały. Nie wznawiano eksperymentu AI ani importów.
+
 ## Przegląd zawartości `.local` (2026-10-05)
 
 - [x] Zakres: ustalić, co jest zbędnym materiałem roboczym, a co należy zachować; bez kasowania ani przenoszenia plików.
@@ -7,7 +17,7 @@
 - [x] Sprawdzono odwołania kodu, konfiguracji i dokumentacji; rozpoznano kopię testowego projektu, logi/zrzuty, biblioteki, profil OLX, źródła map, prywatne decyzje i eksperyment AI. `backups/` obecnie pusty.
 - [x] Zapisano [podział i zasady porządkowania](guides/local-artifacts.md), w tym katalogi sesji, ręczną retencję zakończonych prac oraz wyjątki dla danych do zachowania.
 - [x] Weryfikacja dokumentacji: liczniki zestawiono z inwentarzem, sprawdzono odnośnik, formatowanie Prettier i `git diff --check`. Bez zmian kodu aplikacji; testy aplikacji nie były potrzebne.
-- [ ] Dalsze sprzątanie: usunięcie wskazanych artefaktów po kontroli użycia, indywidualny przegląd JSON-ów i ewentualna archiwizacja skryptów. Ten audyt nie klasyfikuje automatycznie każdego pliku jako bezpiecznego do usunięcia.
+- [x] Dalsze sprzątanie wykonano po decyzji użytkownika — wynik i zachowane materiały opisano powyżej.
 
 ## Rozstrzygnięcia opisów użytkownika (2026-10-04)
 

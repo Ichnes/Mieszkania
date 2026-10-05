@@ -6,6 +6,10 @@ export type DashboardStat = {
   value: string;
   description: string;
   trend?: string;
+  periodValues?: Record<
+    7 | 30 | 180,
+    Pick<DashboardStat, "label" | "value" | "description" | "trend">
+  >;
 };
 
 export type MarketSegment = {
