@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Przegląd zawartości `.local` (2026-10-05)
+
+- [x] Zakres: ustalić, co jest zbędnym materiałem roboczym, a co należy zachować; bez kasowania ani przenoszenia plików.
+- [x] Pełny inwentarz: 21 987 plików / 570,5 MiB; 2294 pliki luzem. Same zależności starego `fresh-start` to 18 161 plików / 165,8 MiB.
+- [x] Sprawdzono odwołania kodu, konfiguracji i dokumentacji; rozpoznano kopię testowego projektu, logi/zrzuty, biblioteki, profil OLX, źródła map, prywatne decyzje i eksperyment AI. `backups/` obecnie pusty.
+- [x] Zapisano [podział i zasady porządkowania](guides/local-artifacts.md), w tym katalogi sesji, ręczną retencję zakończonych prac oraz wyjątki dla danych do zachowania.
+- [x] Weryfikacja dokumentacji: liczniki zestawiono z inwentarzem, sprawdzono odnośnik, formatowanie Prettier i `git diff --check`. Bez zmian kodu aplikacji; testy aplikacji nie były potrzebne.
+- [ ] Dalsze sprzątanie: usunięcie wskazanych artefaktów po kontroli użycia, indywidualny przegląd JSON-ów i ewentualna archiwizacja skryptów. Ten audyt nie klasyfikuje automatycznie każdego pliku jako bezpiecznego do usunięcia.
+
 ## Rozstrzygnięcia opisów użytkownika (2026-10-04)
 
 - [x] Zakres: nadmiarowe „tys.”, dopłaty oddzielne i wspólne, pięć wariantów czynszu, najem garażu/komórki, konkretna możliwość zakupu i pobliski garaż.

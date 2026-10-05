@@ -1,5 +1,8 @@
 # Utrzymanie lokalnych danych
 
+Zasady przechowywania logów, skryptów roboczych i materiałów do zachowania:
+[porządek w `.local`](local-artifacts.md).
+
 ## Audyt tożsamości i historii ofert
 
 `docker compose exec -T api npm run data:audit` sprawdza identyfikatory Otodomu,
