@@ -21,12 +21,12 @@ export function getSunExposure(description?: string, override?: ExposureDirectio
         ? bearing.toUpperCase()
         : bearing,
     )
-    // Treat adjectival compound bearings as one diagonal direction. Without
-    // this normalization "południowo-zachodnia" can be split into S + W.
-    .replace(/\bpoludniow\w*\s*[-â€“â€”]?\s*zachod\w*\b/g, " SW ")
-    .replace(/\bpoludniow\w*\s*[-â€“â€”]?\s*wschod\w*\b/g, " SE ")
-    .replace(/\bpolnocn\w*\s*[-â€“â€”]?\s*zachod\w*\b/g, " NW ")
-    .replace(/\bpolnocn\w*\s*[-â€“â€”]?\s*wschod\w*\b/g, " NE ")
+    // A compound bearing is diagonal unless an explicit two-sided layout
+    // identifies it as a pair of cardinal directions (resolved below).
+    .replace(/\bpoludniow\w*\s*[-–—]?\s*zachod\w*\b/g, " SW ")
+    .replace(/\bpoludniow\w*\s*[-–—]?\s*wschod\w*\b/g, " SE ")
+    .replace(/\bpolnocn\w*\s*[-–—]?\s*zachod\w*\b/g, " NW ")
+    .replace(/\bpolnocn\w*\s*[-–—]?\s*wschod\w*\b/g, " NE ")
     .replace(/\bgaleri\w*\s+polnoc\w*/g, " ")
     .replace(/\b(?:prag\w*|pradz\w*)\s*[-–—]?\s*(?:poludni|polnoc)\w*/g, " ")
     .replace(/\bwarszaw(?:a|y|ie|e)\s+(?:wschod|zachod)\w*/g, " ")
@@ -118,5 +118,18 @@ export function getSunExposure(description?: string, override?: ExposureDirectio
       text,
     );
   if (corner) sideCount = Math.max(2, sideCount ?? 0, directions.size);
+  // "Dwustronna ekspozycja południowo-zachodnia" means S and W.
+  // Two explicitly named diagonals stay diagonal; manual overrides return above.
+  if (
+    sideCount === 2 &&
+    directions.size === 1 &&
+    /\bdwustron\w*|\b(?:dwie|dwoch|2)\s+stron\w*/.test(text)
+  ) {
+    const [direction] = directions;
+    if (direction.length === 2) {
+      directions.clear();
+      for (const cardinal of direction) directions.add(cardinal as ExposureDirection);
+    }
+  }
   return { directions: [...directions], sideCount, isDoubleSided: sideCount === 2 };
 }

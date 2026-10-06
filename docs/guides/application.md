@@ -750,3 +750,9 @@ Jeśli jedna z łączonych ofert jest aktywna, pozostaje ofertą główną.
 Podgląd wykorzystuje własne zdjęcia oferty, a w razie ich braku zdjęcia z jej już
 połączonej grupy z podpisem **Zdjęcie z połączonej oferty**. Nie pobiera zdjęć
 z drugiej, jeszcze niepotwierdzonej strony proponowanej pary.
+
+Ekspozycja z wyraźnym określeniem **dwustronna**, np. „dwustronna ekspozycja
+południowo-zachodnia”, oznacza **południe i zachód**. Reguła działa również dla
+pozostałych par kierunków, filtrów i oceny ofert. Sama „ekspozycja południowo-zachodnia”
+oznacza kierunek SW. Dwie osobno wymienione ekspozycje ukośne (np. NE i SW) pozostają
+dwoma kierunkami ukośnymi. Ręczna korekta ma pierwszeństwo.

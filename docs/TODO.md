@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Dwustronna ekspozycja (2026-10-06)
+
+- [x] Zakres: wspólna interpretacja dwustronnej ekspozycji złożonej, np. południowo-zachodnia → S i W, także w filtrach i ocenie.
+- [x] Poprawiono wszystkie cztery pary kierunków i typy myślników. Zachowano pojedynczy kierunek ukośny bez deklaracji dwustronności, dwie osobno podane przekątne i ręczne korekty.
+- [x] Weryfikacja: 38 testów parsera/filtrów/punktacji/backendu i 142 testy web bez błędów; typecheck i build Docker poprawne. Audyt 3455 opisów wskazał 73 zmienione rozpoznania; bez migracji danych i naruszania ręcznych korekt.
+- [x] Aplikacja uruchomiona lokalnie; Playwright potwierdził dwa znaczniki S i W na rzeczywistej ofercie przy 1440/1280/390 px, bez błędów JS. Commit i push na `main`.
+
 ## Adresy, wspólny okres i archiwalne duplikaty (2026-10-06)
 
 - [x] Zakres: czyszczenie zdań w adresach, jeden wspólny wybór 7/30/60 dni, łączenie archiwalnych duplikatów i dostępność zdjęć.
