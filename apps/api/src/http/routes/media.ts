@@ -5,7 +5,7 @@ import "../../config";
 import { findMediaFilePathAsync, getListingImages } from "../../services/media/image-repository";
 import { backfillListingMedia } from "../../services/media/media-downloader";
 import { getMapThumbnail, getRemoteMapThumbnail } from "../../services/media/map-thumbnail";
-import { getOwnListingPreviewUrls } from "../../services/media/listing-preview";
+import { getDuplicateListingPreviews } from "../../services/media/listing-preview";
 
 export function registerMediaRoutes(app: FastifyInstance) {
   app.get<{ Params: { id: string } }>(
@@ -14,7 +14,9 @@ export function registerMediaRoutes(app: FastifyInstance) {
       if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(request.params.id))
         return reply.code(400).send({ message: "Nieprawidłowe ID." });
       return {
-        urls: (await getOwnListingPreviewUrls([request.params.id])).get(request.params.id) ?? [],
+        ...((await getDuplicateListingPreviews([request.params.id])).get(request.params.id) ?? {
+          urls: [],
+        }),
       };
     },
   );

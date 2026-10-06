@@ -7,7 +7,7 @@ import type {
 } from "@mieszkania/shared";
 import type { Pool, PoolClient } from "pg";
 import { withDb } from "../../db";
-import { getOwnListingPreviewUrls } from "../media/listing-preview";
+import { getDuplicateListingPreviews } from "../media/listing-preview";
 import { syncDuplicateGroupPrice, restoreSourcePrice } from "./group-prices";
 
 type QueryableDb = Pick<Pool | PoolClient, "query">;
@@ -109,7 +109,7 @@ export async function getDuplicateCandidates(
             ${normalizedTextKeySql("coalesce(l.district, '')")} as match_district_key,
             array(select distinct token from unnest(regexp_split_to_array(substring(${normalizedTextKeySql("coalesce(l.description, '')")} from 1 for 300), '\\s+')) token
               where length(token)>=4 and token not in ('mieszkanie','sprzedaz','oferta','nieruchomosci','warszawa','lokalizacja','pokojowe','pokojowy')) as match_tokens
-          from listings l where l.status='active' and l.hidden_duplicate_of_id is null
+          from listings l where l.status in ('active', 'removed', 'sold', 'reserved') and l.hidden_duplicate_of_id is null
         ), pair_base as (
           select
             l1.id as left_id,
@@ -237,12 +237,11 @@ export async function getDuplicateCandidates(
           ) g2 on g2.group_id = (select group_id from listing_duplicate_group_members where listing_id = l2.id)
           left join listing_duplicate_reviews r
             on r.pair_key = concat(least(l1.id::text, l2.id::text), ':', greatest(l1.id::text, l2.id::text))
-          where l1.status = 'active'
-            and l2.status = 'active'
+          where l1.status in ('active', 'removed', 'sold', 'reserved')
+            and l2.status in ('active', 'removed', 'sold', 'reserved')
             and l1.hidden_duplicate_of_id is null
             and l2.hidden_duplicate_of_id is null
             and l1.city = l2.city
-            and l1.source_id <> l2.source_id
             and ($1::uuid is null or l1.id = $1::uuid or l2.id = $1::uuid)
             and (
               l1.rooms is not null and l2.rooms is not null and l1.rooms = l2.rooms
@@ -294,13 +293,14 @@ export async function getDuplicateCandidates(
     );
 
     const items = result.rows.map(mapDuplicateCandidateRow);
-    const previews = await getOwnListingPreviewUrls(
+    const previews = await getDuplicateListingPreviews(
       [...new Set(items.flatMap((item) => [item.left.id, item.right.id]))],
       db,
     );
     for (const item of items)
       for (const offer of [item.left, item.right]) {
-        offer.thumbnailUrls = previews.get(offer.id) ?? [];
+        offer.thumbnailUrls = previews.get(offer.id)?.urls ?? [];
+        offer.thumbnailSharedFromIndex = previews.get(offer.id)?.sharedFromIndex;
         offer.thumbnailUrl = offer.thumbnailUrls[0];
       }
     return {
@@ -719,6 +719,7 @@ export type DuplicateGroupOverview = {
     canonicalUrl?: string;
     thumbnailUrl?: string;
     thumbnailUrls?: string[];
+    thumbnailSharedFromIndex?: number;
     priceLabel: string;
     areaLabel: string;
     floor?: number;
@@ -822,13 +823,14 @@ export async function getDuplicateGroupOverviews(limit = 200, summary = false, s
     if (sort === "members_asc") groups.sort((a, b) => a.members.length - b.members.length);
     const safeLimit = Math.max(1, Number.isFinite(limit) ? Math.floor(limit) : 200);
     const items = groups.slice(0, summary ? safeLimit : Math.min(safeLimit, 500));
-    const previews = await getOwnListingPreviewUrls(
+    const previews = await getDuplicateListingPreviews(
       items.flatMap((group) => group.members.map((member) => member.id)),
       db,
     );
     for (const group of items)
       for (const member of group.members) {
-        member.thumbnailUrls = previews.get(member.id) ?? [];
+        member.thumbnailUrls = previews.get(member.id)?.urls ?? [];
+        member.thumbnailSharedFromIndex = previews.get(member.id)?.sharedFromIndex;
         member.thumbnailUrl = member.thumbnailUrls[0];
       }
     const totalMembers = new Set(
@@ -1505,13 +1507,24 @@ function choosePrimaryListingId(left: AutoMergeListingRow, right: AutoMergeListi
     : right.id;
 }
 
-async function choosePreferredPrimaryListingId(db: QueryableDb, leftId: string, rightId: string) {
-  const result = await db.query<{ id: string; source_key: string; created_at: string }>(
-    `select l.id, s.key as source_key, l.created_at::text from listings l join sources s on s.id = l.source_id where l.id in ($1, $2)`,
+export async function choosePreferredPrimaryListingId(
+  db: QueryableDb,
+  leftId: string,
+  rightId: string,
+) {
+  const result = await db.query<{
+    id: string;
+    source_key: string;
+    created_at: string;
+    status: string;
+  }>(
+    `select l.id, s.key as source_key, l.created_at::text, l.status from listings l join sources s on s.id = l.source_id where l.id in ($1, $2)`,
     [leftId, rightId],
   );
   const [left, right] = result.rows;
   if (!left || !right) return leftId;
+  if ((left.status === "active") !== (right.status === "active"))
+    return left.status === "active" ? left.id : right.id;
   return choosePrimaryListingId(
     {
       ...left,

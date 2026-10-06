@@ -22,11 +22,11 @@ test(
           (1, 'price_drop', now() - interval '2 days'),
           (1, 'price_increase', now() - interval '4 days'),
           (2, 'price_increase', now() - interval '10 days'),
-          (3, 'price_drop', now() - interval '90 days'),
-          (4, 'price_drop', now() - interval '181 days'),
+          (3, 'price_drop', now() - interval '45 days'),
+          (4, 'price_drop', now() - interval '61 days'),
           (5, 'price_drop', now() - interval '7 days'),
           (6, 'price_drop', now() - interval '30 days'),
-          (7, 'price_drop', now() - interval '180 days'),
+          (7, 'price_drop', now() - interval '60 days'),
           (8, 'new_listing', now());
         insert into price_events select id, 'price_drop', now() from generate_series(9, 14) id;
         update listings set status = 'removed' where id = 9;
@@ -38,10 +38,10 @@ test(
         update listings set price_amount = null, area_sqm = null, rooms = null where id = 1;
       `);
       const result = await db.query(dashboardPriceChangesSql, ["Warszawa", 1500000, 50]);
-      assert.deepEqual(result.rows, [{ days7: "2", days30: "4", days180: "6" }]);
+      assert.deepEqual(result.rows, [{ days7: "2", days30: "4", days60: "6" }]);
       await db.query("truncate price_events");
       const empty = await db.query(dashboardPriceChangesSql, ["Warszawa", 1500000, 50]);
-      assert.deepEqual(empty.rows, [{ days7: "0", days30: "0", days180: "0" }]);
+      assert.deepEqual(empty.rows, [{ days7: "0", days30: "0", days60: "0" }]);
     } finally {
       await db.query("rollback");
       await db.end();

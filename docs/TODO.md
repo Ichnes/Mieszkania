@@ -1,5 +1,16 @@
 # Bieżące zadania
 
+## Adresy, wspólny okres i archiwalne duplikaty (2026-10-06)
+
+- [x] Zakres: czyszczenie zdań w adresach, jeden wspólny wybór 7/30/60 dni, łączenie archiwalnych duplikatów i dostępność zdjęć.
+- [x] Wspólny wybór okresu w wąskiej piątej komórce po prawej stronie podsumowania; na telefonie pasek obok siatki 2×2. Korekta parsera ulic.
+- [x] Naprawiono 9 adresów z fragmentami zdań; lokalna kopia zmian zachowana. Wskazana Chęcińska była już poprawna w bazie. Parser obcina zdania reklamowe i normalizuje odmianę ulic.
+- [x] Kandydaci obejmują archiwum i ten sam portal; bezpośrednie „Połącz duplikaty” na stronie Duplikaty, zachowanie aktywnej oferty głównej i czytelne błędy.
+- [x] Podglądy wykorzystują zdjęcia już połączonej grupy z podpisem ich pochodzenia, zgodnie ze szczegółami oferty. Ponowne pobieranie obejmuje grupę i stosuje limit po sprawdzeniu brakujących plików. Zweryfikowano 3 rzeczywiste oferty bez własnych zdjęć.
+- [x] Weryfikacja: 452 testy zaliczone, 13 środowiskowych pominiętych; osobno 22 testy z PostgreSQL bez pominięć (izolowane dane). Typecheck i build Docker poprawne; aplikacja uruchomiona lokalnie. Playwright 1440/1280/390 px: wspólny wybór okresu, brak przepełnień, zdjęcie rzeczywistej grupy, żądanie łączenia przechwycone bez zmiany ofert, brak błędów JS.
+- [x] Doprecyzowany układ: wybór dni w piątej komórce, kontrola przeglądarki 1440/1280/390/320 px; brak dodatkowych odczytów podsumowania po zmianie okresu.
+- [x] Commit i push zmian na bieżącą gałąź `main`.
+
 ## Sprzątanie `.local` i okres zmian cen (2026-10-05)
 
 - [x] Zakres: usunąć zbędne artefakty, wydobyć wartościowe źródła i raporty, zachować profil OLX oraz możliwość obróbki PDF; dodatkowo przełącznik 7/30/180 dni w kafelku Zmiany cen na stronie głównej.

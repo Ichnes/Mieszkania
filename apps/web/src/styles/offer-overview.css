@@ -28,35 +28,41 @@
 .top-dashboard-frame .hero-stat > span {
   white-space: normal;
 }
-.hero-stat .overview-period-bar {
+.top-dashboard-frame .hero-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) 100px;
+  gap: 1px;
+}
+.overview-period-control {
   display: flex;
-  flex-wrap: wrap;
-  width: fit-content;
-  max-width: 100%;
-  margin-top: auto;
-  gap: 2px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px;
+  background: var(--surface);
 }
-.hero-stat .overview-period-bar button {
-  flex: 1 1 auto;
-  min-height: 36px;
-  padding: 5px 8px;
-  white-space: nowrap;
+.overview-period-control > span {
+  font-size: 0.65rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  color: var(--muted);
 }
-.hero-stat .overview-period-bar button.is-active {
-  background: var(--brand-strong);
-  border-color: var(--brand-strong);
-  color: #fff;
+.overview-period-control .listing-select-trigger {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px;
+  gap: 4px;
+  font-size: 0.75rem;
 }
-:root[data-theme="dark"] .hero-stat .overview-period-bar button.is-active {
-  color: #18211d;
-}
-.hero-stat .overview-period-bar button:focus-visible {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-}
-@media (max-width: 680px) {
-  .hero-stat .overview-period-bar button {
-    min-height: 44px;
+@media (max-width: 800px) {
+  .top-dashboard-frame .hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) 80px;
+  }
+  .overview-period-control {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    padding: 5px;
   }
 }
 @media (max-width: 680px) {

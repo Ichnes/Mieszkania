@@ -35,7 +35,7 @@ test(
           (1,now()-interval '3 days',1100);
       `);
       const fresh = await db.query(dashboardNewListingsSql, ["Warszawa", 10000, 50]);
-      assert.deepEqual(fresh.rows, [{ days7: "1", days30: "3", days180: "3" }]);
+      assert.deepEqual(fresh.rows, [{ days7: "1", days30: "3", days60: "3" }]);
       const averages = ["30", "33", "27"];
       for (const [index, days] of dashboardPeriods.entries()) {
         const historical = await db.query(dashboardBaselineSql, ["Warszawa", 10000, 50, days]);
@@ -44,7 +44,7 @@ test(
         ]);
       }
       await db.query("truncate listings, price_events");
-      const empty = await db.query(dashboardBaselineSql, ["Warszawa", 10000, 50, 180]);
+      const empty = await db.query(dashboardBaselineSql, ["Warszawa", 10000, 50, 60]);
       assert.deepEqual(empty.rows, [{ active_count: "0", average: null, has_history: false }]);
     } finally {
       await db.query("rollback");

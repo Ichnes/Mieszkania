@@ -9,6 +9,7 @@ export type DuplicateGroupOverview = {
     canonicalUrl?: string;
     thumbnailUrl?: string;
     thumbnailUrls?: string[];
+    thumbnailSharedFromIndex?: number;
     priceLabel: string;
     areaLabel: string;
     isPrimary: boolean;

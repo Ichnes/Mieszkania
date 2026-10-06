@@ -46,7 +46,7 @@ export function DuplicateCandidatesPanel({
       });
     return () => controller.abort();
   }, [range, sort, page, revision]);
-  async function reject(pair: DuplicateCandidate) {
+  async function review(pair: DuplicateCandidate, status: "same_listing" | "different_listing") {
     setBusy(pair.pairKey);
     setError("");
     try {
@@ -56,11 +56,18 @@ export function DuplicateCandidatesPanel({
         body: JSON.stringify({
           leftId: pair.left.id,
           rightId: pair.right.id,
-          status: "different_listing",
+          status,
         }),
       });
-      if (!response.ok) throw Error("Nie udało się zapisać decyzji. Spróbuj ponownie.");
-      setNotice("Odrzucono powiązanie. Ta para nie będzie proponowana ponownie.");
+      if (!response.ok) {
+        const failure = await response.json().catch(() => null);
+        throw Error(failure?.message ?? "Nie udało się zapisać decyzji. Spróbuj ponownie.");
+      }
+      setNotice(
+        status === "same_listing"
+          ? "Połączono duplikaty. Zdjęcia i źródła znajdziesz w połączonej ofercie."
+          : "Odrzucono powiązanie. Ta para nie będzie proponowana ponownie.",
+      );
       setPage(1);
       setRevision((v) => v + 1);
       onChanged();
@@ -76,7 +83,7 @@ export function DuplicateCandidatesPanel({
         <h2>Potencjalne powiązania</h2>
         <p className="muted">
           To propozycje do sprawdzenia, a nie połączone oferty. Wynik opisuje podobieństwo danych.
-          Kolejność i zakres obejmują całą kolejkę.
+          Kolejność i zakres obejmują całą kolejkę, także oferty archiwalne.
         </p>
         <div className="duplicate-toolbar">
           <label>
@@ -150,6 +157,7 @@ export function DuplicateCandidatesPanel({
                       id={offer.id}
                       title={offer.title}
                       urls={offer.thumbnailUrls ?? []}
+                      sharedFromIndex={offer.thumbnailSharedFromIndex}
                       onOpen={onOpen}
                     />
                   </div>
@@ -175,13 +183,18 @@ export function DuplicateCandidatesPanel({
                 type="button"
                 className="action-button secondary-button"
                 disabled={Boolean(busy)}
-                onClick={() => void reject(pair)}
+                onClick={() => void review(pair, "different_listing")}
               >
                 {busy === pair.pairKey ? "Zapisywanie…" : "To inne mieszkania"}
               </button>
-              <span className="muted">
-                Połączenie znajdziesz w zakładce Duplikaty po otwarciu oferty.
-              </span>
+              <button
+                type="button"
+                className="action-button"
+                disabled={Boolean(busy)}
+                onClick={() => void review(pair, "same_listing")}
+              >
+                {busy === pair.pairKey ? "Zapisywanie…" : "Połącz duplikaty"}
+              </button>
             </div>
           </article>
         ))}

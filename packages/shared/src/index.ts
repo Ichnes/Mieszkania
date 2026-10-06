@@ -7,7 +7,7 @@ export type DashboardStat = {
   description: string;
   trend?: string;
   periodValues?: Record<
-    7 | 30 | 180,
+    7 | 30 | 60,
     Pick<DashboardStat, "label" | "value" | "description" | "trend">
   >;
 };
@@ -490,6 +490,7 @@ export type DuplicateReviewStatus = "pending" | "same_listing" | "different_list
 export type DuplicateListingPreview = {
   thumbnailUrl?: string;
   thumbnailUrls?: string[];
+  thumbnailSharedFromIndex?: number;
   id: string;
   title: string;
   canonicalUrl?: string;

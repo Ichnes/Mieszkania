@@ -215,3 +215,33 @@ test("recovers Warsaw when a portal puts listing prose in the city field", () =>
     "Warszawa",
   );
 });
+
+test("stops street names before advertising verbs and normalizes the reported address", () => {
+  for (const verb of [
+    "rozwiązuje problem braku przestrzeni",
+    "zapewnia ciszę",
+    "oferuje dużo przestrzeni",
+    "pozwala odpocząć",
+  ]) {
+    assert.equal(sanitizeStreetCandidate(`Chęcińskiej ${verb}`), "Chęcińskiej");
+    assert.equal(sanitizeWarsawAddressText(`Chęcińskiej ${verb}, Warszawa`), "Chęcińska, Warszawa");
+  }
+  assert.equal(
+    sanitizeStreetCandidate("Bitwy Warszawskiej 1920 r. 12"),
+    "Bitwy Warszawskiej 1920 r. 12",
+  );
+});
+
+test("does not turn agency and property prose into street names", () => {
+  assert.equal(
+    sanitizeWarsawAddressText("Biuro gwarantuje bezpieczeństwo transakcji, Warszawa"),
+    "Warszawa",
+  );
+  assert.equal(
+    sanitizeWarsawAddressText("części posesji co gwarantuje ciszę, Warszawa", {
+      district: "Ursus",
+      city: "Warszawa",
+    }),
+    "Ursus, Warszawa",
+  );
+});

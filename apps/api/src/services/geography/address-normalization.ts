@@ -41,7 +41,7 @@ export function normalizeStreetName(value?: string | null) {
 }
 
 const streetNarrativeBoundary =
-  /\s+(?=(?:przedmiotem\s+(?:sprzedaży|oferty|najmu)\b|(?:mieszkanie|lokal|apartament|nieruchomość|dom|budynek|oferta)\s+(?:jest|znajduje|położon|usytuowan|składa|oferuje|stanowi|posiada)\w*\b|(?:znajduje|położon|usytuowan)\w*\s+(?:jest\s+)?(?:na|w)\b|(?:budynek|osiedle|nieruchomość|rozkład|lokalizacja|okolica)\b|(?:oferujemy|prezentujemy|zapraszamy|zapraszam|sprzedam|polecamy)\b|(?:na|do)\s+sprzedaży\b))/iu;
+  /\s+(?=(?:(?:rozwiązuje|zapewnia|gwarantuje|oferuje|pozwala|wyróżnia|łączy|spełnia)\b|przedmiotem\s+(?:sprzedaży|oferty|najmu)\b|(?:mieszkanie|lokal|apartament|nieruchomość|dom|budynek|oferta)\s+(?:jest|znajduje|położon|usytuowan|składa|oferuje|stanowi|posiada)\w*\b|(?:znajduje|położon|usytuowan)\w*\s+(?:jest\s+)?(?:na|w)\b|(?:budynek|osiedle|nieruchomość|rozkład|lokalizacja|okolica)\b|(?:oferujemy|prezentujemy|zapraszamy|zapraszam|sprzedam|polecamy)\b|(?:na|do)\s+sprzedaży\b))/iu;
 
 /** Removes prose accidentally captured after a street name by portal parsers. */
 export function sanitizeStreetCandidate(value?: string | null) {
@@ -73,6 +73,9 @@ const knownWarsawStreetNames = new Map<string, string>(
     "Batalionów Chłopskich",
     "Bokserska",
     "Czerska",
+    "Chęcińska",
+    "Chodakowska",
+    "Dembego",
     "Długa",
     "Cylichowska",
     "Gagarina",
@@ -183,7 +186,7 @@ export function sanitizeWarsawAddressText(
   const city = context?.city?.trim() || "Warszawa";
   if (!street) {
     const location = fallbackLocation?.trim();
-    if (!location) return candidate;
+    if (!location) return isNonAddressPhrase(parts[0]) ? city : candidate;
     return normalizePolish(location) === normalizePolish(city) ? city : `${location}, ${city}`;
   }
 
@@ -235,7 +238,7 @@ export function isKnownWarsawStreetCandidate(value?: string | null) {
 }
 
 export function isNonAddressPhrase(value: string) {
-  return /\b(?:(?:bez|brak|zero|0)\s*(?:pcc|prowizj\w*)|(?:pcc|vat)\s*\d*|opcja\s+wykonczenia)\b/.test(
+  return /\b(?:biuro|czesci\s+posesji|(?:bez|brak|zero|0)\s*(?:pcc|prowizj\w*)|(?:pcc|vat)\s*\d*|opcja\s+wykonczenia)\b/.test(
     normalizePolish(value),
   );
 }

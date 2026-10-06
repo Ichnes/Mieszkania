@@ -16,6 +16,7 @@ type Group = {
     canonicalUrl?: string;
     thumbnailUrl?: string;
     thumbnailUrls?: string[];
+    thumbnailSharedFromIndex?: number;
     priceLabel: string;
     areaLabel: string;
     floor?: number;
@@ -230,6 +231,7 @@ export function DuplicateGroupsPanel({
                     urls={
                       member.thumbnailUrls ?? (member.thumbnailUrl ? [member.thumbnailUrl] : [])
                     }
+                    sharedFromIndex={member.thumbnailSharedFromIndex}
                     onOpen={onOpen}
                   />
                 </div>

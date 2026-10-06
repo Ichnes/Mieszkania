@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { Select } from "../components/Select";
 import { GitCompareArrows, Search } from "lucide-react";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatViewingDate } from "../shared/lib/format";
@@ -23,6 +25,7 @@ export function OffersOverview({
     | "listingsError"
   >;
 }) {
+  const [period, setPeriod] = useState<7 | 30 | 60>(7);
   const {
     activeTab,
     region,
@@ -96,8 +99,17 @@ export function OffersOverview({
             aria-busy={dashboardSection.status === "loading"}
           >
             {listingInsights.map((stat) => (
-              <OverviewStat key={stat.label} stat={stat} />
+              <OverviewStat key={stat.label} stat={stat} period={period} />
             ))}
+            <div className="overview-period-control">
+              <span>Okres</span>
+              <Select
+                label="Okres podsumowania"
+                value={String(period)}
+                onChange={(value) => setPeriod(Number(value) as 7 | 30 | 60)}
+                options={[7, 30, 60].map((days) => ({ value: String(days), label: `${days} dni` }))}
+              />
+            </div>
           </div>
 
           {viewingsSection.error && (

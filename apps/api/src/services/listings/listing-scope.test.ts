@@ -50,7 +50,7 @@ test("list, map and dashboard use current configured area, price and city", asyn
     for (const { sql, params } of scoped) {
       if ([dashboardPriceChangesSql, dashboardNewListingsSql, dashboardBaselineSql].includes(sql)) {
         assert.deepEqual(params?.slice(0, 3), [settings.searchContract.city, price, area]);
-        if (sql === dashboardBaselineSql) assert.ok([7, 30, 180].includes(Number(params?.[3])));
+        if (sql === dashboardBaselineSql) assert.ok([7, 30, 60].includes(Number(params?.[3])));
         continue;
       }
       assert.ok(sql.includes(`area_sqm >= ${area}`), sql.slice(0, 180));

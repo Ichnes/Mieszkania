@@ -1225,7 +1225,7 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
         maximumVisiblePrice,
         minimumVisibleArea,
       ]),
-      db.query<{ days7: string; days30: string; days180: string }>(dashboardPriceChangesSql, [
+      db.query<{ days7: string; days30: string; days60: string }>(dashboardPriceChangesSql, [
         settings.searchContract.city,
         maximumVisiblePrice,
         minimumVisibleArea,
@@ -1298,7 +1298,7 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
       periodValues: {
         7: statsByPeriod[0][index],
         30: statsByPeriod[1][index],
-        180: statsByPeriod[2][index],
+        60: statsByPeriod[2][index],
       },
     }));
   });

@@ -64,10 +64,11 @@ export async function getListingImagesForListings(
             candidate_sources.source_listing_id,
             row_number() over (
               partition by candidate_sources.target_listing_id
-              order by candidate_sources.priority asc, count(li.id) desc, candidate_sources.source_listing_id
+              order by count(li.id) filter (where media.download_status = 'downloaded') desc, candidate_sources.priority asc, count(li.id) desc, candidate_sources.source_listing_id
             ) as source_rank
           from candidate_sources
           join listing_images li on li.listing_id = candidate_sources.source_listing_id
+          left join listing_media_assets media on media.id = li.asset_id
           group by candidate_sources.target_listing_id, candidate_sources.source_listing_id, candidate_sources.priority
         )
         select
@@ -184,46 +185,43 @@ export async function getMediaDownloadCandidates(input?: { listingId?: string; l
 
     if (input?.listingId) {
       values.push(input.listingId);
-      clauses.push(`li.listing_id = $${values.length}`);
+      clauses.push(`(li.listing_id = $${values.length} or li.listing_id in (
+        select sibling.listing_id from listing_duplicate_group_members own
+        join listing_duplicate_group_members sibling on sibling.group_id = own.group_id
+        where own.listing_id = $${values.length}
+      ))`);
     }
 
-    values.push(limit);
-
-    const result = await db.query<{
-      asset_id: string;
-      storage_key: string;
-      source_url: string;
-      download_status: string | null;
-    }>(
-      `
-        select distinct on (lma.id)
-          lma.id as asset_id,
-          lma.storage_key,
-          lma.source_url,
+    const candidates: DownloadableMediaAsset[] = [];
+    const batchSize = Math.max(limit, 100);
+    for (let offset = 0; candidates.length < limit; offset += batchSize) {
+      const result = await db.query<{
+        asset_id: string;
+        storage_key: string;
+        source_url: string;
+        download_status: string | null;
+      }>(
+        `select lma.id as asset_id, lma.storage_key, lma.source_url,
           lma.download_status::text
         from listing_media_assets lma
-        inner join listing_images li on li.asset_id = lma.id
-        where ${clauses.join(" and ")}
-        order by
-          lma.id,
-          case
-            when lma.download_status::text = 'failed' then 0
-            when lma.download_status::text = 'pending' then 1
-            when lma.download_status::text = 'downloaded' then 2
-            else 3
-          end,
-          li.updated_at desc
-        limit $${values.length}
-      `,
-      values,
-    );
-
-    return result.rows
-      .filter((row) => row.download_status !== "downloaded" || !findMediaFilePath(row.storage_key))
-      .map((row) => ({
-        assetId: row.asset_id,
-        storageKey: row.storage_key,
-        sourceUrl: row.source_url,
-      })) satisfies DownloadableMediaAsset[];
+        where exists (select 1 from listing_images li
+          where li.asset_id = lma.id and ${clauses.join(" and ")})
+        order by (lma.download_status::text = 'downloaded') asc nulls first, lma.id
+        limit $${values.length + 1} offset $${values.length + 2}`,
+        [...values, batchSize, offset],
+      );
+      for (const row of result.rows) {
+        if (row.download_status === "downloaded" && (await findMediaFilePathAsync(row.storage_key)))
+          continue;
+        candidates.push({
+          assetId: row.asset_id,
+          storageKey: row.storage_key,
+          sourceUrl: row.source_url,
+        });
+        if (candidates.length === limit) break;
+      }
+      if (result.rows.length < batchSize) break;
+    }
+    return candidates;
   });
 }

@@ -1,6 +1,6 @@
-export const dashboardPeriods = [7, 30, 180] as const;
+export const dashboardPeriods = [7, 30, 60] as const;
 export type DashboardPeriod = (typeof dashboardPeriods)[number];
-export type DashboardPeriodCounts = { days7: string; days30: string; days180: string };
+export type DashboardPeriodCounts = { days7: string; days30: string; days60: string };
 export type DashboardBaseline = {
   active_count: string;
   average: string | null;
@@ -11,7 +11,7 @@ export const dashboardNewListingsSql = `
   select
     count(*) filter (where l.first_seen_at >= now() - interval '7 days')::text as days7,
     count(*) filter (where l.first_seen_at >= now() - interval '30 days')::text as days30,
-    count(*)::text as days180
+    count(*)::text as days60
   from listings l
   where l.status = 'active'
     and l.city = $1
@@ -19,7 +19,7 @@ export const dashboardNewListingsSql = `
     and coalesce(l.rooms, 0) <> 2
     and (l.price_amount is null or l.price_amount <= $2)
     and (l.area_sqm is null or l.area_sqm >= $3)
-    and l.first_seen_at >= now() - interval '180 days'
+    and l.first_seen_at >= now() - interval '60 days'
 `;
 
 export const dashboardBaselineSql = `
