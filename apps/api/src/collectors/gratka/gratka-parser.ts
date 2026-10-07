@@ -1,4 +1,5 @@
 import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
+import { descriptionText } from "../description-text";
 import {
   canonicalWarsawNeighborhood,
   inferWarsawNeighborhood,
@@ -32,8 +33,8 @@ export class GratkaParser implements ListingParser {
       ) ?? `Gratka listing ${fallbackId}`,
     );
     const description = firstString(
-      stripHtml(readString(productNode, "description")),
-      stripHtml(readString(webPageNode, "description")),
+      descriptionText(readString(productNode, "description")),
+      descriptionText(readString(webPageNode, "description")),
       extractMetaTag(document.html, "property", "og:description"),
       extractMetaDescription(primaryHtml),
       extractMetaDescription(document.html),

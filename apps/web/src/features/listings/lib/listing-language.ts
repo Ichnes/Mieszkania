@@ -50,7 +50,7 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
     `(?:do\\s+odświeżenia|do\\s+wymiany|okn${suffix}\\s+do\\s+wymiany|instalacj${suffix}\\s+do\\s+wymiany|dach${suffix}\\s+do\\s+wymiany)`,
     `brak\\s+księg${suffix}\\s+wieczyst${suffix}`,
     `(?:wysok${suffix}|ostatni${suffix})\\s+piętr${suffix}\\s+(?:bez|i\\s+nie\\s+ma)\\s+wind${suffix}`,
-    `(?:ruchliw${suffix}\\s+ulic${suffix}|głośn(?:y|a|e|o|ym|ych|ego|ej|ymi|ą)(?![\\p{L}])|(?:(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix})\\s+(?:jest\\s+|są\\s+)?ciemn${suffix}|ciemn${suffix}\\s+(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix}))|zadłużon${suffix}|zawilgocon${suffix}|wilgoć|grzyb${suffix}|suterena|niski\\s+parter)`,
+    `(?:ruchliw${suffix}\\s+ulic${suffix}|głośn(?:y|a|e|o|ym|ych|ego|ej|ymi|ą)(?![\\p{L}])|(?:(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix})\\s+(?:jest\\s+|są\\s+)?ciemn${suffix}|ciemn${suffix}\\s+(?:nieruchomoś${suffix}|mieszkan${suffix}|lokal${suffix}|apartament${suffix}|pokój${suffix}|pokoj${suffix}|wnętrz${suffix}|pomieszczeni${suffix}))|zadłużon${suffix}|zawilgocon${suffix}|wilgoć|(?<![\\p{L}])grzyb(?:a|em|ie|y|ów|ami|ach)?(?![\\p{L}])|suterena|niski\\s+parter)`,
   ].join("|");
   const positive = [
     `\\bbezczynsz${suffix}`,

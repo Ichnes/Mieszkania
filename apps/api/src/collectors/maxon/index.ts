@@ -1,4 +1,5 @@
 import { publicFetch as fetch } from "../../services/http/public-fetch";
+import { descriptionText } from "../description-text";
 import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { createHash } from "node:crypto";
@@ -325,9 +326,8 @@ export function parseListing(
 ): ParsedListing {
   const title =
     firstText(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i) || meta(html, "og:title") || "Oferta Maxon";
-  const description = firstText(
-    html,
-    /<div[^>]+class=["'][^"']*description_cnt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i,
+  const description = descriptionText(
+    html.match(/<div[^>]+class=["'][^"']*description_cnt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1],
   );
   const address =
     firstText(html, /<h1\b[^>]*>[\s\S]*?<\/h1>\s*<h2\b[^>]*>([\s\S]*?)<\/h2>/i) ??

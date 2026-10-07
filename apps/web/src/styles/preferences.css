@@ -1177,12 +1177,12 @@
   line-height: 1.4;
 }
 .listing-description p {
-  white-space: normal;
+  white-space: pre-line;
   margin: 0;
   line-height: 1.4;
 }
 .listing-description {
-  gap: 5px;
+  gap: 12px;
 }
 @media (max-width: 600px) {
   .stats-filter-diff {

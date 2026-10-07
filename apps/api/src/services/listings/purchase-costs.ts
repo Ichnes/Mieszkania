@@ -58,6 +58,9 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       before = includedPrefix[2];
     }
     const mentioned = amenities(before);
+    // A summary's unqualified "Cena:" is the apartment price. Earlier fields
+    // (including "garaż: w cenie") must not make it an amenity surcharge.
+    if (/\bcena\s*[:=]\s*$/.test(before) && /\bw\s+cenie\b/.test(before)) continue;
     // A price directly attached to the parking space is not a joint storage price.
     if (/\bprzy\s+miejscu\s+postojowym\s*\(?\s*(?:dodatkowo\s+platne)?\s*$/.test(before))
       mentioned.storage = false;

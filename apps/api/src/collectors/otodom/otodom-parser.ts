@@ -1,5 +1,6 @@
 import { extractOtodomFloorPlans, imageIdentity } from "./otodom-floor-plans";
 import { sanitizeStreetCandidate } from "../../services/geography/address-normalization";
+import { descriptionText } from "../description-text";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
 import { extractOtodomExternalId } from "./otodom-url";
 import { parsePortalFloor as parseFloorNumber } from "../../services/listings/portal-building-facts";
@@ -27,8 +28,8 @@ export class OtodomParser implements ListingParser {
     );
 
     const description = firstString(
-      stripHtml(readString(adNode, "description")),
-      stripHtml(readString(productNode, "description")),
+      descriptionText(readString(adNode, "description")),
+      descriptionText(readString(productNode, "description")),
       extractMetaTag(document.html, "property", "og:description"),
       extractMetaDescription(document.html),
     );

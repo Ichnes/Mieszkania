@@ -129,3 +129,15 @@ test("apartment and unit prices after unpriced amenities are not surcharges", ()
     {},
   );
 });
+test("included amenities before a summary apartment price do not double the price (3b458ce0)", () => {
+  assert.deepEqual(parse("Garaż cena: 50 000 zł"), { garage: 50000 });
+  assert.deepEqual(
+    parse(
+      "Miejsce w garażu podziemnym: w cenie Komórka lokatorska: w cenie Forma własności: pełna własność z KW Cena: 1 970 000 zł",
+    ),
+    {
+      garageIncluded: true,
+      storageIncluded: true,
+    },
+  );
+});

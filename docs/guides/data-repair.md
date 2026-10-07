@@ -70,3 +70,14 @@ node --import tsx --test apps/api/src/services/market/market-postgres.test.ts
 Test tworzy tabele tymczasowe na własnym połączeniu i wycofuje transakcję. Sprawdza
 medianę/kwartyle po połączeniu aliasów oraz dziedziczenie i konflikty faktów duplikatów.
 Bez zmiennej test SQL jest jawnie pomijany.
+
+## Akapity w opisach
+
+Nowe importy zachowują akapity i podziały wierszy portalu. Starsze opisy można odtworzyć z ostatniego zapisanego snapshotu:
+
+```powershell
+docker compose exec -T api node --import tsx apps/api/src/scripts/maintenance/restore-description-paragraphs.ts
+docker compose exec -T api node --import tsx apps/api/src/scripts/maintenance/restore-description-paragraphs.ts --apply
+```
+
+Pierwsze polecenie pokazuje liczbę dopasowań, drugie zapisuje formatowanie. Zmiana jest możliwa wyłącznie przy zgodności treści po pominięciu białych znaków; opisy bez zachowanego źródła pozostają bez zmian. Dopisek portalu o sprzedaży bezpośredniej pozostaje zachowany.

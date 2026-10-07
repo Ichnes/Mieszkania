@@ -1,4 +1,5 @@
 import { publicFetch as fetch } from "../../services/http/public-fetch";
+import { descriptionText } from "../description-text";
 import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { adresowoWarsawDistrictIds } from "../location-groups";
@@ -421,11 +422,12 @@ export function parseListing(
   const json = jsonLd(html);
   const offer = json.find((node) => typeIncludes(node, "Offer"));
   const place = json.find((node) => typeIncludes(node, "Place"));
-  const extractedDescription = strip(
-    html.match(/<p[^>]+id=["']description["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] ??
-      string(place?.description) ??
-      "",
-  );
+  const extractedDescription =
+    descriptionText(
+      html.match(/<p[^>]+id=["']description["'][^>]*>([\s\S]*?)<\/p>/i)?.[1] ??
+        string(place?.description) ??
+        "",
+    ) ?? "";
   const title = strip(
     html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? meta(html, "og:title") ?? "Oferta Adresowo",
   );

@@ -1,4 +1,5 @@
 import { normalizeWarsawListingCity } from "../../services/geography/address-normalization";
+import { descriptionText } from "../description-text";
 import type { FetchedListingDocument, ListingParser, ParsedListing } from "../types";
 import { parseCoordinatePair } from "../portal-coordinates";
 import { parsePortalFloor } from "../../services/listings/portal-building-facts";
@@ -27,7 +28,7 @@ export class OlxParser implements ListingParser {
     )!;
     const description = firstString(
       readString(jsonLd, "description"),
-      stripHtml(readString(ad, "description")),
+      descriptionText(readString(ad, "description")),
       extractMetaTag(document.html, "property", "og:description"),
       extractMetaDescription(document.html),
     );

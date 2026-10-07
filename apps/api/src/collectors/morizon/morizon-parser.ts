@@ -1,4 +1,5 @@
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
+import { descriptionText } from "../description-text";
 import type { ParsedListing, SourceListingReference } from "../types";
 import { gratkaMorizonWarsawDistrictIds } from "../location-groups";
 
@@ -72,7 +73,8 @@ export function parseMorizonListing(
     stringValue(offer?.name) ||
     meta(html, "og:title") ||
     "Oferta Morizon";
-  const description = stripHtml(stringValue(offer?.description) || extractDescriptionHtml(html));
+  const description =
+    descriptionText(stringValue(offer?.description) || extractDescriptionHtml(html)) ?? "";
   const text = `${title}\n${description}\n${visibleText}`;
   const floorValue = information[normalizeLabel("Piętro")] ?? highlighted[normalizeLabel("Piętro")];
   const floorParts = floorValue?.match(/(parter|\d+)\s*(?:\/|z)\s*(\d+)/i);

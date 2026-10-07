@@ -1031,3 +1031,13 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Sprawdzono skrypty npm, pliki Compose i instrukcję startu. Lokalny override korzysta z PostgreSQL Windows i istniejącego storage.
 - [x] Przygotowano instrukcję startu w tle oraz wariant obserwowania zmian kodu; bez uruchamiania usług i zmiany konfiguracji.
 - Weryfikacja: odczyt konfiguracji; testy nie dotyczą tej odpowiedzi. Pozostała praca: brak.
+
+## Cena pakietu, piekarnia i akapity (2026-10-07)
+
+- [x] Zakres: oferta 3b458ce0 — garaż i komórka w cenie, neutralna nazwa Piekarnia Grzybki, zachowanie akapitów źródłowych.
+- [x] Cena z podsumowania po dodatkach „w cenie” nie jest dopłatą. Ostrzeżenie o grzybie nie dopasowuje Grzybków ani Grzybowskiej.
+- [x] Wspólne zachowanie akapitów i list w opisach Otodom, OLX, Gratka, Morizon, Adresowo i Maxon; frontend zachowuje nowe wiersze i odstępy z zawijaniem na małych ekranach.
+- [x] Narzędzie odtwarzania formatowania z ostatniego snapshotu, wyłącznie przy zgodności treści; domyślnie dry run.
+- [x] Weryfikacja: 457 testów zaliczonych, 13 środowiskowych pominiętych; typecheck i build Docker poprawne. Po doprecyzowaniu ceny ponownie 52 testy kosztów bez błędów.
+- [x] Przywrócono formatowanie 8852 opisów zgodnych ze źródłem. Wskazana oferta: 27 akapitów, garaż i komórka w cenie, suma dopłat 0 zł. Playwright 1440/1280/390 px: brak przepełnień, brak fałszywego wyróżnienia Grzybków i błędów JS. Aplikacja uruchomiona lokalnie.
+- [x] Commit i push na bieżącą gałąź `main`.
