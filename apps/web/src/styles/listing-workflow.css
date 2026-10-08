@@ -358,6 +358,10 @@
   border-radius: 16px;
   background: var(--surface);
 }
+.listing-contact-phones {
+  flex-wrap: wrap;
+  overflow-wrap: anywhere;
+}
 .listing-facts-table th {
   color: var(--ink-soft);
   background: var(--surface-muted);

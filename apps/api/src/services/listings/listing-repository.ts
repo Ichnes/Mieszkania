@@ -19,6 +19,7 @@ import { invalidateMarketStatsCache } from "../market/stats-cache";
 import { effectiveDistrictSql } from "./listing-title-location";
 import { decodeListingText } from "./listing-text";
 import { buildListingSearch } from "./listing-search";
+import { archiveStatusSql, mergedArchiveMemberSql } from "./archive-filter";
 import type {
   DashboardStat,
   ExposureDirection,
@@ -863,9 +864,7 @@ async function getListingsPageByScope(
   return withDb(async (db) => {
     const clauses = [
       "1=1",
-      filters.archivedOnly
-        ? "l.status = 'removed' and coalesce(l.exclusion_reason, '') <> 'manual_rejected'"
-        : "l.status = 'active'",
+      filters.archivedOnly ? archiveStatusSql(filters.includeMergedActive) : "l.status = 'active'",
       "l.hidden_duplicate_of_id is null",
       filters.archivedOnly
         ? "1=1"
@@ -975,7 +974,13 @@ async function getListingsPageByScope(
 
     if (filters.search) {
       const search = buildListingSearch(filters.search, paramIndex);
-      if (search.clause) clauses.push(`(${search.clause})`);
+      if (search.clause) {
+        const archivedSearch =
+          filters.archivedOnly && filters.includeMergedActive
+            ? ` or exists (${mergedArchiveMemberSql} and ${buildListingSearch(filters.search, paramIndex, "archived_member").clause})`
+            : "";
+        clauses.push(`(${search.clause}${archivedSearch})`);
+      }
       values.push(...search.values);
       paramIndex += search.values.length;
     }

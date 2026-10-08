@@ -20,7 +20,10 @@ export function getActiveFilterBadges(filters: ListingFilters) {
   if (filters.search) badges.push(`Fraza: ${filters.search}`);
   if (filters.shortlistedOnly) badges.push("Tylko ulubione");
   if (filters.priceChangedOnly) badges.push("Tylko zmiana ceny");
-  if (filters.archivedOnly) badges.push("Tylko archiwalne");
+  if (filters.archivedOnly)
+    badges.push(
+      filters.includeMergedActive ? "Archiwalne i połączone aktualne" : "Tylko archiwalne",
+    );
   if (filters.hiddenOnly) badges.push("Tylko ukryte (2 pokoje)");
 
   return badges;

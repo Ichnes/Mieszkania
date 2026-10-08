@@ -36,6 +36,10 @@ Aby zobaczyć dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
 i naciśnij **Filtruj**. Możesz też najpierw wybrać archiwum, a potem kliknąć
 **Ulubione**. Nagłówek **Archiwalne ulubione** potwierdza połączenie filtrów.
 Ponowne kliknięcie **Ulubione** wyłącza tylko ten warunek, zachowując archiwum.
+
+Po zaznaczeniu **Tylko archiwalne** możesz dodatkowo włączyć **Uwzględnij aktualne połączone z archiwalnymi** i kliknąć **Filtruj**. Wyniki obejmą aktualne oferty mające połączony archiwalny duplikat, po jednym wyniku na grupę. Fraza wyszukiwania sprawdza również treść archiwalnych kopii. Aktualna oferta zachowuje swój status; ręcznie odrzucona kopia nie kwalifikuje jej do archiwum.
+
+W szczegółach, w zakładce **Przegląd**, wiersz **Telefon** pokazuje zapisany numer kontaktu i numery z portali, także połączonych ofert. Powtórzenia są pomijane, a kliknięcie numeru otwiera połączenie telefoniczne. Przy braku numeru pojawia się **Brak numeru**. Zakładka **Ocena AI** jest widoczna tylko dla ofert z zapisaną oceną.
 **Wszystkie** przywraca aktywne oferty i wyłącza oba ograniczenia.
 
 Błąd podsumowania lub kalendarza pojawia się przy danej sekcji. **Ponów** powtarza

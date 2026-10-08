@@ -46,6 +46,7 @@ type DuplicateCandidateRow = {
 };
 
 type RelatedListingRow = {
+  source_contact_phone: string | null;
   primary_listing_id: string;
   id: string;
   title: string;
@@ -1143,6 +1144,7 @@ async function getRelatedListingsWithDb(
         other.id,
         other.title,
         other.canonical_url,
+        other.source_contact_phone,
         s.name as source_label,
         other.price_amount::text,
         other.area_sqm::text,
@@ -1166,6 +1168,7 @@ async function getRelatedListingsWithDb(
     id: row.id,
     title: row.title,
     canonicalUrl: row.canonical_url,
+    sourceContactPhone: row.source_contact_phone ?? undefined,
     sourceLabel: row.source_label ?? undefined,
     priceLabel: formatCurrencyLabel(row.price_amount),
     areaLabel: formatAreaLabel(row.area_sqm),

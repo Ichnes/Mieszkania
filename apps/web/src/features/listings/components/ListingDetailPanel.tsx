@@ -186,6 +186,20 @@ export function ListingDetailPanel(input: {
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
   const [copiedId, setCopiedId] = useState(false);
+  const contactPhones = [
+    ...new Map(
+      [
+        input.listing.manual.contactPhone,
+        input.listing.sourceContactPhone,
+        ...input.listing.relatedListings.map((listing) => listing.sourceContactPhone),
+      ]
+        .filter((phone): phone is string => Boolean(phone?.trim()))
+        .map((phone) => [phone.replace(/\D/g, "").replace(/^48(?=\d{9}$)/, ""), phone.trim()]),
+    ).values(),
+  ];
+  useEffect(() => {
+    if (activeDetailTab === "ai" && !input.listing.aiAssessment) setActiveDetailTab("overview");
+  }, [activeDetailTab, input.listing.aiAssessment]);
   const detailPanelRef = useRef<HTMLElement | null>(null);
   const dialogRef = useRef<HTMLElement | null>(null);
   useDialogFocus(dialogRef, input.onClose);
@@ -686,13 +700,15 @@ export function ListingDetailPanel(input: {
               >
                 <Star size={16} aria-hidden="true" /> <span>Ocena</span>
               </button>
-              <button
-                className={tabClass(activeDetailTab === "ai")}
-                type="button"
-                onClick={() => setActiveDetailTab("ai")}
-              >
-                <Sparkles size={16} aria-hidden="true" /> <span>Ocena AI</span>
-              </button>
+              {input.listing.aiAssessment && (
+                <button
+                  className={tabClass(activeDetailTab === "ai")}
+                  type="button"
+                  onClick={() => setActiveDetailTab("ai")}
+                >
+                  <Sparkles size={16} aria-hidden="true" /> <span>Ocena AI</span>
+                </button>
+              )}
               <button
                 className={tabClass(activeDetailTab === "duplicates")}
                 type="button"
@@ -706,7 +722,7 @@ export function ListingDetailPanel(input: {
                 className={tabClass(activeDetailTab === "decisions")}
                 onClick={() => setActiveDetailTab("decisions")}
               >
-                Ustalenia
+                <ClipboardCheck size={16} aria-hidden="true" /> <span>Ustalenia</span>
               </button>
             </div>
             {activeDetailTab === "decisions" && (
@@ -716,7 +732,7 @@ export function ListingDetailPanel(input: {
                 listing={input.listing}
               />
             )}
-            {activeDetailTab === "ai" && (
+            {activeDetailTab === "ai" && input.listing.aiAssessment && (
               <ListingAiAssessment
                 assessment={input.listing.aiAssessment}
                 currentPrice={input.listing.totalAcquisitionPrice}
@@ -984,9 +1000,17 @@ export function ListingDetailPanel(input: {
                     </tr>
                   ) : null}
                   <tr>
-                    <th>Po rozmowie</th>
+                    <th>Telefon</th>
                     <td colSpan={3}>
-                      {manual.askingPriceOverride ? formatPln(manual.askingPriceOverride) : "—"}
+                      <div className="source-links-list listing-contact-phones">
+                        {contactPhones.length
+                          ? contactPhones.map((phone) => (
+                              <a key={phone} href={`tel:${phone.replace(/[^\d+]/g, "")}`}>
+                                {phone}
+                              </a>
+                            ))
+                          : "Brak numeru"}
+                      </div>
                     </td>
                   </tr>
                   <tr className="listing-portals-row">

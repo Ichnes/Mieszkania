@@ -406,6 +406,21 @@ export function OffersPage({
                     />
                     <span>Tylko archiwalne</span>
                   </label>
+                  {filters.archivedOnly && (
+                    <label className="check-row">
+                      <input
+                        type="checkbox"
+                        checked={filters.includeMergedActive ?? false}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            includeMergedActive: event.target.checked || undefined,
+                          }))
+                        }
+                      />
+                      <span>Uwzględnij aktualne połączone z archiwalnymi</span>
+                    </label>
+                  )}
                   <div className="filters-actions">
                     <button className="action-button" type="submit" disabled={isLoadingListings}>
                       {isLoadingListings ? (

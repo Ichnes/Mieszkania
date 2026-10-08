@@ -15,11 +15,17 @@ export function listingSearchPatterns(query: string) {
     });
 }
 
-export function buildListingSearch(query: string, firstParameter: number) {
+export function buildListingSearch(
+  query: string,
+  firstParameter: number,
+  alias: "l" | "archived_member" = "l",
+) {
   const values = listingSearchPatterns(query);
   const text = `translate(lower(concat_ws(' ',l.title,l.description,l.address_text,l.district,l.neighborhood)), 'ąćęłńóśźż', 'acelnoszz')`;
   return {
-    clause: values.map((_, index) => `${text} ~ $${firstParameter + index}`).join(" and "),
+    clause: values
+      .map((_, index) => `${text.replaceAll("l.", `${alias}.`)} ~ $${firstParameter + index}`)
+      .join(" and "),
     values,
   };
 }

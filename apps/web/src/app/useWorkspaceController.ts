@@ -454,9 +454,13 @@ export function useWorkspaceController() {
         };
   const listingInsights = buildListingInsights(dashboard.stats, dashboardListings);
   const listingSectionTitle = appliedFilters.archivedOnly
-    ? appliedFilters.shortlistedOnly
-      ? "Archiwalne ulubione"
-      : "Oferty archiwalne"
+    ? appliedFilters.includeMergedActive
+      ? appliedFilters.shortlistedOnly
+        ? "Ulubione: archiwalne i połączone aktualne"
+        : "Archiwalne i połączone aktualne"
+      : appliedFilters.shortlistedOnly
+        ? "Archiwalne ulubione"
+        : "Oferty archiwalne"
     : appliedFilters.hiddenOnly
       ? "Ukryte oferty"
       : appliedFilters.shortlistedOnly

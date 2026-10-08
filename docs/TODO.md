@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Archiwum i przegląd oferty (2026-10-08)
+
+- [x] Opcja „Uwzględnij aktualne połączone z archiwalnymi” w archiwum: jeden wynik na grupę, wyszukiwanie także po starej treści, zachowanie statusu aktualnej oferty i pomijanie ręcznie odrzuconych kopii.
+- [x] Telefony ręczne i z portali (także połączonych ofert) zamiast „Po rozmowie” w przeglądzie: deduplikacja, linki do połączenia i jawny brak numeru. Pełny przycisk „Ustalenia”; zakładka AI tylko przy istniejącej ocenie.
+- [x] Weryfikacja: 457 testów OK, 14 środowiskowych pominiętych; osobny test PostgreSQL archiwum/wyszukiwania/rozłączenia OK bez pominięcia. Typecheck i build Docker OK, lokalna aplikacja przebudowana. Playwright 1440/1280/390 px, mobilny filtr, telefony, obecna/brakująca ocena AI; zrzuty i logi w `.local/runs/2026-10-08-offer-overview/`.
+- [x] Przewodnik zaktualizowany. Zakres zakończony; bez migracji danych i bez dalszych zadań funkcjonalnych.
+
 ## Dwustronna ekspozycja (2026-10-06)
 
 - [x] Zakres: wspólna interpretacja dwustronnej ekspozycji złożonej, np. południowo-zachodnia → S i W, także w filtrach i ocenie.

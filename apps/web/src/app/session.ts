@@ -103,6 +103,7 @@ export function sanitizeListingFilters(value: unknown): ListingFilters {
     "shortlistedOnly",
     "priceChangedOnly",
     "archivedOnly",
+    "includeMergedActive",
     "hiddenOnly",
     "includeAllCities",
   ] as const;

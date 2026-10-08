@@ -354,6 +354,7 @@ function parseListingFilters(query: Record<string, string | undefined>): Listing
     shortlistedOnly: query.shortlistedOnly === "true",
     priceChangedOnly: query.priceChangedOnly === "true",
     archivedOnly: query.archivedOnly === "true",
+    includeMergedActive: query.includeMergedActive === "true",
     hiddenOnly: query.hiddenOnly === "true",
     includeAllCities: query.includeAllCities === "true",
     page: toPositiveInteger(query.page),

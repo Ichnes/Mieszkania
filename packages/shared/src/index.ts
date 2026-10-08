@@ -411,6 +411,7 @@ export type ListingSummary = {
 };
 
 export type RelatedListingSummary = {
+  sourceContactPhone?: string;
   primaryListingId?: string;
   id: string;
   title: string;
@@ -735,6 +736,7 @@ export type ListingFilters = {
   shortlistedOnly?: boolean;
   priceChangedOnly?: boolean;
   archivedOnly?: boolean;
+  includeMergedActive?: boolean;
   hiddenOnly?: boolean;
   includeAllCities?: boolean;
   page?: number;
