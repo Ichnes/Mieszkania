@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Odległość od ruchliwej ulicy (2026-10-11)
+
+- [x] Zakres: błędne oznaczenie „Mieszkanie jest usytuowane z dala od ruchliwej ulicy” jako wady.
+- [x] Podświetlanie rozpoznaje całą frazę „z dala od” / „daleko od” ruchliwej ulicy jako zaletę, także w liczbie mnogiej i odwróconym szyku. Osobna wzmianka o pobliskiej ruchliwej ulicy nadal jest wadą. Bez migracji danych i zmian układu na PC/laptopie/telefonie.
+- [x] Weryfikacja: 144 testy frontendu OK, w tym regresja zgłoszonego zdania, wariantów i dwóch przeciwnych stwierdzeń w jednym opisie.
+- [x] Produkcyjny build (TypeScript/Vite) i uruchomienie lokalnego frontendu zakończone poprawnie. Brak pozostałych zmian funkcjonalnych.
+
 ## Archiwum i przegląd oferty (2026-10-08)
 
 - [x] Opcja „Uwzględnij aktualne połączone z archiwalnymi” w archiwum: jeden wynik na grupę, wyszukiwanie także po starej treści, zachowanie statusu aktualnej oferty i pomijanie ręcznie odrzuconych kopii.

@@ -6,6 +6,29 @@ import {
   normalizeListingText,
 } from "./listing-language";
 
+test("distance from busy streets is positive while nearby busy streets remain negative", () => {
+  for (const phrase of [
+    "z dala od ruchliwej ulicy",
+    "daleko od ruchliwych ulic",
+    "z dala od ulicy ruchliwej",
+  ]) {
+    const text = `Mieszkanie jest usytuowane ${phrase}.`;
+    const parts = getDescriptionHighlightParts(text);
+    assert.equal(parts.map((part) => part.text).join(""), text);
+    assert.deepEqual(
+      parts.filter((part) => part.tone),
+      [{ text: phrase, tone: "positive" }],
+    );
+  }
+  const parts = getDescriptionHighlightParts(
+    "Z dala od ruchliwej ulicy. Drugie mieszkanie przy ruchliwej ulicy.",
+  );
+  assert.deepEqual(
+    parts.filter((part) => part.tone).map((part) => part.tone),
+    ["positive", "negative"],
+  );
+});
+
 test("highlighting respects absent, planned and imitation amenities", () => {
   for (const [text, phrase, tone] of [
     ["Balkon: brak.", "Balkon", "negative"],

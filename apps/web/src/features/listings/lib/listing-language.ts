@@ -19,6 +19,7 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
   const suffix = "[a-ząćęłńóśźżą-]*";
   const count = "(?:\\d+|jeden|jedno|jedna|dwa|dwie|trzy|cztery|pięć)";
   const contextualPositive = [
+    `(?<![\\p{L}])(?:z\\s+dala|daleko)\\s+od\\s+(?:ruchliw${suffix}\\s+ulic${suffix}|ulic${suffix}\\s+ruchliw${suffix})`,
     `bezpośrednio\\s+od\\s+właściciel${suffix}`,
     `nie\\s+(?:wymaga|potrzebuje)\\s+(?:remont${suffix}|odśwież${suffix})(?:\\s+ani\\s+(?:remont${suffix}|odśwież${suffix}))?`,
     `(?:garaż${suffix}\\s+podziemn${suffix}|podziemn${suffix}\\s+garaż${suffix})`,
