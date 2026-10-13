@@ -593,7 +593,7 @@ export function SettingsPanel(input: {
                     }))
                   }
                 />
-                <span>Garaż</span>
+                <span>Parking (garaż lub miejsce zewnętrzne)</span>
               </label>
               <label className="dream-toggle">
                 <input

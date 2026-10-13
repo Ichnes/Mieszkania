@@ -2,6 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { randomUUID } from "node:crypto";
 import pg from "pg";
+import Fastify from "fastify";
+import { pool } from "../../db";
+import { registerPayloadValidation } from "../../http/payload-validation";
+import { registerListingsRoutes } from "../../http/routes/listings";
 import { reviewRelisting } from "./relisting-review";
 import {
   getPotentialRelistings,
@@ -12,13 +16,17 @@ import {
 test(
   "scan persists suggestions separately, repeated scans are idempotent, and stale archives disappear",
   { skip: !process.env.TEST_DATABASE_URL },
-  async () => {
+  async (t) => {
     const schema = `test_relistings_${randomUUID().replaceAll("-", "")}`;
     const admin = new pg.Pool({ connectionString: process.env.TEST_DATABASE_URL });
     const db = new pg.Pool({
       connectionString: process.env.TEST_DATABASE_URL,
       options: `-c search_path=${schema},public`,
     });
+    const app = Fastify();
+    registerPayloadValidation(app);
+    registerListingsRoutes(app);
+    t.mock.method(pool, "connect", db.connect.bind(db));
     try {
       await admin.query(`create schema ${schema}`);
       for (const table of [
@@ -73,7 +81,14 @@ test(
         );
         assert.equal(count.rows[0].n, 1);
       }
-      for (let run = 0; run < 2; run++) await reviewRelisting(ids[1], ids[0], "confirmed", db);
+      for (let run = 0; run < 2; run++) {
+        const response = await app.inject({
+          method: "POST",
+          url: `/api/listings/${ids[1]}/relisting-review`,
+          payload: { previousId: ids[0], decision: "confirmed" },
+        });
+        assert.equal(response.statusCode, 200, response.body);
+      }
       assert.equal((await getPotentialRelistings(ids[1], db)).length, 0);
       const manual = await scanRelistedListings(100, db);
       assert.equal(manual.matched, 1);
@@ -84,7 +99,12 @@ test(
           .price,
         1200000,
       );
-      await reviewRelisting(ids[1], ids[0], "rejected", db);
+      const rejectedResponse = await app.inject({
+        method: "POST",
+        url: `/api/listings/${ids[1]}/relisting-review`,
+        payload: { previousId: ids[0], decision: "rejected" },
+      });
+      assert.equal(rejectedResponse.statusCode, 200, rejectedResponse.body);
       await reviewRelisting(ids[1], ids[0], "rejected", db);
       const rejected = await scanRelistedListings(100, db);
       assert.equal(rejected.matched, 0);
@@ -116,6 +136,8 @@ test(
       assert.equal(downgraded.potentialCount, 1);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 0);
     } finally {
+      await app.close();
+      t.mock.restoreAll();
       await db.end();
       await admin.query(`drop schema if exists ${schema} cascade`);
       await admin.end();

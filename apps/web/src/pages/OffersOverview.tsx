@@ -152,10 +152,6 @@ export function OffersOverview({
                 )}
               </div>
             </section>
-          ) : viewingsSection.status === "ready" ? (
-            <p className="empty-viewings-note">
-              Brak zaplanowanych oglądań. Termin dodasz w szczegółach oferty.
-            </p>
           ) : null}
         </div>
       ) : null}

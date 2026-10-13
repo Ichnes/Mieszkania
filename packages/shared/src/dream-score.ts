@@ -220,10 +220,10 @@ export function computeDreamEvaluation(
 
   // These are deliberately asymmetric: their absence is a real drawback for the
   // family profile, not merely a missed small bonus.
-  const garageBonus = profile.requiresGarage ? 24 : 16;
+  const garageBonus = 15;
   const garagePenalty = profile.requiresGarage ? 36 : 10;
   maxPoints += garageBonus;
-  points += listing.hasGarage ? garageBonus : -garagePenalty;
+  points += listing.hasGarage ? garageBonus : listing.hasOutdoorParking ? 0 : -garagePenalty;
   if (
     listing.hasGarage &&
     listing.garageTenure === "rental" &&
@@ -232,16 +232,18 @@ export function computeDreamEvaluation(
     points -= 2;
   record(
     "Garaż",
-    "Wymagany: +24 / brak −36. Niewymagany: +16 / brak −10. Najem: −2 pkt, chyba że naliczono już −5 za wiele wynajmowanych miejsc.",
+    "Garaż +15; bez garażu, z parkingiem zewnętrznym: 0 w tym kryterium. Brak obu: −36 przy wymaganym parkingu, inaczej −10. Najem: −2 pkt, chyba że naliczono już −5 za wiele wynajmowanych miejsc.",
     listing.hasGarage
       ? listing.garageTenure === "rental"
         ? "Najem"
         : listing.garageTenure === "purchase_option"
           ? "Możliwość zakupu"
           : "Jest"
-      : garageKnown
-        ? "Potwierdzony brak"
-        : "brak danych",
+      : listing.hasOutdoorParking
+        ? "Parking zewnętrzny zamiast garażu — bez kary"
+        : garageKnown
+          ? "Potwierdzony brak"
+          : "brak danych",
   );
 
   maxPoints += 8;
@@ -251,7 +253,7 @@ export function computeDreamEvaluation(
 
   record(
     "Parking zewnętrzny",
-    "Bez garażu, z parkingiem zewnętrznym +8.",
+    "Bez garażu, z parkingiem zewnętrznym +8; zastępuje garaż i znosi karę za jego brak.",
     listing.hasOutdoorParking
       ? listing.hasGarage
         ? "Jest; premia nie łączy się z garażem"
@@ -607,7 +609,7 @@ export function computeDreamEvaluation(
       descriptionFacts.unfinished || listing.finishQuality === "to_finish"
         ? pricePerSqm !== undefined
         : listing.finishQuality === "ready",
-    Garaż: garageKnown,
+    Garaż: garageKnown || listing.hasOutdoorParking === true,
     "Parking zewnętrzny": listing.hasGarage === true || listing.hasOutdoorParking === true,
     Komórka: storageKnown,
     Winda: liftKnown,

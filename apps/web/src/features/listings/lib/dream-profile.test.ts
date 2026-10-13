@@ -31,6 +31,31 @@ const base = {
 const evaluate = (changes: Partial<ListingSummary> = {}, profile = settings.dreamProfile) =>
   computeDreamEvaluation({ ...base, ...changes }, profile, [], now);
 
+test("garage earns 15, outdoor parking is an alternative, and no parking or lift retains strong penalties", () => {
+  const row = (result: ReturnType<typeof evaluate>, label: string) =>
+    result.rows.find((r) => r.label === label)!;
+  for (const requiresGarage of [true, false]) {
+    const profile = { ...settings.dreamProfile, requiresGarage };
+    const garage = evaluate({}, profile);
+    const outdoor = evaluate({ hasGarage: false, hasOutdoorParking: true }, profile);
+    const neither = evaluate({ hasGarage: false, hasOutdoorParking: false }, profile);
+    assert.equal(row(garage, "Garaż").points, 15);
+    assert.equal(row(outdoor, "Garaż").points, 0);
+    assert.equal(row(outdoor, "Garaż").dataStatus, "known");
+    assert.equal(row(outdoor, "Parking zewnętrzny").points, 8);
+    assert.equal(row(neither, "Garaż").points, requiresGarage ? -36 : -10);
+    assert.equal(garage.maxPoints, outdoor.maxPoints);
+    assert.equal(outdoor.maxPoints, neither.maxPoints);
+    assert.equal(
+      row(evaluate({ hasOutdoorParking: true }, profile), "Parking zewnętrzny").points,
+      0,
+    );
+  }
+  assert.equal(row(evaluate(), "Winda").points, 21);
+  assert.equal(row(evaluate({ hasLift: false, floor: 3 }), "Winda").points, -20);
+  assert.equal(row(evaluate(), "Garaż i winda razem").points, 12);
+});
+
 test("rented garage and storage lose two and one points without duplicating the existing multiple-space penalty", () => {
   const owned = evaluate({ hasGarage: true, hasStorage: true });
   const rented = evaluate({

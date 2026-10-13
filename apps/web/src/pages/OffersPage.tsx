@@ -76,7 +76,6 @@ export function OffersPage({
   } = model;
   return (
     <>
-      <DecisionReminders onOpen={model.openListing} />
       {activeTab === "dashboard" ? (
         <>
           <div
@@ -565,4 +564,3 @@ export function OffersPage({
     </>
   );
 }
-import { DecisionReminders } from "../features/decisions/DecisionReminders";

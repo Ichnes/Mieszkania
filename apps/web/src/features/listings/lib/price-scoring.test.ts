@@ -189,7 +189,7 @@ test("score reasons describe listing facts instead of repeating rules or timesta
   assert.equal(detail("Dojazd do pracy"), "brak danych");
   assert.match(detail("Szacowana rata"), /^(Do|Powyżej) 7500 zł$/);
   assert.equal(row({ hasGarage: false, hasOutdoorParking: true }, "Parking zewnętrzny").points, 8);
-  assert.ok(row({ hasGarage: false, hasOutdoorParking: true }, "Garaż").points < 0);
+  assert.equal(row({ hasGarage: false, hasOutdoorParking: true }, "Garaż").points, 0);
 });
 
 test("commute distance bands award points only inside the configured ranges", () => {

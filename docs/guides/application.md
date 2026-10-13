@@ -36,6 +36,9 @@ Aby zobaczyć dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
 i naciśnij **Filtruj**. Możesz też najpierw wybrać archiwum, a potem kliknąć
 **Ulubione**. Nagłówek **Archiwalne ulubione** potwierdza połączenie filtrów.
 Ponowne kliknięcie **Ulubione** wyłącza tylko ten warunek, zachowując archiwum.
+Ulubione wyróżniają złoty tytuł i grubsza pulsująca ramka. Przy systemowym
+ograniczeniu animacji ramka pozostaje nieruchoma. Procent dopasowania na laptopie
+i PC ma nieco większą czcionkę niż wcześniej.
 
 Po zaznaczeniu **Tylko archiwalne** możesz dodatkowo włączyć **Uwzględnij aktualne połączone z archiwalnymi** i kliknąć **Filtruj**. Wyniki obejmą aktualne oferty mające połączony archiwalny duplikat, po jednym wyniku na grupę. Fraza wyszukiwania sprawdza również treść archiwalnych kopii. Aktualna oferta zachowuje swój status; ręcznie odrzucona kopia nie kwalifikuje jej do archiwum.
 
@@ -132,9 +135,11 @@ preferencji, identyczna dla każdej oferty. Brak danych nie usuwa kryterium z mi
 Uzupełnienie kierunków, roku, piętra, ceny lub wyposażenia zmienia tylko zdobyte punkty.
 Zmiana preferencji może zmienić mianownik dla wszystkich ofert. Maksima kryteriów
 są sumowane osobno, także dla alternatywnych udogodnień (garaż i parking zewnętrzny).
-Przycisk **Co ile daje punktów?** rozwija nad tabelą karty zasad w kategoriach
+Domyślny widok **Ocena** pokazuje **Co ile daje punktów?** — karty zasad w kategoriach
 **Koszty**, **Lokalizacja**, **Układ**, **Budynek** i **Wykończenie**.
-Wybierz kategorię, aby zobaczyć jej kryteria i punkty bieżącej oferty.
+Wybierz kategorię, aby zobaczyć jej kryteria i punkty bieżącej oferty. Pogrubiony
+warunek **Dla tej oferty** wskazuje zastosowane widełki lub brak danych. Tabelę
+punktów, sumę i szczegółowe objaśnienia pokrycia otworzysz w **Dane rozwinięte**.
 Suma wierszy odpowiada wynikowi;
 na telefonie szeroka tabela przewija się wewnątrz zakładki.
 
@@ -148,7 +153,7 @@ wyraźnie bezczynszowe mieszkanie nie dostaje tej kary.
 Rok budowy: do 1980 −4; 1981–1990 −2; 1991–2000 0; 2001–2005 +4;
 2006–2010 +6; 2011–2015 +8; 2016–2020 +10; po 2020 +12.
 Rok bieżący lub poprzedni daje dodatkowe +2.
-Piętro: parter i poniżej −4; pierwsze +1; drugie −2; trzecie +3; czwarte +4;
+Piętro: parter i poniżej −4; pierwsze +1; drugie +2; trzecie +3; czwarte +4;
 piąte +5; szóste +7; siódme +8; 8–12 +9; powyżej 12 +12.
 Premia ostatniego piętra nalicza się tylko raz, w tym samym wierszu.
 
@@ -471,7 +476,10 @@ Drugie piętro daje +2 pkt, jednostronne południe +4 pkt, a dwustronny wschód�
 Tabela oceny pokazuje **Kryterium**, **Punkty** oraz **Dane / powód**.
 Zapis **+11 (18)** oznacza 11 zdobytych punktów z 18 możliwych. Powody pokazują wiek
 w dniach i osiągnięte zakresy dojazdu oraz raty. Parking zewnętrzny bez garażu daje
-osobne +8 pkt; kara za brak garażu nadal obowiązuje.
+osobne +8 pkt i znosi karę za brak garażu. Garaż daje +15 pkt. Przy włączonej
+preferencji **Parking (garaż lub miejsce zewnętrzne)** brak obu możliwości daje
+−36 pkt; przy wyłączonej −10 pkt. Garaż z windą zachowuje dodatkowe +12 pkt.
+Winda nadal daje +21 pkt, a jej brak −20 poza dotychczasowym wyjątkiem parteru.
 Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
 Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
 Kliknięcie lub dotknięcie tła poza zdjęciem również zamyka pełnoekranowy podgląd.
@@ -722,12 +730,9 @@ Możesz też zapisać niepotwierdzoną odpowiedź jako szkic. Zapisane odpowiedz
 pozostają widoczne, nawet gdy po odświeżeniu ogłoszenia pytanie przestanie wynikać
 z braków danych. Aktualizacja danych portalu nie weryfikuje ponownie ustaleń użytkownika.
 
-W sekcji **Następny krok** wpisz czynność i termin. Lista **Następne kroki** nad
-ofertami pokazuje do 100 najbliższych niewykonanych czynności, także z ofert
-archiwalnych, i wyróżnia minione terminy. Odświeża się po zapisie i powrocie do okna;
-można ją też odświeżyć przyciskiem. To przypomnienia wewnątrz aplikacji — bez
-powiadomień systemowych ani wiadomości email. Wykonaną lub anulowaną czynność
-oznacz w Ustaleniach; możesz później ustawić w tym samym miejscu kolejny termin.
+W sekcji **Następny krok** w Ustaleniach oferty możesz nadal zapisać czynność i termin
+oraz oznaczyć czynność jako wykonaną lub anulowaną. Zbiorcza lista **Następne kroki**
+została usunięta z ekranu głównego; zapisane czynności pozostają w ofertach.
 
 W **Duplikatach** rozwiń **Zapisz rozstrzygnięcie i źródło**, następnie wczytaj
 ustalenia. Można zapisać poprawną powierzchnię, liczbę pokoi, piętro i wyjaśnienie

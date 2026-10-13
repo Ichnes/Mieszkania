@@ -1,5 +1,18 @@
 # Bieżące zadania
 
+## Audyt punktacji wymarzonego mieszkania (2026-10-13)
+
+- [ ] Kalibracja DreamScore nadal trwa. Audyt kodu i poprawki techniczne nie oznaczają zatwierdzenia całego modelu; uzgodniono dotąd parking i windę. Otwarte pytania: pokoje/układ, piętra i wykończenie; następnie budżet, światło/lokalizacja, braki danych i sygnały ogłoszenia.
+- [x] Zakres: audyt punktacji, uzgodniona korekta parkingu, błąd formularzy łączenia archiwum, domyślne karty Oceny z pogrubionym warunkiem, wygląd ulubionych oraz usunięcie Następnych kroków z ekranu głównego.
+- [x] [Raport](audit-scoring-2026-10-13.md): dominacja garażu/windy, fałszywe premie opisowe, nieosiągalne maksimum, ekspozycja, podwójne pokoje, progi i podstawy cen, piętra, dojazdy oraz sygnały ogłoszenia. Końcowe ustalenie: parking konieczny (garaż lub zewnętrzny), winda konieczna, garaż +15 bez drastycznego osłabienia kar.
+- [x] Weryfikacja: lokalny skrypt na aktualnym kodzie przeszedł 11 asercji oraz odtworzył trzy fałszywe premie; analiza na profilu domyślnym, bez prywatnych danych i bez deklarowania pomiaru rzeczywistego rankingu.
+- [x] Garaż +15; parking zewnętrzny +8 usuwa karę za brak garażu. Bez obu opcji nadal −36/−10 zależnie od preferencji. Winda i premia garażu z windą bez zmian. Etykieta preferencji uwzględnia obie formy parkingu.
+- [x] Walidacja API przyjmuje `previousId` i `decision`; oba zarejestrowane w logach błędy 400 dotyczyły ponownych wystawień. Testy HTTP obu sposobów łączenia na izolowanym PostgreSQL: 3/3 bez pominięć; status aktywnej/archiwalnej oferty i historia zachowane.
+- [x] Ocena: domyślnie karty, zastosowane widełki pogrubione, szczegóły w „Dane rozwinięte”. Ulubione: ramka 4 px, wyraźniejsze stałe pulsowanie z obsługą reduced-motion i złoty tytuł w obu motywach; procent +1 px od 901 px. Usunięto montowanie Następnych kroków i powiązany odczyt z ekranu głównego oraz komunikat o braku oglądań; zaplanowane wizyty nadal są widoczne.
+- [x] Weryfikacja: 315 testów API i 148 web OK; 14 środowiskowych pominiętych w pełnym zestawie, wymagane scenariusze archiwum osobno na PostgreSQL (3/3 bez pominięć). Po końcowym usunięciu pustego komunikatu także 2/2 testy ekranu głównego. Typecheck i końcowy build Docker OK, aplikacja uruchomiona lokalnie.
+- [x] Playwright 1440/1280/390 px: domyślne karty, wyróżnione widełki we wszystkich kategoriach, rozwijana tabela, ramka 4 px i pulsowanie, złote tytuły, +1 px tylko na większych ekranach, brak następnych kroków i odczytu przypomnień, brak pustego komunikatu wizyt. Ciemny motyw i reduced-motion OK; brak poziomego przepełnienia strony i błędów JS. Zrzuty obejrzane; artefakty w `.local/runs/2026-10-13-scoring-audit/`.
+- [ ] Do dalszej rozmowy: pozostałe propozycje audytu (opis, ekspozycja, mianownik, braki danych, pokoje i progi cen), następnie porównanie wpływu na rzeczywiste oferty. Poza uzgodnionym parkingiem nie zmieniano wag.
+
 ## Odległość od ruchliwej ulicy (2026-10-11)
 
 - [x] Zakres: błędne oznaczenie „Mieszkanie jest usytuowane z dala od ruchliwej ulicy” jako wady.

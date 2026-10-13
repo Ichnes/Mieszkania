@@ -85,8 +85,16 @@ const enums: Record<string, string[]> = {
     "other",
   ],
   status: ["same_listing", "different_listing", "scheduled", "completed", "cancelled"],
+  decision: ["confirmed", "rejected"],
 };
-const ids = new Set(["listingId", "primaryListingId", "duplicateListingId", "leftId", "rightId"]);
+const ids = new Set([
+  "listingId",
+  "primaryListingId",
+  "duplicateListingId",
+  "leftId",
+  "rightId",
+  "previousId",
+]);
 const dates = new Set(["scheduledAt", "occurredAt", "lastContactAt"]);
 const stringArrays = new Set(["districts", "preferredDistricts", "exposureDirectionsOverride"]);
 const objects = new Set(["financing", "searchContract", "dreamProfile"]);

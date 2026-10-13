@@ -86,6 +86,31 @@
   overflow: hidden;
   background: var(--surface);
 }
+.score-expanded-data {
+  min-width: 0;
+}
+.score-expanded-data > summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  font-weight: 700;
+}
+.score-guide-match {
+  margin: 12px 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--brand-strong);
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+.score-guide-match span,
+.score-guide-match strong {
+  display: block;
+}
+.score-guide-match span {
+  margin-bottom: 4px;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
 .score-guide-header {
   padding: 24px 24px 16px;
   background: var(--brand-soft);

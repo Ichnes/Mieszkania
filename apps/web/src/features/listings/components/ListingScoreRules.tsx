@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Building2, Home, MapPin, Sparkles, Wallet } from "lucide-react";
 import type { computeDreamEvaluation } from "@mieszkania/shared";
+import { getScoreBand } from "../lib/score-band";
 
 type ScoreRow = ReturnType<typeof computeDreamEvaluation>["rows"][number];
 const categories = [
@@ -79,8 +80,8 @@ export function ListingScoreRules({ rows }: { rows: ScoreRow[] }) {
     <section id="dream-score-rules" className="score-guide" aria-label="Zasady punktacji">
       <header className="score-guide-header">
         <span className="score-guide-eyebrow">JAK POWSTAJE WYNIK</span>
-        <h4>Co ma dla nas znaczenie?</h4>
-        <p>Wybierz kategorię. Przy każdej zasadzie zobaczysz punkty tej oferty.</p>
+        <h4>Co ile daje punktów?</h4>
+        <p>Wybierz kategorię. Pogrubiony warunek pokazuje, jak oceniono tę ofertę.</p>
       </header>
       <div className="score-guide-categories" aria-label="Kategorie punktacji">
         {groups.map((group) => (
@@ -118,6 +119,10 @@ export function ListingScoreRules({ rows }: { rows: ScoreRow[] }) {
                   {row.points} pkt
                 </span>
               </div>
+              <p className="score-guide-match">
+                <span>Dla tej oferty</span>
+                <strong>{getScoreBand(row)}</strong>
+              </p>
               <ul>
                 {row.rule.split(/;\s*/).map((condition, index) => (
                   <li key={index}>{condition}</li>

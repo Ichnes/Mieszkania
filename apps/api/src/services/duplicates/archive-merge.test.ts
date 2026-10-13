@@ -15,9 +15,12 @@ test("manual archive merge keeps an active listing visible regardless of source 
   assert.equal(await choosePreferredPrimaryListingId(db as never, "archive", "live"), "live");
 });
 import { randomUUID } from "node:crypto";
+import Fastify from "fastify";
+import { registerPayloadValidation } from "../../http/payload-validation";
+import { registerDuplicatesRoutes } from "../../http/routes/duplicates";
 import pg from "pg";
 import { pool } from "../../db";
-import { getDuplicateCandidates, reviewDuplicateCandidate } from "./listing-duplicates";
+import { getDuplicateCandidates } from "./listing-duplicates";
 
 test(
   "archived duplicate candidates can be merged without hiding the live listing or changing archive status",
@@ -29,6 +32,9 @@ test(
       connectionString: process.env.TEST_DATABASE_URL,
       options: `-c search_path=${schema},public`,
     });
+    const app = Fastify();
+    registerPayloadValidation(app);
+    registerDuplicatesRoutes(app);
     try {
       await admin.query(`create schema ${schema}`);
       for (const table of [
@@ -67,7 +73,17 @@ test(
       const candidates = await getDuplicateCandidates(20, ids[1], { minConfidence: 0 });
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[0])));
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[2])));
-      await reviewDuplicateCandidate({ leftId: ids[1], rightId: ids[0], status: "same_listing" });
+      const response = await app.inject({
+        method: "POST",
+        url: "/api/duplicates/review",
+        payload: {
+          leftId: ids[1],
+          rightId: ids[0],
+          primaryListingId: ids[1],
+          status: "same_listing",
+        },
+      });
+      assert.equal(response.statusCode, 200, response.body);
       const asset = (
         await db.query(
           `insert into listing_media_assets(storage_key,source_url) values('test/archive.jpg','https://example.test/archive.jpg') returning id`,
@@ -99,6 +115,7 @@ test(
         false,
       );
     } finally {
+      await app.close();
       t.mock.restoreAll();
       await db.end();
       await admin.query(`drop schema ${schema} cascade`);

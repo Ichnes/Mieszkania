@@ -50,7 +50,7 @@ test("not-yet-loaded and failed calendar/list never look like empty successful r
   assert.doesNotMatch(failed, /Brak zaplanowanych oglądań|0 ofert/);
 });
 
-test("confirmed empty calendar and filtered zero results have honest empty labels", () => {
+test("empty calendar stays quiet while filtered zero results remain visible", () => {
   const input = model();
   input.hasLoadedListings = true;
   input.viewingsSection = {
@@ -59,6 +59,6 @@ test("confirmed empty calendar and filtered zero results have honest empty label
     data: input.upcomingViewings,
   };
   const html = renderToStaticMarkup(<OffersOverview model={input} />);
-  assert.match(html, /Brak zaplanowanych oglądań/);
+  assert.doesNotMatch(html, /Brak zaplanowanych oglądań/);
   assert.match(html, /0 ofert w bieżących wynikach/);
 });
