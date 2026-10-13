@@ -74,13 +74,31 @@ test("missing lift costs no points on the ground floor", () => {
   assert.equal(row({ floor: 0, hasLift: false }, "Winda").points, 0);
   assert.equal(row({ description: "Mieszkanie na parterze.", hasLift: false }, "Winda").points, 0);
   assert.equal(row({ floor: 0, hasLift: true }, "Winda").points, 21);
-  assert.equal(row({ floor: 1, hasLift: false }, "Winda").points, -20);
   assert.equal(
-    row({ hasLift: false, description: "Na parterze lokale usługowe." }, "Winda").points,
+    row({ floor: 1, hasLift: false, amenityEvidence: { lift: false } }, "Winda").points,
     -20,
   );
   assert.equal(
-    row({ floor: 2, hasLift: false, description: "Na parterze jest wejście." }, "Winda").points,
+    row(
+      {
+        hasLift: false,
+        amenityEvidence: { lift: false },
+        description: "Na parterze lokale usługowe.",
+      },
+      "Winda",
+    ).points,
+    -20,
+  );
+  assert.equal(
+    row(
+      {
+        floor: 2,
+        hasLift: false,
+        amenityEvidence: { lift: false },
+        description: "Na parterze jest wejście.",
+      },
+      "Winda",
+    ).points,
     -20,
   );
 });
@@ -88,9 +106,9 @@ test("purchase price: exact budget, seven percent and above", () => {
   for (const [price, points] of [
     [999999, 15],
     [1000000, 15],
-    [1000001, -5],
-    [1070000, -5],
-    [1070001, -15],
+    [1000001, 15],
+    [1070000, -6],
+    [1070001, -6],
   ])
     assert.equal(row({ priceLabel: String(price) }, "Cena zakupu").points, points, String(price));
 });
@@ -100,9 +118,9 @@ test("unit price: proportional discount bonus and explicit overspending penaltie
     [15000, 20],
     [17500, 15],
     [20000, 10],
-    [20001, -5],
-    [21400, -5],
-    [21401, -10],
+    [20001, 10],
+    [21400, -4],
+    [21401, -4],
   ])
     assert.equal(
       row({ pricePerSqmLabel: String(price) }, "Cena za m²").points,
@@ -164,10 +182,10 @@ test("metro penalties start beyond 150 percent; missing location remains neutral
   assert.equal(row({ latitude: undefined, longitude: undefined }, "Metro").points, 0);
 });
 
-test("commute without location data deducts five points and keeps a twelve-point budget", () => {
+test("commute is inactive without configured commuters", () => {
   const result = row({}, "Dojazd do pracy");
-  assert.equal(result.points, -5);
-  assert.equal(result.maxPoints, 12);
+  assert.equal(result.points, 0);
+  assert.equal(result.maxPoints, 0);
   assert.ok(
     !computeDreamEvaluation(base, profile, []).rows.some((row) => /\bdalej\b/i.test(row.rule)),
   );
@@ -182,24 +200,23 @@ test("score reasons describe listing facts instead of repeating rules or timesta
   );
   const detail = (label: string) => result.rows.find((row) => row.label === label)!.detail;
   assert.equal(detail("Wiek oferty"), "1 dzień");
-  assert.equal(detail("Układ mieszkania"), "nie spełnia");
-  assert.equal(detail("Parking zewnętrzny"), "brak danych");
+  assert.match(detail("Liczba pokoi"), /Liczba pokoi: 2/);
+  assert.equal(detail("Garaż"), "brak danych");
   assert.equal(detail("Klimatyzacja"), "brak danych");
   assert.equal(detail("Wynajem miejsc parkingowych"), "brak danych");
-  assert.equal(detail("Dojazd do pracy"), "brak danych");
-  assert.match(detail("Szacowana rata"), /^(Do|Powyżej) 7500 zł$/);
-  assert.equal(row({ hasGarage: false, hasOutdoorParking: true }, "Parking zewnętrzny").points, 8);
-  assert.equal(row({ hasGarage: false, hasOutdoorParking: true }, "Garaż").points, 0);
+  assert.equal(detail("Dojazd do pracy"), "Brak osób dojeżdżających");
+  assert.match(detail("Szacowana rata"), /zł; limit 7500 zł/);
+  assert.equal(row({ hasGarage: false, hasOutdoorParking: true }, "Garaż").points, 8);
 });
 
-test("commute distance bands award points only inside the configured ranges", () => {
+test("straight-line distances never replace missing route times", () => {
   for (const [km, points] of [
-    [6.99, 12],
-    [7.01, 8],
-    [11.99, 8],
-    [12.01, 4],
-    [17.99, 4],
-    [18.01, -5],
+    [6.99, -3],
+    [7.01, -3],
+    [11.99, -3],
+    [12.01, -3],
+    [17.99, -3],
+    [18.01, -3],
   ]) {
     const result = computeDreamEvaluation({ ...base, latitude: 52, longitude: 21 }, profile, [
       { key: "test", label: "Test", address: "", latitude: 52 + km / 111.195, longitude: 21 },

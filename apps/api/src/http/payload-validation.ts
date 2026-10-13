@@ -40,6 +40,7 @@ const numbers = new Set([
   "maxPricePerSqm",
   "maxMetroDistanceMeters",
   "downPayment",
+  "maxMonthlyPayment",
   "latitude",
   "longitude",
 ]);
@@ -62,6 +63,7 @@ const strings = new Set([
   "confirmation",
 ]);
 const enums: Record<string, string[]> = {
+  workMode: ["onsite", "remote"],
   refreshMode: ["full", "price_only"],
   contactStatus: ["new", "contacted", "negotiating", "viewing_scheduled", "rejected", "closed"],
   decisionStage: [

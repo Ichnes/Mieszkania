@@ -4,6 +4,23 @@ import { createDefaultFamilySettings } from "@mieszkania/shared";
 import { mergeSettings, normalizeDreamProfile, validateWorkplacePoints } from "./family-settings";
 import { createDefaultDreamListingProfile } from "@mieszkania/shared";
 
+test("remote workers need no office coordinates and financing retains the editable payment limit", () => {
+  const remote = { key: "home", label: "Dom", address: "", workMode: "remote" as const };
+  assert.doesNotThrow(() => validateWorkplacePoints([remote]));
+  const merged = mergeSettings({
+    ...createDefaultFamilySettings(),
+    workplaces: [remote],
+    financing: { downPayment: 400000, maxMonthlyPayment: 6500 },
+  });
+  assert.equal(merged.workplaces[0].workMode, "remote");
+  assert.equal(merged.financing?.maxMonthlyPayment, 6500);
+  assert.equal(
+    mergeSettings({ ...merged, financing: { downPayment: 400000, maxMonthlyPayment: NaN } })
+      .financing?.maxMonthlyPayment,
+    7500,
+  );
+});
+
 test("workplaces require a complete valid point while an empty list is allowed", () => {
   const workplace = {
     key: "test",

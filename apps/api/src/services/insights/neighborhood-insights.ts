@@ -224,31 +224,33 @@ export async function getCommutes(
   settings: FamilySettings,
 ): Promise<CommuteSummary[]> {
   return Promise.all(
-    settings.workplaces.map(async (workplace): Promise<CommuteSummary> => {
-      const basic = { key: workplace.key, label: workplace.label };
-      if (
-        !isCoordinate(latitude) ||
-        !isCoordinate(longitude) ||
-        !isCoordinate(workplace.latitude) ||
-        !isCoordinate(workplace.longitude)
-      )
-        return basic;
-      try {
-        const route = await fetchRoute(
-          latitude,
-          longitude,
-          workplace.latitude,
-          workplace.longitude,
-        );
-        return {
-          ...basic,
-          distanceKm: route ? Number((route.distance / 1000).toFixed(1)) : undefined,
-          durationMinutes: route ? Math.round(route.duration / 60) : undefined,
-        };
-      } catch {
-        return basic;
-      }
-    }),
+    settings.workplaces
+      .filter((workplace) => workplace.workMode !== "remote")
+      .map(async (workplace): Promise<CommuteSummary> => {
+        const basic = { key: workplace.key, label: workplace.label };
+        if (
+          !isCoordinate(latitude) ||
+          !isCoordinate(longitude) ||
+          !isCoordinate(workplace.latitude) ||
+          !isCoordinate(workplace.longitude)
+        )
+          return basic;
+        try {
+          const route = await fetchRoute(
+            latitude,
+            longitude,
+            workplace.latitude,
+            workplace.longitude,
+          );
+          return {
+            ...basic,
+            distanceKm: route ? Number((route.distance / 1000).toFixed(1)) : undefined,
+            durationMinutes: route ? Math.round(route.duration / 60) : undefined,
+          };
+        } catch {
+          return basic;
+        }
+      }),
   );
 }
 
@@ -617,7 +619,8 @@ function buildInsightsCacheKey(
 ) {
   const workplacesKey = settings.workplaces
     .map(
-      (workplace) => `${workplace.key}:${workplace.latitude ?? "x"}:${workplace.longitude ?? "x"}`,
+      (workplace) =>
+        `${workplace.key}:${workplace.latitude ?? "x"}:${workplace.longitude ?? "x"}:${workplace.workMode ?? "onsite"}`,
     )
     .join("|");
   return `${listingId}:${latitude.toFixed(5)}:${longitude.toFixed(5)}:${workplacesKey}`;

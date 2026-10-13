@@ -38,6 +38,29 @@ export function getDreamDescriptionFacts(text: string) {
       );
   return {
     countertopPoints,
+    bedroomArea: getBedroomArea(text),
+    architect: hasPositiveDescriptionFact(
+      text,
+      /\b(?:(?:wnetrz\w*|mieszkanie|lokal)\b[^.!?;\n]{0,65}?\b(?:zaprojektowan\w*|urzadzon\w*|projekt\w*)\b[^.!?;\n]{0,30}?\barchitekt\w*|(?:projekt\w*|zaprojektowan\w*|urzadzon\w*)\b[^.!?;\n]{0,35}?\barchitekt\w*\s+wnetrz\w*)\b/,
+    ),
+    separateWc: hasPositiveDescriptionFact(
+      text,
+      /\b(?:(?:osobn\w*|oddzieln\w*|niezalezn\w*)\s+(?:wc|toalet\w*)|(?:wc|toalet\w*)\s+(?:osobn\w*|oddzieln\w*|niezalezn\w*))\b/,
+    ),
+    laundry: hasPositiveDescriptionFact(
+      text,
+      /\b(?:pralni[aeą]|pralnia|pomieszczeni\w*\s+(?:na\s+pralni\w*|z\s+pralka\s+i\s+suszarka))\b/,
+    ),
+    bathroomFittings: text
+      .split(/[.!?;\n]/)
+      .some(
+        (clause) =>
+          /\b(?:lazien\w*|prysznic\w*|natrysk\w*|armatur\w*\s+lazienkow\w*)\b/.test(clause) &&
+          hasPositiveDescriptionFact(
+            clause,
+            /\b(?:(?:bateri\w*|armatur\w*|prysznic\w*)\s+(?:(?:lazienkow\w*|firmy|marki)\s+)?(?:termostatyczn\w*|podtynkow\w*|grohe|hansgrohe|axor|dornbracht)|(?:grohe|hansgrohe|axor|dornbracht)\s+(?:bateri\w*|armatur\w*|prysznic\w*))\b/,
+          ),
+      ),
     shower: hasPositiveDescriptionFact(
       text,
       /\b(?:prysznic\w*|natrysk\w*|kabina\s+(?:bezbrodzikow\w*|walk[ -]in))\b/,
@@ -70,9 +93,22 @@ export function getDreamDescriptionFacts(text: string) {
   };
 }
 
+/** An explicit room measurement; living-room area and vague adjectives never qualify. */
+function getBedroomArea(text: string) {
+  const pattern =
+    /\b(?:sypialni\w*|pokoj\s+(?:dzieciec\w*|dzieck\w*))\s*(?:(?:glown\w*|duz\w*|mniejsz\w*|wieksz\w*)\s*)?(?:(?:nr\.?\s*)?\d\s*[:.)-]\s*)?(?:(?:o\s+)?(?:powierzchni|pow\.)\s*)?[:(–-]?\s*(\d{1,2}(?:[,.]\d{1,2})?)\s*m(?:²|2|kw\b)/g;
+  const areas = Array.from(text.matchAll(pattern))
+    .filter(
+      (match) => getDescriptionMentionStatus(text, match.index!, match[0].length) === "present",
+    )
+    .map((match) => Number(match[1].replace(",", ".")))
+    .filter((area) => Number.isFinite(area) && area > 0 && area <= 60);
+  return areas.length ? Math.max(...areas) : undefined;
+}
+
 export function getCountertopPoints(text: string) {
   const materials: Array<[string, number]> = [
-    ["granit\\w*", 8],
+    ["granit\\w*", 7],
     ["(?:konglomerat\\w*|spiek\\w*)", 7],
     ["(?:drewnian\\w*|drewn(?:o|a|em)|debow\\w*|dab|debu|debem|jesion\\w*|bukow\\w*)", 5],
   ];

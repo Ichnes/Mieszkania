@@ -38,21 +38,27 @@ test("garage earns 15, outdoor parking is an alternative, and no parking or lift
     const profile = { ...settings.dreamProfile, requiresGarage };
     const garage = evaluate({}, profile);
     const outdoor = evaluate({ hasGarage: false, hasOutdoorParking: true }, profile);
-    const neither = evaluate({ hasGarage: false, hasOutdoorParking: false }, profile);
+    const neither = evaluate(
+      {
+        hasGarage: false,
+        hasOutdoorParking: false,
+        amenityEvidence: { garage: false, outdoorParking: false },
+      },
+      profile,
+    );
     assert.equal(row(garage, "Garaż").points, 15);
-    assert.equal(row(outdoor, "Garaż").points, 0);
+    assert.equal(row(outdoor, "Garaż").points, 8);
     assert.equal(row(outdoor, "Garaż").dataStatus, "known");
-    assert.equal(row(outdoor, "Parking zewnętrzny").points, 8);
     assert.equal(row(neither, "Garaż").points, requiresGarage ? -36 : -10);
     assert.equal(garage.maxPoints, outdoor.maxPoints);
     assert.equal(outdoor.maxPoints, neither.maxPoints);
-    assert.equal(
-      row(evaluate({ hasOutdoorParking: true }, profile), "Parking zewnętrzny").points,
-      0,
-    );
+    assert.equal(row(evaluate({ hasOutdoorParking: true }, profile), "Garaż").points, 15);
   }
   assert.equal(row(evaluate(), "Winda").points, 21);
-  assert.equal(row(evaluate({ hasLift: false, floor: 3 }), "Winda").points, -20);
+  assert.equal(
+    row(evaluate({ hasLift: false, floor: 3, amenityEvidence: { lift: false } }), "Winda").points,
+    -20,
+  );
   assert.equal(row(evaluate(), "Garaż i winda razem").points, 12);
 });
 
@@ -86,20 +92,20 @@ test("rented garage and storage lose two and one points without duplicating the 
   );
 });
 
-test("coverage distinguishes missing evidence from confirmed absence without changing scores", () => {
+test("coverage distinguishes missing evidence from confirmed absence and applies partial penalties", () => {
   const missing = evaluate({ hasGarage: false, hasLift: false, hasStorage: false });
   const absent = evaluate({
     hasGarage: false,
     hasLift: false,
     hasStorage: false,
-    amenityEvidence: { garage: false, lift: false, storage: false },
+    amenityEvidence: { garage: false, outdoorParking: false, lift: false, storage: false },
   });
   for (const label of ["Garaż", "Winda", "Komórka"]) {
     assert.equal(missing.rows.find((row) => row.label === label)?.dataStatus, "unknown");
     assert.equal(absent.rows.find((row) => row.label === label)?.dataStatus, "known");
   }
-  assert.equal(absent.score, missing.score);
-  assert.equal(absent.points, missing.points);
+  assert.ok(absent.score < missing.score);
+  assert.equal(absent.points, missing.points - 28);
   assert.equal(absent.maxPoints, missing.maxPoints);
   assert.ok(absent.coverage.known > missing.coverage.known);
   assert.equal(absent.coverage.total, missing.coverage.total);
@@ -120,10 +126,10 @@ test("coverage includes known failures, omits disabled rules, and keeps partial 
   const status = (label: string) => result.rows.find((row) => row.label === label)?.dataStatus;
   assert.equal(status("Liczba pokoi"), "known");
   assert.equal(status("Cena zakupu"), "known");
-  assert.equal(status("Piętro"), "unknown");
+  assert.equal(status("Piętro"), "known");
   assert.equal(status("Winda"), "unknown");
   assert.equal(status("Ekspozycja"), "unknown");
-  assert.equal(status("Dojazd do pracy"), "unknown");
+  assert.equal(status("Dojazd do pracy"), "inactive");
   const disabled = evaluate(
     {},
     {
@@ -243,7 +249,7 @@ test("two rented parking spaces incur an additional five-point penalty, not a pu
 test("breakdown sums exactly and includes balcony, year, shower, fee and top-floor rules", () => {
   const row = (changes: Partial<ListingSummary>, label: string) =>
     evaluate(changes).rows.find((item) => item.label === label)!;
-  assert.equal(row({ hasBalcony: false }, "Balkon").points, -8);
+  assert.equal(row({ hasBalcony: false }, "Balkon").points, -4);
   assert.equal(
     evaluate({ hasBalcony: false }, { ...settings.dreamProfile, prefersBalcony: false }).rows.find(
       (item) => item.label === "Balkon",
@@ -269,11 +275,11 @@ test("breakdown sums exactly and includes balcony, year, shower, fee and top-flo
   assert.equal(row({ maintenanceFeeLabel: "950 PLN" }, "Informacja o czynszu").points, 0);
   assert.equal(
     row({ description: "Na trzecim najwyższym i najcichszym piętrze." }, "Piętro").points,
-    5,
+    12,
   );
   assert.equal(
     row({ floor: 3, totalFloors: 3, description: "Na ostatnim piętrze" }, "Piętro").points,
-    8,
+    12,
   );
   assert.equal(row({ description: "Nie jest na ostatnim piętrze" }, "Piętro").points, 0);
   const evaluation = evaluate({
@@ -300,7 +306,7 @@ test("mortgage points use saved down payment, acquisition extras and the 7500 th
       now,
       { downPayment },
     );
-  assert.equal(evaluateMortgage(7500.01 / paymentFactor, 0).mortgage!.points, -10);
+  assert.equal(evaluateMortgage(7500.01 / paymentFactor, 0).mortgage!.points, 0);
   assert.equal(evaluateMortgage(7499.99 / paymentFactor, 0).mortgage!.points, 0);
   assert.equal(evaluateMortgage(3750 / paymentFactor, 0).mortgage!.points, 5);
   assert.equal(evaluateMortgage(1500000, 1500000).mortgage!.points, 10);
@@ -316,13 +322,13 @@ test("mortgage points use saved down payment, acquisition extras and the 7500 th
 test("premium countertops, oak floors, carpentry and parking recognize Polish variants once", () => {
   for (const [description, bonus] of [
     ["Blaty kuchenne wykonane ze spieku kwarcowego", 7],
-    ["Kuchnia z blatem z granitu.", 8],
-    ["Granitowe blaty kuchenne.", 8],
+    ["Kuchnia z blatem z granitu.", 7],
+    ["Granitowe blaty kuchenne.", 7],
     ["Blat wykonany z konglomeratu kwarcowego.", 7],
-    ["Blaty ze spieku, blaty granitowe i blat z konglomeratu.", 8],
-    ["Na podłogach wysokiej jakości deska dębow", 10],
-    ["Na podłodze deski dębowe.", 6],
-    ["Dębowa deska, parkiet oraz drewniana podłoga.", 6],
+    ["Blaty ze spieku, blaty granitowe i blat z konglomeratu.", 7],
+    ["Na podłogach wysokiej jakości deska dębow", 8],
+    ["Na podłodze deski dębowe.", 8],
+    ["Dębowa deska, parkiet oraz drewniana podłoga.", 8],
     ["Meble robione pod wymiar przez stolarza.", 5],
     ["Zabudowa wykonana na wymiar przez stolarzy.", 5],
     ["Szafy wykonane przez stolarza na wymiar.", 5],
@@ -439,7 +445,7 @@ test("requested amenity and commercial bonuses use exact point values", () => {
   for (const [changes, points] of [
     [{ hasStorage: true }, 9],
     [{ hasAirConditioning: true }, 5],
-    [{ description: "Drewniana podłoga, parkiet." }, 6],
+    [{ description: "Drewniana podłoga, parkiet." }, 8],
     [{ description: "Garderoba" }, 5],
     [{ badges: ["Oferta prywatna"] }, 10],
     [{ badges: ["Oferta bezpośrednia"] }, 10],
@@ -449,10 +455,10 @@ test("requested amenity and commercial bonuses use exact point values", () => {
   }
 });
 
-test("three rooms earn a large-area bonus at 75 m² and four rooms remain ideal", () => {
+test("total area does not duplicate room points and four rooms remain ideal", () => {
   const below = evaluate({ areaLabel: "74,9 m²" });
   const large = evaluate({ areaLabel: "75 m²" });
-  assert.equal(large.points - below.points, 4);
+  assert.equal(large.points - below.points, 0);
   assert.equal(large.maxPoints, below.maxPoints);
   assert.ok(evaluate({ roomsCount: 4 }).score > large.score);
   assert.ok(large.score > evaluate({ roomsCount: 2 }).score);
@@ -475,14 +481,17 @@ test("area tolerance checks both bounds and does not reward distant misses", () 
 });
 
 test("synonyms cannot multiply a single descriptive amenity bonus", () => {
-  assert.equal(evaluate({ description: "projekt architekta" }).points - evaluate().points, 8);
+  assert.equal(
+    evaluate({ description: "Projekt architekta wnętrz" }).points - evaluate().points,
+    5,
+  );
   assert.equal(
     evaluate({ description: "dwie łazienki, 2 łazienki" }).points - evaluate().points,
     4,
   );
   assert.equal(
     evaluate({ description: "wysoki standard, wysokiej jakości" }).points - evaluate().points,
-    4,
+    1,
   );
   assert.equal(
     evaluate({ description: "po remoncie, świeżo wyremontowane, odświeżone" }).points -

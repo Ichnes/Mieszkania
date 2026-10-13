@@ -120,10 +120,36 @@ export function SettingsPanel(input: {
               onChange={(event) =>
                 setLocal((current) => ({
                   ...current,
-                  financing: { downPayment: Math.max(0, Number(event.target.value)) },
+                  financing: {
+                    ...current.financing,
+                    downPayment: Math.max(0, Number(event.target.value)),
+                  },
                 }))
               }
             />
+          </label>
+          <label className="field-label">
+            <span>Limit miesięcznej raty w DreamScore (zł)</span>
+            <input
+              className="text-input"
+              type="number"
+              min="1"
+              step="100"
+              value={local.financing?.maxMonthlyPayment ?? 7500}
+              onChange={(event) =>
+                setLocal((current) => ({
+                  ...current,
+                  financing: {
+                    downPayment: current.financing?.downPayment ?? defaultDownPayment,
+                    maxMonthlyPayment: Math.max(1, Number(event.target.value)),
+                  },
+                }))
+              }
+            />
+            <small>
+              Do limitu premia stopniowo maleje do 0. Powyżej limitu kara rośnie płynnie do −10 przy
+              przekroczeniu o 20%.
+            </small>
           </label>
         </section>
 
@@ -134,7 +160,10 @@ export function SettingsPanel(input: {
             </span>
             <div>
               <h3>Dojazdy do pracy</h3>
-              <p>Adresy używane do liczenia czasu i wygody codziennych dojazdów.</p>
+              <p>
+                Do oceny trafiają tylko dojazdy osób pracujących poza domem. Przy kilku celach
+                liczymy średnią.
+              </p>
             </div>
           </div>
           <div className="settings-workplaces-grid">
@@ -185,9 +214,10 @@ export function SettingsPanel(input: {
           </button>
           {local.workplaces.some(
             (item) =>
-              !item.address.trim() ||
-              !Number.isFinite(item.latitude) ||
-              !Number.isFinite(item.longitude),
+              item.workMode !== "remote" &&
+              (!item.address.trim() ||
+                !Number.isFinite(item.latitude) ||
+                !Number.isFinite(item.longitude)),
           ) && (
             <p role="status">
               Uzupełnij adres i wybierz punkt dla każdego miejsca pracy albo usuń niepotrzebny wpis.
@@ -640,11 +670,12 @@ export function SettingsPanel(input: {
                 input.isSaving ||
                 local.workplaces.some(
                   (item) =>
-                    !item.address.trim() ||
-                    !Number.isFinite(item.latitude) ||
-                    !Number.isFinite(item.longitude) ||
-                    Math.abs(item.latitude!) > 90 ||
-                    Math.abs(item.longitude!) > 180,
+                    item.workMode !== "remote" &&
+                    (!item.address.trim() ||
+                      !Number.isFinite(item.latitude) ||
+                      !Number.isFinite(item.longitude) ||
+                      Math.abs(item.latitude!) > 90 ||
+                      Math.abs(item.longitude!) > 180),
                 )
               }
               onClick={() => void input.onSave(settingsWithPendingDreamLocation())}

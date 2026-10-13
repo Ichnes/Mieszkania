@@ -1,4 +1,6 @@
 import { readMonthlyFee } from "./maintenance-fee";
+import { isRealPriceChange, realPriceChangeSql } from "./price-change";
+import { commuteRouteCache } from "../insights/commute-route-cache";
 import { dashboardPriceChangesSql } from "./dashboard-price-changes";
 import {
   dashboardPeriods,
@@ -159,6 +161,7 @@ type DashboardContext = {
 };
 
 type ListingsPage = {
+  commutesPending?: number;
   total: number;
   items: ListingSummary[];
 };
@@ -250,9 +253,9 @@ export async function getMapListings() {
       left join listing_manual_overrides lmo on lmo.listing_id = l.id
       left join lateral (
         select previous_price_amount, new_price_amount
-        from price_events
-        where listing_id = l.id
-          and event_type in ('price_drop', 'price_increase')
+        from price_events pe
+        where pe.listing_id = l.id
+          and ${realPriceChangeSql}
         order by changed_at desc
         limit 1
       ) pe on true
@@ -514,6 +517,8 @@ export async function addListingContactEvent(
 }
 
 export async function getListingDetail(listingId: string): Promise<ListingDetail | null> {
+  const settings = await getFamilySettings();
+  await commuteRouteCache.load();
   return withDb(async (db) => {
     const result = await db.query<ListingRow>(
       `
@@ -625,13 +630,15 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       undefined;
     const detail = mapListingSummary(
       { ...row, snapshot_payload_raw: snapshotPayload },
-      priceHistoryResult.rows.at(-1),
+      [...priceHistoryResult.rows].reverse().find(isRealPriceChange),
       null,
       images.length,
       primaryImage?.resolvedUrl,
       imageUrls,
       undefined,
     );
+    commuteRouteCache.prepare([detail], settings.workplaces);
+    detail.scoringCommutes = commuteRouteCache.read(detail, settings.workplaces);
     return {
       ...detail,
       aiAssessment: aiAssessments.get(listingId),
@@ -859,6 +866,7 @@ async function getListingsPageByScope(
   };
   const settings = await getFamilySettings();
   measure("settings");
+  await commuteRouteCache.load();
   const minimumVisibleArea = settings.searchContract.minArea;
   const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
@@ -995,7 +1003,7 @@ async function getListingsPageByScope(
           select 1
           from price_events pe
           where pe.listing_id = l.id
-            and pe.event_type in ('price_drop', 'price_increase')
+            and ${realPriceChangeSql}
         )
       `);
     }
@@ -1122,6 +1130,7 @@ async function getListingsPageByScope(
           pe.previous_price_amount::text, pe.new_price_amount::text, pe.changed_at::text
         from price_events pe
         where pe.listing_id = any($1::uuid[])
+          and ${realPriceChangeSql}
         order by pe.listing_id, pe.changed_at desc
       `,
       [pageRows.map((row) => row.id)],
@@ -1129,6 +1138,13 @@ async function getListingsPageByScope(
     const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
     measure("price-events-query");
     const dreamScores = new Map<string, number>();
+    commuteRouteCache.prepare(
+      pageRows.map((row) => ({
+        latitude: row.latitude == null ? undefined : Number(row.latitude),
+        longitude: row.longitude == null ? undefined : Number(row.longitude),
+      })),
+      settings.workplaces,
+    );
     if (isDreamSort) {
       await dreamScoreCache.load();
       const preferencesSignature = JSON.stringify([
@@ -1188,6 +1204,7 @@ async function getListingsPageByScope(
         0,
       );
       const assessment = aiAssessments.get(row.id);
+      item.scoringCommutes = commuteRouteCache.read(item, settings.workplaces);
       if (assessment) {
         const { score, coverage, confidence, evaluatedAt } = assessment;
         item.aiAssessment = { score, coverage, confidence, evaluatedAt };
@@ -1196,7 +1213,7 @@ async function getListingsPageByScope(
     });
 
     measure("page-summaries");
-    return { total, items };
+    return { total, items, commutesPending: commuteRouteCache.pending };
   });
 }
 
@@ -1632,6 +1649,18 @@ function mapListingSummary(
       garage: amenities.garage,
       lift: amenities.lift,
       storage: row.manual_has_storage_override ?? (detectedStorage ? true : undefined),
+      outdoorParking: hasOutdoorParking
+        ? true
+        : hasNoAssignedParking(row.description ?? "")
+          ? false
+          : undefined,
+      balcony: hasBalcony
+        ? true
+        : /\b(?:bez|brak)\s+(?:balkonu|balkonow|tarasu)\b/.test(
+              normalizePolish(row.description ?? ""),
+            )
+          ? false
+          : undefined,
     },
     finishQuality: extractedFeatures.some(
       (feature) =>
@@ -3057,7 +3086,10 @@ function getPriceChangePercent(latestEvent: PriceEventRow | undefined) {
     return 0;
   }
 
-  return Number((((next - previous) / previous) * 100).toFixed(1));
+  const change = ((next - previous) / previous) * 100;
+  const rounded = Number(change.toFixed(1));
+  // A genuine small change must not become "0%" on a filtered offer card.
+  return rounded === 0 && change !== 0 ? Number(change.toPrecision(2)) : rounded;
 }
 
 const currencyFormatter = new Intl.NumberFormat("pl-PL", {
@@ -3260,12 +3292,21 @@ function getCachedDreamScore(
       latestEvent,
       preferencesSignature,
       getListingAgePoints(row.first_seen_at ?? row.published_at),
+      commuteRouteCache.read(
+        {
+          latitude: row.latitude == null ? undefined : Number(row.latitude),
+          longitude: row.longitude == null ? undefined : Number(row.longitude),
+        },
+        settings.workplaces,
+      ),
     ]),
   );
   const cached = dreamScoreCache.get(row.id);
   if (cached?.signature === signature) return cached.score;
+  const summary = mapListingSummary(row, latestEvent, null, 0);
+  summary.scoringCommutes = commuteRouteCache.read(summary, settings.workplaces);
   const score = computeDreamScore(
-    mapListingSummary(row, latestEvent, null, 0),
+    summary,
     settings.dreamProfile,
     settings.workplaces,
     undefined,

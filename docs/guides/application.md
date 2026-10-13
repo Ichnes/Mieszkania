@@ -143,35 +143,35 @@ punktów, sumę i szczegółowe objaśnienia pokrycia otworzysz w **Dane rozwini
 Suma wierszy odpowiada wynikowi;
 na telefonie szeroka tabela przewija się wewnątrz zakładki.
 
-Przy włączonej preferencji balkonu brak potwierdzonego balkonu oznacza −8 pkt
-(obecność nadal +10). Brak roku budowy daje −3 pkt. Prysznic, kabina prysznicowa
-lub natrysk dają +3 pkt; najwyższe/ostatnie piętro dodatkowe +5 pkt, także gdy
-wynika z opisu, np. „trzecim najwyższym i najcichszym piętrze”.
+Przy włączonej preferencji balkonu potwierdzony brak oznacza −8 pkt,
+brak informacji −4, obecność +10. Brak roku budowy daje −3 pkt.
+Prysznic, kabina prysznicowa lub natrysk dają +3 pkt.
 Brak podanej kwoty czynszu daje −2 pkt. Kwota w polach portalu też się liczy;
 wyraźnie bezczynszowe mieszkanie nie dostaje tej kary.
 
 Rok budowy: do 1980 −4; 1981–1990 −2; 1991–2000 0; 2001–2005 +4;
 2006–2010 +6; 2011–2015 +8; 2016–2020 +10; po 2020 +12.
 Rok bieżący lub poprzedni daje dodatkowe +2.
-Piętro: parter i poniżej −4; pierwsze +1; drugie +2; trzecie +3; czwarte +4;
-piąte +5; szóste +7; siódme +8; 8–12 +9; powyżej 12 +12.
-Premia ostatniego piętra nalicza się tylko raz, w tym samym wierszu.
+Piętro: parter i poniżej −4; wyżej zaokrąglone `9 × piętro / liczba pięter`,
+z dodatkowym +3 za ostatnie. Przykłady: 2/5 +4, 4/5 +7, 5/5 i 13/13 +12.
+Bez wysokości budynku 0, chyba że opis potwierdza ostatnie piętro (+12).
+Sprzeczne dane, np. 7. piętro w budynku pięciopiętrowym, wymagają sprawdzenia.
 
-Ekspozycja jednostronna daje −5, z wyjątkiem potwierdzonego S +4, W +4, N −15, E +2.
-Dwustronna daje +10 oraz bonus za parę: S/W +10, S/E +7, S/N +4, N/W +2,
-N/E +1, E/W +10. Trójstronna daje +13 oraz bonus: S/E/W +5, S/W/N +4,
-S/E/N +3, N/W/E +1. Cztery lub więcej kierunków daje 20 z 20 możliwych punktów.
-Brak rozpoznanej ekspozycji daje 0.
+Jedna strona: S/W +4, E +2, N −15, kierunek SW +6, SE +4, NW +1, NE 0.
+Dwie strony: S/W +20, S/E i E/W +18, S/N +15, N/W +13, N/E +11.
+Trzy strony zachowują co najmniej premię najlepszej pary: S/E/W i S/W/N +20,
+S/E/N i N/E/W +18. Cztery lub więcej +20. Bez znanych kierunków jedna strona
+daje −5, dwie +10, trzy +13; bez rozpoznanej ekspozycji 0.
 
 Ocena raty korzysta z zapisanego wkładu własnego w **Finansowaniu zakupu**.
 Kwota kredytu to cena zakupu z rozpoznanymi dodatkowymi kosztami garażu i komórki,
 pomniejszona o wkład (nie mniej niż zero). Założenia są takie jak w podglądzie ofert:
 5,8% rocznie, 360 równych rat; bez dodatkowych opłat bankowych.
 Lokalne symulacje oprocentowania i okresu w kalkulatorze nie zmieniają rankingu.
-Rata powyżej 7500 zł daje −10 pkt; przy racie do 7500 zł premia to zaokrąglone
-`10 × (1 − rata / 7500)`: 7500 zł → 0 pkt, 6000 zł → +2 pkt,
-3750 zł → +5 pkt, zakup bez kredytu → +10 pkt. Brak ceny daje 0 pkt za ratę.
-Zmiana zapisanego wkładu własnego przelicza ocenę i kolejność sortowania.
+**Limit miesięcznej raty w DreamScore (zł)** jest edytowalny, początkowo 7500 zł.
+Do limitu premia wynosi zaokrąglone `10 × (1 − rata / limit)`, od +10 do 0.
+Powyżej limitu kara rośnie płynnie do −10 przy przekroczeniu o 20%.
+Brak ceny daje 0. Zmiana wkładu lub limitu przelicza ocenę i kolejność sortowania.
 
 Pole Otodom **Stan wykończenia: do wykończenia** jest zapisywane przez kolektor
 i uruchamia progi stanu deweloperskiego niezależnie od opisu. Odczytywane są
@@ -185,18 +185,23 @@ wyłącznie od aktywnych preferencji; wykryte dodatkowe udogodnienia zwiększaj�
 licznik, a mianownik pozostaje stały, również przy brakujących danych.
 
 Minimum to 3 pokoje (domyślne ustawienie profilu), a ideałem są 4:
-3 pokoje dostają 11 pkt, 4 — 18 pkt, więcej — 14 pkt.
-Dodatkowa premia za układ to 4 pkt dla 3 pokoi od 75 m², 8 pkt dla 4 pokoi
-i 6 pkt dla większej liczby. Ustawione wyższe minimum pokoi jest respektowane:
-oferta poniżej niego nie dostaje punktów za pokoje ani układ.
-Komórka daje 9 pkt, klimatyzacja 5 pkt, drewniana podłoga 6 pkt, garderoba 5 pkt.
+3 pokoje dostają 18 pkt albo 23, gdy opis jednoznacznie podaje sypialnię/pokój
+dziecięcy większy niż 12 m². Salon nie spełnia tego warunku; brak metrażu oznacza
+brak dodatkowej premii. 4 pokoje dają 25, więcej 23 (25 przy minimum profilu ponad 4).
+Nie ma dodatkowej premii za ten sam układ ani za 75 m². Wyższe minimum profilu
+jest respektowane; poniżej minimum punkty za pokoje wynoszą 0.
+Komórka daje 9 pkt, klimatyzacja 5, drewniana podłoga 8, garderoba 5.
+Projekt wnętrza przez architekta daje 5, ogólny slogan wysokiego standardu 1.
+Osobne WC lub pralnia daje 3 łącznie, bez dodatkowych punktów przy dwóch łazienkach (+4).
+Konkretna armatura łazienkowa daje maksymalnie 2; wzmianka o jakości obsługi lub jasnych
+meblach nie potwierdza standardu ani nasłonecznienia mieszkania.
 
-Kryterium **Blat**: granit +8, konglomerat lub spiek (w tym kwarcowy) +7,
+Kryterium **Blat**: granit, konglomerat lub spiek (w tym kwarcowy) +7,
 drewno, w tym „blaty z naturalnego dębu”, +5. Kilka materiałów nie sumuje się:
-liczy się najwyższa potwierdzona premia. Mianownik przy rozpoznanym materiale to 8.
+liczy się najwyższa potwierdzona premia. Maksimum kryterium to 7.
 Samo „kamienny” bez podania materiału nie rozstrzyga punktacji; imitacje i laminaty nie dostają premii.
 Deska dębowa, również w opisie „na podłogach wysokiej jakości deska dębowa”,
-liczy się jako drewniana podłoga (+6, raz za tę cechę).
+liczy się jako drewniana podłoga (+8, raz za tę cechę).
 Co najmniej dwa miejsca parkingowe/postojowe/garażowe dają dodatkowe +5 pkt.
 Jeśli te miejsca są wynajmowane/dzierżawione lub wymagają opłaty miesięcznej,
 naliczane jest dodatkowe −5 pkt w osobnym wierszu **Wynajem miejsc parkingowych**.
@@ -340,6 +345,20 @@ szerokość i długość geograficzną. Na końcu kliknij **Zapisz ustawienia**.
 Zmiana tekstu adresu usuwa poprzedni punkt, aby nie liczyć dojazdu do starego miejsca.
 Jeśli wyszukiwarka nie odpowiada, nadal można wskazać punkt ręcznie.
 
+Przy każdym celu wybierz **Tryb pracy**: **Dojeżdżam do pracy** albo **Pracuję z domu**.
+Praca z domu nie wymaga adresu i nie wpływa na dojazd w DreamScore. Jedna osoba
+dojeżdżająca oznacza jej czas; kilka — średnią ich czasów. Gdy wszyscy pracują z domu
+albo nie ma celów, kryterium jest wyłączone. Istniejące cele domyślnie oznaczają dojeżdżanie.
+
+DreamScore używa tras samochodem po drogach (OSRM), bez aktualnych korków.
+Do 35 minut daje +12, 45 minut +8, 55 minut +4, od 70 minut −5, płynnie pomiędzy.
+Brak choć jednej potrzebnej trasy daje częściową karę −3; nie zastępujemy jej linią prostą.
+Lista oblicza brakujące trasy w tle i pokazuje postęp; odświeża się co 15 sekund.
+Sortowanie DreamScore przygotowuje trasy dla wszystkich pasujących ofert, pozostałe
+sortowania dla pobranej strony. Wyniki zapisują się lokalnie na 30 dni; zmiana punktu
+oferty lub pracy wymaga nowej trasy. Nieudany odczyt ponawiany jest najwcześniej po 10 minutach.
+Komunikacja publiczna nie jest jeszcze podłączona do punktacji.
+
 Wyszukiwanie adresów korzysta z Nominatim/OpenStreetMap wyłącznie na żądanie,
 z limitem 1 zapytania na sekundę dla aplikacji i cache wyników w bazie.
 Obowiązuje [polityka Nominatim](https://operations.osmfoundation.org/policies/nominatim/).
@@ -464,22 +483,25 @@ Filtr dzielnicy obowiązuje razem z wyszukiwanym tekstem; samo wystąpienie „W
 w opisie np. dojazdów nie oznacza, że oferta leży w Wesołej. Dzielnica wskazana
 w lokalizacyjnej części tytułu ma takie samo pierwszeństwo w filtrze i widoku oferty.
 Ocena nie uwzględnia gabinetu. Nieznany stan wykończenia daje 0 pkt.
-Przekroczenie budżetu do 7% oznacza −5 pkt, większe −15 pkt. Dla ceny za m²
-odpowiednio −5 i −10 pkt; przy limicie jest +10 pkt, przy cenie o 25% niższej +20 pkt,
-a pomiędzy tymi cenami premia rośnie proporcjonalnie.
+Limit zakupu dotyczy samego mieszkania: do limitu +15, każde 1% przekroczenia
+odejmuje płynnie 3 pkt; przy 5% jest 0, od 10% −15. Cena za m²: przy limicie +10,
+25% taniej +20, 5% drożej 0, od 10% drożej −10; pomiędzy płynnie i po zaokrągleniu.
 Metraż ponad 5 m² poza zakresem daje −3 pkt, a metro powyżej 150% limitu −3 pkt.
 Metro bliżej niż 60% ustawionego limitu daje dodatkowe +3 pkt, czyli łącznie +13.
 Dokładnie na granicy 60% pozostaje +10 pkt. Odległość jest liczona w linii prostej.
-Dojazd w linii prostej powyżej 18 km lub bez danych daje −5 pkt.
-Drugie piętro daje +2 pkt, jednostronne południe +4 pkt, a dwustronny wschód–zachód
-20 pkt (10 za dwustronność i 10 premii za kierunki).
+Dojazd oceniamy według czasu trasy samochodem; piętro względem wysokości budynku.
+Jednostronne południe daje +4, dwustronny wschód–zachód +18.
 Tabela oceny pokazuje **Kryterium**, **Punkty** oraz **Dane / powód**.
-Zapis **+11 (18)** oznacza 11 zdobytych punktów z 18 możliwych. Powody pokazują wiek
-w dniach i osiągnięte zakresy dojazdu oraz raty. Parking zewnętrzny bez garażu daje
-osobne +8 pkt i znosi karę za brak garażu. Garaż daje +15 pkt. Przy włączonej
-preferencji **Parking (garaż lub miejsce zewnętrzne)** brak obu możliwości daje
-−36 pkt; przy wyłączonej −10 pkt. Garaż z windą zachowuje dodatkowe +12 pkt.
-Winda nadal daje +21 pkt, a jej brak −20 poza dotychczasowym wyjątkiem parteru.
+Zapis **+18 (25)** oznacza 18 zdobytych punktów z 25 możliwych. Powody pokazują wiek
+w dniach oraz czas dojazdu i ratę. Garaż daje +15 albo parking zewnętrzny +8
+w ramach jednego kryterium (maks. 15). Przy wymaganym parkingu potwierdzony brak
+obu daje −36, brak informacji −18; przy niewymaganym odpowiednio −10 i −5.
+Garaż z windą zachowuje dodatkowe +12. Winda daje +21; potwierdzony brak −20,
+brak informacji −10, na parterze bez kary.
+
+Filtr **Tylko zmiana ceny** wymaga rzeczywistej zmiany pomiędzy dwiema dodatnimi
+kwotami. Uzupełnienie brakującej ceny nie jest podwyżką. Karta i szczegóły pokazują
+ostatnią rzeczywistą zmianę, także gdy później odnotowano ponowne wystawienie.
 Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
 Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
 Kliknięcie lub dotknięcie tła poza zdjęciem również zamyka pełnoekranowy podgląd.

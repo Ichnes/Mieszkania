@@ -64,6 +64,7 @@ export function useWorkspaceController() {
   const refreshDashboard = dashboardSection.reload;
   const refreshUpcomingViewings = viewingsSection.reload;
   const [hasLoadedListings, setHasLoadedListings] = useState(false);
+  const [commutesPending, setCommutesPending] = useState(0);
   const [filters, setFilters] = useState<ListingFilters>(initialListingsSession.filters);
   const [appliedFilters, setAppliedFilters] = useState(initialListingsSession.filters);
   const [appliedListingSort, setAppliedListingSort] = useState(initialListingsSession.listingSort);
@@ -277,6 +278,12 @@ export function useWorkspaceController() {
       currentListingsPage,
     });
   }, [activeTab, appliedFilters, appliedListingSort, currentListingsPage]);
+
+  useEffect(() => {
+    if (!commutesPending || activeTab !== "dashboard") return;
+    const timer = setInterval(() => void applyFilters(), 15000);
+    return () => clearInterval(timer);
+  }, [commutesPending, activeTab, appliedFilters, currentListingsPage, appliedListingSort]);
   useScrollSession(state.status === "ready", location.pathname);
   useEffect(() => {
     void loadInitial();
@@ -505,6 +512,7 @@ export function useWorkspaceController() {
     dashboardSection,
     viewingsSection,
     hasLoadedListings,
+    commutesPending,
     listingsTotal,
     dashboardListings,
     listingInsights,
@@ -725,6 +733,7 @@ export function useWorkspaceController() {
           setHasLoadedListings(true);
           setFilteredListings(data.items);
           setListingsTotal(data.total);
+          setCommutesPending(data.commutesPending ?? 0);
           setAppliedFilters(nextFilters);
           setAppliedListingSort(nextSort);
           setCurrentListingsPage(nextPage);

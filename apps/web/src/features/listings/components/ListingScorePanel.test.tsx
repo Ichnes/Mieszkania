@@ -20,7 +20,7 @@ test("evaluation opens with rule cards and the matched band in bold while raw da
     />,
   );
   assert.ok(html.indexOf('id="dream-score-rules"') < html.indexOf('class="score-expanded-data"'));
-  assert.match(html, /<strong>Powyżej limitu, maksymalnie o 7%: -5 pkt<\/strong>/);
+  assert.match(html, /<strong>1 800 001 zł; limit 1800000 zł: \+15 pkt<\/strong>/);
   assert.match(html, /<details class="score-expanded-data"><summary>Dane rozwinięte<\/summary>/);
   assert.doesNotMatch(html, /<details[^>]*\bopen/);
   assert.match(html, /aria-label="Rozbicie punktacji"/);

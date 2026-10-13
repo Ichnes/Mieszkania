@@ -11,13 +11,13 @@ const points = (text: string) =>
   ).countertopPoints;
 test("countertop material points distinguish granite, engineered stone and natural oak without stacking", () => {
   for (const [text, expected] of [
-    ["Blat granitowy", 8],
-    ["Granitowe blaty", 8],
+    ["Blat granitowy", 7],
+    ["Granitowe blaty", 7],
     ["Blaty z konglomeratu", 7],
     ["Blat ze spieku kwarcowego", 7],
     ["Blaty z naturalnego dębu", 5],
     ["Drewniany blat", 5],
-    ["Blat drewniany i blat granitowy", 8],
+    ["Blat drewniany i blat granitowy", 7],
     ["Blat ze spieku i konglomeratu", 7],
     ["Laminowany blat imitujący drewno", 0],
     ["Blat drewnopodobny", 0],

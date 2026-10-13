@@ -81,7 +81,7 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   await getListingsPage({ sort: "dream_desc", page: 1, pageSize: 30 });
   priceEvents.push({
     listing_id: target.id,
-    event_type: "price_decreased",
+    event_type: "price_drop",
     previous_price_amount: "1100000",
     new_price_amount: "1000000",
     changed_at: "2026-09-08T10:00:00Z",
@@ -103,6 +103,25 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   assert.equal(personal?.priceLabel.replace(/\D/g, ""), "900000");
   assert.equal(personal?.advertisedPriceLabel?.replace(/\D/g, ""), "1000000");
   assert.equal(personal?.pricePerSqmLabel?.replace(/\s/g, ""), "15000PLN/m2");
+  priceEvents.push({
+    listing_id: target.id,
+    event_type: "relisted",
+    previous_price_amount: "1000000",
+    new_price_amount: "1000000",
+    changed_at: "2026-09-09T10:00:00Z",
+  });
+  assert.equal(
+    (await getListingDetail(target.id))?.priceChangePercent,
+    -9.1,
+    "Relisting must not hide the preceding real price change",
+  );
+  priceEvents.pop();
+  priceEvents[0].previous_price_amount = "1000001";
+  assert.ok(
+    (await getListingDetail(target.id))!.priceChangePercent < 0,
+    "A small genuine price change must not round to zero",
+  );
+  priceEvents[0].previous_price_amount = "1100000";
   assert.equal(priceEvents[0].new_price_amount, "1000000");
   Object.assign(target, { manual_asking_price_override: null });
   const restored = await getListingDetail(target.id);

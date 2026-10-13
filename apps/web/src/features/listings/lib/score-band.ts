@@ -6,26 +6,20 @@ type ScoreRow = ReturnType<typeof computeDreamEvaluation>["rows"][number];
 export function getScoreBand(row: ScoreRow): string {
   if (row.dataStatus === "inactive") return "Kryterium wyłączone";
   const points = `${row.points > 0 ? "+" : ""}${row.points} pkt`;
+  if (
+    [
+      "Piętro",
+      "Cena zakupu",
+      "Cena za m²",
+      "Szacowana rata",
+      "Dojazd do pracy",
+      "Liczba pokoi",
+    ].includes(row.label)
+  )
+    return `${row.dataStatus === "unknown" ? "Dane niepełne / niepotwierdzone; " : ""}${row.detail}: ${points}`;
   const bands: Record<string, Record<number, string>> = {
-    "Cena zakupu": {
-      15: "Cena nie przekracza limitu",
-      [-5]: "Powyżej limitu, maksymalnie o 7%",
-      [-15]: "Ponad 7% powyżej limitu",
-    },
-    "Cena za m²": { [-5]: "Powyżej limitu, maksymalnie o 7%", [-10]: "Ponad 7% powyżej limitu" },
     Metraż: { 20: "W zakresie", 10: "Do 5 m² poza zakresem", [-3]: "Ponad 5 m² poza zakresem" },
-    "Liczba pokoi": {
-      18: "4 pokoje, minimum profilu spełnione",
-      14: "Więcej niż 4 pokoje, minimum profilu spełnione",
-      11: "3 pokoje, minimum profilu spełnione",
-      0: "Poniżej minimum punktacji",
-    },
-    "Układ mieszkania": {
-      8: "4 pokoje",
-      6: "Więcej niż 4 pokoje",
-      4: "3 pokoje i co najmniej 75 m²",
-      0: "Nie spełnia warunków premii",
-    },
+
     "Stan wykończenia": {
       16: "Gotowe do zamieszkania",
       5: "Do wykończenia, poniżej 17 tys. zł/m²",
@@ -53,12 +47,7 @@ export function getScoreBand(row: ScoreRow): string {
       5: "Powyżej 100% do 150% limitu",
       [-3]: "Powyżej 150% limitu",
     },
-    "Dojazd do pracy": {
-      12: "Do 7 km",
-      8: "Powyżej 7 do 12 km",
-      4: "Powyżej 12 do 18 km",
-      [-5]: "Powyżej 18 km lub brak danych",
-    },
+
     "Obniżka ceny": {
       0: "Brak obniżki",
       2: "Spadek powyżej 0 do 1%",
@@ -73,37 +62,13 @@ export function getScoreBand(row: ScoreRow): string {
       10: "Oferta prywatna lub bezpośrednia bez oznaczenia prowizji",
       0: "Bez premii za sprzedaż bezpośrednią i bez oznaczenia prowizji",
     },
-    Blat: { 8: "Granit", 7: "Konglomerat lub spiek", 5: "Drewno" },
+    Blat: { 7: "Granit, konglomerat lub spiek", 5: "Drewno" },
     "Remont / odświeżenie": { 4: "Remont", 3: "Odświeżenie" },
   };
-  // A partial floor/finishing record may still have a definite awarded branch.
-  if (row.label === "Piętro") {
-    const top = row.detail.includes("ostatnie piętro +5");
-    const base = row.points - (top ? 5 : 0);
-    const floors: Record<number, string> = {
-      [-4]: "Parter i poniżej",
-      1: "1. piętro",
-      2: "2. piętro",
-      3: "3. piętro",
-      4: "4. piętro",
-      5: "5. piętro",
-      7: "6. piętro",
-      8: "7. piętro",
-      9: "8.–12. piętro",
-      12: "Powyżej 12. piętra",
-    };
-    return `${floors[base] ?? "Brak danych o numerze piętra"}${top ? "; ostatnie piętro: dodatkowe +5" : ""}: ${points}`;
-  }
   if (row.label === "Stan wykończenia" && row.points === -10)
     return `${bands[row.label][-10]}: ${points}`;
   if (row.dataStatus === "unknown")
     return `Dane niepełne / niepotwierdzone: ${points}${row.detail ? ` (${row.detail})` : ""}`;
-  if (row.label === "Cena za m²" && row.points >= 10)
-    return `Cena nie przekracza limitu; premia rośnie do +20 przy obniżce o co najmniej 25%: ${points}`;
-  if (row.label === "Szacowana rata")
-    return `${row.points < 0 ? "Powyżej 7500 zł" : "Do 7500 zł; premia proporcjonalna do wysokości raty"}: ${points}`;
-  if (row.label === "Dojazd do pracy" && row.points === -5 && row.detail !== "brak danych")
-    return `Powyżej 18 km: ${points}`;
   const band = bands[row.label]?.[row.points];
   if (band) return `${band}: ${points}`;
   if (row.label === "Garaż i winda razem")

@@ -6,6 +6,15 @@ import { registerPayloadValidation, validatePayload } from "./payload-validation
 
 test("payload validation preserves current forms and rejects invalid types before writes", async () => {
   assert.equal(validatePayload(createDefaultFamilySettings()), true);
+  assert.equal(
+    validatePayload({
+      ...createDefaultFamilySettings(),
+      workplaces: [{ key: "home", label: "Dom", address: "", workMode: "remote" }],
+      financing: { downPayment: 400000, maxMonthlyPayment: 6500 },
+    }),
+    true,
+  );
+  assert.equal(validatePayload({ workplaces: [{ workMode: "other" }] }), false);
   for (const value of [
     null,
     [],

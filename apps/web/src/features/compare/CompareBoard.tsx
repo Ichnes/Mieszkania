@@ -9,7 +9,7 @@ import { useComparisonCommutes } from "./useComparisonCommutes";
 
 export function CompareBoard({
   listings,
-  workplaces,
+  workplaces: allWorkplaces,
   onSettings,
   onOpen,
   onRemove,
@@ -20,6 +20,7 @@ export function CompareBoard({
   onOpen: (id: string) => void | Promise<void>;
   onRemove: (id: string) => void;
 }) {
+  const workplaces = allWorkplaces.filter((workplace) => workplace.workMode !== "remote");
   const [onlyDifferences, setOnlyDifferences] = useState(false);
   const [includePrintNotes, setIncludePrintNotes] = useState(false);
   const commutes = useComparisonCommutes(listings, workplaces);

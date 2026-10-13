@@ -108,6 +108,24 @@ export function WorkplaceEditor({
   return (
     <div className="settings-workplace-card">
       <label className="field-label">
+        <span>Tryb pracy</span>
+        <select
+          className="text-input"
+          value={value.workMode ?? "onsite"}
+          onChange={(event) =>
+            onChange({ ...value, workMode: event.target.value as "onsite" | "remote" })
+          }
+        >
+          <option value="onsite">Dojeżdżam do pracy</option>
+          <option value="remote">Pracuję z domu</option>
+        </select>
+        <small>
+          {value.workMode === "remote"
+            ? "Ten cel nie wpływa na DreamScore. Adres jest opcjonalny."
+            : "Czas tego dojazdu wpływa na DreamScore."}
+        </small>
+      </label>
+      <label className="field-label">
         <span>Nazwa miejsca</span>
         <input
           className="text-input"

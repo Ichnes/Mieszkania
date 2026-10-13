@@ -294,11 +294,12 @@ export type DreamListingProfile = {
 export const defaultDownPayment = 430_000;
 
 export type FamilySettings = {
-  financing?: { downPayment: number };
+  financing?: { downPayment: number; maxMonthlyPayment?: number };
   workplaces: Array<{
     key: string;
     label: string;
     address: string;
+    workMode?: "onsite" | "remote";
     latitude?: number;
     longitude?: number;
   }>;
@@ -329,6 +330,13 @@ export type ListingContactEvent = {
 };
 
 export type ListingSummary = {
+  scoringCommutes?: Array<{
+    key: string;
+    destinationLatitude?: number;
+    destinationLongitude?: number;
+    durationMinutes?: number;
+    distanceKm?: number;
+  }>;
   exposureDirectionsOverride?: ExposureDirection[];
   id: string;
   title: string;
@@ -360,7 +368,13 @@ export type ListingSummary = {
   hasBalcony?: boolean;
   hasAirConditioning?: boolean;
   /** Explicit evidence; missing values mean unknown, including legacy false flags. */
-  amenityEvidence?: { garage?: boolean; lift?: boolean; storage?: boolean };
+  amenityEvidence?: {
+    garage?: boolean;
+    lift?: boolean;
+    storage?: boolean;
+    outdoorParking?: boolean;
+    balcony?: boolean;
+  };
   garageTenure?: "rental" | "purchase_option";
   storageTenure?: "rental";
   garageNearby?: boolean;
@@ -576,6 +590,7 @@ export type DashboardResponse = {
 };
 
 export type ListingsResponse = {
+  commutesPending?: number;
   total: number;
   items: ListingSummary[];
 };

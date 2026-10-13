@@ -52,6 +52,7 @@ export async function updateFamilySettings(input: FamilySettings): Promise<Famil
 
 export function validateWorkplacePoints(workplaces: FamilySettings["workplaces"]) {
   for (const workplace of workplaces) {
+    if (workplace.workMode === "remote") continue;
     if (
       !workplace.address?.trim() ||
       !Number.isFinite(workplace.latitude) ||
@@ -80,6 +81,12 @@ function validateAndNormalizeSettings(input: FamilySettings): FamilySettings {
   const downPayment = input.financing?.downPayment;
   const normalized: FamilySettings = {
     financing: {
+      maxMonthlyPayment:
+        typeof input.financing?.maxMonthlyPayment === "number" &&
+        Number.isFinite(input.financing.maxMonthlyPayment) &&
+        input.financing.maxMonthlyPayment > 0
+          ? Math.round(input.financing.maxMonthlyPayment)
+          : 7500,
       downPayment:
         typeof downPayment === "number" && Number.isFinite(downPayment)
           ? Math.max(0, Math.round(downPayment))
@@ -90,6 +97,11 @@ function validateAndNormalizeSettings(input: FamilySettings): FamilySettings {
         key: workplace.key || `workplace-${index + 1}`,
         label: workplace.label || `Miejsce ${index + 1}`,
         address: workplace.address,
+        ...(workplace.workMode
+          ? {
+              workMode: workplace.workMode === "remote" ? ("remote" as const) : ("onsite" as const),
+            }
+          : {}),
         latitude: workplace.latitude,
         longitude: workplace.longitude,
       }),
@@ -183,7 +195,7 @@ export function normalizeDreamProfile(
 async function geocodeWorkplaces(settings: FamilySettings, force = false) {
   const workplaces = await Promise.all(
     settings.workplaces.map(async (workplace) => {
-      if (!workplace.address.trim()) return workplace;
+      if (workplace.workMode === "remote" || !workplace.address.trim()) return workplace;
       const normalizedKnown = normalizeKnownWorkplace(workplace);
       if (normalizedKnown.latitude && normalizedKnown.longitude) {
         return normalizedKnown;
@@ -223,13 +235,16 @@ async function ensureWorkplaceCoordinates(settings: FamilySettings) {
 }
 
 function hasMissingWorkplaceCoordinates(workplaces?: FamilySettings["workplaces"]) {
-  return (workplaces ?? []).some((workplace) => !workplace.latitude || !workplace.longitude);
+  return (workplaces ?? []).some(
+    (workplace) => workplace.workMode !== "remote" && (!workplace.latitude || !workplace.longitude),
+  );
 }
 
 function hasSuspiciousWorkplaceCoordinates(workplaces?: FamilySettings["workplaces"]) {
   const coordinates = new Set<string>();
 
   for (const workplace of workplaces ?? []) {
+    if (workplace.workMode === "remote") continue;
     if (!workplace.latitude || !workplace.longitude) {
       continue;
     }

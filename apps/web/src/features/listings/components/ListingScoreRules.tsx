@@ -40,7 +40,7 @@ const categories = [
       "Układ mieszkania",
       "Balkon",
       "Garderoba",
-      "Dwie łazienki",
+      "Łazienki / WC / pralnia",
       "Prysznic",
     ],
   },

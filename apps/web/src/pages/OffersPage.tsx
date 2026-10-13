@@ -45,6 +45,7 @@ export function OffersPage({
     | "setListingSort"
     | "isLoadingListings"
     | "hasLoadedListings"
+    | "commutesPending"
     | "setFiltersPanelCollapsed"
     | "listingsMainRef"
     | "visibleListings"
@@ -482,6 +483,12 @@ export function OffersPage({
                   busy={isLoadingListings}
                 />
               ) : null}
+              {(model.commutesPending ?? 0) > 0 && (
+                <p role="status">
+                  Obliczamy trasy samochodowe dla {model.commutesPending} lokalizacji. Ranking
+                  uwzględni wyniki po automatycznym odświeżeniu. Czasy bez aktualnych korków.
+                </p>
+              )}
               {model.hasLoadedListings || !model.listingsError || isLoadingListings ? (
                 <ListingSection
                   compareIds={model.compareListingIds}
