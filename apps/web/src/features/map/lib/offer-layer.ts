@@ -27,6 +27,7 @@ export function attachOfferLayer(
 ) {
   const L = window.L;
   const layer = L.layerGroup().addTo(map);
+  let clusterPopup: any;
   let frame = 0;
   const render = () => {
     layer.clearLayers();
@@ -41,7 +42,8 @@ export function attachOfferLayer(
           members.map((item) => [item.latitude, item.longitude]),
         ).getCenter();
         const marker = L.marker(center, {
-          title: `Grupa: ${members.length} ofert — kliknij, aby przybliżyć`,
+          autoPanOnFocus: false,
+          title: `Grupa: ${members.length} ofert — kliknij, aby zobaczyć oferty`,
           icon: L.divIcon({
             className: "leaflet-offer-cluster",
             html: String(members.length),
@@ -50,27 +52,28 @@ export function attachOfferLayer(
           }),
         });
         marker.on("click", () => {
-          const memberBounds = L.latLngBounds(
-            members.map((item) => [item.latitude, item.longitude]),
-          );
-          if (map.getZoom() < map.getMaxZoom()) {
-            map.fitBounds(memberBounds, {
-              padding: [45, 45],
-              maxZoom: Math.min(map.getZoom() + 2, map.getMaxZoom()),
-            });
-          } else {
-            // Several adverts can share one building. Keep each selectable at maximum zoom.
-            const content = document.createElement("div");
-            content.className = "map-cluster-offers";
-            for (const item of members) {
-              const button = document.createElement("button");
-              button.type = "button";
-              button.textContent = `${item.priceLabel} · ${item.title}`;
-              button.addEventListener("click", () => onOpen(item.id));
-              content.append(button);
-            }
-            marker.bindPopup(content, { maxWidth: 320 }).openPopup();
+          const content = document.createElement("div");
+          content.className = "map-cluster-offers";
+          const heading = document.createElement("strong");
+          heading.textContent = `Oferty w tej grupie: ${members.length}`;
+          content.append(heading);
+          for (const item of members) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = `${item.priceLabel} · ${item.title}`;
+            button.addEventListener("click", () => onOpen(item.id));
+            content.append(button);
           }
+          // Keep the popup independent of markers rebuilt after its automatic pan.
+          clusterPopup = L.popup({
+            minWidth: Math.min(300, map.getSize().x - 60),
+            maxWidth: Math.min(320, map.getSize().x - 60),
+            autoPanPaddingTopLeft: [12, 76],
+            autoPanPaddingBottomRight: [12, 12],
+          })
+            .setLatLng(center)
+            .setContent(content)
+            .openOn(map);
         });
         marker.addTo(layer);
         continue;
@@ -79,6 +82,8 @@ export function attachOfferLayer(
       const color =
         item.priceChangePercent < 0 ? "down" : item.priceChangePercent > 0 ? "up" : "default";
       const marker = L.marker([item.latitude, item.longitude], {
+        // Focus must not pan and rebuild the offer layer between mousedown and click.
+        autoPanOnFocus: false,
         title: item.title,
         icon: L.divIcon({
           className: `${color === "default" ? "leaflet-default-marker" : `leaflet-price-${color}-marker`}${item.isShortlisted ? " is-shortlisted" : ""}`,
@@ -150,5 +155,6 @@ export function attachOfferLayer(
     cancelAnimationFrame(frame);
     map.off("moveend zoomend", schedule);
     map.removeLayer(layer);
+    clusterPopup?.remove();
   };
 }

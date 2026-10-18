@@ -1,9 +1,9 @@
-/* Individual scale preserves positioning transforms (compass, maps, dialogs). */
+/* Leaflet translates markers from the pane origin: scaling also moves that offset. */
 button,
 a.action-button,
 a.tab-button,
 summary,
-[role="button"],
+[role="button"]:not(.leaflet-marker-icon),
 input[type="checkbox"],
 input[type="radio"] {
   transition:
@@ -17,7 +17,7 @@ button:not(:disabled):not([aria-disabled="true"]):active,
 a.action-button:active,
 a.tab-button:active,
 summary:active,
-[role="button"]:not([aria-disabled="true"]):active {
+[role="button"]:not(.leaflet-marker-icon):not([aria-disabled="true"]):active {
   scale: 0.96;
 }
 input:is([type="checkbox"], [type="radio"]):not(:disabled):active {

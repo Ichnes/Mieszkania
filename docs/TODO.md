@@ -2,6 +2,10 @@
 
 ## Klikanie ofert na mapie (2026-10-18)
 
+- [x] Doprecyzowanie zgłoszenia: miganie samej pinezki. Odtworzono w działającej aplikacji przy naciśnięciu myszy przez 150 ms: globalne `scale: 0.96` przesuwało znacznik o kilkadziesiąt pikseli przed `mouseup`, więc kliknięcie trafiało w mapę. Wyłączono animację skali dla znaczników Leaflet, także grup ofert i transportu.
+- [x] Wyłączono również automatyczne przesuwanie mapy po fokusie pinezki/grupy, które przy krawędzi mogło przerysować warstwę przed zakończeniem kliknięcia.
+- [x] Rozszerzenie: kliknięcie liczby ofert od razu pokazuje pełną listę grupy z wyborem ogłoszenia, bez wymuszania zoomu. Okno pozostaje otwarte po automatycznym dopasowaniu widoku; szerokość dopasowana do telefonu. Przewodnik zaktualizowany.
+- [x] Weryfikacja w działającej aplikacji: przytrzymanie pinezki 220 ms, stabilna pozycja i załadowane rzeczywiste szczegóły przy 1440/1280/390/320 px w zwykłym i pełnym ekranie. Grupa czterech ofert we wspólnym punkcie pokazuje wszystkie cztery bez zoomowania, pozostaje po przesunięciu mapy i otwiera wybraną rzeczywistą ofertę; sprawdzone cztery szerokości, w tym mobilny pełny ekran. 156 testów web i build Docker (TypeScript/Vite) OK. Poprawka uruchomiona lokalnie; commit i push na `main`.
 - [x] Zakres: otwieranie oferty z podglądu nad znacznikiem mapy.
 - [x] Zdjęcie i tytuł w podglądzie są klikalnym przyciskiem. Podgląd pozostaje dostępny przy przejściu kursora ze znacznika i przeniesieniu fokusu; kliknięcia nie trafiają do mapy pod spodem.
 - [x] Weryfikacja przeglądarkowa z rzeczywistym Leaflet: kliknięcie znacznika, podglądu i Enter przy 1440/1280/390/320 px; szerokość podglądu mieści się w ekranie. 156 testów web OK. Artefakty w `.local/runs/2026-10-18-map-click/`.

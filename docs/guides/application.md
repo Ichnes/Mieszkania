@@ -562,8 +562,9 @@ Mapa w szczegółach oferty obsługuje kółko myszy oraz powiększanie dwoma pa
 
 Na mapie głównej wybierz przynajmniej jeden filtr ofert. Przycisk **Pokaż filtry /
 Ukryj filtry** działa również na komputerze. Liczby w zielonych kółkach oznaczają
-grupy ofert: kliknięcie przybliża mapę, a przy maksymalnym powiększeniu pozwala
-wybrać spośród ofert w tym samym miejscu. Lista obok mapy ma strony po 50 ofert;
+grupy ofert: kliknięcie od razu pokazuje listę wszystkich ofert z tej grupy.
+Kliknij wybraną pozycję, żeby otworzyć ogłoszenie — także gdy kilka ofert ma
+dokładnie ten sam adres. Nie trzeba przybliżać mapy. Lista obok mapy ma strony po 50 ofert;
 zmiana strony listy nie usuwa pozostałych wyników z mapy. Podgląd zdjęcia używa
 małej miniatury, a szczegóły oferty zachowują oryginalne zdjęcia.
 

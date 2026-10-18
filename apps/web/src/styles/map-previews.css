@@ -180,10 +180,12 @@
 .map-cluster-offers {
   display: grid;
   gap: 6px;
-  max-height: 260px;
+  max-height: min(360px, 50vh);
   overflow-y: auto;
 }
 .map-cluster-offers button {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 10px;
   text-align: left;
   border: 1px solid #d4dedb;
