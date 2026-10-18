@@ -18,6 +18,22 @@
   width: min(380px, calc(100vw - 42px));
   white-space: normal;
 }
+.map-offer-preview-link {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.map-offer-preview-link:focus-visible {
+  outline: 3px solid var(--ink);
+  outline-offset: -3px;
+}
 .leaflet-popup.listing-map-popup .leaflet-popup-content {
   width: auto !important;
   margin: 0;

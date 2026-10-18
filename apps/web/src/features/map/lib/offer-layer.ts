@@ -88,14 +88,56 @@ export function attachOfferLayer(
         }),
       });
       marker.on("click", () => onOpen(item.id));
-      marker.bindTooltip(() => buildMapListingPreview(item, apiBaseUrl), {
-        className: "listing-map-tooltip",
-        direction: "top",
-        offset: [0, -28],
-        opacity: 1,
-        sticky: true,
+      let closeTimer: ReturnType<typeof setTimeout>;
+      const keepPreviewOpen = () => clearTimeout(closeTimer);
+      const closePreview = () => {
+        keepPreviewOpen();
+        closeTimer = setTimeout(() => marker.closeTooltip(), 250);
+      };
+      marker.bindTooltip(
+        (() => {
+          const button = document.createElement("button");
+          button.type = "button";
+          button.className = "map-offer-preview-link";
+          button.innerHTML = buildMapListingPreview(item, apiBaseUrl);
+          L.DomEvent.disableClickPropagation(button);
+          button.addEventListener("mouseenter", keepPreviewOpen);
+          button.addEventListener("mouseleave", closePreview);
+          button.addEventListener("focus", keepPreviewOpen);
+          button.addEventListener("blur", closePreview);
+          button.addEventListener("click", (event) => {
+            event.stopPropagation();
+            onOpen(item.id);
+          });
+          return button;
+        })(),
+        {
+          className: "listing-map-tooltip",
+          direction: "top",
+          offset: [0, -28],
+          opacity: 1,
+          interactive: true,
+        },
+      );
+      // Allow the pointer to cross the gap between the pin and its preview.
+      marker.off("mouseout", marker.closeTooltip);
+      marker.on("mouseout", closePreview);
+      marker.off("mouseover");
+      marker.on("mouseover", () => {
+        keepPreviewOpen();
+        if (!marker.isTooltipOpen()) marker.openTooltip();
       });
+      marker.on("remove", keepPreviewOpen);
       marker.addTo(layer);
+      marker.getElement()?.addEventListener(
+        "blur",
+        (event: FocusEvent) => {
+          if (marker.getTooltip().getElement()?.contains(event.relatedTarget)) {
+            event.stopImmediatePropagation();
+          }
+        },
+        true,
+      );
     }
   };
   const schedule = () => {

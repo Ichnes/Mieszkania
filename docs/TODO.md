@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Klikanie ofert na mapie (2026-10-18)
+
+- [x] Zakres: otwieranie oferty z podglądu nad znacznikiem mapy.
+- [x] Zdjęcie i tytuł w podglądzie są klikalnym przyciskiem. Podgląd pozostaje dostępny przy przejściu kursora ze znacznika i przeniesieniu fokusu; kliknięcia nie trafiają do mapy pod spodem.
+- [x] Weryfikacja przeglądarkowa z rzeczywistym Leaflet: kliknięcie znacznika, podglądu i Enter przy 1440/1280/390/320 px; szerokość podglądu mieści się w ekranie. 156 testów web OK. Artefakty w `.local/runs/2026-10-18-map-click/`.
+- [x] Końcowy build Docker (TypeScript/Vite) i ponownie 156 testów web OK; lokalny frontend przebudowany i uruchomiony. Zakres zakończony; commit i push na `main`.
+
 ## Audyt punktacji wymarzonego mieszkania (2026-10-13)
 
 - [x] Druga runda: [uzgodnienia i reguły](dream-score-calibration-2026-10-13.md) wdrożone. Pokoje w jednym kryterium: 4 → 25, 3 → 18 albo 23 z sypialnią/pokojem dziecięcym ponad 12 m² (bez salonu). Piętro względem wysokości budynku, maks. 12. Architekt wnętrza 5, blat maks. 7, slogan standardu 1, podłoga drewniana 8, konkretna armatura 2. Dwie łazienki / WC / pralnia mają wspólne maksimum, bez sumowania.
