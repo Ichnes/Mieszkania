@@ -513,6 +513,11 @@ brak informacji −10, na parterze bez kary.
 Filtr **Tylko zmiana ceny** wymaga rzeczywistej zmiany pomiędzy dwiema dodatnimi
 kwotami. Uzupełnienie brakującej ceny nie jest podwyżką. Karta i szczegóły pokazują
 ostatnią rzeczywistą zmianę, także gdy później odnotowano ponowne wystawienie.
+Jeżeli nowe ogłoszenie nie ma jeszcze własnej zmiany ceny, procent na karcie,
+w szczegółach i na mapie uwzględnia różnicę ceny z ustalonego ponownego wystawienia.
+Ta różnica kwalifikuje ofertę również do filtra **Tylko zmiana ceny**. Późniejsza
+zmiana ceny nowego ogłoszenia ma pierwszeństwo. Same propozycje powiązań oraz
+ponowne wystawienie za tę samą cenę nie tworzą obniżki ani podwyżki.
 Okno oferty można zamknąć przyciskiem lub kliknięciem tła, również podczas ładowania.
 Podczas ładowania działa także Escape; w galerii Escape zamyka podgląd zdjęcia.
 Kliknięcie lub dotknięcie tła poza zdjęciem również zamyka pełnoekranowy podgląd.

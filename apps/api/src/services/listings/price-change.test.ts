@@ -1,7 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import pg from "pg";
-import { isRealPriceChange, realPriceChangeSql } from "./price-change";
+import {
+  isRealPriceChange,
+  realPriceChangeSql,
+  realRelistingPriceChangeSql,
+  relistingPriceChange,
+  getPriceChangePercent,
+} from "./price-change";
+
+test("relisting price differences supply a real percentage only with distinct positive prices", () => {
+  assert.equal(getPriceChangePercent(relistingPriceChange("1370000", "1320000")), -3.6);
+  assert.equal(getPriceChangePercent(relistingPriceChange("1000000", "1100000")), 10);
+  assert.equal(getPriceChangePercent(relistingPriceChange("1000000", "999999")), -0.0001);
+  for (const [previous, next] of [
+    [null, "1320000"],
+    ["0", "1320000"],
+    ["1370000", null],
+    ["-1", "1320000"],
+    ["1320000", "1320000"],
+  ])
+    assert.equal(relistingPriceChange(previous, next), undefined);
+});
 
 const cases: Array<[string, string | null, string | null, boolean]> = [
   ["price_drop", "1000000", "900000", true],
@@ -48,6 +68,16 @@ test(
         { listing_id: 0, new_price_amount: "900000" },
         { listing_id: 1, new_price_amount: "1000000" },
       ]);
+      await db.query(
+        "create temporary table listing_relistings (current_listing_id int, previous_price_amount numeric, relisted_price_amount numeric)",
+      );
+      await db.query(
+        "insert into listing_relistings values (100,1370000,1320000),(101,1320000,1320000),(102,null,1320000),(103,0,1320000)",
+      );
+      const relisted = await db.query(
+        `select lr.current_listing_id from listing_relistings lr where ${realRelistingPriceChangeSql}`,
+      );
+      assert.deepEqual(relisted.rows, [{ current_listing_id: 100 }]);
     } finally {
       await db.query("rollback");
       await db.end();

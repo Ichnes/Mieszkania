@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Procent zmiany ceny po ponownym wystawieniu (2026-11-11)
+
+- [x] Diagnoza wskazanej oferty: ustalone ponowne wystawienie 1 370 000 → 1 320 000 zł, ale karta pokazywała 0%, bo korzystała wyłącznie ze zdarzeń ceny nowego ogłoszenia.
+- [x] Karty/szczegóły i mapa korzystają ze zmiany ceny ustalonego ponownego wystawienia, jeśli brak późniejszej rzeczywistej zmiany ceny. Spójny filtr „Tylko zmiana ceny”; niepotwierdzone propozycje, brakujące/zerowe i jednakowe kwoty nie tworzą obniżki. Historia źródłowa pozostaje bez zmian.
+- [x] Testy API: 330 zaliczonych, 15 zależnych od środowiska pominiętych, 0 błędów; osobne testy PostgreSQL 4/4. Typecheck i build Docker OK. Działające API: szczegóły, karta w filtrze zmian cen i mapa pokazują -3,6%; historia zachowuje jedno źródłowe zdarzenie. Commit i push na `main`. Artefakty: `.local/runs/2026-11-11-relisting-price/`.
+
 ## OLX: naprawa pobierania po 403 (2026-11-11)
 
 - [x] Rozszerzona diagnoza: opóźnienie kolejki nie usuwa przyczyny. Dla tego samego linku uzyskano rzeczywisty HTML oferty przez curl na Windows, a klient Node i Chromium z kontenera otrzymały CloudFront 403. Kolejna próba curl także zwróciła 403 — pojedynczy sukces nie dowodzi stałej różnicy między klientami.

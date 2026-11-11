@@ -1,5 +1,11 @@
 import { readMonthlyFee } from "./maintenance-fee";
-import { isRealPriceChange, realPriceChangeSql } from "./price-change";
+import {
+  isRealPriceChange,
+  realPriceChangeSql,
+  realRelistingPriceChangeSql,
+  relistingPriceChange,
+  getPriceChangePercent,
+} from "./price-change";
 import { commuteRouteCache } from "../insights/commute-route-cache";
 import { dashboardPriceChangesSql } from "./dashboard-price-changes";
 import {
@@ -214,7 +220,8 @@ export async function getMapListings() {
       latitude: string | null;
       longitude: string | null;
       is_shortlisted: boolean;
-      price_change_percent: string | null;
+      previous_price_amount: string | null;
+      new_price_amount: string | null;
       coordinate_accuracy: "exact" | "approximate" | null;
       rooms: string | null;
       published_at: string | null;
@@ -242,14 +249,13 @@ export async function getMapListings() {
         l.rooms::text as rooms,
         l.published_at::text as published_at,
         l.first_seen_at::text as first_seen_at,
-        case
-          when pe.previous_price_amount is null or pe.previous_price_amount = 0 then 0
-          else round(((pe.new_price_amount - pe.previous_price_amount) / pe.previous_price_amount) * 100, 2)
-        end::text as price_change_percent,
+        coalesce(pe.previous_price_amount, case when ${realRelistingPriceChangeSql} then lr.previous_price_amount end)::text as previous_price_amount,
+        coalesce(pe.new_price_amount, case when ${realRelistingPriceChangeSql} then lr.relisted_price_amount end)::text as new_price_amount,
         case when l.latitude is null or l.longitude is null then null else 'approximate' end as coordinate_accuracy,
         cover.source_url as thumbnail_url
       from listings l
       join sources s on s.id = l.source_id
+      left join listing_relistings lr on lr.current_listing_id = l.id
       left join listing_manual_overrides lmo on lmo.listing_id = l.id
       left join lateral (
         select previous_price_amount, new_price_amount
@@ -305,7 +311,7 @@ export async function getMapListings() {
       imageUrls: row.thumbnail_url ? [row.thumbnail_url] : [],
       imageCount: row.thumbnail_url ? 1 : 0,
       badges: [],
-      priceChangePercent: Number(row.price_change_percent ?? 0),
+      priceChangePercent: getPriceChangePercent(row),
       coordinateAccuracy: row.coordinate_accuracy ?? undefined,
     }));
   });
@@ -999,12 +1005,15 @@ async function getListingsPageByScope(
 
     if (filters.priceChangedOnly) {
       clauses.push(`
-        exists (
+        (exists (
           select 1
           from price_events pe
           where pe.listing_id = l.id
             and ${realPriceChangeSql}
-        )
+        ) or exists (
+          select 1 from listing_relistings lr
+          where lr.current_listing_id = l.id and ${realRelistingPriceChangeSql}
+        ))
       `);
     }
 
@@ -1485,6 +1494,14 @@ function mapListingSummary(
   relatedCount = 0,
   potentialDuplicateCount = 0,
 ): ListingSummary {
+  const relistedEvent = relistingPriceChange(
+    row.relisting_previous_price_amount,
+    row.relisting_relisted_price_amount,
+  );
+  const usesRelistingChange = !latestEvent && Boolean(relistedEvent);
+  latestEvent ??= relistedEvent
+    ? { ...relistedEvent, listing_id: row.id, changed_at: row.first_seen_at ?? "" }
+    : undefined;
   const contactStatus = parseListingContactStatus(row.manual_contact_status);
   const decisionStage = parseListingDecisionStage(row.manual_decision_stage);
   const advertisedPriceAmount = row.price_amount ? Number(row.price_amount) : null;
@@ -1683,7 +1700,9 @@ function mapListingSummary(
     priceChangePercent,
     relisting,
     potentialRelistingCount: Number(row.potential_relisting_count ?? 0),
-    summary: buildListingSummary(row, latestEvent, imageCount, manualSummary),
+    summary: usesRelistingChange
+      ? `Ponownie wystawione z ${priceChangePercent < 0 ? "niższą" : "wyższą"} ceną względem poprzedniego ogłoszenia.${manualSummary ? ` ${manualSummary}.` : ""}`
+      : buildListingSummary(row, latestEvent, imageCount, manualSummary),
     thumbnailUrl,
     imageCount,
     imageUrls,
@@ -3073,23 +3092,6 @@ export function inferCommercialInfo(
   }
 
   return { badges };
-}
-
-function getPriceChangePercent(latestEvent: PriceEventRow | undefined) {
-  if (!latestEvent?.previous_price_amount || !latestEvent.new_price_amount) {
-    return 0;
-  }
-
-  const previous = Number(latestEvent.previous_price_amount);
-  const next = Number(latestEvent.new_price_amount);
-  if (!previous || !next) {
-    return 0;
-  }
-
-  const change = ((next - previous) / previous) * 100;
-  const rounded = Number(change.toFixed(1));
-  // A genuine small change must not become "0%" on a filtered offer card.
-  return rounded === 0 && change !== 0 ? Number(change.toPrecision(2)) : rounded;
 }
 
 const currencyFormatter = new Intl.NumberFormat("pl-PL", {
