@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## OLX: naprawa pobierania po 403 (2026-11-11)
+
+- [x] Rozszerzona diagnoza: opóźnienie kolejki nie usuwa przyczyny. Dla tego samego linku uzyskano rzeczywisty HTML oferty przez curl na Windows, a klient Node i Chromium z kontenera otrzymały CloudFront 403. Kolejna próba curl także zwróciła 403 — pojedynczy sukces nie dowodzi stałej różnicy między klientami.
+- [x] Parser poprawnej odpowiedzi: 1 990 000 zł, 113,1 m², 8 zdjęć. Jedna sesja Chromium ze stroną główną przed ofertą nadal otrzymuje 403 i brak cookies; publiczny skrypt i endpoint tej oferty także 403. Nie potwierdzono działającego zamiennika transportu. Profil użytkownika zachowany, bez odczytu/przenoszenia cookies. Do rozróżnienia blokady zwykłej przeglądarki i kolektora poproszono użytkownika o wynik otwarcia dokładnie tego samego linku.
+- [ ] Ustalić działającą metodę pobierania i zweryfikować ją na kilku ofertach; zachować rzeczywiste błędy i statusy. Testy, wdrożenie, commit/push po poprawce. Artefakty: `.local/runs/2026-11-11-olx-access/`.
+
 ## Błędy importów i adresów (2026-11-11)
 
 - [x] Diagnoza logów: Nieruchomosci-online odrzucał `force` w globalnej walidacji (400); OLX zwraca 403, Maxon ponawia stare URL i zgłasza brak ceny.
