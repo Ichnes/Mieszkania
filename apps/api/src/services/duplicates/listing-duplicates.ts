@@ -323,6 +323,7 @@ export async function reviewDuplicateCandidate(input: {
     const leftId = input.leftId < input.rightId ? input.leftId : input.rightId;
     const rightId = input.leftId < input.rightId ? input.rightId : input.leftId;
     const pairKey = buildDuplicatePairKey(leftId, rightId);
+    let mergedPrimaryId: string | undefined;
 
     try {
       await db.query("begin");
@@ -360,8 +361,7 @@ export async function reviewDuplicateCandidate(input: {
           input.rightId,
         );
         const duplicateListingId = primaryListingId === input.leftId ? input.rightId : input.leftId;
-        await mergeDuplicateGroup(db, primaryListingId, duplicateListingId);
-        await markDuplicateHidden(db, primaryListingId, duplicateListingId);
+        mergedPrimaryId = await mergeDuplicateGroup(db, primaryListingId, duplicateListingId);
       }
 
       if (input.status === "different_listing") {
@@ -398,7 +398,7 @@ export async function reviewDuplicateCandidate(input: {
       }
 
       await db.query("commit");
-      return { pairKey, status: input.status };
+      return { pairKey, status: input.status, primaryListingId: mergedPrimaryId };
     } catch (error) {
       await db.query("rollback");
       throw error;
@@ -576,13 +576,13 @@ export async function autoMergeDuplicateByDescription(db: QueryableDb, listingId
     ],
   );
 
-  await mergeDuplicateGroup(db, primaryListingId, duplicateListingId);
-  await markDuplicateHidden(db, primaryListingId, duplicateListingId);
+  const mergedPrimaryId = await mergeDuplicateGroup(db, primaryListingId, duplicateListingId);
 
   return {
     pairKey,
-    primaryListingId,
-    duplicateListingId,
+    primaryListingId: mergedPrimaryId,
+    duplicateListingId:
+      mergedPrimaryId === duplicateListingId ? primaryListingId : duplicateListingId,
     similarity: best.similarity,
   };
 }
@@ -684,7 +684,6 @@ export async function runAutomaticDuplicateMergeByDescription(limit = 10_000) {
                 ],
               );
               await mergeDuplicateGroup(db, primary.id, duplicate.id);
-              await markDuplicateHidden(db, primary.id, duplicate.id);
               groupMerged += 1;
             }
             return groupMerged;
@@ -1271,6 +1270,12 @@ async function mergeDuplicateGroup(
     );
   }
 
+  primaryListingId = await choosePreferredPrimaryListingId(
+    db,
+    primaryListingId,
+    duplicateListingId,
+    targetGroupId,
+  );
   await db.query(
     `
       update listing_duplicate_group_members
@@ -1282,6 +1287,12 @@ async function mergeDuplicateGroup(
 
   await inheritStableDuplicateFacts(db, targetGroupId);
   await syncDuplicateGroupPrice(db, targetGroupId);
+  await markDuplicateHidden(
+    db,
+    primaryListingId,
+    duplicateListingId === primaryListingId ? undefined : duplicateListingId,
+  );
+  return primaryListingId;
 }
 
 export async function inheritStableDuplicateFacts(db: QueryableDb, groupId: string) {
@@ -1343,7 +1354,7 @@ export async function inheritStableDuplicateFacts(db: QueryableDb, groupId: stri
 async function markDuplicateHidden(
   db: QueryableDb,
   primaryListingId: string,
-  duplicateListingId: string,
+  duplicateListingId?: string,
 ) {
   await db.query(
     `
@@ -1514,41 +1525,32 @@ export async function choosePreferredPrimaryListingId(
   db: QueryableDb,
   leftId: string,
   rightId: string,
+  groupId?: string,
 ) {
   const result = await db.query<{
     id: string;
     source_key: string;
     created_at: string;
     status: string;
+    source_count?: string;
   }>(
-    `select l.id, s.key as source_key, l.created_at::text, l.status from listings l join sources s on s.id = l.source_id where l.id in ($1, $2)`,
-    [leftId, rightId],
+    `select l.id, s.key as source_key, l.created_at::text, l.status,
+      (select count(*)::text from listings source_listing where source_listing.source_id = l.source_id) as source_count
+     from listings l join sources s on s.id = l.source_id
+     where l.id in ($1, $2) or exists (
+       select 1 from listing_duplicate_group_members gm where gm.listing_id = l.id and gm.group_id = $3
+     )`,
+    [leftId, rightId, groupId ?? null],
   );
-  const [left, right] = result.rows;
-  if (!left || !right) return leftId;
-  if ((left.status === "active") !== (right.status === "active"))
-    return left.status === "active" ? left.id : right.id;
-  return choosePrimaryListingId(
-    {
-      ...left,
-      city: "",
-      description: null,
-      rooms: null,
-      area_sqm: null,
-      price_amount: null,
-      address_text: null,
-      existing_primary_id: null,
-    },
-    {
-      ...right,
-      city: "",
-      description: null,
-      rooms: null,
-      area_sqm: null,
-      price_amount: null,
-      address_text: null,
-      existing_primary_id: null,
-    },
+  return (
+    result.rows.sort(
+      (left, right) =>
+        Number(right.status === "active") - Number(left.status === "active") ||
+        Number(right.source_key === "otodom") - Number(left.source_key === "otodom") ||
+        Number(right.source_count ?? 0) - Number(left.source_count ?? 0) ||
+        new Date(left.created_at).getTime() - new Date(right.created_at).getTime() ||
+        left.id.localeCompare(right.id),
+    )[0]?.id ?? leftId
   );
 }
 

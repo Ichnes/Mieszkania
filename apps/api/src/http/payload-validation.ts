@@ -3,6 +3,7 @@ import { validDecisionNote } from "./routes/decision-notes";
 
 const uuid = /^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i;
 const booleans = new Set([
+  "force",
   "shortlisted",
   "resume",
   "downloadMedia",

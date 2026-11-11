@@ -61,11 +61,42 @@ test("retains house numbers when normalizing declined street names and cuts loca
 });
 import { estimateWarsawNeighborhood } from "../insights/listing-neighborhood-estimator";
 import {
+  registerWarsawStreetNames,
   normalizeWarsawListingCity,
   normalizeWarsawStreetCandidate,
   sanitizeStreetCandidate,
   sanitizeWarsawAddressText,
 } from "./address-normalization";
+
+test("street annotations cannot become a house number or a second street", () => {
+  for (const suffix of [
+    "> stacja metra Kondratowicza 10",
+    "&gt; stacja metra Kondratowicza 10",
+    "→ metro 10 min",
+    "metro Kondratowicza 10",
+    "10 min do metra",
+  ]) {
+    assert.equal(normalizeWarsawStreetCandidate(`Głębocka ${suffix}`), "Głębocka");
+    assert.equal(
+      sanitizeWarsawAddressText(`Głębocka ${suffix}, Grodzisk, Warszawa`),
+      "Głębocka, Grodzisk, Warszawa",
+    );
+  }
+  assert.equal(normalizeWarsawStreetCandidate("Głębocka 12A > metro 10 min"), "Głębocka 12A");
+});
+
+test("canonical street names use the imported street catalog", () => {
+  registerWarsawStreetNames([
+    "Kondratowicza",
+    "Ostródzka",
+    "Dywizjonu 303",
+    "Bitwy Warszawskiej 1920 r.",
+  ]);
+  assert.equal(normalizeWarsawStreetCandidate("Dywizjonu 303"), "Dywizjonu 303");
+  assert.equal(normalizeWarsawStreetCandidate("Dywizjonu 303 12"), "Dywizjonu 303 12");
+  assert.equal(normalizeWarsawStreetCandidate("ostrodzkiej 12"), "Ostródzka 12");
+  assert.equal(normalizeWarsawStreetCandidate("kondratowicza 10"), "Kondratowicza 10");
+});
 import {
   canonicalWarsawDistrict,
   canonicalWarsawNeighborhood,

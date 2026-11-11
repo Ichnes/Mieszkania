@@ -312,7 +312,7 @@ export function ListingDetailPanel(input: {
                 onClick={() => void input.onReviewDuplicate(candidate, "same_listing")}
                 disabled={input.isReviewingDuplicatePair === candidate.pairKey}
               >
-                Zostaw tę, ukryj duplikat
+                Połącz duplikaty
               </button>
             </div>
           </div>

@@ -185,7 +185,7 @@ export function DuplicateCandidatesPanel({
                 disabled={Boolean(busy)}
                 onClick={() => void review(pair, "different_listing")}
               >
-                {busy === pair.pairKey ? "Zapisywanie…" : "To inne mieszkania"}
+                {busy === pair.pairKey ? "Zapisywanie…" : "To nie duplikat"}
               </button>
               <button
                 type="button"

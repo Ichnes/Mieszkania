@@ -1,5 +1,21 @@
 # Bieżące zadania
 
+## Błędy importów i adresów (2026-11-11)
+
+- [x] Diagnoza logów: Nieruchomosci-online odrzucał `force` w globalnej walidacji (400); OLX zwraca 403, Maxon ponawia stare URL i zgłasza brak ceny.
+- [x] Poprawka walidacji `force` i test HTTP. Normalizacja oddziela dopiski o metrze od ulicy/numeru; katalog ulic ładowany z lokalnej bazy (6048 nazw), także po imporcie ulic.
+- [x] Maxon: aktualne wyszukiwanie i linki `/oferta/…-ID`, JSON-LD z ceną/metrażem/zdjęciami, aktualny opis i czynsz; poprawiony prefiks województwa w adresie. Stare URL dopasowywane po ID do mapy strony; brak odpowiednika i lista ofert mają osobny komunikat oraz ponowienie po 24 h, bez archiwizacji i bez pobierania cen rekomendacji.
+- [x] OLX: potwierdzona odmowa dostępu; po 403/429 pozostałe wpisy partii są odkładane, następne partie wstrzymane na 30 min. Test potwierdza brak kolejnych pobrań oraz brak oznaczania ofert jako usuniętych.
+- [x] Weryfikacja działającego API: wskazana Głębocka bez dopisku i numeru 10; Nieruchomosci-online z `force: true` zwraca 200 (pusta kolejka); Maxon Zgoda zapisuje 1 245 000 zł i poprawną ulicę. Odkrywanie Maxona: 10 znalezionych / 3 nowe wpisy, próbna kolejka 2/2 udane. OLX: 2 wpisy odłożone po odmowie dostępu. Zewnętrzna blokada OLX pozostaje; starych ID Maxona bez potwierdzonego odpowiednika nie usuwamy ani nie zgadujemy adresów.
+- [x] 328 testów API i 156 web OK (15 środowiskowych pominiętych); osobno 4 testy PostgreSQL bez pominięć, po końcowej korekcie adresu 4 testy Maxona OK. Typecheck i końcowy build Docker poprawne; API i web zdrowe, aplikacja uruchomiona lokalnie. Artefakty w `.local/runs/2026-11-11-import-errors/`. Commit i push na `main`.
+
+## Proste łączenie duplikatów (2026-11-11)
+
+- [x] Zakres: „Połącz duplikaty” / „To nie duplikat” zamiast wskazywania, którą ofertę zostawić; wybór głównej automatycznie: aktywna przed archiwalną, Otodom, następnie liczba ofert portalu w lokalnej bazie.
+- [x] Wspólna reguła obejmuje wszystkich członków scalanych grup, także automatyczne łączenie. Po ręcznym połączeniu widok otwiera główną ofertę. Linki, zdjęcia i historia pozostają w grupie.
+- [x] PostgreSQL: wybór aktywnej oferty, zachowanie Otodomu w istniejącej grupie mimo łączenia innych członków, wspólne zdjęcia i spójne ukrycie kopii; 4/4 testy bez pominięć. Regresja wyboru według liczby ogłoszeń i niezależności od kolejności pary.
+- [x] Etykiety potwierdzone w wdrożonych modułach szczegółów i strony Duplikaty. Zachowany responsywny układ z zawijaniem oraz przyciskami min. 44 px w szczegółach (PC/laptop/mobile); bez nowych kontrolek i zmian CSS. Wizualny test przeglądarkowy niedostępny: narzędzie przerwało sterowanie z powodu niemożności ustalenia bieżącego URL. Typecheck, testy web i build OK; commit i push na `main`.
+
 ## Klikanie ofert na mapie (2026-10-18)
 
 - [x] Doprecyzowanie zgłoszenia: miganie samej pinezki. Odtworzono w działającej aplikacji przy naciśnięciu myszy przez 150 ms: globalne `scale: 0.96` przesuwało znacznik o kilkadziesiąt pikseli przed `mouseup`, więc kliknięcie trafiało w mapę. Wyłączono animację skali dla znaczników Leaflet, także grup ofert i transportu.

@@ -4,6 +4,32 @@ import Fastify from "fastify";
 import { createDefaultFamilySettings } from "@mieszkania/shared";
 import { registerPayloadValidation, validatePayload } from "./payload-validation";
 
+test("manual queue processing accepts boolean force through HTTP validation", async () => {
+  const app = Fastify();
+  registerPayloadValidation(app);
+  const url = "/api/collectors/nieruchomosci-online/process-queue";
+  let calls = 0;
+  app.post(url, async (request) => {
+    calls++;
+    return request.body;
+  });
+  try {
+    for (const force of [true, false]) {
+      const payload = { limit: 200, concurrency: 8, force };
+      const response = await app.inject({ method: "POST", url, payload });
+      assert.equal(response.statusCode, 200);
+      assert.deepEqual(response.json(), payload);
+    }
+    for (const force of ["true", 1, null, {}]) {
+      const response = await app.inject({ method: "POST", url, payload: { force } });
+      assert.equal(response.statusCode, 400);
+    }
+    assert.equal(calls, 2);
+  } finally {
+    await app.close();
+  }
+});
+
 test("payload validation preserves current forms and rejects invalid types before writes", async () => {
   assert.equal(validatePayload(createDefaultFamilySettings()), true);
   assert.equal(

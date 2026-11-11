@@ -388,7 +388,8 @@ z zapisanego miasta, minimalnego metrażu i maksymalnej ceny (bez dawnych stały
 pobranych ofert. Preferowane dzielnice w profilu wymarzonego mieszkania pozostają
 osobnym ustawieniem oceny dopasowania.
 
-Otodom, Adresowo, Domiporta i Maxon wyszukują wybrane lokalizacje wspólnie.
+Otodom, Adresowo i Domiporta wyszukują wybrane lokalizacje wspólnie.
+Maxon przeszukuje wybrane dzielnice osobno, korzystając z aktualnych adresów `/oferty/sprzedaz/mieszkania/…`.
 Bez wybranych dzielnic Otodom przeszukuje całą Warszawę z filtrami ceny, metrażu
 i liczby pokoi z ustawień. Pusty wynik lub błąd nie przełącza wyszukiwania na inną ścieżkę lokalizacji.
 Morizon i Gratka przeszukują kolejno grupy do 3 dzielnic; OLX i Nieruchomości-online
@@ -402,9 +403,16 @@ filtry stron wyszukiwania pozostają zachowane. Przy HTTP 403 lub błędzie serw
 odczytu w Chromium (jedna przeglądarka naraz). Komunikat „To ogłoszenie nie jest
 już dostępne” lub HTTP 404/410 oznacza niedostępne ogłoszenie: istniejąca oferta
 jest archiwizowana, a wpis kolejki kończy się bez błędu importu.
-Jeśli również przeglądarka odmawia dostępu, kolejka nadal pokazuje błąd.
+Jeśli również przeglądarka odmawia dostępu (403/429), OLX odkłada pozostałe wpisy
+i wstrzymuje kolejne partie na 30 minut. Zachowuje zapisane oferty; odmowa dostępu
+nie oznacza, że ogłoszenie zostało usunięte.
 
 Adresowo: komunikat **Ogłoszenie usunięte** oznacza ofertę archiwalną.
+Maxon odczytuje aktualne linki `/oferta/…-ID` i dane strukturalne oferty, w tym cenę,
+metraż i zdjęcia. Stary adres `/mieszkania/oferta/…` jest dopasowywany do mapy strony
+wyłącznie po identycznym ID. Brak odpowiednika lub przekierowanie na listę ofert
+ma osobny komunikat, a automatyczne ponowienie następuje po 24 godzinach.
+Nie pobieramy wówczas ceny z rekomendacji i nie uznajemy mieszkania za sprzedane.
 Maxon: tak samo traktujemy **OFERTA NIEAKTUALNA** oraz komunikat
 „Poszukiwana oferta … nie jest już aktualna”. Pełne pobranie danych i odświeżenie
 ceny archiwizują istniejącą ofertę, zachowując ostatnią cenę, opis i zdjęcia.
@@ -629,6 +637,13 @@ liczby powiązanych ofert. W potencjalnych powiązaniach wybierz zakres **60–7
 **80–100%** lub wszystkie, a następnie kolejność od najniższego/najwyższego podobieństwa
 lub największej liczby powiązanych ogłoszeń. Sortowanie obejmuje całą kolejkę,
 nie tylko aktualnie pobraną stronę.
+
+W szczegółach oferty i w potencjalnych powiązaniach użyj **Połącz duplikaty** albo
+**To nie duplikat**. Nie trzeba wybierać, którą ofertę zostawić. Aplikacja wybiera
+główną spośród całej grupy: aktywna ma pierwszeństwo przed archiwalną, następnie
+Otodom, a potem portal z największą liczbą ogłoszeń w lokalnej bazie. Przy remisie
+pozostaje starszy rekord. Linki źródłowe, zdjęcia i historia połączonych ofert są zachowane.
+Po połączeniu w szczegółach otwiera się automatycznie wybrana oferta główna.
 
 Miniatury korzystają ze zdjęć danej oferty: najpierw z dostępnych plików lokalnych,
 potem z adresów źródłowych. Niedostępne zdjęcie jest zastępowane kolejnym.

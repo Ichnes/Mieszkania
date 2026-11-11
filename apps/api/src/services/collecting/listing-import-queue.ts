@@ -372,9 +372,12 @@ export async function failListingImport(input: {
   attempts: number;
   metadata?: Record<string, unknown>;
 }) {
-  const retryDelayMinutes = input.error.includes("RATE_LIMITED")
-    ? 30
-    : Math.min(120, Math.max(5, input.attempts * 10));
+  const retryDelayMinutes =
+    input.error.startsWith("MAXON_LEGACY_URL:") || input.error.startsWith("MAXON_LISTING_REDIRECT:")
+      ? 24 * 60
+      : input.error.includes("RATE_LIMITED")
+        ? 30
+        : Math.min(120, Math.max(5, input.attempts * 10));
 
   return retryQueueWrite(() =>
     withDb(async (db) => {

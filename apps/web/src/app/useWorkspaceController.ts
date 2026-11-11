@@ -1355,7 +1355,6 @@ export function useWorkspaceController() {
         body: JSON.stringify({
           leftId: pair.left.id,
           rightId: pair.right.id,
-          primaryListingId: selectedListing?.id,
           status,
         }),
       });
@@ -1364,10 +1363,11 @@ export function useWorkspaceController() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.message ?? "Nie udało się zapisać decyzji o duplikacie.");
       }
+      const result = (await response.json()) as { primaryListingId?: string };
       duplicateCandidateCache.clear();
       if (!selectedListing) return;
 
-      await openListing(selectedListing.id, false, true);
+      await openListing(result.primaryListingId ?? selectedListing.id, false, true);
       await refreshDashboard();
       await applyFilters(appliedFilters, currentListingsPage, appliedListingSort);
     } catch (error) {

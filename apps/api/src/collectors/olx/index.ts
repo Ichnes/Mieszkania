@@ -3,6 +3,7 @@ import { archiveOfferArtifacts } from "../../services/archive/offer-archive";
 import {
   claimListingImportBatch,
   completeListingImport,
+  deferListingImport,
   enqueueListingImports,
   failListingImport,
   getKnownListingExternalIds,
@@ -22,6 +23,7 @@ import { OlxFetcher } from "./olx-fetcher";
 import { OlxParser } from "./olx-parser";
 
 export class OlxCollector {
+  private accessPausedUntil = 0;
   private readonly discovery = new OlxDiscovery();
   private readonly fetcher = new OlxFetcher();
   private readonly parser = new OlxParser();
@@ -184,6 +186,16 @@ export class OlxCollector {
     downloadMedia?: boolean;
     queueKind?: "all" | "price_updates";
   }) {
+    if (this.accessPausedUntil > Date.now()) {
+      return {
+        claimed: 0,
+        completed: 0,
+        failed: 0,
+        deferred: 0,
+        failures: [],
+        pausedUntil: new Date(this.accessPausedUntil).toISOString(),
+      };
+    }
     const limit = Math.max(1, Math.min(500, input?.limit ?? 100));
     const concurrency = Math.max(1, Math.min(16, input?.concurrency ?? 8));
     const claimed = await claimListingImportBatch({
@@ -197,12 +209,17 @@ export class OlxCollector {
     });
     let completed = 0;
     let failed = 0;
+    let deferred = 0;
     const failures: Array<{ externalId: string; url: string; error: string }> = [];
 
     for (let index = 0; index < claimed.length; index += concurrency) {
       const batch = claimed.slice(index, index + concurrency);
       const results = await Promise.allSettled(
         batch.map(async (item) => {
+          if (this.accessPausedUntil > Date.now())
+            throw new Error(
+              "OLX_ACCESS_PAUSED: portal odmawia dostępu (HTTP 403/429); pobieranie wstrzymane na 30 minut.",
+            );
           const priceOnly = knownExternalIds.has(item.external_id);
           try {
             await this.collectOne(item.canonical_url, {
@@ -228,8 +245,20 @@ export class OlxCollector {
           continue;
         }
 
-        failed += 1;
         const message = result.reason instanceof Error ? result.reason.message : "unknown error";
+        if (/^HTTP (403|429):|^OLX_ACCESS_PAUSED:/.test(message)) {
+          this.accessPausedUntil = Date.now() + 30 * 60_000;
+          deferred++;
+          await deferListingImport({
+            id: item.id,
+            reason:
+              "OLX odmawia dostępu (HTTP 403/429). Ponowienie za 30 minut; zapisane oferty pozostają bez zmian.",
+            delayMinutes: 30,
+            metadata: { failureCode: "access_denied" },
+          });
+          continue;
+        }
+        failed += 1;
         failures.push({ externalId: item.external_id, url: item.canonical_url, error: message });
         await failListingImport({
           id: item.id,
@@ -247,7 +276,17 @@ export class OlxCollector {
       }
     }
 
-    return { claimed: claimed.length, completed, failed, failures };
+    return {
+      claimed: claimed.length,
+      completed,
+      failed,
+      deferred,
+      failures,
+      pausedUntil:
+        this.accessPausedUntil > Date.now()
+          ? new Date(this.accessPausedUntil).toISOString()
+          : undefined,
+    };
   }
 
   async getQueueStatus() {

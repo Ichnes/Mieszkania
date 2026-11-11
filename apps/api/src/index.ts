@@ -2,6 +2,7 @@ import "./config";
 import { pool } from "./db";
 import { initializeDatabase } from "./db/initialize";
 import { createApp } from "./http/app";
+import { registerWarsawStreetNames } from "./services/geography/address-normalization";
 
 const { app, automation } = createApp();
 process.on("unhandledRejection", (error) =>
@@ -11,6 +12,10 @@ process.on("unhandledRejection", (error) =>
 async function start() {
   try {
     await initializeDatabase();
+    const streets = await pool.query<{ name: string }>(
+      "select distinct name from streets where city = 'Warszawa'",
+    );
+    registerWarsawStreetNames(streets.rows.map((street) => street.name));
     await automation.initialize();
     await app.listen({
       host: process.env.HOST ?? "0.0.0.0",

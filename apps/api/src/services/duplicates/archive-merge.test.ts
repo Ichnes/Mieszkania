@@ -14,6 +14,40 @@ test("manual archive merge keeps an active listing visible regardless of source 
   };
   assert.equal(await choosePreferredPrimaryListingId(db as never, "archive", "live"), "live");
 });
+
+test("primary selection prefers Otodom, then portal volume, independent of pair order", async () => {
+  const rows = [
+    {
+      id: "small",
+      status: "active",
+      source_key: "gratka",
+      source_count: "5",
+      created_at: "2020-01-01",
+    },
+    {
+      id: "large",
+      status: "active",
+      source_key: "olx",
+      source_count: "100",
+      created_at: "2026-01-01",
+    },
+  ];
+  const db = { query: async () => ({ rows: [...rows] }) };
+  assert.equal(await choosePreferredPrimaryListingId(db as never, "small", "large"), "large");
+  rows.reverse();
+  assert.equal(await choosePreferredPrimaryListingId(db as never, "large", "small"), "large");
+  rows.push({
+    id: "otodom",
+    status: "active",
+    source_key: "otodom",
+    source_count: "1",
+    created_at: "2026-02-01",
+  });
+  assert.equal(
+    await choosePreferredPrimaryListingId(db as never, "small", "large", "existing-group"),
+    "otodom",
+  );
+});
 import { randomUUID } from "node:crypto";
 import Fastify from "fastify";
 import { registerPayloadValidation } from "../../http/payload-validation";
@@ -84,6 +118,7 @@ test(
         },
       });
       assert.equal(response.statusCode, 200, response.body);
+      assert.equal(response.json().primaryListingId, ids[0]);
       const asset = (
         await db.query(
           `insert into listing_media_assets(storage_key,source_url) values('test/archive.jpg','https://example.test/archive.jpg') returning id`,
@@ -113,6 +148,41 @@ test(
           [pair.left.id, pair.right.id].includes(ids[1]),
         ),
         false,
+      );
+      // Joining a member of an existing group must preserve its active Otodom
+      // primary, even when neither clicked card is that primary.
+      const olxSource = (
+        await db.query(
+          "insert into sources(key,name,kind,access_mode) values('olx','Test OLX','portal','crawler') returning id",
+        )
+      ).rows[0].id;
+      const otherId = randomUUID();
+      await db.query(
+        `insert into listings(id,source_id,external_id,canonical_url,title,city,area_sqm,price_amount,source_price_amount,status) values($1,$2,'other','https://example.test/other','Other','Warszawa',60,900000,900000,'active')`,
+        [otherId, olxSource],
+      );
+      const merged = await app.inject({
+        method: "POST",
+        url: "/api/duplicates/review",
+        payload: { leftId: ids[1], rightId: otherId, status: "same_listing" },
+      });
+      assert.equal(merged.statusCode, 200, merged.body);
+      assert.equal(merged.json().primaryListingId, ids[0]);
+      const members = (
+        await db.query(
+          "select listing_id,is_primary from listing_duplicate_group_members where group_id=(select group_id from listing_duplicate_group_members where listing_id=$1)",
+          [otherId],
+        )
+      ).rows;
+      assert.equal(members.length, 3);
+      assert.deepEqual(
+        members.filter((row) => row.is_primary).map((row) => row.listing_id),
+        [ids[0]],
+      );
+      assert.equal(
+        (await db.query("select hidden_duplicate_of_id from listings where id=$1", [otherId]))
+          .rows[0].hidden_duplicate_of_id,
+        ids[0],
       );
     } finally {
       await app.close();

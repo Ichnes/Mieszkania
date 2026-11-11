@@ -51,14 +51,17 @@ export function sanitizeStreetCandidate(value?: string | null) {
     .trim();
   if (!candidate) return null;
 
-  const clause = (candidate.split(/[,;|\n]|\s+[–—]\s+/, 1)[0]?.trim() ?? "").replace(
+  const clause = (candidate.split(/[,;|\n>→]|&gt;|\s+[–—]\s+/, 1)[0]?.trim() ?? "").replace(
     /(\d+[a-z]?(?:[/-]\d+[a-z]?)?)\s+(?:na|w|we)\s+.*$/iu,
     "$1",
   );
   const locationBoundary =
     /\s+(?:na\s+(?:warszawsk\p{L}*|osiedlu\b|(?:Bemowie|Białołęce|Bielanach|Mokotowie|Ochocie|Pradze(?:[- ](?:Północ|Południe))?|Targówku|Ursynowie|Woli|Żoliborzu)(?!\p{L}))|w\s+(?:dzielnicy\b|Warszawie\b|(?:Rembertowie|Śródmieściu|Ursusie|Wawrze|Wesołej|Wilanowie|Włochach)(?!\p{L}))|we\s+Wrocławiu\b)/iu;
   const narrativeIndex = clause.search(
-    new RegExp(`${streetNarrativeBoundary.source}|${locationBoundary.source}`, "iu"),
+    new RegExp(
+      `${streetNarrativeBoundary.source}|${locationBoundary.source}|\\s+(?:stacja\\s+metra|metro|przystanek|\\d+\\s*min(?:ut)?\\b)`,
+      "iu",
+    ),
   );
   const street = (narrativeIndex >= 0 ? clause.slice(0, narrativeIndex) : clause)
     .replace(/[.:-]+$/, "")
@@ -100,6 +103,16 @@ const knownWarsawStreetNames = new Map<string, string>(
     return normalized ? [[normalized, street] as const] : [];
   }),
 );
+
+/** Extend canonical names with the actual local street database at startup/import. */
+const importedStreetNames = new Map<string, string>();
+const streetCatalogKey = (value: string) => normalizePolish(value).replace(/\s+/g, " ").trim();
+export function registerWarsawStreetNames(names: Iterable<string>) {
+  for (const name of names) {
+    const clean = sanitizeStreetCandidate(name);
+    if (clean) importedStreetNames.set(streetCatalogKey(clean), clean);
+  }
+}
 
 const warsawDistrictNames = new Set([
   "bemowo",
@@ -146,6 +159,21 @@ export function normalizeWarsawStreetCandidate(value?: string | null) {
   if (!candidate) {
     return null;
   }
+
+  // Match the entire catalog name before extracting a house number: 303 and
+  // 1920 can belong to a street name, not a building.
+  const catalogExact = importedStreetNames.get(streetCatalogKey(candidate));
+  if (catalogExact) return catalogExact;
+  const number = candidate.match(/\s+(\d+[a-z]?(?:[/-]\d+[a-z]?)?)$/iu)?.[1];
+  const name = number ? candidate.slice(0, -(number.length + 1)) : candidate;
+  const key = streetCatalogKey(name);
+  const catalogName = importedStreetNames.get(key);
+  if (catalogName) return number ? `${catalogName} ${number}` : catalogName;
+  const declinedNames = [...importedStreetNames].filter(
+    ([entry]) => canonicalStreetForm(entry) === canonicalStreetForm(key),
+  );
+  if (declinedNames.length === 1)
+    return number ? `${declinedNames[0][1]} ${number}` : declinedNames[0][1];
 
   const normalized = normalizeStreetName(candidate);
   if (!normalized || warsawDistrictNames.has(normalized) || isGarbageStreetCandidate(normalized)) {

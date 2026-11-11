@@ -58,11 +58,10 @@ test("single-district and multi-district portals use their own identifiers witho
     /Warszawa:20571,Praga-Południe:23578,,,900000-2800000,53/,
   );
   const districts = ["Ochota", "Praga-Południe", "Śródmieście", "Wola"];
-  const maxon = new URL(maxonUrl("warszawa", 1, { ...contract, districts }));
-  assert.deepEqual(
-    maxon.searchParams.getAll("Location"),
-    districts.map((d) => `MAZOWIECKIE|Warszawa|${d}`),
-  );
+  for (const district of districts) {
+    const maxon = new URL(maxonUrl("warszawa", 1, { ...contract, districts: [district] }));
+    assert.match(maxon.pathname, /^\/oferty\/sprzedaz\/mieszkania\/mazowieckie\/warszawa\//);
+  }
   const domiporta = new URL(domiportaUrl("warszawa", 2, { ...contract, districts }));
   assert.equal(domiporta.searchParams.get("Localizations[0].Id"), "70026");
   assert.equal(domiporta.searchParams.get("Localizations[3].Id"), "70040");
@@ -201,10 +200,11 @@ test("portal URLs use the current area, prices and room count instead of histori
     roomsMin: 2,
   };
   const maxon = new URL(maxonUrl("warszawa", 2, contract));
-  assert.equal(maxon.searchParams.get("AreaFrom"), "53");
-  assert.equal(maxon.searchParams.get("PriceTotalPLNTo"), "2800000");
-  assert.equal(maxon.searchParams.get("PriceTotalPLNFrom"), "700000");
-  assert.equal(maxon.searchParams.get("RoomsCountFrom"), "2");
+  assert.equal(maxon.searchParams.get("pow_min"), "53");
+  assert.equal(maxon.searchParams.get("cena_max"), "2800000");
+  assert.equal(maxon.searchParams.get("cena_min"), "700000");
+  assert.deepEqual(maxon.searchParams.getAll("pokoje_set"), ["2", "3", "4", "5", "6"]);
+  assert.equal(maxon.searchParams.get("page"), "2");
   const morizon = new URL(buildMorizonSearchUrl("warszawa", 2, contract));
   assert.equal(morizon.searchParams.get("ps[living_area_from]"), "53");
   assert.equal(morizon.searchParams.get("ps[price_to]"), "2800000");

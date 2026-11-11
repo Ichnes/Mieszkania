@@ -1,4 +1,5 @@
 import { pool } from "../../db";
+import { registerWarsawStreetNames } from "./address-normalization";
 import { findWarsawDistrictAtPoint } from "./warsaw-district-boundaries";
 
 type OverpassElement = {
@@ -49,6 +50,7 @@ export async function importWarsawStreets() {
     );
     imported += 1;
   }
+  registerWarsawStreetNames(streets.map((street) => street.tags!.name!));
   return { imported, received: streets.length };
 }
 

@@ -23,6 +23,12 @@ import {
   ListingUnavailableBeforeImportError,
 } from "../../services/listings/listing-archive";
 import type { ParsedListing, SourceListingReference } from "../types";
+import {
+  maxonStructuredListing,
+  maxonCurrentReferences,
+  resolveMaxonLegacyUrl,
+  assertMaxonDetailPage,
+} from "./document";
 
 const sourceKey = "maxon";
 
@@ -147,11 +153,18 @@ export class MaxonCollector {
 
   private async discover(city: string, startPage: number, pages: number) {
     const references: SourceListingReference[] = [];
+    const contract = (await getFamilySettings()).searchContract;
+    const districts = contract.districts?.length ? [...new Set(contract.districts)] : [undefined];
     for (let offset = 0; offset < pages; offset += 1) {
-      const html = await fetchHtml(
-        buildSearchUrl(city, startPage + offset, (await getFamilySettings()).searchContract),
-      );
-      references.push(...extractReferences(html));
+      for (const district of districts) {
+        const html = await fetchHtml(
+          buildSearchUrl(city, startPage + offset, {
+            ...contract,
+            districts: district ? [district] : [],
+          }),
+        );
+        references.push(...extractReferences(html));
+      }
     }
     return Array.from(new Map(references.map((item) => [item.externalId, item])).values());
   }
@@ -162,7 +175,9 @@ export class MaxonCollector {
     options?: { refreshMode?: "full" | "price_only"; downloadMedia?: boolean },
   ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
-    let rendered = isPriceOnlyRefresh ? await fetchStaticPage(url) : await fetchRenderedPage(url);
+    url = await resolveMaxonLegacyUrl(url, externalId);
+    let rendered = await fetchStaticPage(url);
+    assertMaxonDetailPage(rendered.html);
     const unavailable = await this.archiveUnavailable({
       sourceKey,
       externalId,
@@ -238,24 +253,31 @@ export function buildSearchUrl(
   page: number,
   contract: SearchContract = createDefaultSearchContract(),
 ) {
-  const url = new URL("https://www.maxon.pl/mieszkania/oferty/mieszkania/sprzedaz");
-  const cityName = city.toLowerCase() === "warszawa" ? "Warszawa" : city;
-  if (contract.districts?.length) {
-    for (const district of new Set(contract.districts))
-      url.searchParams.append("Location", `MAZOWIECKIE|${cityName}|${district}`);
-  } else url.searchParams.set("Location", `MAZOWIECKIE|${cityName}`);
-  url.searchParams.set("PriceTotalPLNFrom", String(contract.minPrice));
-  url.searchParams.set("PriceTotalPLNTo", String(contract.maxPrice));
-  url.searchParams.set("AreaFrom", String(contract.minArea));
-  url.searchParams.set("PrimaryMarket", "2");
-  url.searchParams.set("RoomsCountFrom", String(contract.roomsMin));
-  url.searchParams.set("Page", String(page));
-  url.searchParams.set("Sort", "0");
+  const slug = (value: string) =>
+    value
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/ł/gi, "l")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+  const district = contract.districts?.length === 1 ? `/${slug(contract.districts[0])}` : "";
+  const url = new URL(
+    `https://www.maxon.pl/oferty/sprzedaz/mieszkania/mazowieckie/${slug(city)}${district}`,
+  );
+  url.searchParams.set("cena_min", String(contract.minPrice));
+  url.searchParams.set("cena_max", String(contract.maxPrice));
+  url.searchParams.set("pow_min", String(contract.minArea));
+  url.searchParams.set("rynek", "secondary");
+  for (let rooms = contract.roomsMin; rooms <= 6; rooms++)
+    url.searchParams.append("pokoje_set", String(rooms));
+  url.searchParams.set("page", String(page));
   return url.toString();
 }
 
 function externalIdFromUrl(url: string) {
-  const numeric = url.match(/(?:[?&](?:id|offerid)=|\/(\d+)(?:$|[/?#]))/i)?.[1];
+  const numeric =
+    url.match(/\/oferta\/[^/?#]+-(\d+)(?:$|[?#])/i)?.[1] ??
+    url.match(/(?:[?&](?:id|offerid)=|\/)(\d+)(?:$|[/?#&])/i)?.[1];
   return `maxon-${numeric ?? createHash("sha256").update(url).digest("hex").slice(0, 16)}`;
 }
 
@@ -268,7 +290,7 @@ function resolveExternalId(fallbackExternalId: string, html: string) {
 }
 
 function extractReferences(html: string) {
-  const references: SourceListingReference[] = [];
+  const references: SourceListingReference[] = maxonCurrentReferences(html);
   // Maxon renders result cards from embedded JSON, so there are no populated href values in the initial HTML.
   for (const match of html.matchAll(
     /"OfferId"\s*:\s*(\d+)[\s\S]{0,3000}?"URL"\s*:\s*"([^"]+)"/gi,
@@ -280,7 +302,10 @@ function extractReferences(html: string) {
 }
 
 async function fetchHtml(url: string) {
-  const response = await fetch(url, { headers: requestHeaders });
+  const response = await fetch(url, {
+    headers: requestHeaders,
+    signal: AbortSignal.timeout(30_000),
+  });
   if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
   return response.text();
 }
@@ -324,28 +349,42 @@ export function parseListing(
   visibleText: string,
   externalId: string,
 ): ParsedListing {
+  const structured = maxonStructuredListing(html);
+  const apartment = structured?.about;
   const title =
     firstText(html, /<h1[^>]*>([\s\S]*?)<\/h1>/i) || meta(html, "og:title") || "Oferta Maxon";
   const description = descriptionText(
-    html.match(/<div[^>]+class=["'][^"']*description_cnt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1],
+    html.match(
+      /<div[^>]+data-readmore-content[^>]*>([\s\S]*?)(?:<div[^>]+class=["']readmore__gradient|<\/div>)/i,
+    )?.[1] ??
+      html.match(/<div[^>]+class=["'][^"']*description_cnt[^"']*["'][^>]*>([\s\S]*?)<\/div>/i)?.[1],
   );
   const address =
+    apartment?.address?.streetAddress?.replace(/^mazowieckie\s*,\s*/i, "") ??
     firstText(html, /<h1\b[^>]*>[\s\S]*?<\/h1>\s*<h2\b[^>]*>([\s\S]*?)<\/h2>/i) ??
     firstText(html, /<[^>]+class=["'][^"']*(?:address|location)[^"']*["'][^>]*>([\s\S]*?)<\//i) ??
     "Warszawa";
   const details = {
-    area: amount(labeledValue(visibleText, "Powierzchnia")),
-    rooms: amount(labeledValue(visibleText, "Liczba pokoi")),
+    area:
+      amount(String(apartment?.floorSize?.value ?? "")) ??
+      amount(labeledValue(visibleText, "Powierzchnia")),
+    rooms:
+      amount(String(apartment?.numberOfRooms ?? "")) ??
+      amount(labeledValue(visibleText, "Liczba pokoi")),
     price:
+      amount(String(structured?.offers?.price ?? "")) ??
       jsonLdOfferPrice(html) ??
       amount(labeledValue(visibleText, "Cena")) ??
       amount(meta(html, "product:price:amount")),
-    fee: amount(labeledValue(visibleText, "Czynsz")),
-    floor: labeledValue(visibleText, "Piętro"),
+    fee:
+      amount(htmlLabeledValue(html, "Czynsz administracyjny")) ??
+      amount(labeledValue(visibleText, "Czynsz")),
+    floor: apartment?.floorLevel ?? labeledValue(visibleText, "Piętro"),
   };
   const floor = parseFloor(details.floor);
   const phone = html.match(/href=["']tel:([^"']+)["']/i)?.[1]?.replace(/[^0-9+]/g, "");
   const publishedAt = firstValidPublishedAt(
+    structured?.datePosted,
     html.match(/"datePublished"\s*:\s*"([^"]+)"/i)?.[1],
     html.match(/"dateCreated"\s*:\s*"([^"]+)"/i)?.[1],
     meta(html, "article:published_time"),
@@ -355,13 +394,15 @@ export function parseListing(
   const district = location.match(
     /(?:Mokotów|Wilanów|Wola|Ursynów|Żoliborz|Bemowo|Ochota|Bielany|Włochy|Praga-Północ|Praga-Południe|Śródmieście)/i,
   )?.[0];
-  const images = extractImages(html);
+  const images: string[] = structured?.image?.length
+    ? structured.image.filter((image: unknown) => typeof image === "string")
+    : extractImages(html);
   return {
     externalId,
     canonicalUrl: url,
     title: strip(title),
     description: description || undefined,
-    city: "Warszawa",
+    city: apartment?.address?.addressLocality ?? "Warszawa",
     district,
     street: strip(address)
       .match(/\bul\.?\s+([^,]+)/i)?.[1]
@@ -372,9 +413,21 @@ export function parseListing(
     areaSqm: details.area,
     rooms: details.rooms,
     floor: floor.floor,
-    totalFloors: floor.totalFloors,
+    totalFloors:
+      Number(
+        apartment?.additionalProperty?.find(
+          (property: { name: string }) => property.name === "numberOfFloors",
+        )?.value,
+      ) || floor.totalFloors,
+    yearBuilt: Number(apartment?.yearBuilt) || undefined,
+    latitude: Number(apartment?.geo?.latitude) || undefined,
+    longitude: Number(apartment?.geo?.longitude) || undefined,
     publishedAt: publishedAt ?? undefined,
-    marketType: /Rynek:\s*wtórny/i.test(visibleText) ? "secondary" : "primary",
+    marketType: /pierwotny/i.test(
+      htmlLabeledValue(html, "Rynek") ?? labeledValue(visibleText, "Rynek") ?? "",
+    )
+      ? "primary"
+      : "secondary",
     offerType: "sale",
     status: isUnavailableListingDocument({ url, html, statusCode: 200 }) ? "removed" : "active",
     images: images.map((sourceUrl, position) => ({
@@ -389,6 +442,16 @@ export function parseListing(
         : undefined,
     },
   };
+}
+
+function htmlLabeledValue(html: string, label: string) {
+  const decoded = decodeHtmlEntities(html);
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return decoded
+    .match(
+      new RegExp(`<span[^>]*>\\s*${escaped}\\s*</span>\\s*<span[^>]*>([^<]*)</span>`, "i"),
+    )?.[1]
+    ?.trim();
 }
 
 function labeledValue(text: string, label: string) {
@@ -483,6 +546,7 @@ function decodeHtmlEntities(value: string) {
     .replace(/&#39;|&apos;/gi, "'")
     .replace(/&lt;/gi, "<")
     .replace(/&gt;/gi, ">")
+    .replace(/&#x([0-9a-f]+);/gi, (_match, hex) => String.fromCodePoint(parseInt(hex, 16)))
     .replace(/&#(\d+);/g, (_match, decimal) => String.fromCodePoint(Number(decimal)));
 }
 
