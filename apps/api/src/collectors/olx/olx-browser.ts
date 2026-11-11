@@ -8,7 +8,19 @@ export function fetchOlxBrowserDocument(url: string): Promise<FetchedListingDocu
   const result = pending.then(async () => {
     const browser = await chromium.launch({ headless: true });
     try {
-      const page = await browser.newPage({ locale: "pl-PL", serviceWorkers: "block" });
+      // OLX's CDN rejects the HeadlessChrome product token before serving HTML.
+      // Use the installed Chromium version, not a stale hard-coded browser UA.
+      const platform =
+        process.platform === "win32"
+          ? "Windows NT 10.0; Win64; x64"
+          : process.platform === "darwin"
+            ? "Macintosh; Intel Mac OS X 10_15_7"
+            : "X11; Linux x86_64";
+      const page = await browser.newPage({
+        locale: "pl-PL",
+        serviceWorkers: "block",
+        userAgent: `Mozilla/5.0 (${platform}) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/${browser.version()} Safari/537.36`,
+      });
       await page.route("**/*", (route) =>
         ["image", "media", "font"].includes(route.request().resourceType())
           ? route.abort()

@@ -403,6 +403,9 @@ filtry stron wyszukiwania pozostają zachowane. Przy HTTP 403 lub błędzie serw
 odczytu w Chromium (jedna przeglądarka naraz). Komunikat „To ogłoszenie nie jest
 już dostępne” lub HTTP 404/410 oznacza niedostępne ogłoszenie: istniejąca oferta
 jest archiwizowana, a wpis kolejki kończy się bez błędu importu.
+Chromium wysyła standardowy nagłówek Chrome z własną aktualną wersją; domyślny
+identyfikator `HeadlessChrome` powodował odpowiedź 403 z CDN OLX. Nie wymaga to
+logowania ani przenoszenia cookies z przeglądarki użytkownika.
 Jeśli również przeglądarka odmawia dostępu (403/429), OLX odkłada pozostałe wpisy
 i wstrzymuje kolejne partie na 30 minut. Zachowuje zapisane oferty; odmowa dostępu
 nie oznacza, że ogłoszenie zostało usunięte.

@@ -3,8 +3,9 @@
 ## OLX: naprawa pobierania po 403 (2026-11-11)
 
 - [x] Rozszerzona diagnoza: opóźnienie kolejki nie usuwa przyczyny. Dla tego samego linku uzyskano rzeczywisty HTML oferty przez curl na Windows, a klient Node i Chromium z kontenera otrzymały CloudFront 403. Kolejna próba curl także zwróciła 403 — pojedynczy sukces nie dowodzi stałej różnicy między klientami.
-- [x] Parser poprawnej odpowiedzi: 1 990 000 zł, 113,1 m², 8 zdjęć. Jedna sesja Chromium ze stroną główną przed ofertą nadal otrzymuje 403 i brak cookies; publiczny skrypt i endpoint tej oferty także 403. Nie potwierdzono działającego zamiennika transportu. Profil użytkownika zachowany, bez odczytu/przenoszenia cookies. Do rozróżnienia blokady zwykłej przeglądarki i kolektora poproszono użytkownika o wynik otwarcia dokładnie tego samego linku.
-- [ ] Ustalić działającą metodę pobierania i zweryfikować ją na kilku ofertach; zachować rzeczywiste błędy i statusy. Testy, wdrożenie, commit/push po poprawce. Artefakty: `.local/runs/2026-11-11-olx-access/`.
+- [x] Użytkownik potwierdził działanie oferty bez logowania. Kontrolowany test obu silników Chromium: domyślny `HeadlessChrome` → 403, standardowy nagłówek Chrome z wersją zainstalowanej przeglądarki → 200 i HTML oferty. Poprawiono User-Agent kolektora; profil użytkownika zachowany, bez odczytu/przenoszenia cookies.
+- [x] Weryfikacja wdrożonego kolektora: trzy rzeczywiste aktywne oferty z ceną/metrażem/zdjęciami oraz prawidłowe 410 dla wygasłej oferty. Ponowiona kolejka: 5/5 ukończone, 0 błędów i 0 odłożonych. Przerwa po faktycznej odmowie pozostaje zabezpieczeniem, nie zastępuje naprawy.
+- [x] 14 testów OLX bez błędów; regresja nagłówka, zachowania rzeczywistego 403, kolejności odczytów i zamykania przeglądarki po awarii. Typecheck, build Docker i gotowość API/web OK. Dokumentacja zaktualizowana; commit/push na `main`. Artefakty: `.local/runs/2026-11-11-olx-access/`.
 
 ## Błędy importów i adresów (2026-11-11)
 
