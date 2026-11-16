@@ -879,7 +879,7 @@ export function useWorkspaceController() {
     cancelListingRequests();
     setSelectedListing(null);
     setListingOpenError(null);
-    void navigate(location.pathname);
+    void navigate(listingHref(null));
   }
 
   async function navigateOffer(direction: -1 | 1) {
@@ -1365,6 +1365,7 @@ export function useWorkspaceController() {
       }
       const result = (await response.json()) as { primaryListingId?: string };
       duplicateCandidateCache.clear();
+      window.dispatchEvent(new Event("mieszkania:duplicate-reviewed"));
       if (!selectedListing) return;
 
       await openListing(result.primaryListingId ?? selectedListing.id, false, true);

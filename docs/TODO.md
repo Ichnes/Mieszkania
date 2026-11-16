@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Weryfikacja powiązań bez zmiany zakładki (2026-11-16)
+
+- [x] Diagnoza: otwieranie i zamykanie szczegółów usuwało parametry wybranej zakładki z URL.
+- [x] Zachowanie parametrów zakładki przy otwieraniu, zmianie i zamykaniu szczegółów; filtry i strona pozostają w komponencie. Propozycje duplikatów zachowują stronę także po decyzji i odświeżają się po decyzji w szczegółach. Opis grup wyjaśnia, że są już połączone.
+- [x] Ponowne wystawienia: „Połączone oferty” i „Potencjalne powiązania”, automatyczny odczyt zapisanych wyników przy wejściu/odświeżeniu, po 20 par ze stabilną paginacją i pełnymi licznikami. Klikalne zdjęcia, decyzje i odświeżenie listy bez kolejnego skanu; „Sprawdź oferty” służy wyłącznie nowemu porównaniu.
+- [x] Testy: 330 API + 158 web OK (15 środowiskowych pominiętych); osobna regresja PostgreSQL bez pominięcia obejmuje odczyt zapisanych propozycji, paginację poza zakresem, HTTP GET po ręcznej decyzji, odrzucenie, znikanie nieaktualnych archiwów i połączenie automatyczne. Typecheck, format i build Docker OK; API/web uruchomione lokalnie.
+- [x] UI 1440/1280/390/320: zdjęcia i szczegóły z obu list ponownych wystawień oraz z kontrolowanej kolejki duplikatów z rzeczywistymi ofertami; zachowane URL, strona 2 i pozycja listy, brak przepełnienia i błędów JS. Potwierdzenie/odrzucenie/błąd zapisu sprawdzone na przechwyconych żądaniach bez zmiany danych użytkownika i bez wywołania skanu. Obejrzano zrzuty PC/telefonu. Rzeczywisty odczyt ponownych wystawień: 397 połączonych i 624 propozycje. Pełna dotychczasowa kolejka potencjalnych duplikatów przekroczyła limit oczekiwania testu; nawigację odizolowano od czasu tego zapytania. Artefakty: `.local/runs/2026-11-16-relation-review/`.
+- [x] Przewodnik zaktualizowany. Zakres zakończony; commit i push na `main`.
+
 ## Procent zmiany ceny po ponownym wystawieniu (2026-11-11)
 
 - [x] Diagnoza wskazanej oferty: ustalone ponowne wystawienie 1 370 000 → 1 320 000 zł, ale karta pokazywała 0%, bo korzystała wyłącznie ze zdarzeń ceny nowego ogłoszenia.

@@ -9,6 +9,10 @@ import { getListingParcelContext } from "../../services/insights/listing-parcel-
 import { getListingPlanningContext } from "../../services/insights/listing-planning-context";
 import { reviewRelisting } from "../../services/listings/relisting-review";
 import {
+  addRelistingPreviews,
+  getRelistingResults,
+} from "../../services/listings/relisting-results";
+import {
   getPotentialRelistings,
   scanRelistedListings,
 } from "../../services/listings/listing-relistings";
@@ -261,6 +265,12 @@ export function registerListingsRoutes(app: FastifyInstance) {
     return scanRelistedListings(request.body?.limit);
   });
 
+  app.get<{ Querystring: { limit?: string; offset?: string } }>(
+    "/api/listings/relistings",
+    async (request) =>
+      getRelistingResults(Number(request.query.limit ?? 20), Number(request.query.offset ?? 0)),
+  );
+
   app.post<{ Params: { id: string }; Body: { previousId?: string; decision?: string } }>(
     "/api/listings/:id/relisting-review",
     async (request, reply) => {
@@ -290,7 +300,9 @@ export function registerListingsRoutes(app: FastifyInstance) {
       if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(request.params.id)) {
         return reply.code(400).send({ message: "Nieprawidłowy identyfikator oferty." });
       }
-      return { items: await getPotentialRelistings(request.params.id) };
+      const items = await getPotentialRelistings(request.params.id);
+      await addRelistingPreviews(items);
+      return { items };
     },
   );
 

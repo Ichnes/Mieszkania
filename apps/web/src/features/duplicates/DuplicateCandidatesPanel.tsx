@@ -22,6 +22,11 @@ export function DuplicateCandidatesPanel({
   const [busy, setBusy] = useState<string>();
   const [notice, setNotice] = useState("");
   useEffect(() => {
+    const refresh = () => setRevision((value) => value + 1);
+    window.addEventListener("mieszkania:duplicate-reviewed", refresh);
+    return () => window.removeEventListener("mieszkania:duplicate-reviewed", refresh);
+  }, []);
+  useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError("");
@@ -35,8 +40,12 @@ export function DuplicateCandidatesPanel({
     void apiFetch(`${apiBaseUrl}/api/duplicates/candidates?${query}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw Error("Nie udało się pobrać potencjalnych powiązań.");
-        const next = await response.json();
-        if (!controller.signal.aborted) setData(next);
+        const next: DuplicateCandidatesResponse = await response.json();
+        if (!controller.signal.aborted) {
+          setData(next);
+          if (page > Math.max(1, Math.ceil(next.total / 20)))
+            setPage(Math.max(1, Math.ceil(next.total / 20)));
+        }
       })
       .catch((e) => {
         if (!controller.signal.aborted) setError(e.message);
@@ -68,7 +77,6 @@ export function DuplicateCandidatesPanel({
           ? "Połączono duplikaty. Zdjęcia i źródła znajdziesz w połączonej ofercie."
           : "Odrzucono powiązanie. Ta para nie będzie proponowana ponownie.",
       );
-      setPage(1);
       setRevision((v) => v + 1);
       onChanged();
     } catch (e) {

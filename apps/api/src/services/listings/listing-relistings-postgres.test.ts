@@ -7,6 +7,7 @@ import { pool } from "../../db";
 import { registerPayloadValidation } from "../../http/payload-validation";
 import { registerListingsRoutes } from "../../http/routes/listings";
 import { reviewRelisting } from "./relisting-review";
+import { getRelistingResults } from "./relisting-results";
 import {
   getPotentialRelistings,
   scanRelistedListings,
@@ -27,6 +28,7 @@ test(
     registerPayloadValidation(app);
     registerListingsRoutes(app);
     t.mock.method(pool, "connect", db.connect.bind(db));
+    t.mock.method(pool, "query", db.query.bind(db));
     try {
       await admin.query(`create schema ${schema}`);
       for (const table of [
@@ -35,6 +37,9 @@ test(
         "listing_relistings",
         "listing_relisting_candidates",
         "listing_relisting_reviews",
+        "listing_duplicate_group_members",
+        "listing_images",
+        "listing_media_assets",
       ]) {
         await db.query(
           `create table ${table} (like public.${table} including defaults including indexes)`,
@@ -68,6 +73,13 @@ test(
         assert.equal(result.matched, 0);
         assert.equal(result.potentialCount, 1);
         assert.equal(result.potentialItems[0].previous.id, ids[0]);
+        const saved = await getRelistingResults(20, 0, db);
+        assert.equal(saved.matched, 0);
+        assert.equal(saved.potentialCount, 1);
+        assert.equal(saved.potentialItems[0].previous.id, ids[0]);
+        const beyond = await getRelistingResults(20, 20, db);
+        assert.equal(beyond.potentialCount, 1);
+        assert.deepEqual(beyond.potentialItems, []);
         assert.equal(
           (await db.query("select count(*)::int n from listing_relistings")).rows[0].n,
           0,
@@ -90,6 +102,17 @@ test(
         assert.equal(response.statusCode, 200, response.body);
       }
       assert.equal((await getPotentialRelistings(ids[1], db)).length, 0);
+      const savedResponse = await app.inject({
+        method: "GET",
+        url: "/api/listings/relistings?limit=20&offset=0",
+      });
+      assert.equal(savedResponse.statusCode, 200, savedResponse.body);
+      const savedManual = savedResponse.json();
+      assert.equal(savedManual.matched, 1);
+      assert.equal(savedManual.potentialCount, 0);
+      assert.equal(savedManual.items[0].manuallyConfirmed, true);
+      assert.equal(savedManual.items[0].priceDifferenceAmount, -100_000);
+      assert.deepEqual(savedManual.items[0].previous.thumbnailUrls, []);
       const manual = await scanRelistedListings(100, db);
       assert.equal(manual.matched, 1);
       assert.equal(manual.items[0].manuallyConfirmed, true);
@@ -109,6 +132,7 @@ test(
       const rejected = await scanRelistedListings(100, db);
       assert.equal(rejected.matched, 0);
       assert.equal(rejected.potentialCount, 0);
+      assert.equal((await getRelistingResults(20, 0, db)).matched, 0);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 0);
       // Reset only this isolated test schema to exercise the remaining stale-source cases.
       await db.query("delete from listing_relisting_reviews");
@@ -117,6 +141,7 @@ test(
         ids[0],
       ]);
       assert.deepEqual(await getPotentialRelistings(ids[1], db), []);
+      assert.equal((await getRelistingResults(20, 0, db)).potentialCount, 0);
       await assert.rejects(reviewRelisting(ids[1], ids[0], "confirmed", db), /zmieniła status/);
       assert.equal((await scanRelistedListings(100, db)).potentialCount, 0);
       assert.equal(
@@ -128,6 +153,9 @@ test(
       await db.query("update listings set description=$1", [description]);
       const strong = await scanRelistedListings(100, db);
       assert.equal(strong.matched, 1);
+      const savedStrong = await getRelistingResults(20, 0, db);
+      assert.equal(savedStrong.matched, 1);
+      assert.equal(savedStrong.items[0].manuallyConfirmed, false);
       assert.equal(strong.potentialCount, 0);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 1);
       await db.query("update listings set description='Changed description' where id=$1", [ids[1]]);

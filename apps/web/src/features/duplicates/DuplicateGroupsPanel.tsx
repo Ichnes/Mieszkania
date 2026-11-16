@@ -86,8 +86,8 @@ export function DuplicateGroupsPanel({
             <p className="eyebrow">Kontrola jakości</p>
             <h2>Duplikaty do weryfikacji</h2>
             <p className="muted">
-              Zatwierdzone grupy znikają z tej kolejki. Liczniki obejmują całą kolejkę oczekującą na
-              weryfikację.
+              Te oferty są już połączone jako duplikaty. Sprawdź poprawność połączeń; zatwierdzone
+              grupy znikają z tej kolejki. Liczniki obejmują całą kolejkę do weryfikacji.
             </p>
           </div>
           <button

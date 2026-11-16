@@ -397,6 +397,24 @@ details.data-tools > summary:focus-visible {
   gap: 5px;
   min-width: 0;
 }
+.relisting-photo {
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface);
+}
+.relisting-photo .duplicate-photo-button img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+}
+.relisting-photo .duplicate-preview-empty {
+  min-height: 160px;
+}
+@media (min-width: 701px) and (max-width: 1200px) {
+  .relisting-result-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
 .relisting-offer-row > span {
   color: var(--ink-soft);
   font-size: 0.7rem;

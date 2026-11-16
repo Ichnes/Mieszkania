@@ -612,16 +612,22 @@ niezapisanych okresów wcześniejszej aktywności. Brak danych pozostaje przerw�
 ## Potencjalne wcześniejsze oferty
 
 W **Duplikatach** są zakładki **Duplikaty** i **Oferty wystawione ponownie**.
-Pierwsza zawiera weryfikację grup oraz **Znajdź i połącz**; w drugiej przycisk **Sprawdź oferty** porównuje aktywne ogłoszenia
-z archiwum. Wyniki obejmują mocne dopasowania oraz osobną sekcję
-**Potencjalne wcześniejsze oferty**. Propozycja może pojawić się mimo zmienionego
+Pierwsza zawiera weryfikację grup oraz **Znajdź i połącz**. Druga ma podzakładki
+**Połączone oferty** (już zapisane powiązania) i **Potencjalne powiązania** (pary czekające
+na decyzję). Listy wczytują zapisane wyniki także po odświeżeniu strony, po 20 par na stronę.
+**Odśwież listę** odczytuje aktualny zapis; **Sprawdź oferty** uruchamia nowe porównanie aktywnych
+ogłoszeń z archiwum, łączy mocne dopasowania i zapisuje pozostałe propozycje.
+Propozycja może pojawić się mimo zmienionego
 opisu, gdy zgadzają się ulica, metraż, pokoje i piętro albo opis i lokalizacja są
 dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobieństwo
 dzielnicy nie wystarcza. Sprzeczne piętra lub numery budynków wykluczają automatyczne
 połączenie; przy mocnej zgodności opisu para może trafić do ręcznej weryfikacji.
 
-Karty pokazują obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
-tytułu otwiera odpowiednią ofertę. Różnica cen propozycji jest porównaniem dwóch
+Karty pokazują zdjęcia, obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
+zdjęcia lub tytułu otwiera szczegóły nad bieżącą listą. W szczegółach można przeglądać
+i powiększać zdjęcia. Zamknięcie szczegółów zachowuje zakładkę, filtry, stronę i pozycję
+listy. Decyzja odświeża propozycje bez nowego skanu i bez zmiany zakładki, także gdy
+zapiszesz ją w szczegółach. Różnica cen propozycji jest porównaniem dwóch
 ogłoszeń, a nie potwierdzoną zmianą ceny tego samego mieszkania.
 
 Propozycje zapisują się po skanie. Na aktywnej ofercie pojawia się oznaczenie
@@ -645,6 +651,11 @@ liczby powiązanych ofert. W potencjalnych powiązaniach wybierz zakres **60–7
 **80–100%** lub wszystkie, a następnie kolejność od najniższego/najwyższego podobieństwa
 lub największej liczby powiązanych ogłoszeń. Sortowanie obejmuje całą kolejkę,
 nie tylko aktualnie pobraną stronę.
+
+**Połączone grupy do sprawdzenia** zawierają już scalone duplikaty oczekujące na kontrolę
+poprawności; zatwierdzenie usuwa grupę z kolejki weryfikacji. **Potencjalne powiązania**
+zawierają propozycje, których jeszcze nie połączono. Otwieranie i zamykanie oferty
+z miniatury lub przycisku zachowuje wybraną podzakładkę, filtry i stronę propozycji.
 
 W szczegółach oferty i w potencjalnych powiązaniach użyj **Połącz duplikaty** albo
 **To nie duplikat**. Nie trzeba wybierać, którą ofertę zostawić. Aplikacja wybiera

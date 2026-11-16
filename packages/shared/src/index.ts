@@ -548,6 +548,8 @@ export type RelistedListingPreview = {
   areaSqm?: number;
   rooms?: number;
   floor?: number;
+  thumbnailUrls?: string[];
+  thumbnailSharedFromIndex?: number;
 };
 
 export type RelistedListingMatch = {
@@ -560,13 +562,16 @@ export type RelistedListingMatch = {
   reasons: string[];
 };
 
-export type RelistedListingsScanResponse = {
-  checkedActive: number;
-  checkedArchived: number;
+export type RelistedListingsResponse = {
   matched: number;
   items: RelistedListingMatch[];
   potentialCount: number;
   potentialItems: RelistedListingMatch[];
+};
+
+export type RelistedListingsScanResponse = RelistedListingsResponse & {
+  checkedActive: number;
+  checkedArchived: number;
 };
 
 export type ListingCard = ListingSummary;

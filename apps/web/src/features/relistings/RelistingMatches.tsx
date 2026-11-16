@@ -2,6 +2,7 @@ import type { RelistedListingMatch } from "@mieszkania/shared";
 import { useState } from "react";
 import { saveRelistingReview } from "./review";
 import { formatOptionalPln, formatPln } from "../../shared/lib/format";
+import { DuplicatePreview } from "../duplicates/DuplicatePreview";
 
 export function RelistingMatches({
   items,
@@ -82,6 +83,15 @@ export function RelistingMatches({
                 <span>
                   {index ? "Aktualna" : "Archiwalna"} · {offer.sourceLabel}
                 </span>
+                <div className="relisting-photo">
+                  <DuplicatePreview
+                    id={offer.id}
+                    title={offer.title}
+                    urls={offer.thumbnailUrls}
+                    sharedFromIndex={offer.thumbnailSharedFromIndex}
+                    onOpen={(id) => void onOpenListing(id)}
+                  />
+                </div>
                 <button
                   className="text-link-button"
                   type="button"

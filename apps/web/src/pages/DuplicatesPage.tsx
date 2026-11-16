@@ -1,7 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { useState } from "react";
 import { GitCompareArrows } from "lucide-react";
-import { RelistingMatches } from "../features/relistings/RelistingMatches";
+import { RelistingsPanel } from "../features/relistings/RelistingsPanel";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { DuplicateGroupsPanel } from "../features/duplicates/DuplicateGroupsPanel";
 import { DuplicateCandidatesPanel } from "../features/duplicates/DuplicateCandidatesPanel";
@@ -57,7 +56,6 @@ export function DuplicatesPage({
   const [params, setParams] = useSearchParams();
   const relistings = params.get("tab") === "relistings";
   const candidatesView = params.get("view") === "candidates";
-  const [reviewNotice, setReviewNotice] = useState("");
   return (
     <div className="duplicate-workspace">
       <Link className="duplicate-back-link" to="/oferty">
@@ -79,116 +77,37 @@ export function DuplicatesPage({
           Oferty wystawione ponownie
         </button>
       </nav>
+      <nav className="duplicate-tabs" aria-label="Stan powiązań">
+        <button
+          type="button"
+          aria-current={!candidatesView ? "page" : undefined}
+          onClick={() => setParams(relistings ? { tab: "relistings" } : {})}
+        >
+          {relistings ? "Połączone oferty" : "Połączone grupy do sprawdzenia"}
+        </button>
+        <button
+          type="button"
+          aria-current={candidatesView ? "page" : undefined}
+          onClick={() =>
+            setParams(
+              relistings ? { tab: "relistings", view: "candidates" } : { view: "candidates" },
+            )
+          }
+        >
+          Potencjalne powiązania
+        </button>
+      </nav>
       {relistings ? (
-        <section className="panel">
-          <div className="section-topline">
-            <div>
-              <h2>Oferty wystawione ponownie</h2>
-              <p className="muted">
-                Porównaj aktywne ogłoszenia z archiwum i sprawdź wcześniejsze ceny.
-              </p>
-            </div>
-            <button
-              className="action-button"
-              type="button"
-              onClick={() => void runRelistingScan()}
-              disabled={isScanningRelistedListings}
-            >
-              {isScanningRelistedListings ? "Sprawdzam…" : "Sprawdź oferty"}
-            </button>
-          </div>
-          {relistingScanError && (
-            <p className="error-text" role="alert">
-              {relistingScanError}
-            </p>
-          )}
-          {isScanningRelistedListings && <p role="status">Porównywanie ofert z archiwum…</p>}
-          {!relistingScanResult && !isScanningRelistedListings && (
-            <p className="muted">
-              Wybierz „Sprawdź oferty”, aby zobaczyć dopasowania i propozycje do weryfikacji.
-            </p>
-          )}
-          {relistingScanResult ? (
-            <section className="relisting-results" aria-live="polite">
-              <div className="relisting-results-heading">
-                <div>
-                  <h3>Połączone ponowne wystawienia</h3>
-                  <p className="muted">
-                    Sprawdzono {relistingScanResult.checkedActive} aktywnych i{" "}
-                    {relistingScanResult.checkedArchived} archiwalnych ofert.
-                  </p>
-                </div>
-                <span>Dopasowania: {relistingScanResult.matched}</span>
-              </div>
-              {relistingScanResult.items.length > 0 ? (
-                <RelistingMatches items={relistingScanResult.items} onOpenListing={openListing} />
-              ) : (
-                <p className="muted relisting-empty">
-                  Nie znaleziono mocnych dopasowań do wcześniejszych ofert.
-                </p>
-              )}
-              <div className="relisting-results-heading">
-                <div>
-                  <h3>Potencjalne wcześniejsze oferty</h3>
-                  <p className="muted">
-                    Automatyczne połączenie wymaga mocnych zgodności, wyniku co najmniej 90% i braku
-                    sprzeczności w piętrze lub numerze budynku. Pozostałe propozycje, np. z wynikiem
-                    70%, sprawdź ręcznie. Połączenie zachowuje oba ogłoszenia i ich ceny.
-                  </p>
-                </div>
-                <span>Propozycje: {relistingScanResult.potentialCount}</span>
-              </div>
-              {relistingScanResult.potentialItems.length > 0 ? (
-                <>
-                  <RelistingMatches
-                    items={relistingScanResult.potentialItems}
-                    potential
-                    onOpenListing={openListing}
-                    onReviewed={(_, decision) => {
-                      setReviewNotice(
-                        decision === "confirmed"
-                          ? "Połączono oferty. Powiązanie jest widoczne w sekcji powyżej."
-                          : "Odrzucono parę. Nie pojawi się ponownie po kolejnym skanie.",
-                      );
-                      void runRelistingScan();
-                    }}
-                  />
-                  {relistingScanResult.potentialCount >
-                    relistingScanResult.potentialItems.length && (
-                    <p className="muted">
-                      Pokazano {relistingScanResult.potentialItems.length} z{" "}
-                      {relistingScanResult.potentialCount} propozycji. Pozostałe są dostępne w
-                      szczegółach odpowiednich ofert.
-                    </p>
-                  )}
-                </>
-              ) : (
-                <p className="muted relisting-empty">Brak dodatkowych propozycji z archiwum.</p>
-              )}
-              {reviewNotice && <p role="status">{reviewNotice}</p>}
-            </section>
-          ) : null}
-        </section>
+        <RelistingsPanel
+          potential={candidatesView}
+          onOpenListing={openListing}
+          runScan={runRelistingScan}
+          scanning={isScanningRelistedListings}
+          scanError={relistingScanError}
+          scanResult={relistingScanResult}
+        />
       ) : (
         <>
-          <div className="duplicate-tabs" aria-label="Rodzaj powiązań">
-            <button
-              type="button"
-              className="text-link-button"
-              aria-current={!candidatesView ? "page" : undefined}
-              onClick={() => setParams({})}
-            >
-              Połączone grupy do sprawdzenia
-            </button>
-            <button
-              type="button"
-              className="text-link-button"
-              aria-current={candidatesView ? "page" : undefined}
-              onClick={() => setParams({ view: "candidates" })}
-            >
-              Potencjalne powiązania
-            </button>
-          </div>
           {!candidatesView && (
             <section className="panel duplicate-scan-actions">
               <GitCompareArrows size={20} aria-hidden="true" />
