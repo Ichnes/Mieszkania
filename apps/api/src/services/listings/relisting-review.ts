@@ -1,6 +1,7 @@
 import type { RelistedListingMatch } from "@mieszkania/shared";
 import type { Pool } from "pg";
 import { pool } from "../../db";
+import { getEstablishedRelistingMatch } from "./relisting-results";
 
 export type RelistingReview = {
   current_listing_id: string;
@@ -51,7 +52,9 @@ export async function reviewRelisting(
       )
     ).rows[0]?.match_payload;
     const match =
-      candidate ?? existing.find((row) => row.previous_listing_id === previousId)?.match_payload;
+      candidate ??
+      existing.find((row) => row.previous_listing_id === previousId)?.match_payload ??
+      (await getEstablishedRelistingMatch(currentId, previousId, client));
     if (!match) throw new Error("Ta propozycja nie jest już aktualna. Sprawdź oferty ponownie.");
     const reviewed = { ...match, manuallyConfirmed: decision === "confirmed" };
     await client.query(

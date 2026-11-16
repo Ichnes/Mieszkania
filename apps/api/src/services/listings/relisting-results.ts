@@ -5,6 +5,47 @@ import { activeRegion } from "../../domain/region";
 import { getDuplicateListingPreviews } from "../media/listing-preview";
 import { visibleRelistingCandidateSql } from "./listing-relistings";
 
+const establishedRelistingSql = `
+  select jsonb_build_object(
+    'manuallyConfirmed', exists(select 1 from listing_relisting_reviews review
+      where review.current_listing_id=l.id and review.previous_listing_id=archived.id and review.decision='confirmed'),
+    'previous', jsonb_strip_nulls(jsonb_build_object(
+      'id',archived.id,'title',archived.title,'sourceLabel',previous_source.name,
+      'canonicalUrl',archived.canonical_url,'priceAmount',relation.previous_price_amount,
+      'eventAt',coalesce(archived.removed_at,archived.last_seen_at),
+      'addressText',archived.address_text,'areaSqm',archived.area_sqm,'rooms',archived.rooms,'floor',archived.floor)),
+    'current', jsonb_strip_nulls(jsonb_build_object(
+      'id',l.id,'title',l.title,'sourceLabel',current_source.name,
+      'canonicalUrl',l.canonical_url,'priceAmount',relation.relisted_price_amount,
+      'eventAt',l.first_seen_at,'addressText',l.address_text,'areaSqm',l.area_sqm,'rooms',l.rooms,'floor',l.floor)),
+    'priceDifferenceAmount',relation.relisted_price_amount-relation.previous_price_amount,
+    'priceDifferencePercent',100*(relation.relisted_price_amount-relation.previous_price_amount)/nullif(relation.previous_price_amount,0),
+    'confidenceScore',relation.confidence_score,'reasons',string_to_array(relation.reason_summary,', ')
+  ) payload, l.first_seen_at
+  from listing_relistings relation
+  join listings l on l.id=relation.current_listing_id
+  join listings archived on archived.id=relation.previous_listing_id
+  join sources current_source on current_source.id=l.source_id
+  join sources previous_source on previous_source.id=archived.source_id
+  where l.status='active' and l.hidden_duplicate_of_id is null
+    and archived.status='removed' and archived.hidden_duplicate_of_id is null
+    and coalesce(archived.exclusion_reason,'') <> 'manual_rejected'
+`;
+
+export async function getEstablishedRelistingMatch(
+  currentId: string,
+  previousId: string,
+  db: Pick<Pool, "query"> = pool,
+) {
+  const result = await db.query<{ payload: RelistedListingMatch }>(
+    `select jsonb_strip_nulls(match.payload) payload from (
+      ${establishedRelistingSql} and l.id=$1 and archived.id=$2
+    ) match`,
+    [currentId, previousId],
+  );
+  return result.rows[0]?.payload;
+}
+
 // Read saved relations without rerunning the matching algorithm or changing user decisions.
 export async function getRelistingResults(
   limit = 20,
@@ -20,31 +61,7 @@ export async function getRelistingResults(
   const queries = await Promise.allSettled([
     db.query<Page>(
       `with matches as (
-        select jsonb_build_object(
-          'manuallyConfirmed', exists(select 1 from listing_relisting_reviews review
-            where review.current_listing_id=l.id and review.previous_listing_id=archived.id and review.decision='confirmed'),
-          'previous', jsonb_strip_nulls(jsonb_build_object(
-            'id',archived.id,'title',archived.title,'sourceLabel',previous_source.name,
-            'canonicalUrl',archived.canonical_url,'priceAmount',relation.previous_price_amount,
-            'eventAt',coalesce(archived.removed_at,archived.last_seen_at),
-            'addressText',archived.address_text,'areaSqm',archived.area_sqm,'rooms',archived.rooms,'floor',archived.floor)),
-          'current', jsonb_strip_nulls(jsonb_build_object(
-            'id',l.id,'title',l.title,'sourceLabel',current_source.name,
-            'canonicalUrl',l.canonical_url,'priceAmount',relation.relisted_price_amount,
-            'eventAt',l.first_seen_at,'addressText',l.address_text,'areaSqm',l.area_sqm,'rooms',l.rooms,'floor',l.floor)),
-          'priceDifferenceAmount',relation.relisted_price_amount-relation.previous_price_amount,
-          'priceDifferencePercent',100*(relation.relisted_price_amount-relation.previous_price_amount)/nullif(relation.previous_price_amount,0),
-          'confidenceScore',relation.confidence_score,'reasons',string_to_array(relation.reason_summary,', ')
-        ) payload, l.first_seen_at
-        from listing_relistings relation
-        join listings l on l.id=relation.current_listing_id
-        join listings archived on archived.id=relation.previous_listing_id
-        join sources current_source on current_source.id=l.source_id
-        join sources previous_source on previous_source.id=archived.source_id
-        where l.status='active' and l.hidden_duplicate_of_id is null
-          and archived.status='removed' and archived.hidden_duplicate_of_id is null
-          and coalesce(archived.exclusion_reason,'') <> 'manual_rejected'
-          and l.city=any($3::text[])
+        ${establishedRelistingSql} and l.city=any($3::text[])
       )
       select (select count(*)::int from matches) total,
         coalesce(jsonb_agg(jsonb_strip_nulls(page.payload) order by page.first_seen_at desc,page.payload->'current'->>'id'),'[]'::jsonb) items

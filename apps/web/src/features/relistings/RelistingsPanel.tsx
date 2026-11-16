@@ -3,6 +3,7 @@ import type { RelistedListingsResponse, RelistedListingsScanResponse } from "@mi
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { RelistingMatches } from "./RelistingMatches";
+import type { RelistingReviewEvent } from "./review";
 
 export function RelistingsPanel({
   potential,
@@ -20,23 +21,56 @@ export function RelistingsPanel({
   scanResult: RelistedListingsScanResponse | null;
 }) {
   const [pages, setPages] = useState({ linked: 1, potential: 1 });
+  const [offsets, setOffsets] = useState({ linked: [0], potential: [0] });
   const view = potential ? "potential" : "linked";
   const page = pages[view];
+  const offset = offsets[view][page - 1] ?? 0;
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState<RelistedListingsResponse>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    const refresh = () => setRevision((value) => value + 1);
-    window.addEventListener("mieszkania:relisting-reviewed", refresh);
-    return () => window.removeEventListener("mieszkania:relisting-reviewed", refresh);
+    const reviewed = (event: Event) => {
+      const { match, decision } = (event as CustomEvent<RelistingReviewEvent>).detail;
+      setResult((current) => {
+        if (!current) return current;
+        const potentialItems = current.potentialItems.filter((item) =>
+          decision === "confirmed"
+            ? item.current.id !== match.current.id
+            : item.current.id !== match.current.id || item.previous.id !== match.previous.id,
+        );
+        const removed = current.potentialItems.length - potentialItems.length;
+        const isPair = (item: typeof match) =>
+          item.current.id === match.current.id && item.previous.id === match.previous.id;
+        const linked = current.items.some(isPair);
+        const items =
+          decision === "rejected"
+            ? current.items.filter((item) => !isPair(item))
+            : current.items.map((item) =>
+                isPair(item) ? { ...item, manuallyConfirmed: true } : item,
+              );
+        if (!removed && !linked) return current;
+        return {
+          ...current,
+          items,
+          potentialItems,
+          potentialCount: current.potentialCount - removed,
+          matched:
+            current.matched +
+            (decision === "confirmed" && !linked && removed ? 1 : 0) -
+            (decision === "rejected" && linked ? 1 : 0),
+        };
+      });
+    };
+    window.addEventListener("mieszkania:relisting-reviewed", reviewed);
+    return () => window.removeEventListener("mieszkania:relisting-reviewed", reviewed);
   }, []);
   useEffect(() => {
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    void apiFetch(`${apiBaseUrl}/api/listings/relistings?limit=20&offset=${(page - 1) * 20}`, {
+    void apiFetch(`${apiBaseUrl}/api/listings/relistings?limit=20&offset=${offset}`, {
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -44,9 +78,6 @@ export function RelistingsPanel({
           throw Error("Nie udało się odczytać zapisanych powiązań. Spróbuj ponownie.");
         const next: RelistedListingsResponse = await response.json();
         if (controller.signal.aborted) return;
-        const total = potential ? next.potentialCount : next.matched;
-        const lastPage = Math.max(1, Math.ceil(total / 20));
-        if (page > lastPage) setPages((current) => ({ ...current, [view]: lastPage }));
         setResult(next);
       })
       .catch((failure) => {
@@ -56,7 +87,7 @@ export function RelistingsPanel({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [page, potential, view, revision, scanResult]);
+  }, [page, offset, potential, view, revision, scanResult]);
   const total = (potential ? result?.potentialCount : result?.matched) ?? 0;
   const items = (potential ? result?.potentialItems : result?.items) ?? [];
   return (
@@ -128,8 +159,12 @@ export function RelistingsPanel({
                 onReviewed={(_, decision) => {
                   setNotice(
                     decision === "confirmed"
-                      ? "Połączono oferty. Para jest dostępna w zakładce „Połączone oferty”."
-                      : "Odrzucono parę. Kolejne skany nie zaproponują jej ponownie.",
+                      ? potential
+                        ? "Połączono oferty. Para jest dostępna w zakładce „Połączone oferty”."
+                        : "Potwierdzono powiązanie."
+                      : potential
+                        ? "Odrzucono parę. Kolejne skany nie zaproponują jej ponownie."
+                        : "Rozłączono oferty. Kolejne skany nie połączą tej pary ponownie.",
                   );
                 }}
               />
@@ -140,7 +175,7 @@ export function RelistingsPanel({
                   : "Brak zapisanych ponownych wystawień."}
               </p>
             )}
-            {total > 20 && (
+            {(page > 1 || offset + items.length < total) && (
               <div className="pagination-row">
                 <button
                   className="action-button secondary-button"
@@ -151,13 +186,19 @@ export function RelistingsPanel({
                   Poprzednia
                 </button>
                 <span>
-                  Strona {page} z {Math.ceil(total / 20)}
+                  Strona {page} z {Math.max(page, Math.ceil(total / 20))}
                 </span>
                 <button
                   className="action-button secondary-button"
                   type="button"
-                  disabled={page * 20 >= total}
-                  onClick={() => setPages((current) => ({ ...current, [view]: page + 1 }))}
+                  disabled={offset + items.length >= total}
+                  onClick={() => {
+                    setOffsets((current) => ({
+                      ...current,
+                      [view]: [...current[view].slice(0, page), offset + items.length],
+                    }));
+                    setPages((current) => ({ ...current, [view]: page + 1 }));
+                  }}
                 >
                   Następna
                 </button>

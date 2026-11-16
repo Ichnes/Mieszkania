@@ -28,8 +28,12 @@ export function RelistingMatches({
       setDecisions((current) => ({ ...current, [key]: decision }));
       setNotice(
         decision === "confirmed"
-          ? "Połączono oferty jako ponowne wystawienie. Historia i ceny obu ogłoszeń zostały zachowane."
-          : "Odrzucono parę. Kolejne skany nie zaproponują jej ponownie.",
+          ? potential
+            ? "Połączono oferty jako ponowne wystawienie. Historia i ceny obu ogłoszeń zostały zachowane."
+            : "Potwierdzono powiązanie jako ponowne wystawienie."
+          : potential
+            ? "Odrzucono parę. Kolejne skany nie zaproponują jej ponownie."
+            : "Rozłączono oferty. Kolejne skany nie połączą tej pary ponownie.",
       );
       onReviewed?.(match, decision);
     } catch (e) {
@@ -40,7 +44,7 @@ export function RelistingMatches({
   }
   return (
     <div className="relisting-result-grid">
-      {notice && (
+      {notice && !onReviewed && (
         <p className="relisting-review-notice" role="status">
           {notice}
         </p>
@@ -48,10 +52,13 @@ export function RelistingMatches({
       {items.map((match) => {
         const key = `${match.previous.id}:${match.current.id}`;
         if (
-          decisions[key] ||
-          Object.entries(decisions).some(
-            ([pair, decision]) => decision === "confirmed" && pair.endsWith(`:${match.current.id}`),
-          )
+          decisions[key] === "rejected" ||
+          (potential && decisions[key]) ||
+          (potential &&
+            Object.entries(decisions).some(
+              ([pair, decision]) =>
+                decision === "confirmed" && pair.endsWith(`:${match.current.id}`),
+            ))
         )
           return null;
         const difference = match.priceDifferenceAmount;
@@ -72,7 +79,9 @@ export function RelistingMatches({
             )}
             {!potential && (
               <strong className="relisting-candidate-label">
-                {match.manuallyConfirmed ? "Połączone ręcznie" : "Połączone automatycznie"}
+                {match.manuallyConfirmed || decisions[key] === "confirmed"
+                  ? "Połączone ręcznie"
+                  : "Połączone automatycznie"}
               </strong>
             )}
             {[match.previous, match.current].map((offer, index) => (
@@ -134,26 +143,33 @@ export function RelistingMatches({
               {potential ? "Podobieństwo" : "Pewność"} {match.confidenceScore}% ·{" "}
               {match.reasons.join(", ")}
             </small>
-            {potential && (
-              <div className="relisting-review-actions">
-                <button
-                  type="button"
-                  className="action-button"
-                  disabled={Boolean(busy)}
-                  onClick={() => void review(match, "confirmed")}
-                >
-                  {busy === key ? "Zapisywanie…" : "Połącz jako ponowne wystawienie"}
-                </button>
-                <button
-                  type="button"
-                  className="action-button secondary-button"
-                  disabled={Boolean(busy)}
-                  onClick={() => void review(match, "rejected")}
-                >
-                  To inne mieszkania
-                </button>
-              </div>
-            )}
+            <div className="relisting-review-actions">
+              <button
+                type="button"
+                className="action-button"
+                disabled={
+                  Boolean(busy) ||
+                  (!potential && (match.manuallyConfirmed || decisions[key] === "confirmed"))
+                }
+                onClick={() => void review(match, "confirmed")}
+              >
+                {busy === key
+                  ? "Zapisywanie…"
+                  : potential
+                    ? "Połącz jako ponowne wystawienie"
+                    : match.manuallyConfirmed || decisions[key] === "confirmed"
+                      ? "Powiązanie potwierdzone"
+                      : "Potwierdź powiązanie"}
+              </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                disabled={Boolean(busy)}
+                onClick={() => void review(match, "rejected")}
+              >
+                {potential ? "To inne mieszkania" : "Rozłącz oferty"}
+              </button>
+            </div>
             {error?.key === key && (
               <p className="error-text" role="alert">
                 {error.message}

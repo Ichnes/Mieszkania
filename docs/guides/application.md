@@ -617,6 +617,10 @@ Pierwsza zawiera weryfikację grup oraz **Znajdź i połącz**. Druga ma podzak�
 na decyzję). Listy wczytują zapisane wyniki także po odświeżeniu strony, po 20 par na stronę.
 **Odśwież listę** odczytuje aktualny zapis; **Sprawdź oferty** uruchamia nowe porównanie aktywnych
 ogłoszeń z archiwum, łączy mocne dopasowania i zapisuje pozostałe propozycje.
+W **Połączonych ofertach** można użyć **Potwierdź powiązanie**, aby zatwierdzić automatyczne
+dopasowanie, albo **Rozłącz oferty**, aby usunąć błędne powiązanie. Rozłączenie zachowuje
+oba ogłoszenia, ich ceny i historię; zapisuje też odrzucenie, więc kolejny skan nie łączy
+tej pary ponownie. Potwierdzenie i rozłączenie aktualizują tylko daną kartę, bez pobierania listy.
 Propozycja może pojawić się mimo zmienionego
 opisu, gdy zgadzają się ulica, metraż, pokoje i piętro albo opis i lokalizacja są
 dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobieństwo
@@ -627,7 +631,9 @@ Karty pokazują zdjęcia, obie ceny, adresy, parametry, daty i powody podobieńs
 zdjęcia lub tytułu otwiera szczegóły nad bieżącą listą. W szczegółach można przeglądać
 i powiększać zdjęcia. Zamknięcie szczegółów zachowuje zakładkę, filtry, stronę i pozycję
 listy. Decyzja odświeża propozycje bez nowego skanu i bez zmiany zakładki, także gdy
-zapiszesz ją w szczegółach. Różnica cen propozycji jest porównaniem dwóch
+zapiszesz ją w szczegółach. Decyzja usuwa rozstrzygniętą parę z widoku miejscowo,
+bez ponownego pobierania kolejki ani przeładowania pozostałych kart.
+Różnica cen propozycji jest porównaniem dwóch
 ogłoszeń, a nie potwierdzoną zmianą ceny tego samego mieszkania.
 
 Propozycje zapisują się po skanie. Na aktywnej ofercie pojawia się oznaczenie
@@ -656,6 +662,9 @@ nie tylko aktualnie pobraną stronę.
 poprawności; zatwierdzenie usuwa grupę z kolejki weryfikacji. **Potencjalne powiązania**
 zawierają propozycje, których jeszcze nie połączono. Otwieranie i zamykanie oferty
 z miniatury lub przycisku zachowuje wybraną podzakładkę, filtry i stronę propozycji.
+**To nie duplikat** usuwa wyłącznie odrzuconą parę z bieżącego widoku. Pozostałe
+karty pozostają na miejscu; kolejka nie jest ponownie pobierana, także po odrzuceniu
+w szczegółach. Następna strona uwzględnia usunięte pary, aby nie pomijać propozycji.
 
 W szczegółach oferty i w potencjalnych powiązaniach użyj **Połącz duplikaty** albo
 **To nie duplikat**. Nie trzeba wybierać, którą ofertę zostawić. Aplikacja wybiera

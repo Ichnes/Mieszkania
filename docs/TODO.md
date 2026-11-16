@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Odrzucanie par bez przeładowania listy (2026-11-16)
+
+- [x] Diagnoza: „To nie duplikat” zwiększało rewizję zapytania, usuwało wszystkie karty na czas pobierania i pobierało kolejkę od nowa.
+- [x] „To nie duplikat” usuwa wyłącznie odrzuconą parę z aktualnego stanu, także po decyzji w szczegółach. Nie pobiera ponownie kolejki, grup ani szczegółów. Pozostałe karty zachowują węzły DOM i zdjęcia. Następna strona przesuwa offset o liczbę pozostałych par, aby nie pomijać propozycji po odrzuceniu.
+- [x] Propozycje ponownych wystawień aktualizują się miejscowo po decyzji. Połączone ponowne wystawienia mają „Potwierdź powiązanie” i „Rozłącz oferty”; potwierdzenie zmienia etykietę danej karty, rozłączenie usuwa tylko tę parę, bez pobierania listy.
+- [x] API obsługuje decyzje także dla automatycznych relacji bez wcześniejszego wpisu w propozycjach/decyzjach. Regresja PostgreSQL: potwierdzanie i rozłączanie przez HTTP, zachowane oba ogłoszenia i ceny, brak odtworzenia odrzuconej pary po skanie; bez pominięcia.
+- [x] 330 API i 158 web OK (15 testów API pominiętych środowiskowo), typecheck i końcowy build Docker OK. UI 1440/1280/390/320 na kontrolowanych danych: brak GET kolejki po odrzuceniu/potwierdzeniu/rozłączeniu, pozostałe karty mają te same elementy DOM, odrzucenie w szczegółach bez dodatkowego GET listy/szczegółów, błąd zapisu zachowuje kartę, następna strona nie pomija pary. Brak błędów JS i przepełnienia; zrzuty obejrzane. Artefakty: `.local/runs/2026-11-16-inline-rejection/`.
+- [x] Przewodnik zaktualizowany; aplikacja uruchomiona lokalnie. Zakres zakończony; commit i push na `main`.
+
 ## Weryfikacja powiązań bez zmiany zakładki (2026-11-16)
 
 - [x] Diagnoza: otwieranie i zamykanie szczegółów usuwało parametry wybranej zakładki z URL.

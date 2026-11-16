@@ -4,6 +4,7 @@ import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { DuplicatePreview } from "./DuplicatePreview";
+import { removeRejectedPair, type DuplicateReviewEvent } from "./review-state";
 
 export function DuplicateCandidatesPanel({
   onOpen,
@@ -15,6 +16,8 @@ export function DuplicateCandidatesPanel({
   const [range, setRange] = useState("low");
   const [sort, setSort] = useState("confidence_asc");
   const [page, setPage] = useState(1);
+  const [offsets, setOffsets] = useState([0]);
+  const offset = offsets[page - 1] ?? 0;
   const [revision, setRevision] = useState(0);
   const [data, setData] = useState<DuplicateCandidatesResponse>();
   const [loading, setLoading] = useState(true);
@@ -22,9 +25,13 @@ export function DuplicateCandidatesPanel({
   const [busy, setBusy] = useState<string>();
   const [notice, setNotice] = useState("");
   useEffect(() => {
-    const refresh = () => setRevision((value) => value + 1);
-    window.addEventListener("mieszkania:duplicate-reviewed", refresh);
-    return () => window.removeEventListener("mieszkania:duplicate-reviewed", refresh);
+    const reviewed = (event: Event) => {
+      const { pair, status } = (event as CustomEvent<DuplicateReviewEvent>).detail;
+      if (status === "different_listing") setData((current) => removeRejectedPair(current, pair));
+      else setRevision((value) => value + 1);
+    };
+    window.addEventListener("mieszkania:duplicate-reviewed", reviewed);
+    return () => window.removeEventListener("mieszkania:duplicate-reviewed", reviewed);
   }, []);
   useEffect(() => {
     const controller = new AbortController();
@@ -32,7 +39,7 @@ export function DuplicateCandidatesPanel({
     setError("");
     const query = new URLSearchParams({
       limit: "20",
-      offset: String((page - 1) * 20),
+      offset: String(offset),
       minConfidence: range === "high" ? "80" : "60",
       maxConfidence: range === "low" ? "79" : "100",
       sort,
@@ -43,8 +50,6 @@ export function DuplicateCandidatesPanel({
         const next: DuplicateCandidatesResponse = await response.json();
         if (!controller.signal.aborted) {
           setData(next);
-          if (page > Math.max(1, Math.ceil(next.total / 20)))
-            setPage(Math.max(1, Math.ceil(next.total / 20)));
         }
       })
       .catch((e) => {
@@ -54,7 +59,7 @@ export function DuplicateCandidatesPanel({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [range, sort, page, revision]);
+  }, [range, sort, page, offset, revision]);
   async function review(pair: DuplicateCandidate, status: "same_listing" | "different_listing") {
     setBusy(pair.pairKey);
     setError("");
@@ -77,8 +82,11 @@ export function DuplicateCandidatesPanel({
           ? "Połączono duplikaty. Zdjęcia i źródła znajdziesz w połączonej ofercie."
           : "Odrzucono powiązanie. Ta para nie będzie proponowana ponownie.",
       );
-      setRevision((v) => v + 1);
-      onChanged();
+      if (status === "different_listing") setData((current) => removeRejectedPair(current, pair));
+      else {
+        setRevision((v) => v + 1);
+        onChanged();
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Błąd zapisu.");
     } finally {
@@ -102,6 +110,7 @@ export function DuplicateCandidatesPanel({
               onChange={(v) => {
                 setRange(v);
                 setPage(1);
+                setOffsets([0]);
               }}
             >
               <option value="low">Niższe: 60–79%</option>
@@ -117,6 +126,7 @@ export function DuplicateCandidatesPanel({
               onChange={(v) => {
                 setSort(v);
                 setPage(1);
+                setOffsets([0]);
               }}
             >
               <option value="confidence_asc">Najniższe podobieństwo</option>
@@ -206,7 +216,12 @@ export function DuplicateCandidatesPanel({
             </div>
           </article>
         ))}
-      {!loading && data && data.total > 20 && (
+      {!loading && data && !data.items.length && (
+        <p className="panel muted">
+          Na tej stronie nie ma już propozycji. Możesz przejść dalej lub odświeżyć kolejkę.
+        </p>
+      )}
+      {!loading && data && (page > 1 || offset + data.items.length < data.total) && (
         <div className="panel pagination-row">
           <button
             className="action-button secondary-button"
@@ -216,12 +231,15 @@ export function DuplicateCandidatesPanel({
             Poprzednia
           </button>
           <span>
-            Strona {page} z {Math.ceil(data.total / 20)}
+            Strona {page} z {Math.max(page, Math.ceil(data.total / 20))}
           </span>
           <button
             className="action-button secondary-button"
-            disabled={page * 20 >= data.total || Boolean(busy)}
-            onClick={() => setPage((v) => v + 1)}
+            disabled={offset + data.items.length >= data.total || Boolean(busy)}
+            onClick={() => {
+              setOffsets((current) => [...current.slice(0, page), offset + data.items.length]);
+              setPage((v) => v + 1);
+            }}
           >
             Następna
           </button>

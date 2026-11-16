@@ -1365,7 +1365,15 @@ export function useWorkspaceController() {
       }
       const result = (await response.json()) as { primaryListingId?: string };
       duplicateCandidateCache.clear();
-      window.dispatchEvent(new Event("mieszkania:duplicate-reviewed"));
+      window.dispatchEvent(
+        new CustomEvent("mieszkania:duplicate-reviewed", { detail: { pair, status } }),
+      );
+      if (status === "different_listing") {
+        setSelectedListingDuplicateCandidates((current) =>
+          current.filter((candidate) => candidate.pairKey !== pair.pairKey),
+        );
+        return;
+      }
       if (!selectedListing) return;
 
       await openListing(result.primaryListingId ?? selectedListing.id, false, true);

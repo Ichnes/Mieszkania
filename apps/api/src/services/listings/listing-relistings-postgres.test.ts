@@ -158,6 +158,30 @@ test(
       assert.equal(savedStrong.items[0].manuallyConfirmed, false);
       assert.equal(strong.potentialCount, 0);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 1);
+      // Automatic relations have no candidate/review payload: they must still be reviewable.
+      const unlinkAutomatic = await app.inject({
+        method: "POST",
+        url: `/api/listings/${ids[1]}/relisting-review`,
+        payload: { previousId: ids[0], decision: "rejected" },
+      });
+      assert.equal(unlinkAutomatic.statusCode, 200, unlinkAutomatic.body);
+      assert.equal((await getRelistingResults(20, 0, db)).matched, 0);
+      assert.equal((await scanRelistedListings(100, db)).matched, 0);
+      assert.equal((await db.query("select count(*)::int n from listings")).rows[0].n, 2);
+      await db.query("delete from listing_relisting_reviews");
+      await scanRelistedListings(100, db);
+      const confirmAutomatic = await app.inject({
+        method: "POST",
+        url: `/api/listings/${ids[1]}/relisting-review`,
+        payload: { previousId: ids[0], decision: "confirmed" },
+      });
+      assert.equal(confirmAutomatic.statusCode, 200, confirmAutomatic.body);
+      assert.equal(confirmAutomatic.json().match.manuallyConfirmed, true);
+      const confirmedAutomatic = await scanRelistedListings(100, db);
+      assert.equal(confirmedAutomatic.items[0].manuallyConfirmed, true);
+      assert.equal(confirmedAutomatic.items[0].priceDifferenceAmount, -100_000);
+      await db.query("delete from listing_relisting_reviews");
+      await scanRelistedListings(100, db);
       await db.query("update listings set description='Changed description' where id=$1", [ids[1]]);
       const downgraded = await scanRelistedListings(100, db);
       assert.equal(downgraded.matched, 0);
