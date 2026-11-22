@@ -4,9 +4,11 @@
 
 - [x] Odczytowy przegląd Duplikatów i ponownych wystawień w Chromium (1440 i 390 px). Zmierzono ok. 31–32 s dla pierwszej strony 3279 propozycji z zakresu 60–79% i ok. 3 s dla 100 z 4938 połączonych grup. Na telefonie pierwsza karta grupy zaczyna się ok. 1300 px od góry. Wyszukiwanie grup sprawdza tytuły w pobranej paczce. Otwarcie i zamknięcie szczegółów zachowuje widok grup i propozycji. Odczyt potwierdził dołączenie obu archiwalnych kopii do zgłoszonej wcześniej aktywnej oferty.
 - [x] Test PostgreSQL na tabelach tymczasowych potwierdził pomijanie mocnych par. Identyczna para z pełnymi danymi przekracza 100 punktów i znika z kolejki. Ta sama para z mniejszą liczbą zgodnych danych pojawia się z wynikiem 88.
-- [ ] Propozycja do realizacji. Ujednolicić liczenie punktów i granice przedziałów. Przyspieszyć kolejkę propozycji oraz przenieść wyszukiwanie i paginację grup do API. Dodać wyszukiwanie po adresie, portalu i identyfikatorze ogłoszenia.
-- [ ] Propozycja do realizacji. W karcie porównania wyrównać metraż, piętro, pokoje, adres i ceny źródłowe. Oznaczać status ofert, zdjęcia zapożyczone z grupy oraz liczbę ogłoszeń objętych scaleniem. Na telefonie skrócić nagłówek kolejki i pokazać różnice przed zdjęciami.
-- [ ] Propozycja do realizacji. Domyślnie pokazywać najmocniejsze propozycje i obniżać pozycję par z różnymi adresami. Oznaczyć automatyczne łączenie jako osobną akcję i zachować pozycję kolejki po zapisie.
+- [x] Poprawiono punktację i kolejność propozycji. Dodano indeks par i przeniesiono wyszukiwanie po adresie, portalu i identyfikatorze oraz paginację grup do API.
+- [x] Karty pokazują wyrównane dane, rozbieżności i status. Propozycje wskazują przewidywaną ofertę główną i rozmiar grupy po scaleniu.
+- [x] Zmieniono nawigację i skrócono nagłówek kolejki. Automatyczny skan ma własny rozwijany panel. Dodano sortowanie po dacie wystawienia, podobieństwie i zmianach ceny w obu widokach ponownych wystawień.
+- [x] Weryfikacja PostgreSQL bez pominięć (5 testów), typecheck i build Docker. Pełny zestaw testów: 330 API i 158 web poprawnych, 15 środowiskowych pominięć API. Ta sama kolejka 60–79% zwraca 3279 propozycji, czas spadł z 31–32 do około 12 s. Domyślny zakres pokazał pierwszą kartę po około 8 s w Chromium. Wyszukanie zgłoszonej grupy po ID zajęło poniżej sekundy, a pierwsza karta grup na ekranie 390 px zaczyna się ok. 660 px od góry.
+- [x] Końcowe sprawdzenie w Chromium na 1440, 1280, 390 i 320 px. Nawigacja rozróżnia obie aktywne zakładki, przewijanie tabeli mieści się w karcie, wyszukiwanie zachowuje się po zamknięciu szczegółów, ponowny wybór filtra zostawia karty, a symulowane scalenie zachowuje sąsiednią kartę. Sortowanie ponownych wystawień działa przed paginacją i zachowuje osobny stan widoków. Build uruchomiony lokalnie. Zakres zakończony.
 
 ## Łączenie archiwalnej grupy z aktywną ofertą (2026-11-22)
 

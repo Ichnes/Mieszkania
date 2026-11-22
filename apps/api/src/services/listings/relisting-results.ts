@@ -1,4 +1,8 @@
-import type { RelistedListingMatch, RelistedListingsResponse } from "@mieszkania/shared";
+import type {
+  RelistedListingMatch,
+  RelistedListingsResponse,
+  RelistingSort,
+} from "@mieszkania/shared";
 import type { Pool } from "pg";
 import { pool } from "../../db";
 import { activeRegion } from "../../domain/region";
@@ -51,6 +55,7 @@ export async function getRelistingResults(
   limit = 20,
   offset = 0,
   db: Pick<Pool, "query"> = pool,
+  sort?: string,
 ): Promise<RelistedListingsResponse> {
   const values = [
     Number.isFinite(limit) ? Math.max(1, Math.min(Math.floor(limit), 100)) : 20,
@@ -58,28 +63,33 @@ export async function getRelistingResults(
     activeRegion.supportedCities,
   ];
   type Page = { total: number; items: RelistedListingMatch[] };
+  const orderBy: Record<RelistingSort, string> = {
+    newest: "(payload->'current'->>'eventAt')::timestamptz desc nulls last",
+    oldest: "(payload->'current'->>'eventAt')::timestamptz asc nulls last",
+    confidence: "(payload->>'confidenceScore')::int desc nulls last",
+    price_change: "abs((payload->>'priceDifferencePercent')::numeric) desc nulls last",
+    price_drop: "(payload->>'priceDifferencePercent')::numeric asc nulls last",
+  };
+  const order = sort && Object.hasOwn(orderBy, sort) ? orderBy[sort as RelistingSort] : undefined;
+  const readPage = (matches: string, defaultOrder: RelistingSort) =>
+    db.query<Page>(
+      `with matches as materialized (${matches}), page as (
+       select payload, row_number() over (
+         order by ${order ?? orderBy[defaultOrder]}, payload->'current'->>'id', payload->'previous'->>'id'
+       ) as position from matches order by position limit $1 offset $2
+     )
+     select (select count(*)::int from matches) as total,
+       coalesce(jsonb_agg(jsonb_strip_nulls(page.payload) order by position),'[]'::jsonb) as items
+     from page`,
+      values,
+    );
   const queries = await Promise.allSettled([
-    db.query<Page>(
-      `with matches as (
-        ${establishedRelistingSql} and l.city=any($3::text[])
-      )
-      select (select count(*)::int from matches) total,
-        coalesce(jsonb_agg(jsonb_strip_nulls(page.payload) order by page.first_seen_at desc,page.payload->'current'->>'id'),'[]'::jsonb) items
-      from (select * from matches order by first_seen_at desc,payload->'current'->>'id' limit $1 offset $2) page`,
-      values,
-    ),
-    db.query<Page>(
-      `with matches as (
-        select candidate.match_payload payload from listings l
+    readPage(`${establishedRelistingSql} and l.city=any($3::text[])`, "newest"),
+    readPage(
+      `select candidate.match_payload payload from listings l
         cross join lateral (select rc.match_payload ${visibleRelistingCandidateSql}) candidate
-        where l.city=any($3::text[])
-      )
-      select (select count(*)::int from matches) total,
-        coalesce(jsonb_agg(page.payload order by (page.payload->>'confidenceScore')::int desc,
-          page.payload->'current'->>'id',page.payload->'previous'->>'id'),'[]'::jsonb) items
-      from (select * from matches order by (payload->>'confidenceScore')::int desc,
-        payload->'current'->>'id',payload->'previous'->>'id' limit $1 offset $2) page`,
-      values,
+        where l.city=any($3::text[])`,
+      "confidence",
     ),
   ]);
   const [linked, potential] = queries.map((result) => {

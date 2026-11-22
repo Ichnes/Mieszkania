@@ -104,9 +104,19 @@ test(
             i === 0 ? "active" : "removed",
           ],
         );
+      await db.query(
+        "update listings set floor=3, latitude=52.2234, longitude=21.0154, description=$1",
+        [Array.from({ length: 25 }, (_, index) => `proba${index}`).join(" ")],
+      );
       const candidates = await getDuplicateCandidates(20, ids[1], { minConfidence: 0 });
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[0])));
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[2])));
+      assert.ok(candidates.items.every((pair) => pair.confidenceScore === 100));
+      const livePair = candidates.items.find((pair) =>
+        [pair.left.id, pair.right.id].includes(ids[0]),
+      );
+      assert.equal(livePair?.primaryPreview?.id, ids[0]);
+      assert.equal(livePair?.primaryPreview?.addedCount, 1);
       const reviewPair = (leftId: string, rightId: string, confirmArchiveAreaDifference = false) =>
         app.inject({
           method: "POST",
@@ -118,6 +128,9 @@ test(
       await db.query("update listings set area_sqm = case when id=$1 then 75.1 else 72.8 end", [
         ids[0],
       ]);
+      const groupedCandidate = (await getDuplicateCandidates(20, ids[0])).items[0];
+      assert.equal(groupedCandidate.primaryPreview?.id, ids[0]);
+      assert.equal(groupedCandidate.primaryPreview?.addedCount, 2);
       const blocked = await reviewPair(ids[0], archives.json().primaryListingId);
       assert.equal(blocked.statusCode, 409);
       assert.equal(blocked.json().canConfirmArchiveAreaDifference, true);
@@ -170,6 +183,17 @@ test(
       assert.equal(rows.find((row) => row.id === ids[1]).status, "removed");
       assert.equal(rows.find((row) => row.id === ids[2]).hidden_duplicate_of_id, ids[0]);
       assert.equal(rows.find((row) => row.id === ids[2]).status, "removed");
+      for (const search of ["Testowa", ids[2], "Test"]) {
+        const overview = await app.inject({
+          method: "GET",
+          url: `/api/duplicates/groups?summary=true&limit=1&page=99&onlyConflicts=true&search=${search}`,
+        });
+        assert.equal(overview.statusCode, 200, overview.body);
+        assert.equal(overview.json().total, 1);
+        assert.equal(overview.json().page, 1);
+        assert.equal(overview.json().items[0].primaryListingId, ids[0]);
+        assert.equal(overview.json().items[0].members.length, 3);
+      }
       assert.equal(
         (await getDuplicateCandidates(20, ids[0], { minConfidence: 0 })).items.some((pair) =>
           [pair.left.id, pair.right.id].includes(ids[1]),

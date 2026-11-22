@@ -73,6 +73,9 @@ create index idx_listings_candidate on listings(property_candidate_id);
 create index idx_listings_last_seen on listings(last_seen_at desc);
 create index idx_listings_shortlisted on listings(is_shortlisted, city, last_seen_at desc);
 create index idx_listings_hidden_duplicate on listings(hidden_duplicate_of_id) where hidden_duplicate_of_id is not null;
+create index idx_listings_duplicate_candidate_facts on listings(city, rooms, area_sqm, price_amount) include (id)
+  where hidden_duplicate_of_id is null and status in ('active', 'removed', 'sold', 'reserved')
+    and rooms is not null and area_sqm is not null and price_amount is not null;
 
 create table listing_parcel_context (
   listing_id uuid primary key references listings(id) on delete cascade,

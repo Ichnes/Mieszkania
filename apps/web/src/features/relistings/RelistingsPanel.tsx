@@ -1,5 +1,10 @@
 import { useEffect, useState } from "react";
-import type { RelistedListingsResponse, RelistedListingsScanResponse } from "@mieszkania/shared";
+import type {
+  RelistedListingsResponse,
+  RelistedListingsScanResponse,
+  RelistingSort,
+} from "@mieszkania/shared";
+import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { RelistingMatches } from "./RelistingMatches";
@@ -22,7 +27,12 @@ export function RelistingsPanel({
 }) {
   const [pages, setPages] = useState({ linked: 1, potential: 1 });
   const [offsets, setOffsets] = useState({ linked: [0], potential: [0] });
+  const [sorts, setSorts] = useState<Record<"linked" | "potential", RelistingSort>>({
+    linked: "newest",
+    potential: "confidence",
+  });
   const view = potential ? "potential" : "linked";
+  const sort = sorts[view];
   const page = pages[view];
   const offset = offsets[view][page - 1] ?? 0;
   const [revision, setRevision] = useState(0);
@@ -70,7 +80,7 @@ export function RelistingsPanel({
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    void apiFetch(`${apiBaseUrl}/api/listings/relistings?limit=20&offset=${offset}`, {
+    void apiFetch(`${apiBaseUrl}/api/listings/relistings?limit=20&offset=${offset}&sort=${sort}`, {
       signal: controller.signal,
     })
       .then(async (response) => {
@@ -87,43 +97,63 @@ export function RelistingsPanel({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [page, offset, potential, view, revision, scanResult]);
+  }, [page, offset, view, sort, revision, scanResult]);
   const total = (potential ? result?.potentialCount : result?.matched) ?? 0;
   const items = (potential ? result?.potentialItems : result?.items) ?? [];
   return (
-    <section className="panel">
+    <section className="panel duplicate-queue-controls">
       <div className="section-topline">
         <div>
           <h2>{potential ? "Potencjalne ponowne wystawienia" : "Połączone ponowne wystawienia"}</h2>
           <p className="muted">
-            {potential
-              ? "Te pary nie są jeszcze powiązane. Porównaj zdjęcia i szczegóły, a potem potwierdź lub odrzuć propozycję. Połączenie zachowuje oba ogłoszenia i ich ceny."
-              : "Te oferty są już powiązane z wcześniejszymi ogłoszeniami z archiwum — automatycznie lub po ręcznym potwierdzeniu. Oba ogłoszenia i ich ceny są zachowane."}
+            {result &&
+              `${total.toLocaleString("pl-PL")} ${potential ? "propozycji" : "połączonych par"}`}
           </p>
         </div>
-        <div className="panel-inline-actions">
-          <button
-            className="action-button secondary-button"
-            type="button"
-            onClick={() => setRevision((value) => value + 1)}
-            disabled={loading || scanning}
-          >
-            Odśwież listę
-          </button>
-          <button
-            className="action-button"
-            type="button"
-            onClick={() => void runScan()}
-            disabled={scanning}
-          >
-            {scanning ? "Sprawdzam…" : "Sprawdź oferty"}
-          </button>
-        </div>
+        <button
+          className="action-button secondary-button"
+          type="button"
+          onClick={() => setRevision((value) => value + 1)}
+          disabled={loading || scanning}
+        >
+          Odśwież listę
+        </button>
       </div>
-      <p className="muted">
-        Lista pokazuje zapisane wyniki. „Sprawdź oferty” porównuje aktywne ogłoszenia z archiwum:
-        mocne dopasowania łączy automatycznie, pozostałe zapisuje jako propozycje.
-      </p>
+      <div className="duplicate-toolbar">
+        <label>
+          <span>Kolejność ponownych wystawień</span>
+          <Select
+            label="Kolejność ponownych wystawień"
+            value={sort}
+            onChange={(value) => {
+              setSorts((current) => ({ ...current, [view]: value as RelistingSort }));
+              setPages((current) => ({ ...current, [view]: 1 }));
+              setOffsets((current) => ({ ...current, [view]: [0] }));
+            }}
+          >
+            <option value="newest">Najnowsze wystawienia</option>
+            <option value="oldest">Najstarsze wystawienia</option>
+            <option value="confidence">Najwyższe podobieństwo</option>
+            <option value="price_change">Największa zmiana ceny (%)</option>
+            <option value="price_drop">Największa obniżka ceny (%)</option>
+          </Select>
+        </label>
+      </div>
+      <details className="duplicate-relisting-scan duplicate-filter-menu">
+        <summary>Skan ponownych wystawień</summary>
+        <p className="muted">
+          Porównuje aktywne ogłoszenia z archiwum. Łączy mocne dopasowania, a pozostałe zapisuje
+          jako propozycje.
+        </p>
+        <button
+          className="action-button"
+          type="button"
+          onClick={() => void runScan()}
+          disabled={scanning}
+        >
+          {scanning ? "Sprawdzam…" : "Sprawdź oferty"}
+        </button>
+      </details>
       {scanResult && (
         <p className="muted">
           Ostatni skan: {scanResult.checkedActive} aktywnych i {scanResult.checkedArchived}{" "}
@@ -147,9 +177,6 @@ export function RelistingsPanel({
       ) : (
         !error && (
           <div className="relisting-results">
-            <p className="muted">
-              {potential ? "Propozycje" : "Połączone pary"}: {total}
-            </p>
             {items.length ? (
               <RelistingMatches
                 key={`${view}:${page}:${revision}`}

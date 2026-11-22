@@ -1324,48 +1324,6 @@
     grid-template-columns: 1fr;
   }
 }
-.duplicate-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  border-bottom: 1px solid var(--line);
-  padding-bottom: 8px;
-}
-.duplicate-tabs button {
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--surface-muted);
-  color: var(--ink);
-  cursor: pointer;
-  font: inherit;
-}
-.duplicate-tabs button[aria-current="page"] {
-  background: var(--brand);
-  color: white;
-}
-.duplicate-scan-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-}
-.duplicate-scan-actions > div {
-  flex: 1;
-  min-width: 200px;
-}
-.duplicate-scan-actions h3,
-.duplicate-scan-actions p {
-  margin: 0;
-}
-.duplicate-scan-actions p {
-  color: var(--ink-soft);
-  margin-top: 4px;
-  font-size: 0.85rem;
-}
-.duplicate-scan-actions > small {
-  flex-basis: 100%;
-}
 section.data-tools .data-tools-heading {
   cursor: default;
 }
@@ -1378,13 +1336,5 @@ section.data-tools .data-tool-grid {
 @media (max-width: 650px) {
   section.data-tools .data-tool-grid {
     grid-template-columns: 1fr;
-  }
-  .duplicate-tabs button {
-    flex: 1;
-    font-size: 0.85rem;
-    padding: 10px;
-  }
-  .duplicate-scan-actions > .action-button {
-    width: 100%;
   }
 }

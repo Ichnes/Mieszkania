@@ -1,217 +1,164 @@
 import { Select } from "../../components/Select";
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
-import { normalizeListingText } from "../listings/lib/listing-language";
+import type { DuplicateGroupQuery, DuplicateGroupsResponse } from "@mieszkania/shared";
 import { DuplicatePreview } from "./DuplicatePreview";
-
-type Group = {
-  groupId: string;
-  primaryListingId: string;
-  primaryTitle: string;
-  conflicts?: string[];
-  members: Array<{
-    id: string;
-    title: string;
-    sourceLabel: string;
-    canonicalUrl?: string;
-    thumbnailUrl?: string;
-    thumbnailUrls?: string[];
-    thumbnailSharedFromIndex?: number;
-    priceLabel: string;
-    areaLabel: string;
-    floor?: number;
-    rooms?: number;
-    isPrimary: boolean;
-  }>;
-};
+import { DuplicateComparisonFacts } from "./DuplicateComparisonFacts";
 
 export function DuplicateGroupsPanel({
-  groups,
-  total,
-  totalMembers,
-  totalCopies,
+  data,
+  query,
+  onQueryChange,
   error,
   busy,
   onReload,
-  onLoadMore,
   isLoading,
   onOpen,
   onUnmerge,
   onConfirm,
-  sort,
-  onSortChange,
 }: {
-  groups: Group[];
-  total: number;
-  totalMembers: number;
-  totalCopies: number;
+  data?: DuplicateGroupsResponse;
+  query: DuplicateGroupQuery;
+  onQueryChange: (query: DuplicateGroupQuery) => void;
   error: string | null;
   busy: string | null;
   onReload: () => void;
-  onLoadMore: () => void;
   isLoading: boolean;
   onOpen: (id: string) => void;
   onUnmerge: (primaryListingId: string, duplicateListingId: string) => void;
   onConfirm: (primaryListingId: string) => void;
-  sort: string;
-  onSortChange: (sort: string) => void;
 }) {
-  const [search, setSearch] = useState("");
-  const [source, setSource] = useState("");
-  const [onlyConflicts, setOnlyConflicts] = useState(false);
-  const [page, setPage] = useState(1);
-  const filtered = groups.filter(
-    (group) =>
-      (!onlyConflicts || Boolean(group.conflicts?.length)) &&
-      (!source || group.members.some((member) => member.sourceLabel === source)) &&
-      normalizeListingText(group.members.map((member) => member.title).join(" ")).includes(
-        normalizeListingText(search),
-      ),
-  );
-  const pages = Math.max(1, Math.ceil(filtered.length / 20));
-  const currentPage = Math.min(page, pages);
-  const visible = filtered.slice((currentPage - 1) * 20, currentPage * 20);
-  const members = new Set(filtered.flatMap((group) => group.members.map((member) => member.id)))
-    .size;
-  const copies = new Set(
-    filtered.flatMap((group) =>
-      group.members.filter((member) => !member.isPrimary).map((member) => member.id),
-    ),
-  ).size;
+  const [search, setSearch] = useState(query.search);
+  const visible = data?.items ?? [];
+  const pages = Math.max(1, Math.ceil((data?.total ?? 0) / 20));
+  const currentPage = data?.page ?? query.page;
+  const filter = (change: Partial<DuplicateGroupQuery>) =>
+    onQueryChange({ ...query, ...change, page: 1 });
   return (
     <section className="duplicate-groups-page">
-      <section className="panel">
+      <section className="panel duplicate-queue-controls">
         <div className="section-topline">
           <div>
-            <p className="eyebrow">Kontrola jakości</p>
-            <h2>Duplikaty do weryfikacji</h2>
-            <p className="muted">
-              Te oferty są już połączone jako duplikaty. Sprawdź poprawność połączeń; zatwierdzone
-              grupy znikają z tej kolejki. Liczniki obejmują całą kolejkę do weryfikacji.
-            </p>
+            <h2>Połączone grupy do sprawdzenia</h2>
+            {data && (
+              <p className="muted">
+                {data.total.toLocaleString("pl-PL")} grup ·{" "}
+                {data.totalMembers.toLocaleString("pl-PL")} ogłoszeń ·{" "}
+                {data.totalCopies.toLocaleString("pl-PL")} kopii
+              </p>
+            )}
           </div>
           <button
             className="action-button secondary-button"
+            type="button"
             onClick={onReload}
             disabled={isLoading || Boolean(busy)}
           >
             <RefreshCw size={16} /> Odśwież
           </button>
         </div>
-        <div className="insight-card-grid duplicate-metrics">
-          <article>
-            <strong>{isLoading ? "…" : total}</strong>
-            <span>grup do sprawdzenia</span>
-          </article>
-          <article>
-            <strong>{isLoading ? "…" : totalMembers}</strong>
-            <span>ogłoszeń w tych grupach</span>
-          </article>
-          <article>
-            <strong>{isLoading ? "…" : totalCopies}</strong>
-            <span>kopii poza głównymi</span>
-          </article>
-        </div>
-        <div className="duplicate-toolbar">
-          <label>
-            <span>Kolejność grup</span>
-            <Select
-              label="Kolejność grup"
-              value={sort}
-              onChange={(value) => {
-                setPage(1);
-                onSortChange(value);
-              }}
-            >
-              <option value="conflicts">Najwięcej rozbieżności</option>
-              <option value="members_desc">Najwięcej powiązanych ofert</option>
-              <option value="members_asc">Najmniej powiązanych ofert</option>
-            </Select>
-          </label>
-          <label className="duplicate-conflict-toggle">
-            <input
-              type="checkbox"
-              checked={onlyConflicts}
-              onChange={(event) => {
-                setOnlyConflicts(event.target.checked);
-                setPage(1);
-              }}
-            />
-            <span>Tylko grupy z rozbieżnościami</span>
-          </label>
-          <label>
-            <span>Szukaj w pobranych grupach</span>
-            <input
-              className="text-input"
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value);
-                setPage(1);
-              }}
-              placeholder="Tytuł lub lokalizacja"
-            />
-          </label>
-          <label>
-            <span>Portal w grupie</span>
-            <Select
-              label="Portal w grupie"
-              value={source}
-              onChange={(value) => {
-                setSource(value);
-                setPage(1);
-              }}
-            >
-              <option value="">Wszystkie portale</option>
-              {[
-                ...new Set(
-                  groups.flatMap((group) => group.members.map((member) => member.sourceLabel)),
-                ),
-              ]
-                .sort()
-                .map((label) => (
+        <form
+          className="duplicate-search"
+          onSubmit={(event) => {
+            event.preventDefault();
+            filter({ search });
+          }}
+        >
+          <input
+            type="search"
+            className="text-input"
+            aria-label="Szukaj we wszystkich grupach"
+            placeholder="Tytuł, adres, portal lub ID"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          <button type="submit" className="action-button secondary-button">
+            Szukaj
+          </button>
+        </form>
+        <details className="duplicate-filter-menu">
+          <summary>
+            Filtry i sortowanie{(query.source || query.onlyConflicts) && " · aktywne"}
+          </summary>
+          <div className="duplicate-toolbar">
+            <label>
+              <span>Kolejność grup</span>
+              <Select
+                label="Kolejność grup"
+                value={query.sort}
+                onChange={(sort) => filter({ sort })}
+              >
+                <option value="conflicts">Najwięcej rozbieżności</option>
+                <option value="members_desc">Najwięcej powiązanych ofert</option>
+                <option value="members_asc">Najmniej powiązanych ofert</option>
+              </Select>
+            </label>
+            <label>
+              <span>Portal w grupie</span>
+              <Select
+                label="Portal w grupie"
+                value={query.source}
+                onChange={(source) => filter({ source })}
+              >
+                <option value="">Wszystkie portale</option>
+                {data?.sources.map((label) => (
                   <option key={label}>{label}</option>
                 ))}
-            </Select>
-          </label>
-        </div>
-        <p className="muted">
-          Pobrano {groups.length} z {total} grup do weryfikacji. Po filtrach: {filtered.length}{" "}
-          grup, {members} ogłoszeń i {copies} kopii.
-        </p>
-        {groups.length < total ? (
-          <button
-            className="action-button secondary-button"
-            disabled={isLoading || Boolean(busy)}
-            onClick={onLoadMore}
-          >
-            Pobierz kolejne 100 grup
-          </button>
-        ) : null}
-        {error ? <p role="alert">{error}</p> : null}
+              </Select>
+            </label>
+            <label className="duplicate-conflict-toggle">
+              <input
+                type="checkbox"
+                checked={query.onlyConflicts}
+                onChange={(event) => filter({ onlyConflicts: event.target.checked })}
+              />
+              <span>Tylko grupy z rozbieżnościami</span>
+            </label>
+          </div>
+        </details>
+        {isLoading && (
+          <p className="muted" role="status">
+            Wczytywanie grup…
+          </p>
+        )}
+        {error && (
+          <p className="error-text" role="alert">
+            {error}
+          </p>
+        )}
       </section>
-      {visible.map((group, groupIndex) => (
+      {visible.map((group) => (
         <section className="panel duplicate-review-v2" key={group.groupId}>
-          <details>
-            <summary>Zapisz rozstrzygnięcie i źródło</summary>
-            <LazyGroupNotes listingId={group.primaryListingId} />
-          </details>
           <div className="section-topline">
             <div className="duplicate-group-heading">
-              <p className="eyebrow">
-                Porównanie {String((currentPage - 1) * 20 + groupIndex + 1).padStart(2, "0")}
-              </p>
               <h3>{group.primaryTitle}</h3>
-              {Boolean(group.conflicts?.length) && (
-                <p className="error-text">
-                  Do sprawdzenia: {group.conflicts!.join(" · ")}. Rozbieżność może wynikać z błędu
-                  ogłoszenia.
-                </p>
+              {Boolean(group.conflicts.length) && (
+                <p className="error-text">{group.conflicts.join(" · ")}</p>
               )}
             </div>
             <span className="pill">
               {group.members.length} ogłoszeń ·{" "}
               {new Set(group.members.map((member) => member.sourceLabel)).size} portali
             </span>
+          </div>
+          <DuplicateComparisonFacts
+            offers={group.members.map((member) => ({
+              ...member,
+              roomsLabel: member.rooms === undefined ? undefined : String(member.rooms),
+            }))}
+          />
+          <div className="duplicate-review-footer">
+            <button
+              className="action-button"
+              disabled={Boolean(busy) || isLoading}
+              onClick={() => onConfirm(group.primaryListingId)}
+            >
+              {busy === group.primaryListingId ? "Zapisuję…" : "Zatwierdź całą grupę"}
+            </button>
+            <details>
+              <summary>Zapisz rozstrzygnięcie i źródło</summary>
+              <LazyGroupNotes listingId={group.primaryListingId} />
+            </details>
           </div>
           <div className="duplicate-member-grid">
             {group.members.map((member) => (
@@ -240,14 +187,6 @@ export function DuplicateGroupsPanel({
                     {member.isPrimary ? "Oferta główna" : "Powiązane ogłoszenie"}
                   </span>
                   <h4>{member.title}</h4>
-                  <p className="duplicate-price-row">
-                    <strong>{member.priceLabel}</strong>
-                    <span>{member.areaLabel}</span>
-                    <span>
-                      Piętro: {member.floor ?? "brak danych"} · Pokoje:{" "}
-                      {member.rooms ?? "brak danych"}
-                    </span>
-                  </p>
                   <div className="duplicate-member-actions">
                     <button
                       className="action-button secondary-button"
@@ -279,29 +218,21 @@ export function DuplicateGroupsPanel({
               </article>
             ))}
           </div>
-          <div className="duplicate-review-footer">
-            <small>Porównaj zdjęcia, metraż i lokalizację przed zatwierdzeniem.</small>
-            <button
-              className="action-button"
-              disabled={Boolean(busy) || isLoading}
-              onClick={() => onConfirm(group.primaryListingId)}
-            >
-              {busy === group.primaryListingId ? "Zapisuję…" : "Zatwierdź całą grupę"}
-            </button>
-          </div>
         </section>
       ))}
       {!visible.length && !isLoading && !error ? (
         <div className="panel">
-          {groups.length ? "Brak grup dla tych filtrów." : "Brak grup oczekujących na weryfikację."}
+          {query.search || query.source || query.onlyConflicts
+            ? "Brak grup dla tych filtrów."
+            : "Brak grup oczekujących na weryfikację."}
         </div>
       ) : null}
       {pages > 1 ? (
         <div className="duplicate-pagination">
           <button
             className="action-button secondary-button"
-            disabled={currentPage <= 1}
-            onClick={() => setPage(currentPage - 1)}
+            disabled={isLoading || currentPage <= 1}
+            onClick={() => onQueryChange({ ...query, page: currentPage - 1 })}
           >
             Poprzednie
           </button>
@@ -310,8 +241,8 @@ export function DuplicateGroupsPanel({
           </span>
           <button
             className="action-button secondary-button"
-            disabled={currentPage >= pages}
-            onClick={() => setPage(currentPage + 1)}
+            disabled={isLoading || currentPage >= pages}
+            onClick={() => onQueryChange({ ...query, page: currentPage + 1 })}
           >
             Następne
           </button>

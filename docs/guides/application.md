@@ -649,18 +649,25 @@ skan nie nadpisuje ręcznego potwierdzenia ani nie przywraca odrzuconej pary.
 Połączenie wiąże aktywną ofertę z archiwalną i zachowuje oba rekordy oraz ich ceny.
 Nie usuwa wcześniejszego ogłoszenia ani jego historii.
 
+W widokach **Połączone** i **Propozycje** menu **Kolejność ponownych wystawień**
+sortuje całą kolejkę po dacie dodania aktualnej oferty, podobieństwie, największej
+procentowej zmianie ceny lub obniżce. Każdy widok ma własną kolejność.
+Przycisk **Sprawdź oferty** znajdziesz w sekcji **Skan ponownych wystawień**.
+
 ### Kolejka duplikatów i zdjęcia
 
-W zakładce **Duplikaty** wybierz **Połączone grupy do sprawdzenia** albo
-**Potencjalne powiązania**. Grupy można sortować według liczby rozbieżności lub
-liczby powiązanych ofert. W potencjalnych powiązaniach wybierz zakres **60–79%**,
-**80–100%** lub wszystkie, a następnie kolejność od najniższego/najwyższego podobieństwa
-lub największej liczby powiązanych ogłoszeń. Sortowanie obejmuje całą kolejkę,
-nie tylko aktualnie pobraną stronę.
+W **Powiązaniach ofert** wybierz **Duplikaty**, a potem **Do weryfikacji** albo
+**Propozycje**. Wyszukiwarka grup sprawdza tytuł, adres, portal i identyfikator.
+Menu **Filtry i sortowanie** pozwala ograniczyć wyniki do portalu lub grup
+z rozbieżnościami i zmienić kolejność. Wyszukiwanie i sortowanie obejmują całą kolejkę.
+Propozycje domyślnie pokazują najwyższe podobieństwo z zakresu **80–100%**. Możesz
+zawęzić zakres do **60–79%** lub wyświetlić wszystkie pasujące pary. Komunikat
+**Rozbieżne adresy w ogłoszeniach** wskazuje różnicę wartą sprawdzenia.
 
-**Połączone grupy do sprawdzenia** zawierają już scalone duplikaty oczekujące na kontrolę
-poprawności; zatwierdzenie usuwa grupę z kolejki weryfikacji. **Potencjalne powiązania**
-zawierają propozycje, których jeszcze nie połączono. Otwieranie i zamykanie oferty
+**Do weryfikacji** zawiera scalone duplikaty oczekujące na kontrolę.
+Zatwierdzenie usuwa grupę z kolejki. Karty pokazują porównanie statusu, adresu, metrażu,
+piętra, pokoi i cen źródłowych. Przy propozycji widać przewidywaną ofertę główną,
+liczbę dołączanych ogłoszeń i rozmiar grupy po połączeniu. Otwieranie i zamykanie oferty
 z miniatury lub przycisku zachowuje wybraną podzakładkę, filtry i stronę propozycji.
 **To nie duplikat** usuwa wyłącznie odrzuconą parę z bieżącego widoku. Pozostałe
 karty pozostają na miejscu; kolejka nie jest ponownie pobierana, także po odrzuceniu

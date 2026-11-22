@@ -265,10 +265,15 @@ export function registerListingsRoutes(app: FastifyInstance) {
     return scanRelistedListings(request.body?.limit);
   });
 
-  app.get<{ Querystring: { limit?: string; offset?: string } }>(
+  app.get<{ Querystring: { limit?: string; offset?: string; sort?: string } }>(
     "/api/listings/relistings",
     async (request) =>
-      getRelistingResults(Number(request.query.limit ?? 20), Number(request.query.offset ?? 0)),
+      getRelistingResults(
+        Number(request.query.limit ?? 20),
+        Number(request.query.offset ?? 0),
+        undefined,
+        request.query.sort,
+      ),
   );
 
   app.post<{ Params: { id: string }; Body: { previousId?: string; decision?: string } }>(

@@ -1,6 +1,9 @@
 import type {
   DuplicateCandidate,
   DuplicateCandidatesResponse,
+  DuplicateGroupOverview,
+  DuplicateGroupQuery,
+  DuplicateGroupsResponse,
   DuplicateListingPreview,
   DuplicateReviewStatus,
   RelatedListingSummary,
@@ -40,6 +43,13 @@ type DuplicateCandidateRow = {
   right_area_sqm: string | null;
   right_rooms: string | null;
   right_group_size: string | null;
+  left_status: string;
+  right_status: string;
+  left_floor: number | null;
+  right_floor: number | null;
+  left_source_price_amount: string | null;
+  right_source_price_amount: string | null;
+  address_conflict: boolean;
   confidence_score: string;
   reason_summary: string;
   review_status: string | null;
@@ -98,19 +108,58 @@ export async function getDuplicateCandidates(
   const rightDistrictKey = "l2.match_district_key";
   const leftStreetKey = "l1.match_street_key";
   const rightStreetKey = "l2.match_street_key";
-  const descriptionOverlap = `(select count(*)::int from (select unnest(l1.match_tokens) intersect select unnest(l2.match_tokens)) common_tokens)`;
+  const sameStreet = `nullif(${leftStreetKey}, '') is not null and ${leftStreetKey} = ${rightStreetKey}`;
+  const sameLocation = `l1.latitude is not null and l1.longitude is not null
+    and l2.latitude is not null and l2.longitude is not null
+    and abs(l1.latitude - l2.latitude) <= 0.0009
+    and abs(l1.longitude - l2.longitude) <= 0.0009`;
+  const descriptionOverlap = "description.overlap";
 
   return withDb(async (db) => {
     const result = await db.query<DuplicateCandidateRow>(
       `
-        with normalized_listings as materialized (
-          select l.*,
+        with nearby_pairs as materialized (
+          select least(l1.id, other.id) as left_id, greatest(l1.id, other.id) as right_id
+          from listings l1
+          join lateral (
+            select l2.id from listings l2 where l2.city = l1.city and l2.rooms = l1.rooms
+              and l2.area_sqm between l1.area_sqm - 3 and l1.area_sqm + 3
+              and l2.price_amount between least(l1.price_amount - 60000, l1.price_amount * 0.95)
+                and greatest(l1.price_amount + 60000, l1.price_amount * 1.053)
+              and l2.status in ('active', 'removed', 'sold', 'reserved')
+              and l2.hidden_duplicate_of_id is null
+              and l2.price_amount is not null
+              and l2.id <> l1.id and ($1::uuid is not null or l1.id < l2.id)
+              and (
+                abs(l1.price_amount - l2.price_amount) <= 60000 or
+                abs(l1.price_amount - l2.price_amount) <= greatest(l1.price_amount, l2.price_amount) * 0.05
+              )
+            offset 0
+          ) other on true
+          where l1.hidden_duplicate_of_id is null and l1.status in ('active', 'removed', 'sold', 'reserved')
+            and l1.rooms is not null and l1.area_sqm is not null and l1.price_amount is not null
+            and ($1::uuid is null or l1.id = $1::uuid)
+        ), relevant_ids as (
+          select left_id as id from nearby_pairs union select right_id from nearby_pairs
+        ), normalized_listings as materialized (
+          select l.id, l.source_id, l.title, l.canonical_url, l.city, l.district, l.neighborhood,
+            l.address_text, l.price_amount, l.source_price_amount, l.price_per_sqm, l.area_sqm,
+            l.rooms, l.floor, l.status, l.latitude, l.longitude,
             ${normalizedAddressKeySql("coalesce(l.address_text, '')")} as match_address_key,
             ${normalizedStreetKeySql("coalesce(l.address_text, '')")} as match_street_key,
             ${normalizedTextKeySql("coalesce(l.district, '')")} as match_district_key,
-            array(select distinct token from unnest(regexp_split_to_array(substring(${normalizedTextKeySql("coalesce(l.description, '')")} from 1 for 300), '\\s+')) token
-              where length(token)>=4 and token not in ('mieszkanie','sprzedaz','oferta','nieruchomosci','warszawa','lokalizacja','pokojowe','pokojowy')) as match_tokens
-          from listings l where l.status in ('active', 'removed', 'sold', 'reserved') and l.hidden_duplicate_of_id is null
+            tokens.words as match_tokens, tokens.signature,
+            cardinality(tokens.words) - bit_count(tokens.signature) as collisions
+          from relevant_ids join listings l using (id)
+          cross join lateral (
+            select coalesce(array_agg(token), '{}'::text[]) as words,
+              coalesce(bit_or(set_bit(B'0'::bit(256), hashtext(token) & 255, 1)), B'0'::bit(256)) as signature
+            from (
+              select distinct token
+              from unnest(regexp_split_to_array(substring(${normalizedTextKeySql("coalesce(l.description, '')")} from 1 for 300), '\\s+')) token
+              where length(token)>=4 and token not in ('mieszkanie','sprzedaz','oferta','nieruchomosci','warszawa','lokalizacja','pokojowe','pokojowy')
+            ) distinct_tokens
+          ) tokens
         ), pair_base as (
           select
             l1.id as left_id,
@@ -125,6 +174,9 @@ export async function getDuplicateCandidates(
             l1.price_per_sqm::text as left_price_per_sqm,
             l1.area_sqm::text as left_area_sqm,
             l1.rooms::text as left_rooms,
+            l1.status as left_status,
+            l1.floor as left_floor,
+            l1.source_price_amount::text as left_source_price_amount,
             coalesce(g1.group_size::text, '0') as left_group_size,
             l2.id as right_id,
             l2.title as right_title,
@@ -138,8 +190,12 @@ export async function getDuplicateCandidates(
             l2.price_per_sqm::text as right_price_per_sqm,
             l2.area_sqm::text as right_area_sqm,
             l2.rooms::text as right_rooms,
+            l2.status as right_status,
+            l2.floor as right_floor,
+            l2.source_price_amount::text as right_source_price_amount,
             coalesce(g2.group_size::text, '0') as right_group_size,
-            ${descriptionOverlap} as description_overlap,
+            (nullif(${leftStreetKey}, '') is not null and nullif(${rightStreetKey}, '') is not null
+              and ${leftStreetKey} <> ${rightStreetKey}) as address_conflict,
             (
               case
                 when nullif(${leftStreetKey}, '') is not null and ${leftStreetKey} = ${rightStreetKey} then 22
@@ -222,8 +278,17 @@ export async function getDuplicateCandidates(
                 then 'prawie ten sam punkt na mapie' end
             ) as reason_summary,
             r.status as review_status
-          from normalized_listings l1
-          join normalized_listings l2 on l1.id < l2.id
+          from nearby_pairs pair
+          join normalized_listings l1 on l1.id = pair.left_id
+          join normalized_listings l2 on l2.id = pair.right_id
+          cross join lateral (
+            -- Shared buckets plus collisions bound the maximum possible overlap.
+            select case when bit_count(l1.signature & l2.signature) + least(l1.collisions, l2.collisions)
+              >= case when (${sameStreet}) or (${sameLocation}) then 7 else 12 end
+              then (select count(*)::int from unnest(l1.match_tokens) token where token = any(l2.match_tokens))
+              else 0 end as overlap
+            offset 0
+          ) description
           join sources s1 on s1.id = l1.source_id
           join sources s2 on s2.id = l2.source_id
           left join (
@@ -238,45 +303,16 @@ export async function getDuplicateCandidates(
           ) g2 on g2.group_id = (select group_id from listing_duplicate_group_members where listing_id = l2.id)
           left join listing_duplicate_reviews r
             on r.pair_key = concat(least(l1.id::text, l2.id::text), ':', greatest(l1.id::text, l2.id::text))
-          where l1.status in ('active', 'removed', 'sold', 'reserved')
-            and l2.status in ('active', 'removed', 'sold', 'reserved')
-            and l1.hidden_duplicate_of_id is null
-            and l2.hidden_duplicate_of_id is null
-            and l1.city = l2.city
-            and ($1::uuid is null or l1.id = $1::uuid or l2.id = $1::uuid)
-            and (
-              l1.rooms is not null and l2.rooms is not null and l1.rooms = l2.rooms
-            )
-            and (
-              l1.area_sqm is not null and l2.area_sqm is not null and abs(l1.area_sqm - l2.area_sqm) <= 3.0
-            )
-            and (
-              l1.price_amount is not null and l2.price_amount is not null
-              and (
-                abs(l1.price_amount - l2.price_amount) <= 60000
-                or (
-                  greatest(l1.price_amount, l2.price_amount) > 0
-                  and abs(l1.price_amount - l2.price_amount) / greatest(l1.price_amount, l2.price_amount) <= 0.05
-                )
-              )
-            )
-            and (
-              nullif(${leftStreetKey}, '') is not null and ${leftStreetKey} = ${rightStreetKey}
-              or ${descriptionOverlap} >= 12
-              or (
-                l1.latitude is not null and l1.longitude is not null and l2.latitude is not null and l2.longitude is not null
-                and abs(l1.latitude - l2.latitude) <= 0.0009
-                and abs(l1.longitude - l2.longitude) <= 0.0009
-              )
+          where coalesce(r.status, 'pending') <> 'different_listing' and (
+              (${sameStreet}) or ${descriptionOverlap} >= 12 or (${sameLocation})
             )
         )
         select *, count(*) over()::text as total_count
         from pair_base
-        where confidence_score >= $3 and confidence_score <= $4
-          and ($1::uuid is null or left_id = $1::uuid or right_id = $1::uuid)
-          and coalesce(review_status, 'pending') <> 'different_listing'
+        where least(confidence_score, 100) between $3 and $4
         order by
           case when coalesce(review_status, 'pending') = 'pending' then 0 else 1 end,
+          case when $5::text = 'confidence_desc' then address_conflict end,
           case when $5::text='confidence_asc' then confidence_score end asc,
           case when $5::text='related_desc' then coalesce(left_group_size,'0')::int+coalesce(right_group_size,'0')::int end desc,
           confidence_score desc,
@@ -294,10 +330,36 @@ export async function getDuplicateCandidates(
     );
 
     const items = result.rows.map(mapDuplicateCandidateRow);
-    const previews = await getDuplicateListingPreviews(
-      [...new Set(items.flatMap((item) => [item.left.id, item.right.id]))],
-      db,
-    );
+    const listingIds = [...new Set(items.flatMap((item) => [item.left.id, item.right.id]))];
+    const [previews, primaryOptions] = await Promise.all([
+      getDuplicateListingPreviews(listingIds, db),
+      getDuplicatePrimaryOptions(db, listingIds, undefined, true),
+    ]);
+    const byId = new Map(primaryOptions.map((option) => [option.id, option]));
+    const firstByGroup = new Map<string, PrimaryOption>();
+    for (const option of primaryOptions) {
+      if (option.group_id && !firstByGroup.has(option.group_id))
+        firstByGroup.set(option.group_id, option);
+    }
+    for (const pair of items) {
+      const options = [pair.left, pair.right].flatMap(({ id }) => {
+        const option = byId.get(id);
+        if (!option) return [];
+        return [option.group_id ? (firstByGroup.get(option.group_id) ?? option) : option];
+      });
+      const primary = options.sort(compareDuplicatePrimaryOptions)[0];
+      if (primary) {
+        const fromLeft =
+          primary.id === pair.left.id ||
+          (primary.group_id && primary.group_id === byId.get(pair.left.id)?.group_id);
+        pair.primaryPreview = {
+          id: primary.id,
+          title: primary.title,
+          sourceLabel: primary.source_label,
+          addedCount: ((fromLeft ? pair.right.relatedCount : pair.left.relatedCount) ?? 0) + 1,
+        };
+      }
+    }
     for (const item of items)
       for (const offer of [item.left, item.right]) {
         offer.thumbnailUrls = previews.get(offer.id)?.urls ?? [];
@@ -727,144 +789,106 @@ export async function getRelatedListings(listingId: string): Promise<RelatedList
   return withDb(async (db) => getRelatedListingsWithDb(db, listingId));
 }
 
-export type DuplicateGroupOverview = {
-  groupId: string;
-  primaryListingId: string;
-  primaryTitle: string;
-  conflicts?: string[];
-  members: Array<{
-    id: string;
-    title: string;
-    sourceLabel: string;
-    canonicalUrl?: string;
-    thumbnailUrl?: string;
-    thumbnailUrls?: string[];
-    thumbnailSharedFromIndex?: number;
-    priceLabel: string;
-    areaLabel: string;
-    floor?: number;
-    rooms?: number;
-    area?: number;
-    isPrimary: boolean;
-  }>;
-};
-
 export async function getDuplicateGroupOverviews(
-  limit?: number,
-  summary?: false,
-  sort?: string,
-): Promise<DuplicateGroupOverview[]>;
-export async function getDuplicateGroupOverviews(
-  limit: number,
-  summary: true,
-  sort?: string,
-): Promise<{
-  items: DuplicateGroupOverview[];
-  total: number;
-  totalMembers: number;
-  totalCopies: number;
-}>;
-export async function getDuplicateGroupOverviews(limit = 200, summary = false, sort = "conflicts") {
+  limit = 200,
+  {
+    page = 1,
+    sort = "conflicts",
+    search = "",
+    source = "",
+    onlyConflicts = false,
+  }: Partial<DuplicateGroupQuery> = {},
+): Promise<DuplicateGroupsResponse> {
+  const safeLimit = Number.isFinite(limit) ? Math.max(1, Math.min(Math.floor(limit), 500)) : 200;
   return withDb(async (db) => {
-    const result = await db.query<{
-      group_id: string;
-      listing_id: string;
-      is_primary: boolean;
-      title: string;
-      source_label: string | null;
-      canonical_url: string;
-      price_amount: string | null;
-      area_sqm: string | null;
-      floor: number | null;
-      rooms: string | null;
-    }>(`
-      select gm.group_id::text, gm.listing_id::text, gm.is_primary, l.title, s.name as source_label, l.canonical_url, l.price_amount::text, l.area_sqm::text, l.floor, l.rooms::text
-      from listing_duplicate_group_members gm
-      join listings l on l.id = gm.listing_id
-      join sources s on s.id = l.source_id
-      join listing_duplicate_groups dg on dg.id = gm.group_id
-      where dg.manually_confirmed = false
-        and exists (select 1 from listing_duplicate_group_members x where x.group_id = gm.group_id having count(*) > 1)
-      order by gm.group_id, gm.is_primary desc, l.last_seen_at desc nulls last
-    `);
-    const grouped = new Map<string, DuplicateGroupOverview>();
-    for (const row of result.rows) {
-      const existing = grouped.get(row.group_id);
-      const member = {
-        id: row.listing_id,
-        title: row.title,
-        sourceLabel: row.source_label ?? "Portal",
-        canonicalUrl: row.canonical_url ?? undefined,
-        priceLabel: formatCurrencyLabel(row.price_amount),
-        areaLabel: formatAreaLabel(row.area_sqm),
-        floor: row.floor ?? undefined,
-        rooms: row.rooms === null ? undefined : Number(row.rooms),
-        area: row.area_sqm === null ? undefined : Number(row.area_sqm),
-        isPrimary: row.is_primary,
-      };
-      if (existing) {
-        existing.members.push(member);
-        if (row.is_primary) {
-          existing.primaryListingId = row.listing_id;
-          existing.primaryTitle = row.title;
-        }
-        continue;
-      }
-      grouped.set(row.group_id, {
-        groupId: row.group_id,
-        primaryListingId: row.is_primary ? row.listing_id : "",
-        primaryTitle: row.is_primary ? row.title : "Oferta powiązana",
-        members: [member],
-      });
-    }
-    const groups = [...grouped.values()].filter(
-      (group) => group.primaryListingId && group.members.length > 1,
+    const {
+      rows: [result],
+    } = await db.query<DuplicateGroupsResponse>(
+      `
+      with review_groups as materialized (
+        select gm.group_id, count(*)::int as members,
+          array_remove(array[
+            case when count(distinct l.floor) > 1 then 'Różne piętra' end,
+            case when count(distinct l.rooms) > 1 then 'Różna liczba pokoi' end,
+            case when max(l.area_sqm) - min(l.area_sqm) > min(l.area_sqm) * 0.02 then 'Rozbieżny metraż' end
+          ], null) as conflicts
+        from listing_duplicate_groups dg
+        join listing_duplicate_group_members gm on gm.group_id = dg.id
+        join listings l on l.id = gm.listing_id
+        join sources s on s.id = l.source_id
+        where not dg.manually_confirmed
+        group by gm.group_id
+        having count(*) > 1 and bool_or(gm.is_primary)
+          and ($3 = '' or bool_or(s.name = $3))
+          and ($4 = '' or bool_or(strpos(
+            ${normalizedTextKeySql("lower(concat_ws(' ', l.title, l.address_text, l.district, l.city, s.name, l.id, l.external_id, l.canonical_url))")},
+            ${normalizedTextKeySql("lower($4::text)")}
+          ) > 0))
+      ), matching as materialized (
+        select * from review_groups where not $5::boolean or cardinality(conflicts) > 0
+      ), totals as (
+        select count(*)::int as total, coalesce(sum(members), 0)::int as members,
+          greatest(1, least($2::int, (count(*)::int + $1::int - 1) / $1::int)) as page
+        from matching
+      ), selected as (
+        select *, row_number() over (
+          order by case when $6 = 'members_desc' then members end desc,
+            case when $6 = 'members_asc' then members end asc, cardinality(conflicts) desc, group_id
+        ) as position
+        from matching
+      ), page_groups as (
+        select selected.position, jsonb_build_object(
+          'groupId', selected.group_id,
+          'primaryListingId', max(l.id::text) filter (where gm.is_primary),
+          'primaryTitle', max(l.title) filter (where gm.is_primary),
+          'conflicts', selected.conflicts,
+          'members', jsonb_agg(jsonb_strip_nulls(jsonb_build_object(
+            'id', l.id, 'title', l.title, 'sourceLabel', s.name, 'canonicalUrl', l.canonical_url,
+            'priceLabel', l.price_amount, 'sourcePriceLabel', l.source_price_amount,
+            'areaLabel', l.area_sqm, 'addressText', coalesce(l.address_text, concat_ws(', ', l.district, l.city)),
+            'listingStatus', l.status, 'floor', l.floor, 'rooms', l.rooms, 'isPrimary', gm.is_primary
+          )) order by gm.is_primary desc, l.last_seen_at desc nulls last, l.id)
+        ) as payload
+        from selected
+        join listing_duplicate_group_members gm on gm.group_id = selected.group_id
+        join listings l on l.id = gm.listing_id
+        join sources s on s.id = l.source_id
+        cross join totals
+        where selected.position between (totals.page - 1) * $1 + 1 and totals.page * $1
+        group by selected.group_id, selected.conflicts, selected.position
+      )
+      select totals.total, totals.page, totals.members as "totalMembers",
+        totals.members - totals.total as "totalCopies",
+        array(select distinct name from sources order by name) as sources,
+        coalesce((select jsonb_agg(payload order by position) from page_groups), '[]'::jsonb) as items
+      from totals`,
+      [
+        safeLimit,
+        Number.isFinite(page) ? Math.max(1, Math.floor(page)) : 1,
+        source,
+        search.trim(),
+        onlyConflicts,
+        sort,
+      ],
     );
-    for (const group of groups) {
-      group.conflicts = [];
-      for (const [key, label] of [
-        ["floor", "Różne piętra"],
-        ["rooms", "Różna liczba pokoi"],
-      ] as const) {
-        if (
-          new Set(group.members.map((member) => member[key]).filter((value) => value !== undefined))
-            .size > 1
-        )
-          group.conflicts.push(label);
-      }
-      const areas = group.members.flatMap((member) =>
-        member.area === undefined ? [] : [member.area],
-      );
-      if (areas.length > 1 && Math.max(...areas) - Math.min(...areas) > Math.min(...areas) * 0.02)
-        group.conflicts.push("Rozbieżny metraż");
-    }
-    groups.sort((a, b) => (b.conflicts?.length ?? 0) - (a.conflicts?.length ?? 0));
-    if (sort === "members_desc") groups.sort((a, b) => b.members.length - a.members.length);
-    if (sort === "members_asc") groups.sort((a, b) => a.members.length - b.members.length);
-    const safeLimit = Math.max(1, Number.isFinite(limit) ? Math.floor(limit) : 200);
-    const items = groups.slice(0, summary ? safeLimit : Math.min(safeLimit, 500));
+    const members = result.items.flatMap((group) => group.members);
     const previews = await getDuplicateListingPreviews(
-      items.flatMap((group) => group.members.map((member) => member.id)),
+      members.map((member) => member.id),
       db,
     );
-    for (const group of items)
-      for (const member of group.members) {
-        member.thumbnailUrls = previews.get(member.id)?.urls ?? [];
-        member.thumbnailSharedFromIndex = previews.get(member.id)?.sharedFromIndex;
-        member.thumbnailUrl = member.thumbnailUrls[0];
-      }
-    const totalMembers = new Set(
-      groups.flatMap((group) => group.members.map((member) => member.id)),
-    ).size;
-    const totalCopies = new Set(
-      groups.flatMap((group) =>
-        group.members.filter((member) => !member.isPrimary).map((member) => member.id),
-      ),
-    ).size;
-    return summary ? { items, total: groups.length, totalMembers, totalCopies } : items;
+    for (const member of members) {
+      member.priceLabel = formatCurrencyLabel(member.priceLabel);
+      member.sourcePriceLabel = member.sourcePriceLabel
+        ? formatCurrencyLabel(member.sourcePriceLabel)
+        : undefined;
+      member.areaLabel = formatAreaLabel(member.areaLabel);
+      member.thumbnailUrls = previews.get(member.id)?.urls ?? [];
+      member.thumbnailSharedFromIndex = previews.get(member.id)?.sharedFromIndex;
+      member.thumbnailUrl = member.thumbnailUrls[0];
+    }
+    return result;
   });
 }
-
 export async function unmergeDuplicateListing(
   primaryListingId: string,
   duplicateListingId: string,
@@ -965,144 +989,11 @@ export async function getRelatedCounts(listingIds: string[]) {
   });
 }
 
-export async function getPotentialDuplicateCounts(listingIds: string[]) {
-  if (listingIds.length === 0) {
-    return new Map<string, number>();
-  }
-
-  const leftDistrictKey = normalizedTextKeySql("coalesce(l1.district, '')");
-  const rightDistrictKey = normalizedTextKeySql("coalesce(l2.district, '')");
-  const leftAddressKey = normalizedAddressKeySql("coalesce(l1.address_text, '')");
-  const rightAddressKey = normalizedAddressKeySql("coalesce(l2.address_text, '')");
-  const leftStreetKey = normalizedStreetKeySql("coalesce(l1.address_text, '')");
-  const rightStreetKey = normalizedStreetKeySql("coalesce(l2.address_text, '')");
-  const descriptionOverlap = descriptionTokenOverlapSql(
-    "coalesce(l1.description, '')",
-    "coalesce(l2.description, '')",
-  );
-
-  return withDb(async (db) => {
-    const result = await db.query<{ listing_id: string; candidate_count: string }>(
-      `
-        with pairs as (
-          select
-            l1.id as left_id,
-            l2.id as right_id,
-            (
-              case
-                when nullif(${leftStreetKey}, '') is not null and ${leftStreetKey} = ${rightStreetKey} then 22
-                when nullif(trim(coalesce(l1.address_text, '')), '') is not null and ${leftAddressKey} = ${rightAddressKey} then 18
-                else 0 end
-            ) +
-            (
-              case
-                when ${leftDistrictKey} = ${rightDistrictKey}
-                  and nullif(trim(coalesce(l1.district, '')), '') is not null
-                then 10 else 0 end
-            ) +
-            (
-              case
-                when l1.floor is not null and l2.floor is not null and l1.floor = l2.floor then 8
-                else 0 end
-            ) +
-            (
-              case
-                when l1.rooms is not null and l2.rooms is not null and l1.rooms = l2.rooms then 14
-                else 0 end
-            ) +
-            (
-              case
-                when l1.area_sqm is not null and l2.area_sqm is not null and abs(l1.area_sqm - l2.area_sqm) <= 1.0 then 18
-                when l1.area_sqm is not null and l2.area_sqm is not null and abs(l1.area_sqm - l2.area_sqm) <= 3.0 then 10
-                else 0 end
-            ) +
-            (
-              case
-                when l1.price_amount is not null and l2.price_amount is not null and abs(l1.price_amount - l2.price_amount) <= 20000 then 16
-                when l1.price_amount is not null and l2.price_amount is not null and abs(l1.price_amount - l2.price_amount) <= 60000 then 9
-                when l1.price_amount is not null and l2.price_amount is not null
-                  and greatest(l1.price_amount, l2.price_amount) > 0
-                  and abs(l1.price_amount - l2.price_amount) / greatest(l1.price_amount, l2.price_amount) <= 0.05
-                then 7
-                else 0 end
-            ) +
-            (
-              case
-                when ${descriptionOverlap} >= 20 then 18
-                when ${descriptionOverlap} >= 12 then 12
-                when ${descriptionOverlap} >= 7 then 6
-                else 0 end
-            ) +
-            (
-              case
-                when l1.latitude is not null and l1.longitude is not null and l2.latitude is not null and l2.longitude is not null
-                  and abs(l1.latitude - l2.latitude) <= 0.0009
-                  and abs(l1.longitude - l2.longitude) <= 0.0009
-                then 18 else 0 end
-            ) as confidence_score
-          from listings l1
-          join listings l2 on l1.id < l2.id
-          where l1.status = 'active'
-            and l2.status = 'active'
-            and l1.hidden_duplicate_of_id is null
-            and l2.hidden_duplicate_of_id is null
-            and l1.city = l2.city
-            and l1.source_id <> l2.source_id
-            and (
-              l1.rooms is not null and l2.rooms is not null and l1.rooms = l2.rooms
-            )
-            and (
-              l1.area_sqm is not null and l2.area_sqm is not null and abs(l1.area_sqm - l2.area_sqm) <= 3.0
-            )
-            and (
-              l1.price_amount is not null and l2.price_amount is not null
-              and (
-                abs(l1.price_amount - l2.price_amount) <= 60000
-                or (
-                  greatest(l1.price_amount, l2.price_amount) > 0
-                  and abs(l1.price_amount - l2.price_amount) / greatest(l1.price_amount, l2.price_amount) <= 0.05
-                )
-              )
-            )
-            and (
-              nullif(${leftStreetKey}, '') is not null and ${leftStreetKey} = ${rightStreetKey}
-              or ${descriptionOverlap} >= 12
-              or (
-                l1.latitude is not null and l1.longitude is not null and l2.latitude is not null and l2.longitude is not null
-                and abs(l1.latitude - l2.latitude) <= 0.0009
-                and abs(l1.longitude - l2.longitude) <= 0.0009
-              )
-            )
-            and not exists (
-              select 1
-              from listing_duplicate_reviews r
-              where r.pair_key = concat(least(l1.id::text, l2.id::text), ':', greatest(l1.id::text, l2.id::text))
-                and r.status = 'different_listing'
-            )
-        ),
-        exploded as (
-          select left_id as listing_id, right_id as other_id from pairs
-          where confidence_score >= 60
-          union all
-          select right_id as listing_id, left_id as other_id from pairs
-          where confidence_score >= 60
-        )
-        select listing_id, count(*)::text as candidate_count
-        from exploded
-        where listing_id = any($1::uuid[])
-        group by listing_id
-      `,
-      [listingIds],
-    );
-
-    return new Map(result.rows.map((row) => [row.listing_id, Number(row.candidate_count)]));
-  });
-}
-
 function mapDuplicateCandidateRow(row: DuplicateCandidateRow): DuplicateCandidate {
   return {
     pairKey: buildDuplicatePairKey(row.left_id, row.right_id),
-    confidenceScore: Number(row.confidence_score),
+    confidenceScore: Math.min(100, Number(row.confidence_score)),
+    addressConflict: row.address_conflict,
     reasons: row.reason_summary
       .split(",")
       .map((item) => item.trim())
@@ -1130,6 +1021,9 @@ function mapDuplicatePreview(
   const areaSqm = side === "left" ? row.left_area_sqm : row.right_area_sqm;
   const rooms = side === "left" ? row.left_rooms : row.right_rooms;
   const relatedCount = side === "left" ? row.left_group_size : row.right_group_size;
+  const floor = side === "left" ? row.left_floor : row.right_floor;
+  const sourcePrice =
+    side === "left" ? row.left_source_price_amount : row.right_source_price_amount;
 
   return {
     id,
@@ -1141,6 +1035,9 @@ function mapDuplicatePreview(
     neighborhood: neighborhood ?? undefined,
     addressText: addressText ?? undefined,
     priceLabel: formatCurrencyLabel(priceAmount),
+    sourcePriceLabel: sourcePrice ? formatCurrencyLabel(sourcePrice) : undefined,
+    listingStatus: side === "left" ? row.left_status : row.right_status,
+    floor: floor ?? undefined,
     areaLabel: formatAreaLabel(areaSqm),
     pricePerSqmLabel: pricePerSqm ? `${formatIntegerLabel(pricePerSqm)} PLN/m2` : undefined,
     roomsLabel: rooms ? `${trimNumeric(rooms)} pokoje` : undefined,
@@ -1510,25 +1407,6 @@ function normalizedStreetKey(value: string) {
     .replace(/\s+/g, "");
 }
 
-function descriptionTokenOverlapSql(leftExpression: string, rightExpression: string) {
-  return `
-    (
-      select count(*)::int
-      from (
-        select left_token.token
-        from unnest(regexp_split_to_array(substring(${normalizedTextKeySql(leftExpression)} from 1 for 300), '\\s+')) as left_token(token)
-        where length(left_token.token) >= 4
-          and left_token.token not in ('mieszkanie', 'sprzedaz', 'oferta', 'nieruchomosci', 'warszawa', 'lokalizacja', 'pokojowe', 'pokojowy')
-        intersect
-        select right_token.token
-        from unnest(regexp_split_to_array(substring(${normalizedTextKeySql(rightExpression)} from 1 for 300), '\\s+')) as right_token(token)
-        where length(right_token.token) >= 4
-          and right_token.token not in ('mieszkanie', 'sprzedaz', 'oferta', 'nieruchomosci', 'warszawa', 'lokalizacja', 'pokojowe', 'pokojowy')
-      ) overlap_tokens
-    )
-  `;
-}
-
 function descriptionPrefixMatchSql(leftExpression: string, rightExpression: string) {
   const leftTokens = `regexp_split_to_array(trim(${normalizedTextKeySql(leftExpression)}), '\\s+')`;
   const rightTokens = `regexp_split_to_array(trim(${normalizedTextKeySql(rightExpression)}), '\\s+')`;
@@ -1567,31 +1445,53 @@ export async function choosePreferredPrimaryListingId(
   rightId: string,
   groupId?: string,
 ) {
-  const result = await db.query<{
-    id: string;
-    source_key: string;
-    created_at: string;
-    status: string;
-    source_count?: string;
-  }>(
-    `select l.id, s.key as source_key, l.created_at::text, l.status,
-      (select count(*)::text from listings source_listing where source_listing.source_id = l.source_id) as source_count
-     from listings l join sources s on s.id = l.source_id
-     where l.id in ($1, $2) or exists (
-       select 1 from listing_duplicate_group_members gm where gm.listing_id = l.id and gm.group_id = $3
-     )`,
-    [leftId, rightId, groupId ?? null],
-  );
+  const options = await getDuplicatePrimaryOptions(db, [leftId, rightId], groupId);
+  return options[0]?.id ?? leftId;
+}
+
+type PrimaryOption = {
+  id: string;
+  title: string;
+  source_label: string;
+  source_key: string;
+  created_at: string;
+  status: string;
+  source_count?: string;
+  group_id?: string;
+};
+
+function compareDuplicatePrimaryOptions(left: PrimaryOption, right: PrimaryOption) {
   return (
-    result.rows.sort(
-      (left, right) =>
-        Number(right.status === "active") - Number(left.status === "active") ||
-        Number(right.source_key === "otodom") - Number(left.source_key === "otodom") ||
-        Number(right.source_count ?? 0) - Number(left.source_count ?? 0) ||
-        new Date(left.created_at).getTime() - new Date(right.created_at).getTime() ||
-        left.id.localeCompare(right.id),
-    )[0]?.id ?? leftId
+    Number(right.status === "active") - Number(left.status === "active") ||
+    Number(right.source_key === "otodom") - Number(left.source_key === "otodom") ||
+    Number(right.source_count ?? 0) - Number(left.source_count ?? 0) ||
+    new Date(left.created_at).getTime() - new Date(right.created_at).getTime() ||
+    left.id.localeCompare(right.id)
   );
+}
+
+async function getDuplicatePrimaryOptions(
+  db: QueryableDb,
+  listingIds: string[],
+  groupId?: string,
+  includeOtherMembers = false,
+) {
+  if (!listingIds.length) return [];
+  const result = await db.query<PrimaryOption>(
+    `with source_counts as materialized (
+      select source_id, count(*)::text as source_count from listings group by source_id
+    )
+     select l.id, l.title, s.key as source_key, s.name as source_label, l.created_at::text, l.status,
+       counts.source_count, member.group_id
+     from listings l join sources s on s.id = l.source_id
+     join source_counts counts on counts.source_id = l.source_id
+     left join listing_duplicate_group_members member on member.listing_id = l.id
+     where l.id = any($1::uuid[]) or member.group_id = $2::uuid or member.group_id in (
+       select group_id from listing_duplicate_group_members where $3::boolean and listing_id = any($1::uuid[])
+     )`,
+    [listingIds, groupId ?? null, includeOtherMembers],
+  );
+  return result.rows.sort(compareDuplicatePrimaryOptions);
 }
 
 function computeDescriptionSimilarity(leftTokens: string[], rightTokens: string[]) {

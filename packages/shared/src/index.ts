@@ -519,6 +519,9 @@ export type DuplicateListingPreview = {
   areaLabel: string;
   pricePerSqmLabel?: string;
   roomsLabel?: string;
+  floor?: number;
+  sourcePriceLabel?: string;
+  listingStatus?: string;
   badges: string[];
   relatedCount?: number;
 };
@@ -528,6 +531,8 @@ export type DuplicateCandidate = {
   confidenceScore: number;
   reasons: string[];
   status: DuplicateReviewStatus;
+  addressConflict?: boolean;
+  primaryPreview?: { id: string; title: string; sourceLabel: string; addedCount: number };
   left: DuplicateListingPreview;
   right: DuplicateListingPreview;
 };
@@ -536,6 +541,49 @@ export type DuplicateCandidatesResponse = {
   total: number;
   items: DuplicateCandidate[];
 };
+
+export type DuplicateGroupOverview = {
+  groupId: string;
+  primaryListingId: string;
+  primaryTitle: string;
+  conflicts: string[];
+  members: Array<{
+    id: string;
+    title: string;
+    sourceLabel: string;
+    canonicalUrl?: string;
+    thumbnailUrl?: string;
+    thumbnailUrls?: string[];
+    thumbnailSharedFromIndex?: number;
+    priceLabel: string;
+    sourcePriceLabel?: string;
+    areaLabel: string;
+    addressText?: string;
+    listingStatus?: string;
+    floor?: number;
+    rooms?: number;
+    isPrimary: boolean;
+  }>;
+};
+
+export type DuplicateGroupQuery = {
+  page: number;
+  sort: string;
+  search: string;
+  source: string;
+  onlyConflicts: boolean;
+};
+
+export type DuplicateGroupsResponse = {
+  items: DuplicateGroupOverview[];
+  total: number;
+  totalMembers: number;
+  totalCopies: number;
+  sources: string[];
+  page: number;
+};
+
+export type RelistingSort = "newest" | "oldest" | "confidence" | "price_change" | "price_drop";
 
 export type RelistedListingPreview = {
   id: string;

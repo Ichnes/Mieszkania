@@ -10,6 +10,8 @@ import type {
   DashboardResponse,
   DuplicateCandidate,
   DuplicateCandidatesResponse,
+  DuplicateGroupQuery,
+  DuplicateGroupsResponse,
   FamilySettings,
   ListingContactEventType,
   ListingDetail,
@@ -23,7 +25,6 @@ import { useEffect, useRef, useState } from "react";
 import { resolveCompareListings } from "../features/compare/lib/selection";
 import { useComparison } from "../features/compare/useComparison";
 import { createLatestRequest } from "../shared/lib/latest-request";
-import { DuplicateGroupOverview } from "../features/duplicates/types";
 import { isGratkaUrl, resolveCollectorEndpoint } from "../features/imports/lib/portals";
 import { getNextQueueAttemptAt } from "../features/imports/lib/queue";
 import { startQueueMonitor } from "../features/imports/lib/queue-monitor";
@@ -100,13 +101,23 @@ export function useWorkspaceController() {
     principal: 0,
     propertyTotal: 0,
   });
-  const [duplicateGroups, setDuplicateGroups] = useState<DuplicateGroupOverview[]>([]);
-  const [duplicateGroupSort, setDuplicateGroupSort] = useState("conflicts");
+  const [duplicateGroupData, setDuplicateGroupData] = useState<DuplicateGroupsResponse>();
+  const [duplicateGroupQuery, setDuplicateGroupQuery] = useState<DuplicateGroupQuery>({
+    page: 1,
+    sort: "conflicts",
+    search: "",
+    source: "",
+    onlyConflicts: false,
+  });
+  const [duplicateGroupRequests] = useState(createLatestRequest);
   const [isLoadingDuplicateGroups, setIsLoadingDuplicateGroups] = useState(false);
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
   const [duplicateAction, setDuplicateAction] = useState<string | null>(null);
-  const [duplicateTotal, setDuplicateTotal] = useState(0);
-  const [duplicateTotals, setDuplicateTotals] = useState({ members: 0, copies: 0 });
+  const duplicateViewParams = new URLSearchParams(location.search);
+  const showingDuplicateGroups =
+    activeTab === "duplicates" &&
+    duplicateViewParams.get("tab") !== "relistings" &&
+    duplicateViewParams.get("view") !== "candidates";
   const [marketStatsError, setMarketStatsError] = useState<string | null>(null);
   const [listingsTotal, setListingsTotal] = useState(0);
   const [currentListingsPage, setCurrentListingsPage] = useState(
@@ -344,12 +355,17 @@ export function useWorkspaceController() {
   useEffect(() => {
     if (state.status !== "ready") return;
     if (activeTab === "map") void refreshMapListings();
-    if (activeTab === "duplicates") void loadDuplicateGroups();
     return () => {
       mapRequests.cancel();
       setIsLoadingMapListings(false);
     };
   }, [state.status, activeTab]);
+
+  useEffect(() => {
+    if (state.status !== "ready" || !showingDuplicateGroups) return;
+    void loadDuplicateGroups();
+    return () => duplicateGroupRequests.cancel();
+  }, [state.status, showingDuplicateGroups, duplicateGroupQuery]);
 
   useEffect(() => {
     if (activeTab !== "stats") return;
@@ -537,10 +553,9 @@ export function useWorkspaceController() {
     refreshComparison,
     removeFromCompare,
     mortgageDraft,
-    duplicateGroups,
-    duplicateGroupSort,
-    duplicateTotal,
-    duplicateTotals,
+    duplicateGroupData,
+    duplicateGroupQuery,
+    setDuplicateGroupQuery,
     duplicateError,
     duplicateAction,
     loadDuplicateGroups,
@@ -778,29 +793,35 @@ export function useWorkspaceController() {
     );
   }
 
-  async function loadDuplicateGroups(limit = 100, sort = duplicateGroupSort) {
-    setDuplicateGroupSort(sort);
-    setIsLoadingDuplicateGroups(true);
-    setDuplicateError(null);
-    try {
-      const response = await apiFetch(
-        `${apiBaseUrl}/api/duplicates/groups?limit=${sort === duplicateGroupSort ? Math.max(limit, duplicateGroups.length) : limit}&summary=true&sort=${encodeURIComponent(sort)}`,
-      );
-      if (!response.ok) throw new Error("Nie udało się pobrać grup duplikatów.");
-      const data = (await response.json()) as {
-        items: DuplicateGroupOverview[];
-        total: number;
-        totalMembers: number;
-        totalCopies: number;
-      };
-      setDuplicateGroups(data.items);
-      setDuplicateTotal(data.total);
-      setDuplicateTotals({ members: data.totalMembers, copies: data.totalCopies });
-    } catch (error) {
-      setDuplicateError(error instanceof Error ? error.message : "Błąd odczytu duplikatów.");
-    } finally {
-      setIsLoadingDuplicateGroups(false);
-    }
+  async function loadDuplicateGroups() {
+    if (!showingDuplicateGroups) return;
+    const { page, sort, search, source, onlyConflicts } = duplicateGroupQuery;
+    const query = new URLSearchParams({
+      summary: "true",
+      limit: "20",
+      page: String(page),
+      sort,
+      search,
+      source,
+      onlyConflicts: String(onlyConflicts),
+    });
+    return duplicateGroupRequests.run(
+      async (signal) => {
+        const response = await apiFetch(`${apiBaseUrl}/api/duplicates/groups?${query}`, { signal });
+        if (!response.ok) throw new Error("Nie udało się pobrać grup duplikatów.");
+        return (await response.json()) as DuplicateGroupsResponse;
+      },
+      {
+        start: () => {
+          setIsLoadingDuplicateGroups(true);
+          setDuplicateError(null);
+        },
+        success: setDuplicateGroupData,
+        error: (error) =>
+          setDuplicateError(error instanceof Error ? error.message : "Błąd odczytu duplikatów."),
+        finish: () => setIsLoadingDuplicateGroups(false),
+      },
+    );
   }
 
   async function unmergeDuplicate(primaryListingId: string, duplicateListingId: string) {

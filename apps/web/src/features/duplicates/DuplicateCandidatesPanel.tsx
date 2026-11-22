@@ -4,18 +4,13 @@ import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { DuplicatePreview } from "./DuplicatePreview";
+import { DuplicateComparisonFacts } from "./DuplicateComparisonFacts";
 import { saveDuplicateReview } from "./review";
 import { removeRejectedPair, type DuplicateReviewEvent } from "./review-state";
 
-export function DuplicateCandidatesPanel({
-  onOpen,
-  onChanged,
-}: {
-  onOpen: (id: string) => void;
-  onChanged: () => void;
-}) {
-  const [range, setRange] = useState("low");
-  const [sort, setSort] = useState("confidence_asc");
+export function DuplicateCandidatesPanel({ onOpen }: { onOpen: (id: string) => void }) {
+  const [range, setRange] = useState("high");
+  const [sort, setSort] = useState("confidence_desc");
   const [page, setPage] = useState(1);
   const [offsets, setOffsets] = useState([0]);
   const offset = offsets[page - 1] ?? 0;
@@ -28,8 +23,8 @@ export function DuplicateCandidatesPanel({
   useEffect(() => {
     const reviewed = (event: Event) => {
       const { pair, status } = (event as CustomEvent<DuplicateReviewEvent>).detail;
-      if (status === "different_listing") setData((current) => removeRejectedPair(current, pair));
-      else setRevision((value) => value + 1);
+      setData((current) => removeRejectedPair(current, pair));
+      if (status === "same_listing") setRevision((value) => value + 1);
     };
     window.addEventListener("mieszkania:duplicate-reviewed", reviewed);
     return () => window.removeEventListener("mieszkania:duplicate-reviewed", reviewed);
@@ -71,11 +66,8 @@ export function DuplicateCandidatesPanel({
           ? "Połączono duplikaty. Zdjęcia i źródła znajdziesz w połączonej ofercie."
           : "Odrzucono powiązanie. Ta para nie będzie proponowana ponownie.",
       );
-      if (status === "different_listing") setData((current) => removeRejectedPair(current, pair));
-      else {
-        setRevision((v) => v + 1);
-        onChanged();
-      }
+      setData((current) => removeRejectedPair(current, pair));
+      if (status === "same_listing") setRevision((v) => v + 1);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Błąd zapisu.");
     } finally {
@@ -84,12 +76,8 @@ export function DuplicateCandidatesPanel({
   }
   return (
     <section className="duplicate-candidates-page">
-      <div className="panel">
+      <div className="panel duplicate-queue-controls">
         <h2>Potencjalne powiązania</h2>
-        <p className="muted">
-          To propozycje do sprawdzenia, a nie połączone oferty. Wynik opisuje podobieństwo danych.
-          Kolejność i zakres obejmują całą kolejkę, także oferty archiwalne.
-        </p>
         <div className="duplicate-toolbar">
           <label>
             <span>Podobieństwo</span>
@@ -97,6 +85,8 @@ export function DuplicateCandidatesPanel({
               label="Podobieństwo"
               value={range}
               onChange={(v) => {
+                if (v === range && page === 1) return;
+                setData(undefined);
                 setRange(v);
                 setPage(1);
                 setOffsets([0]);
@@ -113,6 +103,8 @@ export function DuplicateCandidatesPanel({
               label="Kolejność propozycji"
               value={sort}
               onChange={(v) => {
+                if (v === sort && page === 1) return;
+                setData(undefined);
                 setSort(v);
                 setPage(1);
                 setOffsets([0]);
@@ -140,71 +132,77 @@ export function DuplicateCandidatesPanel({
         )}
         {loading ? (
           <p role="status">Wczytywanie propozycji…</p>
-        ) : (
-          <p className="muted">{data?.total ?? 0} par w wybranym zakresie.</p>
-        )}
+        ) : data ? (
+          <p className="muted">{data.total.toLocaleString("pl-PL")} par w wybranym zakresie.</p>
+        ) : null}
       </div>
-      {!loading &&
-        data?.items.map((pair) => (
-          <article className="panel duplicate-review-v2" key={pair.pairKey}>
-            <div className="section-topline">
-              <h3>Podobieństwo {pair.confidenceScore}%</h3>
-              <span className="pill">
-                {(pair.left.relatedCount ?? 0) + (pair.right.relatedCount ?? 0) + 2} ogłoszeń z
-                powiązaniami
+      {data?.items.map((pair) => (
+        <article className="panel duplicate-review-v2" key={pair.pairKey}>
+          <div className="section-topline">
+            <h3>Podobieństwo {pair.confidenceScore}%</h3>
+            <span className="pill">
+              {(pair.left.relatedCount ?? 0) + (pair.right.relatedCount ?? 0) + 2} ogłoszeń po
+              połączeniu
+            </span>
+          </div>
+          <p className="muted">{pair.reasons.join(" · ")}</p>
+          {pair.addressConflict && <p className="error-text">Rozbieżne adresy w ogłoszeniach</p>}
+          <DuplicateComparisonFacts offers={[pair.left, pair.right]} />
+          {pair.primaryPreview && (
+            <p className="duplicate-primary-preview">
+              <strong>Oferta główna po połączeniu</strong>
+              <span>
+                {pair.primaryPreview.sourceLabel} · {pair.primaryPreview.title}
               </span>
-            </div>
-            <p className="muted">{pair.reasons.join(" · ")}</p>
-            <div className="duplicate-member-grid">
-              {[pair.left, pair.right].map((offer) => (
-                <div className="duplicate-review-member" key={offer.id}>
-                  <div className="duplicate-photo-frame">
-                    <span className="duplicate-source-tag">{offer.sourceLabel}</span>
-                    <DuplicatePreview
-                      id={offer.id}
-                      title={offer.title}
-                      urls={offer.thumbnailUrls ?? []}
-                      sharedFromIndex={offer.thumbnailSharedFromIndex}
-                      onOpen={onOpen}
-                    />
-                  </div>
-                  <div className="duplicate-member-content">
-                    <h4>{offer.title}</h4>
-                    <p>
-                      {offer.priceLabel} · {offer.areaLabel}
-                    </p>
-                    <p className="muted">{offer.addressText}</p>
-                    <button
-                      className="action-button secondary-button"
-                      type="button"
-                      onClick={() => onOpen(offer.id)}
-                    >
-                      Otwórz i porównaj
-                    </button>
-                  </div>
+              <small>Ogłoszenia do dołączenia: {pair.primaryPreview.addedCount}</small>
+            </p>
+          )}
+          <div className="duplicate-member-grid">
+            {[pair.left, pair.right].map((offer) => (
+              <div className="duplicate-review-member" key={offer.id}>
+                <div className="duplicate-photo-frame">
+                  <span className="duplicate-source-tag">{offer.sourceLabel}</span>
+                  <DuplicatePreview
+                    id={offer.id}
+                    title={offer.title}
+                    urls={offer.thumbnailUrls ?? []}
+                    sharedFromIndex={offer.thumbnailSharedFromIndex}
+                    onOpen={onOpen}
+                  />
                 </div>
-              ))}
-            </div>
-            <div className="panel-inline-actions">
-              <button
-                type="button"
-                className="action-button secondary-button"
-                disabled={Boolean(busy)}
-                onClick={() => void review(pair, "different_listing")}
-              >
-                {busy === pair.pairKey ? "Zapisywanie…" : "To nie duplikat"}
-              </button>
-              <button
-                type="button"
-                className="action-button"
-                disabled={Boolean(busy)}
-                onClick={() => void review(pair, "same_listing")}
-              >
-                {busy === pair.pairKey ? "Zapisywanie…" : "Połącz duplikaty"}
-              </button>
-            </div>
-          </article>
-        ))}
+                <div className="duplicate-member-content">
+                  <h4>{offer.title}</h4>
+                  <button
+                    className="action-button secondary-button"
+                    type="button"
+                    onClick={() => onOpen(offer.id)}
+                  >
+                    Otwórz i porównaj
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="panel-inline-actions">
+            <button
+              type="button"
+              className="action-button secondary-button"
+              disabled={loading || Boolean(busy)}
+              onClick={() => void review(pair, "different_listing")}
+            >
+              {busy === pair.pairKey ? "Zapisywanie…" : "To nie duplikat"}
+            </button>
+            <button
+              type="button"
+              className="action-button"
+              disabled={loading || Boolean(busy)}
+              onClick={() => void review(pair, "same_listing")}
+            >
+              {busy === pair.pairKey ? "Zapisywanie…" : "Połącz duplikaty"}
+            </button>
+          </div>
+        </article>
+      ))}
       {!loading && data && !data.items.length && (
         <p className="panel muted">
           Na tej stronie nie ma już propozycji. Możesz przejść dalej lub odświeżyć kolejkę.

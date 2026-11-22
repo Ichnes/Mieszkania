@@ -1,5 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
-import { GitCompareArrows } from "lucide-react";
+import { GitCompareArrows, History } from "lucide-react";
 import { RelistingsPanel } from "../features/relistings/RelistingsPanel";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { DuplicateGroupsPanel } from "../features/duplicates/DuplicateGroupsPanel";
@@ -19,10 +19,9 @@ export function DuplicatesPage({
     | "duplicateAutoMergeError"
     | "relistingScanError"
     | "activeTab"
-    | "duplicateGroups"
-    | "duplicateGroupSort"
-    | "duplicateTotal"
-    | "duplicateTotals"
+    | "duplicateGroupData"
+    | "duplicateGroupQuery"
+    | "setDuplicateGroupQuery"
     | "duplicateError"
     | "duplicateAction"
     | "loadDuplicateGroups"
@@ -42,9 +41,9 @@ export function DuplicatesPage({
     duplicateAutoMergeError,
     relistingScanError,
     activeTab,
-    duplicateGroups,
-    duplicateTotal,
-    duplicateTotals,
+    duplicateGroupData,
+    duplicateGroupQuery,
+    setDuplicateGroupQuery,
     duplicateError,
     duplicateAction,
     loadDuplicateGroups,
@@ -61,42 +60,45 @@ export function DuplicatesPage({
       <Link className="duplicate-back-link" to="/oferty">
         ← Wróć do ofert
       </Link>
-      <nav className="duplicate-tabs" aria-label="Rodzaj powiązania ofert">
-        <button
-          type="button"
-          aria-current={!relistings ? "page" : undefined}
-          onClick={() => setParams({})}
-        >
-          Duplikaty
-        </button>
-        <button
-          type="button"
-          aria-current={relistings ? "page" : undefined}
-          onClick={() => setParams({ tab: "relistings" })}
-        >
-          Oferty wystawione ponownie
-        </button>
-      </nav>
-      <nav className="duplicate-tabs" aria-label="Stan powiązań">
-        <button
-          type="button"
-          aria-current={!candidatesView ? "page" : undefined}
-          onClick={() => setParams(relistings ? { tab: "relistings" } : {})}
-        >
-          {relistings ? "Połączone oferty" : "Połączone grupy do sprawdzenia"}
-        </button>
-        <button
-          type="button"
-          aria-current={candidatesView ? "page" : undefined}
-          onClick={() =>
-            setParams(
-              relistings ? { tab: "relistings", view: "candidates" } : { view: "candidates" },
-            )
-          }
-        >
-          Potencjalne powiązania
-        </button>
-      </nav>
+      <header className="duplicate-navigation">
+        <h1>Powiązania ofert</h1>
+        <nav className="duplicate-navigation-types" aria-label="Rodzaj powiązania ofert">
+          <button
+            type="button"
+            aria-current={!relistings ? "page" : undefined}
+            onClick={() => setParams({})}
+          >
+            <GitCompareArrows size={19} aria-hidden="true" /> Duplikaty
+          </button>
+          <button
+            type="button"
+            aria-current={relistings ? "page" : undefined}
+            onClick={() => setParams({ tab: "relistings" })}
+          >
+            <History size={19} aria-hidden="true" /> Ponowne wystawienia
+          </button>
+        </nav>
+        <nav className="duplicate-navigation-views" aria-label="Stan powiązań">
+          <button
+            type="button"
+            aria-current={!candidatesView ? "page" : undefined}
+            onClick={() => setParams(relistings ? { tab: "relistings" } : {})}
+          >
+            {relistings ? "Połączone" : "Do weryfikacji"}
+          </button>
+          <button
+            type="button"
+            aria-current={candidatesView ? "page" : undefined}
+            onClick={() =>
+              setParams(
+                relistings ? { tab: "relistings", view: "candidates" } : { view: "candidates" },
+              )
+            }
+          >
+            Propozycje
+          </button>
+        </nav>
+      </header>
       {relistings ? (
         <RelistingsPanel
           potential={candidatesView}
@@ -109,14 +111,13 @@ export function DuplicatesPage({
       ) : (
         <>
           {!candidatesView && (
-            <section className="panel duplicate-scan-actions">
-              <GitCompareArrows size={20} aria-hidden="true" />
-              <div>
-                <h3>Połącz duplikaty</h3>
-                <p>
-                  Łączy oferty z identycznymi pierwszymi 25 słowami opisu, także z jednego portalu.
-                </p>
-              </div>
+            <details className="panel duplicate-scan-menu">
+              <summary>
+                <GitCompareArrows size={16} aria-hidden="true" /> Skan i automatyczne łączenie
+              </summary>
+              <p className="muted">
+                Łączy oferty z identycznym początkiem opisu i zgodnym metrażem.
+              </p>
               <button
                 className="action-button secondary-button"
                 type="button"
@@ -131,7 +132,7 @@ export function DuplicatesPage({
                   sprawdzonych
                 </small>
               ) : null}
-            </section>
+            </details>
           )}
           {!candidatesView && duplicateAutoMergeError && (
             <p className="error-text" role="alert">
@@ -139,22 +140,15 @@ export function DuplicatesPage({
             </p>
           )}
           {candidatesView ? (
-            <DuplicateCandidatesPanel
-              onOpen={(id) => void openListing(id)}
-              onChanged={() => void loadDuplicateGroups()}
-            />
+            <DuplicateCandidatesPanel onOpen={(id) => void openListing(id)} />
           ) : activeTab === "duplicates" ? (
             <DuplicateGroupsPanel
-              groups={duplicateGroups}
-              sort={model.duplicateGroupSort}
-              onSortChange={(sort) => void loadDuplicateGroups(100, sort)}
-              total={duplicateTotal}
-              totalMembers={duplicateTotals.members}
-              totalCopies={duplicateTotals.copies}
+              data={duplicateGroupData}
+              query={duplicateGroupQuery}
+              onQueryChange={setDuplicateGroupQuery}
               error={duplicateError}
               busy={duplicateAction}
               onReload={() => void loadDuplicateGroups()}
-              onLoadMore={() => void loadDuplicateGroups(duplicateGroups.length + 100)}
               isLoading={isLoadingDuplicateGroups}
               onOpen={(id) => void openListing(id)}
               onUnmerge={(primaryListingId, duplicateListingId) =>

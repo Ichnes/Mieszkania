@@ -35,11 +35,23 @@ export function registerDuplicatesRoutes(app: FastifyInstance) {
   });
 
   app.get("/api/duplicates/groups", async (request) => {
-    const query = request.query as { limit?: string; summary?: string; sort?: string };
-    const limit = Number(query.limit ?? 200);
-    return query.summary === "true"
-      ? getDuplicateGroupOverviews(limit, true, query.sort)
-      : getDuplicateGroupOverviews(limit, false, query.sort);
+    const query = request.query as {
+      limit?: string;
+      summary?: string;
+      sort?: string;
+      page?: string;
+      search?: string;
+      source?: string;
+      onlyConflicts?: string;
+    };
+    const result = await getDuplicateGroupOverviews(Number(query.limit ?? 200), {
+      page: Number(query.page ?? 1),
+      sort: query.sort,
+      search: query.search,
+      source: query.source,
+      onlyConflicts: query.onlyConflicts === "true",
+    });
+    return query.summary === "true" ? result : result.items;
   });
 
   app.post<{ Body: { primaryListingId?: string; duplicateListingId?: string } }>(
