@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Przegląd zakładki Duplikaty (2026-11-22)
+
+- [x] Odczytowy przegląd Duplikatów i ponownych wystawień w Chromium (1440 i 390 px). Zmierzono ok. 31–32 s dla pierwszej strony 3279 propozycji z zakresu 60–79% i ok. 3 s dla 100 z 4938 połączonych grup. Na telefonie pierwsza karta grupy zaczyna się ok. 1300 px od góry. Wyszukiwanie grup sprawdza tytuły w pobranej paczce. Otwarcie i zamknięcie szczegółów zachowuje widok grup i propozycji. Odczyt potwierdził dołączenie obu archiwalnych kopii do zgłoszonej wcześniej aktywnej oferty.
+- [x] Test PostgreSQL na tabelach tymczasowych potwierdził pomijanie mocnych par. Identyczna para z pełnymi danymi przekracza 100 punktów i znika z kolejki. Ta sama para z mniejszą liczbą zgodnych danych pojawia się z wynikiem 88.
+- [ ] Propozycja do realizacji. Ujednolicić liczenie punktów i granice przedziałów. Przyspieszyć kolejkę propozycji oraz przenieść wyszukiwanie i paginację grup do API. Dodać wyszukiwanie po adresie, portalu i identyfikatorze ogłoszenia.
+- [ ] Propozycja do realizacji. W karcie porównania wyrównać metraż, piętro, pokoje, adres i ceny źródłowe. Oznaczać status ofert, zdjęcia zapożyczone z grupy oraz liczbę ogłoszeń objętych scaleniem. Na telefonie skrócić nagłówek kolejki i pokazać różnice przed zdjęciami.
+- [ ] Propozycja do realizacji. Domyślnie pokazywać najmocniejsze propozycje i obniżać pozycję par z różnymi adresami. Oznaczyć automatyczne łączenie jako osobną akcję i zachować pozycję kolejki po zapisie.
+
 ## Łączenie archiwalnej grupy z aktywną ofertą (2026-11-22)
 
 - [x] Ustalono przyczynę blokady dla grupy dwóch archiwalnych ogłoszeń. Metraże 72,8 i 75,1 m² przekraczają próg 2%.
