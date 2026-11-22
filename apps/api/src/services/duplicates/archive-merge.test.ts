@@ -107,6 +107,30 @@ test(
       const candidates = await getDuplicateCandidates(20, ids[1], { minConfidence: 0 });
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[0])));
       assert.ok(candidates.items.some((pair) => [pair.left.id, pair.right.id].includes(ids[2])));
+      const reviewPair = (leftId: string, rightId: string, confirmArchiveAreaDifference = false) =>
+        app.inject({
+          method: "POST",
+          url: "/api/duplicates/review",
+          payload: { leftId, rightId, status: "same_listing", confirmArchiveAreaDifference },
+        });
+      const archives = await reviewPair(ids[1], ids[2]);
+      assert.equal(archives.statusCode, 200, archives.body);
+      await db.query("update listings set area_sqm = case when id=$1 then 75.1 else 72.8 end", [
+        ids[0],
+      ]);
+      const blocked = await reviewPair(ids[0], archives.json().primaryListingId);
+      assert.equal(blocked.statusCode, 409);
+      assert.equal(blocked.json().canConfirmArchiveAreaDifference, true);
+      assert.match(blocked.json().message, /72,8.*75,1/);
+      assert.equal(
+        (await db.query("select count(*)::int as n from listing_duplicate_group_members")).rows[0]
+          .n,
+        2,
+      );
+      assert.equal(
+        (await db.query("select count(*)::int as n from listing_duplicate_reviews")).rows[0].n,
+        1,
+      );
       const response = await app.inject({
         method: "POST",
         url: "/api/duplicates/review",
@@ -115,6 +139,7 @@ test(
           rightId: ids[0],
           primaryListingId: ids[1],
           status: "same_listing",
+          confirmArchiveAreaDifference: true,
         },
       });
       assert.equal(response.statusCode, 200, response.body);
@@ -143,6 +168,8 @@ test(
       assert.equal(rows.find((row) => row.id === ids[0]).hidden_duplicate_of_id, null);
       assert.equal(rows.find((row) => row.id === ids[1]).hidden_duplicate_of_id, ids[0]);
       assert.equal(rows.find((row) => row.id === ids[1]).status, "removed");
+      assert.equal(rows.find((row) => row.id === ids[2]).hidden_duplicate_of_id, ids[0]);
+      assert.equal(rows.find((row) => row.id === ids[2]).status, "removed");
       assert.equal(
         (await getDuplicateCandidates(20, ids[0], { minConfidence: 0 })).items.some((pair) =>
           [pair.left.id, pair.right.id].includes(ids[1]),
@@ -161,6 +188,10 @@ test(
         `insert into listings(id,source_id,external_id,canonical_url,title,city,area_sqm,price_amount,source_price_amount,status) values($1,$2,'other','https://example.test/other','Other','Warszawa',60,900000,900000,'active')`,
         [otherId, olxSource],
       );
+      const blockedActive = await reviewPair(ids[1], otherId, true);
+      assert.equal(blockedActive.statusCode, 409);
+      assert.equal(blockedActive.json().canConfirmArchiveAreaDifference, false);
+      await db.query("update listings set area_sqm=60");
       const merged = await app.inject({
         method: "POST",
         url: "/api/duplicates/review",
@@ -174,7 +205,7 @@ test(
           [otherId],
         )
       ).rows;
-      assert.equal(members.length, 3);
+      assert.equal(members.length, 4);
       assert.deepEqual(
         members.filter((row) => row.is_primary).map((row) => row.listing_id),
         [ids[0]],

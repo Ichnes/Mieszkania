@@ -4,6 +4,7 @@ import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { DuplicatePreview } from "./DuplicatePreview";
+import { saveDuplicateReview } from "./review";
 import { removeRejectedPair, type DuplicateReviewEvent } from "./review-state";
 
 export function DuplicateCandidatesPanel({
@@ -64,19 +65,7 @@ export function DuplicateCandidatesPanel({
     setBusy(pair.pairKey);
     setError("");
     try {
-      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leftId: pair.left.id,
-          rightId: pair.right.id,
-          status,
-        }),
-      });
-      if (!response.ok) {
-        const failure = await response.json().catch(() => null);
-        throw Error(failure?.message ?? "Nie udało się zapisać decyzji. Spróbuj ponownie.");
-      }
+      if (!(await saveDuplicateReview({ pair, status }))) return;
       setNotice(
         status === "same_listing"
           ? "Połączono duplikaty. Zdjęcia i źródła znajdziesz w połączonej ofercie."

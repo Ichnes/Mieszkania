@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import "../../config";
 import {
   confirmDuplicateGroup,
+  DuplicateAreaConflict,
   getDuplicateCandidates,
   getDuplicateGroupOverviews,
   reviewDuplicateCandidate,
@@ -73,6 +74,7 @@ export function registerDuplicatesRoutes(app: FastifyInstance) {
       primaryListingId?: string;
       status?: "same_listing" | "different_listing";
       notes?: string;
+      confirmArchiveAreaDifference?: boolean;
     };
   }>("/api/duplicates/review", async (request, reply) => {
     if (!request.body?.leftId || !request.body?.rightId || !request.body?.status) {
@@ -80,12 +82,21 @@ export function registerDuplicatesRoutes(app: FastifyInstance) {
       return { message: "Missing duplicate review payload" };
     }
 
-    return reviewDuplicateCandidate({
-      leftId: request.body.leftId,
-      rightId: request.body.rightId,
-      primaryListingId: request.body.primaryListingId,
-      status: request.body.status,
-      notes: request.body.notes,
-    });
+    try {
+      return await reviewDuplicateCandidate({
+        ...request.body,
+        leftId: request.body.leftId,
+        rightId: request.body.rightId,
+        status: request.body.status,
+      });
+    } catch (error) {
+      if (error instanceof DuplicateAreaConflict) {
+        return reply.code(409).send({
+          message: error.message,
+          canConfirmArchiveAreaDifference: error.canConfirmArchive,
+        });
+      }
+      throw error;
+    }
   });
 }

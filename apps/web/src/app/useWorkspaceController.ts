@@ -31,6 +31,7 @@ import { useImportController } from "../features/imports/useImportController";
 import { applyDreamProfile } from "../features/listings/lib/dream-profile";
 import { getOfferStep } from "../features/listings/lib/offer-navigation";
 import { createCandidateCache } from "../features/duplicates/candidate-cache";
+import { saveDuplicateReview } from "../features/duplicates/review";
 import { buildListingInsights } from "../features/listings/lib/insights";
 import { listingHref } from "../features/listings/lib/links";
 import { MortgageDraft } from "../features/mortgage/types";
@@ -1349,21 +1350,8 @@ export function useWorkspaceController() {
     setIsReviewingDuplicatePair(pair.pairKey);
     setDuplicateError(null);
     try {
-      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/review`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          leftId: pair.left.id,
-          rightId: pair.right.id,
-          status,
-        }),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => ({}));
-        throw new Error(data.message ?? "Nie udało się zapisać decyzji o duplikacie.");
-      }
-      const result = (await response.json()) as { primaryListingId?: string };
+      const result = await saveDuplicateReview({ pair, status });
+      if (!result) return;
       duplicateCandidateCache.clear();
       window.dispatchEvent(
         new CustomEvent("mieszkania:duplicate-reviewed", { detail: { pair, status } }),

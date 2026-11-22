@@ -311,11 +311,25 @@ export async function getDuplicateCandidates(
   });
 }
 
+export class DuplicateAreaConflict extends Error {
+  constructor(
+    readonly canConfirmArchive: boolean,
+    minArea: number,
+    maxArea: number,
+    memberCount: number,
+  ) {
+    super(
+      `Metraże w porównywanych ogłoszeniach (${memberCount}) wynoszą od ${minArea.toLocaleString("pl-PL")} do ${maxArea.toLocaleString("pl-PL")} m². Różnica przekracza 2%.`,
+    );
+  }
+}
+
 export async function reviewDuplicateCandidate(input: {
   leftId: string;
   rightId: string;
   primaryListingId?: string;
   status: Exclude<DuplicateReviewStatus, "pending">;
+  confirmArchiveAreaDifference?: boolean;
   notes?: string;
 }) {
   return withDb(async (pool) => {
@@ -349,10 +363,16 @@ export async function reviewDuplicateCandidate(input: {
       );
 
       if (input.status === "same_listing") {
-        if (!(await duplicateGroupsCompatible(db, input.leftId, input.rightId, false))) {
-          throw Object.assign(
-            new Error("Nie można połączyć ofert: różnica metrażu przekracza 2%."),
-            { statusCode: 409 },
+        const check = await checkDuplicateGroups(db, leftId, rightId, false);
+        if (
+          !check.compatible &&
+          !(check.can_confirm_archive && input.confirmArchiveAreaDifference === true)
+        ) {
+          throw new DuplicateAreaConflict(
+            check.can_confirm_archive,
+            Number(check.min_area),
+            Number(check.max_area),
+            check.member_count,
           );
         }
         const primaryListingId = await choosePreferredPrimaryListingId(
@@ -1182,10 +1202,26 @@ export async function duplicateGroupsCompatible(
   rightId: string,
   automatic: boolean,
 ) {
-  const result = await db.query<{ compatible: boolean }>(
+  return (await checkDuplicateGroups(db, leftId, rightId, automatic)).compatible;
+}
+
+async function checkDuplicateGroups(
+  db: QueryableDb,
+  leftId: string,
+  rightId: string,
+  automatic: boolean,
+) {
+  const result = await db.query<{
+    compatible: boolean;
+    can_confirm_archive: boolean;
+    min_area: string | null;
+    max_area: string | null;
+    member_count: number;
+  }>(
     `
     with members as (
-      select l.id, l.area_sqm, l.rooms, l.floor from listings l
+      select l.id, l.area_sqm, l.rooms, l.floor, l.status,
+        coalesce(l.hidden_duplicate_of_id, l.id) as primary_id from listings l
       where l.id in ($1::uuid, $2::uuid) or l.id in (
         select m.listing_id from listing_duplicate_group_members m
         where m.group_id in (select group_id from listing_duplicate_group_members where listing_id in ($1::uuid, $2::uuid))
@@ -1199,11 +1235,15 @@ export async function duplicateGroupsCompatible(
         where r.status = 'different_listing'
           and r.listing_id_left in (select id from members)
           and r.listing_id_right in (select id from members)
-      )) as compatible from members
+      )) as compatible,
+      count(distinct primary_id) = 2 and
+        count(distinct primary_id) filter (where status = 'active') = 1 as can_confirm_archive,
+      min(area_sqm)::text as min_area, max(area_sqm)::text as max_area, count(*)::int as member_count
+    from members
   `,
     [leftId, rightId, automatic],
   );
-  return result.rows[0]?.compatible === true;
+  return result.rows[0];
 }
 
 async function mergeDuplicateGroup(

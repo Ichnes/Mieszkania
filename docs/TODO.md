@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Łączenie archiwalnej grupy z aktywną ofertą (2026-11-22)
+
+- [x] Ustalono przyczynę blokady dla grupy dwóch archiwalnych ogłoszeń. Metraże 72,8 i 75,1 m² przekraczają próg 2%.
+- [x] Dodano ręczne potwierdzenie różnicy metrażu w szczegółach oferty i kolejce duplikatów. API sprawdza status całych grup.
+- [x] Regresja PostgreSQL na odizolowanych danych potwierdza wycofanie zapisu przed akceptacją, dołączenie obu archiwalnych kopii do aktywnej oferty i blokadę dla dwóch aktywnych grup. Cztery testy ukierunkowane przeszły bez pominięć.
+- [x] Chromium na zgłoszonej ofercie przy szerokościach 1440, 1280 i 390 px potwierdza anulowanie i ponowienie po akceptacji. Zapis przechwycono w teście przeglądarkowym. Typecheck i build Docker poprawne, API i web uruchomione. Pełny zestaw testów: 330 API i 158 web poprawnych, 15 API pominiętych środowiskowo. Zakres zakończony.
+
 ## Odrzucanie par bez przeładowania listy (2026-11-16)
 
 - [x] Diagnoza: „To nie duplikat” zwiększało rewizję zapytania, usuwało wszystkie karty na czas pobierania i pobierało kolejkę od nowa.

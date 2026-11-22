@@ -740,7 +740,10 @@ w tym samym mieście, również z tego samego portalu. Normalizacja pomija wielk
 liter i interpunkcję. Różnica metrażu nie może przekroczyć 2% mniejszego metrażu
 (np. 50 i 51 m² — tak, 50 i 60 m² — nie), również po połączeniu całych grup.
 Bez znanego dodatniego metrażu automat nie łączy ofert. Limit 2% znanych metraży
-obowiązuje także przy ręcznym zatwierdzaniu duplikatu.
+obowiązuje także przy ręcznym zatwierdzaniu duplikatu. Jeśli łączysz archiwalne
+ogłoszenie lub archiwalną grupę z aktualną ofertą, kliknij **Połącz duplikaty**.
+Gdy różnica przekracza 2%, zobaczysz zakres metraży i liczbę ogłoszeń w obu grupach.
+Potwierdzenie dołącza całą grupę do aktywnej oferty. Możesz też anulować operację.
 Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania w zakładce **Duplikaty**.
 
