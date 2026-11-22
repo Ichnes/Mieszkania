@@ -45,10 +45,8 @@ export function RelistingsPanel({
       const { match, decision } = (event as CustomEvent<RelistingReviewEvent>).detail;
       setResult((current) => {
         if (!current) return current;
-        const potentialItems = current.potentialItems.filter((item) =>
-          decision === "confirmed"
-            ? item.current.id !== match.current.id
-            : item.current.id !== match.current.id || item.previous.id !== match.previous.id,
+        const potentialItems = current.potentialItems.filter(
+          (item) => item.current.id !== match.current.id || item.previous.id !== match.previous.id,
         );
         const removed = current.potentialItems.length - potentialItems.length;
         const isPair = (item: typeof match) =>

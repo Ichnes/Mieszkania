@@ -426,6 +426,7 @@ export type ListingSummary = {
 
 export type RelatedListingSummary = {
   sourceContactPhone?: string;
+  isActive?: boolean;
   primaryListingId?: string;
   id: string;
   title: string;
@@ -434,6 +435,11 @@ export type RelatedListingSummary = {
   priceLabel: string;
   areaLabel: string;
   relationNote?: string;
+};
+
+export type ListingRelistingHistory = RelistedListingMatch & {
+  archiveCopies: RelatedListingSummary[];
+  reviewable: boolean;
 };
 
 export type RcnComparableTransaction = {

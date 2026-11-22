@@ -385,7 +385,7 @@ export async function ensureRuntimeSchema() {
 
     await db.query(`
       create table if not exists listing_relistings (
-        current_listing_id uuid primary key references listings(id) on delete cascade,
+        current_listing_id uuid not null references listings(id) on delete cascade,
         previous_listing_id uuid not null references listings(id) on delete cascade,
         confidence_score smallint not null,
         reason_summary text not null,
@@ -393,8 +393,18 @@ export async function ensureRuntimeSchema() {
         relisted_price_amount numeric(14, 2),
         detected_at timestamptz not null default now(),
         last_detected_at timestamptz not null default now(),
+        primary key (current_listing_id, previous_listing_id),
         check (current_listing_id <> previous_listing_id)
       );
+      do $$
+      begin
+        if exists (select 1 from pg_constraint
+          where conrelid = 'listing_relistings'::regclass and contype = 'p'
+            and pg_get_constraintdef(oid) = 'PRIMARY KEY (current_listing_id)') then
+          alter table listing_relistings drop constraint listing_relistings_pkey,
+            add primary key (current_listing_id, previous_listing_id);
+        end if;
+      end $$;
     `);
 
     await db.query(`
@@ -423,8 +433,7 @@ export async function ensureRuntimeSchema() {
         primary key (current_listing_id, previous_listing_id),
         check (current_listing_id <> previous_listing_id)
       );
-      create unique index if not exists idx_relisting_manual_current
-        on listing_relisting_reviews(current_listing_id) where decision = 'confirmed';
+      drop index if exists idx_relisting_manual_current;
     `);
 
     await db.query(`

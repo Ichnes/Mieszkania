@@ -2,6 +2,7 @@ import type { RelistedListingMatch } from "@mieszkania/shared";
 import type { Pool } from "pg";
 import { pool } from "../../db";
 import { getEstablishedRelistingMatch } from "./relisting-results";
+import { getListingRelistingCandidates } from "./listing-relistings";
 
 export type RelistingReview = {
   current_listing_id: string;
@@ -23,7 +24,7 @@ export async function reviewRelisting(
     const eligible = await client.query(
       `select current.id from listings current join listings previous on previous.id=$2
       where current.id=$1 and current.status='active' and previous.status='removed'
-        and current.hidden_duplicate_of_id is null and previous.hidden_duplicate_of_id is null
+        and current.hidden_duplicate_of_id is null and previous.hidden_duplicate_of_id is distinct from current.id
         and coalesce(current.exclusion_reason,'') <> 'manual_rejected'
         and coalesce(previous.exclusion_reason,'') <> 'manual_rejected'
         and previous.first_seen_at < current.first_seen_at
@@ -36,15 +37,10 @@ export async function reviewRelisting(
       );
     const existing = (
       await client.query<RelistingReview>(
-        "select * from listing_relisting_reviews where current_listing_id=$1",
-        [currentId],
+        "select * from listing_relisting_reviews where current_listing_id=$1 and previous_listing_id=$2",
+        [currentId, previousId],
       )
-    ).rows;
-    if (
-      decision === "confirmed" &&
-      existing.some((row) => row.decision === "confirmed" && row.previous_listing_id !== previousId)
-    )
-      throw new Error("Ta oferta ma już inne ręcznie potwierdzone połączenie.");
+    ).rows[0];
     const candidate = (
       await client.query<{ match_payload: RelistedListingMatch }>(
         "select match_payload from listing_relisting_candidates where current_listing_id=$1 and previous_listing_id=$2",
@@ -53,8 +49,11 @@ export async function reviewRelisting(
     ).rows[0]?.match_payload;
     const match =
       candidate ??
-      existing.find((row) => row.previous_listing_id === previousId)?.match_payload ??
-      (await getEstablishedRelistingMatch(currentId, previousId, client));
+      existing?.match_payload ??
+      (await getEstablishedRelistingMatch(currentId, previousId, client)) ??
+      (await getListingRelistingCandidates(currentId, client)).find(
+        (item) => item.previous.id === previousId,
+      );
     if (!match) throw new Error("Ta propozycja nie jest już aktualna. Sprawdź oferty ponownie.");
     const reviewed = { ...match, manuallyConfirmed: decision === "confirmed" };
     await client.query(
@@ -66,7 +65,7 @@ export async function reviewRelisting(
     if (decision === "confirmed") {
       await client.query(
         `insert into listing_relistings(current_listing_id,previous_listing_id,confidence_score,reason_summary,previous_price_amount,relisted_price_amount)
-        values($1,$2,$3,$4,$5,$6) on conflict(current_listing_id) do update set previous_listing_id=excluded.previous_listing_id,
+        values($1,$2,$3,$4,$5,$6) on conflict(current_listing_id,previous_listing_id) do update set
         confidence_score=excluded.confidence_score,reason_summary=excluded.reason_summary,previous_price_amount=excluded.previous_price_amount,
         relisted_price_amount=excluded.relisted_price_amount,last_detected_at=now()`,
         [
@@ -78,19 +77,16 @@ export async function reviewRelisting(
           match.current.priceAmount ?? null,
         ],
       );
-      await client.query("delete from listing_relisting_candidates where current_listing_id=$1", [
-        currentId,
-      ]);
     } else {
       await client.query(
         "delete from listing_relistings where current_listing_id=$1 and previous_listing_id=$2",
         [currentId, previousId],
       );
-      await client.query(
-        "delete from listing_relisting_candidates where current_listing_id=$1 and previous_listing_id=$2",
-        [currentId, previousId],
-      );
     }
+    await client.query(
+      "delete from listing_relisting_candidates where current_listing_id=$1 and previous_listing_id=$2",
+      [currentId, previousId],
+    );
     await client.query("update listings set updated_at=now() where id=$1", [currentId]);
     await client.query("commit");
     return { decision, match: reviewed };

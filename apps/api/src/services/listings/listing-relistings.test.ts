@@ -81,7 +81,7 @@ test("weak or conflicting matches require review, and manual decisions survive f
   );
   assert.equal(manual.matches[0].previous.id, old.id);
   assert.equal(manual.matches[0].manuallyConfirmed, true);
-  assert.equal(manual.candidates.length, 0);
+  assert.equal(manual.candidates.length, 1);
 });
 
 test("does not call an overlapping or later archive a relisting", () => {
@@ -169,10 +169,10 @@ test("a generic district, neighborhood or city is not street evidence", () => {
   }
 });
 
-test("keeps multiple plausible archives, caps at five, and strong matches suppress suggestions", () => {
+test("keeps all plausible archives alongside the strongest match", () => {
   const [archive, current] = potentialRows();
   const archives = Array.from({ length: 8 }, (_, i) => ({ ...archive, id: `archive-${i}` }));
-  assert.equal(findRelistedListingRows([...archives, current]).candidates.length, 5);
+  assert.equal(findRelistedListingRows([...archives, current]).candidates.length, 8);
   const result = findRelistedListingRows([
     ...archives,
     { ...archive, id: "strong", description: current.description + " " + description },
@@ -180,7 +180,7 @@ test("keeps multiple plausible archives, caps at five, and strong matches suppre
   ]);
   assert.equal(result.matches.length, 1);
   assert.equal(result.matches[0].previous.id, "strong");
-  assert.equal(result.candidates.length, 0);
+  assert.equal(result.candidates.length, 8);
 });
 
 test("normalizes Polish street prefixes and supports rounding across area buckets", () => {

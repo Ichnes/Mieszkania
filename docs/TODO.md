@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Historia i pojedyncze decyzje o wcześniejszych ofertach (2026-11-22)
+
+- [x] Ustalono, że połączone wcześniej ogłoszenie było zapisane, ale szczegóły pokazywały jedynie kopie bieżącej grupy. Zatwierdzenie wcześniejszej oferty usuwało propozycje całej grupy.
+- [x] Dodano historię z ogłoszeniami wcześniejszych grup, wyszukiwanie propozycji dla otwartej oferty i osobne zatwierdzanie oraz rozłączanie par.
+- [x] Podzielono duplikaty w szczegółach na aktywne i archiwalne. Wiersz „Portale” w „Przeglądzie” pokazuje aktywne linki.
+- [x] Migracja po uruchomieniu Docker zachowała wcześniejsze powiązanie. Na wskazanej ofercie API pokazuje jedno powiązane wcześniejsze ogłoszenie, jego kopię z drugiego portalu i jedną nierozstrzygniętą propozycję.
+- [x] PostgreSQL sprawdził odtworzenie propozycji z archiwum, dwa osobne potwierdzenia, zachowanie pozostałej propozycji po skanie i odrzucenie pojedynczej pary. Cztery testy ukierunkowane przeszły bez pominięć. Pełny zestaw: 330 API i 158 web, 15 pominięć środowiskowych API. Typecheck i build Docker poprawne.
+- [x] Chromium 1440, 1280, 390 i 320 px potwierdził podział, filtr „Portale” i dwa osobne potwierdzenia. Zapis przechwycono w teście. Zakres wdrożony lokalnie i zakończony.
+
 ## Przegląd zakładki Duplikaty (2026-11-22)
 
 - [x] Odczytowy przegląd Duplikatów i ponownych wystawień w Chromium (1440 i 390 px). Zmierzono ok. 31–32 s dla pierwszej strony 3279 propozycji z zakresu 60–79% i ok. 3 s dla 100 z 4938 połączonych grup. Na telefonie pierwsza karta grupy zaczyna się ok. 1300 px od góry. Wyszukiwanie grup sprawdza tytuły w pobranej paczce. Otwarcie i zamknięcie szczegółów zachowuje widok grup i propozycji. Odczyt potwierdził dołączenie obu archiwalnych kopii do zgłoszonej wcześniej aktywnej oferty.

@@ -106,7 +106,7 @@ create table listing_planning_context (
 );
 
 create table listing_relistings (
-  current_listing_id uuid primary key references listings(id) on delete cascade,
+  current_listing_id uuid not null references listings(id) on delete cascade,
   previous_listing_id uuid not null references listings(id) on delete cascade,
   confidence_score smallint not null,
   reason_summary text not null,
@@ -114,6 +114,7 @@ create table listing_relistings (
   relisted_price_amount numeric(14,2),
   detected_at timestamptz not null default now(),
   last_detected_at timestamptz not null default now(),
+  primary key (current_listing_id, previous_listing_id),
   check (current_listing_id <> previous_listing_id)
 );
 
@@ -128,7 +129,6 @@ create table listing_relisting_reviews (
   primary key (current_listing_id, previous_listing_id),
   check (current_listing_id <> previous_listing_id)
 );
-create unique index idx_relisting_manual_current on listing_relisting_reviews(current_listing_id) where decision = 'confirmed';
 
 create table geocode_cache (
   cache_key text primary key,

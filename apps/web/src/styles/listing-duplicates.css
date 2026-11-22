@@ -6,6 +6,31 @@
 .detail-duplicate-group {
   min-width: 0;
 }
+
+.detail-duplicate-status-group + .detail-duplicate-status-group {
+  margin-top: 16px;
+}
+
+.detail-duplicate-status-group h4 {
+  margin: 12px 0 0;
+}
+
+.relisting-archive-copies {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.relisting-archive-copies summary {
+  cursor: pointer;
+}
+
+.relisting-archive-copies li {
+  margin-block: 6px;
+}
+
+.relisting-archive-copies li small {
+  display: block;
+}
 .detail-duplicate-heading {
   display: flex;
   align-items: center;

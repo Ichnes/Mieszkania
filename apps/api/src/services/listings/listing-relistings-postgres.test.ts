@@ -37,6 +37,7 @@ test(
         "listing_relistings",
         "listing_relisting_candidates",
         "listing_relisting_reviews",
+        "listing_duplicate_groups",
         "listing_duplicate_group_members",
         "listing_images",
         "listing_media_assets",
@@ -187,6 +188,45 @@ test(
       assert.equal(downgraded.matched, 0);
       assert.equal(downgraded.potentialCount, 1);
       assert.equal((await db.query("select count(*)::int n from listing_relistings")).rows[0].n, 0);
+      const older = randomUUID();
+      const oldest = randomUUID();
+      for (const id of [older, oldest]) {
+        await db.query(
+          `insert into listings(id,source_id,external_id,canonical_url,title,city,address_text,description,area_sqm,rooms,floor,price_amount,status,first_seen_at,last_seen_at,removed_at)
+           select $2::uuid,source_id,$2::uuid::text,canonical_url,title,city,address_text,description,area_sqm,rooms,floor,price_amount,status,first_seen_at,last_seen_at,removed_at
+           from listings where id=$1`,
+          [ids[0], id],
+        );
+      }
+      // Recover suggestions discarded by older versions without a global rescan.
+      await db.query("update listings set hidden_duplicate_of_id=$1 where id=$2", [ids[0], older]);
+      await db.query("delete from listing_relisting_candidates");
+      const detailUrl = `/api/listings/${ids[1]}/relisting-candidates`;
+      const getDetail = async () => {
+        const detail = await app.inject({ method: "GET", url: detailUrl });
+        assert.equal(detail.statusCode, 200, detail.body);
+        return detail.json();
+      };
+      assert.equal((await getDetail()).items.length, 3);
+      await reviewRelisting(ids[1], ids[0], "confirmed", db);
+      assert.equal((await getDetail()).items.length, 2);
+      await reviewRelisting(ids[1], older, "confirmed", db);
+      const persisted = await getDetail();
+      assert.deepEqual(
+        persisted.items.map((item: { previous: { id: string } }) => item.previous.id),
+        [oldest],
+      );
+      assert.deepEqual(
+        new Set(persisted.history.map((item: { previous: { id: string } }) => item.previous.id)),
+        new Set([ids[0], older]),
+      );
+      await scanRelistedListings(100, db);
+      assert.equal((await getRelistingResults(20, 0, db)).matched, 2);
+      await reviewRelisting(ids[1], older, "rejected", db);
+      const single = await getDetail();
+      assert.equal(single.history.length, 1);
+      assert.equal(single.history[0].previous.id, ids[0]);
+      assert.equal(single.items.length, 1);
     } finally {
       await app.close();
       t.mock.restoreAll();

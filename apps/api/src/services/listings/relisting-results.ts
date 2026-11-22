@@ -1,4 +1,5 @@
 import type {
+  ListingRelistingHistory,
   RelistedListingMatch,
   RelistedListingsResponse,
   RelistingSort,
@@ -7,6 +8,7 @@ import type { Pool } from "pg";
 import { pool } from "../../db";
 import { activeRegion } from "../../domain/region";
 import { getDuplicateListingPreviews } from "../media/listing-preview";
+import { getRelatedListings } from "../duplicates/listing-duplicates";
 import { visibleRelistingCandidateSql } from "./listing-relistings";
 
 const establishedRelistingSql = `
@@ -25,14 +27,20 @@ const establishedRelistingSql = `
     'priceDifferenceAmount',relation.relisted_price_amount-relation.previous_price_amount,
     'priceDifferencePercent',100*(relation.relisted_price_amount-relation.previous_price_amount)/nullif(relation.previous_price_amount,0),
     'confidenceScore',relation.confidence_score,'reasons',string_to_array(relation.reason_summary,', ')
-  ) payload, l.first_seen_at
+  ) payload, l.first_seen_at, l.status as current_status, archived.status as previous_status,
+    l.hidden_duplicate_of_id as current_primary_id, archived.hidden_duplicate_of_id as previous_primary_id,
+    archived.exclusion_reason as previous_exclusion_reason
   from listing_relistings relation
   join listings l on l.id=relation.current_listing_id
   join listings archived on archived.id=relation.previous_listing_id
   join sources current_source on current_source.id=l.source_id
   join sources previous_source on previous_source.id=archived.source_id
+`;
+
+const currentRelistingSql = `
+  ${establishedRelistingSql}
   where l.status='active' and l.hidden_duplicate_of_id is null
-    and archived.status='removed' and archived.hidden_duplicate_of_id is null
+    and archived.status='removed' and archived.hidden_duplicate_of_id is distinct from l.id
     and coalesce(archived.exclusion_reason,'') <> 'manual_rejected'
 `;
 
@@ -43,11 +51,45 @@ export async function getEstablishedRelistingMatch(
 ) {
   const result = await db.query<{ payload: RelistedListingMatch }>(
     `select jsonb_strip_nulls(match.payload) payload from (
-      ${establishedRelistingSql} and l.id=$1 and archived.id=$2
+      ${currentRelistingSql} and l.id=$1 and archived.id=$2
     ) match`,
     [currentId, previousId],
   );
   return result.rows[0]?.payload;
+}
+
+export async function getListingRelistingHistory(listingId: string) {
+  const { rows } = await pool.query<{ payload: RelistedListingMatch; reviewable: boolean }>(
+    `select jsonb_strip_nulls(history.payload) as payload,
+      history.current_status='active' and history.previous_status='removed'
+        and history.current_primary_id is null and history.previous_primary_id is distinct from (history.payload->'current'->>'id')::uuid
+        and coalesce(history.previous_exclusion_reason,'') <> 'manual_rejected' as reviewable
+      from (${establishedRelistingSql}
+        join listings focus on focus.id=$1
+        where coalesce(focus.hidden_duplicate_of_id,focus.id) in (
+          coalesce(l.hidden_duplicate_of_id,l.id), coalesce(archived.hidden_duplicate_of_id,archived.id)
+        )
+      ) history
+      order by (history.payload->'previous'->>'eventAt')::timestamptz desc, history.payload->'previous'->>'id'`,
+    [listingId],
+  );
+  return rows.map(({ payload, reviewable }) => ({ ...payload, reviewable }));
+}
+
+export async function addRelistingArchiveCopies(
+  items: Array<RelistedListingMatch & Partial<Pick<ListingRelistingHistory, "archiveCopies">>>,
+) {
+  const copies = new Map<string, ReturnType<typeof getRelatedListings>>();
+  await Promise.all(
+    items.map(async (item) => {
+      let archiveCopies = copies.get(item.previous.id);
+      if (!archiveCopies) {
+        archiveCopies = getRelatedListings(item.previous.id);
+        copies.set(item.previous.id, archiveCopies);
+      }
+      item.archiveCopies = await archiveCopies;
+    }),
+  );
 }
 
 // Read saved relations without rerunning the matching algorithm or changing user decisions.
@@ -84,7 +126,7 @@ export async function getRelistingResults(
       values,
     );
   const queries = await Promise.allSettled([
-    readPage(`${establishedRelistingSql} and l.city=any($3::text[])`, "newest"),
+    readPage(`${currentRelistingSql} and l.city=any($3::text[])`, "newest"),
     readPage(
       `select candidate.match_payload payload from listings l
         cross join lateral (select rc.match_payload ${visibleRelistingCandidateSql}) candidate

@@ -636,11 +636,11 @@ bez ponownego pobierania kolejki ani przeładowania pozostałych kart.
 Różnica cen propozycji jest porównaniem dwóch
 ogłoszeń, a nie potwierdzoną zmianą ceny tego samego mieszkania.
 
-Propozycje zapisują się po skanie. Na aktywnej ofercie pojawia się oznaczenie
-**Potencjalnie w archiwum**, a w szczegółach lista podobnych archiwalnych ogłoszeń,
-także po odświeżeniu strony. Pokazujemy do pięciu najlepszych propozycji na ofertę.
-Nie są automatycznie łączone ani oznaczane jako potwierdzone ponowne wystawienia.
-Ponowny skan odświeża propozycje; ręcznie odrzucone i ukryte duplikaty są pomijane.
+Propozycje zapisują się po skanie. Szczegóły aktywnej oferty wyszukują też wcześniejsze
+ogłoszenia na żądanie. **Powiąż tę ofertę** zapisuje jedną parę i pozostawia pozostałe
+propozycje do rozstrzygnięcia. W zakładce **Duplikaty** sekcja **Powiązane wcześniejsze
+ogłoszenia** pokazuje historię z linkami i połączonymi kopiami. Każdą parę można
+rozłączyć osobno. Ręcznie odrzucone pary są pomijane podczas kolejnych skanów.
 
 Automatyczne powiązanie wymaga mocnych zgodności, wyniku co najmniej 90% i braku
 sprzeczności w piętrze/numerze budynku. Niższe wyniki, np. 70%, sprawdź przyciskami
@@ -755,6 +755,8 @@ Pary oznaczone jako różne oferty pozostają rozdzielone.
 Reguła działa podczas przetwarzania ofert i skanowania w zakładce **Duplikaty**.
 
 W szczegółach oferty zakładka **Duplikaty** pokazuje połączone ogłoszenia i kandydatów.
+Aktywne i archiwalne ogłoszenia są w osobnych sekcjach. W **Przeglądzie** wiersz
+**Portale** zawiera linki do aktywnych ogłoszeń.
 **Potencjalne duplikaty** są też dostępne w **Przeglądzie**, nad dojazdami do pracy,
 z tymi samymi przyciskami do rozstrzygania kandydatów.
 Wyniki są pamiętane przez 5 minut w bieżącej sesji (do 100 ofert), także gdy lista

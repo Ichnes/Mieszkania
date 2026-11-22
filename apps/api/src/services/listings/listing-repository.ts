@@ -80,6 +80,19 @@ import {
 } from "./listing-title-location";
 import { getListingViewing } from "./listing-viewings";
 
+const representativeRelistingJoin = `
+  left join lateral (
+    select relation.* from listing_relistings relation
+    join listings previous on previous.id = relation.previous_listing_id
+    where relation.current_listing_id = l.id and previous.status = 'removed'
+      and previous.hidden_duplicate_of_id is distinct from l.id
+      and coalesce(previous.exclusion_reason, '') <> 'manual_rejected'
+    order by coalesce(previous.removed_at, previous.last_seen_at) desc,
+      relation.detected_at desc, relation.previous_listing_id
+    limit 1
+  ) lr on true
+`;
+
 type ListingRow = {
   id: string;
   canonical_url: string;
@@ -255,7 +268,7 @@ export async function getMapListings() {
         cover.source_url as thumbnail_url
       from listings l
       join sources s on s.id = l.source_id
-      left join listing_relistings lr on lr.current_listing_id = l.id
+      ${representativeRelistingJoin}
       left join listing_manual_overrides lmo on lmo.listing_id = l.id
       left join lateral (
         select previous_price_amount, new_price_amount
@@ -581,7 +594,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         join sources s on s.id = l.source_id
         left join listing_viewings lv on lv.listing_id = l.id
         left join listing_manual_overrides lmo on lmo.listing_id = l.id
-        left join listing_relistings lr on lr.current_listing_id = l.id
+        ${representativeRelistingJoin}
         left join lateral (
           select payload_raw
           from listing_snapshots
@@ -1094,7 +1107,7 @@ async function getListingsPageByScope(
         join sources s on s.id = l.source_id
         left join listing_viewings lv on lv.listing_id = l.id
         left join listing_manual_overrides lmo on lmo.listing_id = l.id
-        left join listing_relistings lr on lr.current_listing_id = l.id
+        ${representativeRelistingJoin}
         left join lateral (
           select id, xmin::text as row_version
           from listing_snapshots

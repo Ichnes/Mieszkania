@@ -10,10 +10,12 @@ import { getListingPlanningContext } from "../../services/insights/listing-plann
 import { reviewRelisting } from "../../services/listings/relisting-review";
 import {
   addRelistingPreviews,
+  addRelistingArchiveCopies,
+  getListingRelistingHistory,
   getRelistingResults,
 } from "../../services/listings/relisting-results";
 import {
-  getPotentialRelistings,
+  getListingRelistingCandidates,
   scanRelistedListings,
 } from "../../services/listings/listing-relistings";
 import {
@@ -305,9 +307,13 @@ export function registerListingsRoutes(app: FastifyInstance) {
       if (!/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(request.params.id)) {
         return reply.code(400).send({ message: "Nieprawidłowy identyfikator oferty." });
       }
-      const items = await getPotentialRelistings(request.params.id);
-      await addRelistingPreviews(items);
-      return { items };
+      const [items, history] = await Promise.all([
+        getListingRelistingCandidates(request.params.id),
+        getListingRelistingHistory(request.params.id),
+      ]);
+      const matches = [...items, ...history];
+      await Promise.all([addRelistingPreviews(matches), addRelistingArchiveCopies(matches)]);
+      return { items, history };
     },
   );
 

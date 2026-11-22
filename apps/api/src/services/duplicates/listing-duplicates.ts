@@ -56,6 +56,7 @@ type DuplicateCandidateRow = {
 };
 
 type RelatedListingRow = {
+  status: string;
   source_contact_phone: string | null;
   primary_listing_id: string;
   id: string;
@@ -1059,6 +1060,7 @@ async function getRelatedListingsWithDb(
       select
         other.id,
         other.title,
+        other.status,
         other.canonical_url,
         other.source_contact_phone,
         s.name as source_label,
@@ -1083,6 +1085,7 @@ async function getRelatedListingsWithDb(
   return result.rows.map((row) => ({
     id: row.id,
     title: row.title,
+    isActive: row.status === "active",
     canonicalUrl: row.canonical_url,
     sourceContactPhone: row.source_contact_phone ?? undefined,
     sourceLabel: row.source_label ?? undefined,

@@ -37,6 +37,8 @@ type PreparedRelistingRow = RelistingMatchRow & {
   streetKey: string;
 };
 
+type RelistingPairRow = { current_listing_id: string; previous_listing_id: string };
+
 const descriptionPrefixWords = 30;
 const descriptionSimilarityThreshold = 0.82;
 
@@ -48,7 +50,8 @@ export const visibleRelistingCandidateSql = `
     and l.status = 'active' and l.hidden_duplicate_of_id is null
     and archived.status = 'removed' and archived.hidden_duplicate_of_id is null
     and coalesce(archived.exclusion_reason, '') <> 'manual_rejected'
-    and not exists (select 1 from listing_relistings confirmed where confirmed.current_listing_id = l.id)
+    and not exists (select 1 from listing_relistings confirmed
+      where confirmed.current_listing_id = l.id and confirmed.previous_listing_id = rc.previous_listing_id)
     and not exists (select 1 from listing_relisting_reviews review where review.current_listing_id=rc.current_listing_id and review.previous_listing_id=rc.previous_listing_id and review.decision='rejected')
 `;
 
@@ -68,12 +71,38 @@ export async function getPotentialRelistings(
   return result.rows.map((row) => row.match_payload);
 }
 
-export async function scanRelistedListings(
-  limit = 100,
-  db: Pool = pool,
-): Promise<RelistedListingsScanResponse> {
-  const safeLimit = Math.max(1, Math.min(limit, 500));
+export async function getListingRelistingCandidates(
+  listingId: string,
+  db: Pick<Pool, "query"> = pool,
+): Promise<RelistedListingMatch[]> {
+  const [rows, stored, reviews, links] = await Promise.all([
+    readRelistingRows(db, listingId),
+    getPotentialRelistings(listingId, db),
+    db.query<RelistingReview>(
+      "select * from listing_relisting_reviews where current_listing_id=$1",
+      [listingId],
+    ),
+    db.query<{ previous_listing_id: string }>(
+      "select previous_listing_id from listing_relistings where current_listing_id=$1",
+      [listingId],
+    ),
+  ]);
+  const { matches, candidates } = findRelistedListingRows(rows, reviews.rows);
+  const linked = new Set(links.rows.map(({ previous_listing_id }) => previous_listing_id));
+  const pending = new Map<string, RelistedListingMatch>();
+  for (const item of [...stored, ...candidates, ...matches]) {
+    if (!item.manuallyConfirmed && !linked.has(item.previous.id))
+      pending.set(item.previous.id, item);
+  }
+  return [...pending.values()].sort(
+    (a, b) =>
+      b.confidenceScore - a.confidenceScore ||
+      b.previous.eventAt.localeCompare(a.previous.eventAt) ||
+      a.previous.id.localeCompare(b.previous.id),
+  );
+}
 
+async function readRelistingRows(db: Pick<Pool, "query">, listingId?: string) {
   const result = await db.query<{
     id: string;
     status: "active" | "removed";
@@ -115,16 +144,22 @@ export async function scanRelistedListings(
         from listings l
         join sources s on s.id = l.source_id
         where l.status in ('active', 'removed')
-          and l.hidden_duplicate_of_id is null
+          and (l.hidden_duplicate_of_id is null
+            or ($2::uuid is not null and l.status='removed' and l.hidden_duplicate_of_id <> $2))
           and l.rooms is not null
           and l.area_sqm is not null
           and l.city = any($1::text[])
           and (l.status = 'active' or coalesce(l.exclusion_reason, '') <> 'manual_rejected')
+          and ($2::uuid is null or l.id = $2 or (l.status = 'removed' and exists (
+            select 1 from listings target where target.id = $2 and target.status = 'active'
+              and target.hidden_duplicate_of_id is null and target.city = l.city and target.rooms = l.rooms
+              and l.area_sqm between target.area_sqm - 3 and target.area_sqm + 3
+          )))
       `,
-    [activeRegion.supportedCities],
+    [activeRegion.supportedCities, listingId ?? null],
   );
 
-  const rows: RelistingMatchRow[] = result.rows.map((row) => ({
+  return result.rows.map<RelistingMatchRow>((row) => ({
     id: row.id,
     status: row.status,
     title: row.title,
@@ -143,8 +178,21 @@ export async function scanRelistedListings(
     lastSeenAt: row.last_seen_at,
     removedAt: row.removed_at,
   }));
-  const reviews = (await db.query<RelistingReview>("select * from listing_relisting_reviews")).rows;
-  const { matches, candidates } = findRelistedListingRows(rows, reviews);
+}
+
+export async function scanRelistedListings(
+  limit = 100,
+  db: Pool = pool,
+): Promise<RelistedListingsScanResponse> {
+  const safeLimit = Math.max(1, Math.min(limit, 500));
+  const [rows, reviews, existing] = await Promise.all([
+    readRelistingRows(db),
+    db.query<RelistingReview>("select * from listing_relisting_reviews"),
+    db.query<RelistingPairRow>(
+      "select current_listing_id, previous_listing_id from listing_relistings",
+    ),
+  ]);
+  const { matches, candidates } = findRelistedListingRows(rows, reviews.rows, existing.rows);
 
   const client = await db.connect();
   try {
@@ -155,12 +203,15 @@ export async function scanRelistedListings(
     await client.query(
       `delete from listing_relistings relation
       where relation.current_listing_id=any($1::uuid[])
-        and not (relation.current_listing_id=any($2::uuid[]))
+        and not exists(select 1 from unnest($2::uuid[], $3::uuid[]) kept(current_id, previous_id)
+          where kept.current_id=relation.current_listing_id and kept.previous_id=relation.previous_listing_id)
         and not exists(select 1 from listing_relisting_reviews review
-          where review.current_listing_id=relation.current_listing_id and review.decision='confirmed')`,
+          where review.current_listing_id=relation.current_listing_id
+            and review.previous_listing_id=relation.previous_listing_id and review.decision='confirmed')`,
       [
         rows.filter((row) => row.status === "active").map((row) => row.id),
         matches.map((match) => match.current.id),
+        matches.map((match) => match.previous.id),
       ],
     );
     if (matches.length > 0) {
@@ -201,20 +252,11 @@ export async function scanRelistedListings(
           )
           where not exists (select 1 from listing_relisting_reviews review
             where review.current_listing_id=match.current_listing_id
-              and (review.decision='confirmed' or review.previous_listing_id=match.previous_listing_id))
-          on conflict (current_listing_id)
+              and review.previous_listing_id=match.previous_listing_id)
+          on conflict (current_listing_id, previous_listing_id)
           do update set
-            previous_listing_id = excluded.previous_listing_id,
             confidence_score = excluded.confidence_score,
             reason_summary = excluded.reason_summary,
-            previous_price_amount = case
-              when listing_relistings.previous_listing_id <> excluded.previous_listing_id then excluded.previous_price_amount
-              else listing_relistings.previous_price_amount
-            end,
-            relisted_price_amount = case
-              when listing_relistings.previous_listing_id <> excluded.previous_listing_id then excluded.relisted_price_amount
-              else listing_relistings.relisted_price_amount
-            end,
             last_detected_at = now()
         `,
         [JSON.stringify(persistedMatches)],
@@ -231,7 +273,7 @@ export async function scanRelistedListings(
           from jsonb_array_elements($1::jsonb) item
           where not exists (select 1 from listing_relisting_reviews review
             where review.current_listing_id=(item->'current'->>'id')::uuid
-              and (review.decision='confirmed' or review.previous_listing_id=(item->'previous'->>'id')::uuid))
+              and review.previous_listing_id=(item->'previous'->>'id')::uuid)
         `,
         [JSON.stringify(candidates)],
       );
@@ -261,6 +303,7 @@ export function matchRelistedListingRows(rows: RelistingMatchRow[]): RelistedLis
 export function findRelistedListingRows(
   rows: RelistingMatchRow[],
   reviews: RelistingReview[] = [],
+  existing: RelistingPairRow[] = [],
 ): {
   matches: RelistedListingMatch[];
   candidates: RelistedListingMatch[];
@@ -279,14 +322,27 @@ export function findRelistedListingRows(
 
   const matches: RelistedListingMatch[] = [];
   const potential: RelistedListingMatch[] = [];
+  const archiveIds = new Set(archived.map((row) => row.id));
+  const reviewsByCurrent = new Map<string, Map<string, RelistingReview>>();
+  const linkedPairs = new Set(
+    existing.map((row) => `${row.current_listing_id}:${row.previous_listing_id}`),
+  );
+  for (const review of reviews) {
+    let byArchive = reviewsByCurrent.get(review.current_listing_id);
+    if (!byArchive) {
+      byArchive = new Map();
+      reviewsByCurrent.set(review.current_listing_id, byArchive);
+    }
+    byArchive.set(review.previous_listing_id, review);
+  }
   for (const current of active) {
-    const confirmed = reviews.find(
-      (review) => review.current_listing_id === current.id && review.decision === "confirmed",
-    );
-    if (confirmed) {
-      if (rows.some((row) => row.id === confirmed.previous_listing_id && row.status === "removed"))
-        matches.push({ ...confirmed.match_payload, manuallyConfirmed: true });
-      continue;
+    const decisions = reviewsByCurrent.get(current.id);
+    let manuallyLinked = false;
+    for (const review of decisions?.values() ?? []) {
+      if (review.decision === "confirmed" && archiveIds.has(review.previous_listing_id)) {
+        matches.push({ ...review.match_payload, manuallyConfirmed: true });
+        manuallyLinked = true;
+      }
     }
     const candidates = new Map<string, PreparedRelistingRow>();
     const areaBucket = Math.floor(current.areaSqm);
@@ -297,15 +353,7 @@ export function findRelistedListingRows(
     }
 
     const scored = [...candidates.values()]
-      .filter(
-        (previous) =>
-          !reviews.some(
-            (review) =>
-              review.current_listing_id === current.id &&
-              review.previous_listing_id === previous.id &&
-              review.decision === "rejected",
-          ),
-      )
+      .filter((previous) => decisions?.get(previous.id)?.decision !== "rejected")
       .map((previous) => scoreRelisting(previous, current))
       .filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
       .sort(
@@ -315,9 +363,17 @@ export function findRelistedListingRows(
             new Date(left.match.previous.eventAt).getTime(),
       );
 
-    const best = scored.find((item) => item.strong);
-    if (best) matches.push(best.match);
-    else potential.push(...scored.slice(0, 5).map((item) => item.match));
+    const best = scored.find(
+      (item) =>
+        item.strong &&
+        (!manuallyLinked || linkedPairs.has(`${current.id}:${item.match.previous.id}`)),
+    );
+    if (best && !decisions?.has(best.match.previous.id)) matches.push(best.match);
+    potential.push(
+      ...scored
+        .filter((item) => item !== best && !decisions?.has(item.match.previous.id))
+        .map((item) => item.match),
+    );
   }
 
   matches.sort(
