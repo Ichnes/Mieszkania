@@ -74,16 +74,30 @@ export class ListingUnavailableBeforeImportError extends Error {
 // Archive only the status: unavailable pages may contain no facts, or prices/photos
 // of recommended offers. Never replace the last saved snapshot with that content.
 export async function archiveUnavailableListing(
-  input: { sourceKey: string; externalId: string; url: string; html: string },
+  input: {
+    sourceKey: string;
+    externalId: string;
+    url: string;
+    html: string;
+    statusCode?: number;
+    unavailableReason?: string;
+  },
   archive = markListingArchived,
 ) {
-  if (!isUnavailableListingDocument({ url: input.url, html: input.html, statusCode: 200 }))
+  if (
+    !input.unavailableReason &&
+    !isUnavailableListingDocument({
+      url: input.url,
+      html: input.html,
+      statusCode: input.statusCode ?? 200,
+    })
+  )
     return undefined;
   const result = await archive({
     sourceKey: input.sourceKey,
     externalId: input.externalId,
     canonicalUrl: input.url,
-    reason: "Portal oznaczył ofertę jako usuniętą lub nieaktualną",
+    reason: input.unavailableReason ?? "Portal oznaczył ofertę jako usuniętą lub nieaktualną",
   });
   if (!result) throw new ListingUnavailableBeforeImportError(input.url);
   return {

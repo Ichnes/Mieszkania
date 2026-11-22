@@ -25,7 +25,7 @@ import {
   isUnavailableListingDocument,
   ListingUnavailableBeforeImportError,
 } from "../../services/listings/listing-archive";
-import type { ParsedListing, SourceListingReference } from "../types";
+import type { FetchedListingDocument, ParsedListing, SourceListingReference } from "../types";
 
 const sourceKey = "adresowo";
 
@@ -215,8 +215,17 @@ export class AdresowoCollector {
       externalId,
       url,
       html: page.html,
+      statusCode: page.statusCode,
+      unavailableReason: isAdresowoSearchRedirect(page)
+        ? "Adres ogłoszenia przekierowuje do wyników Adresowo"
+        : undefined,
     });
     if (unavailable) return unavailable;
+    if (page.finalUrl) {
+      const target = new URL(page.finalUrl);
+      if (!isAdresowoHost(target.hostname) || externalIdFromUrl(target.href) !== externalId)
+        throw new Error(`UNEXPECTED_ADRESOWO_LISTING_DOCUMENT: ${url}`);
+    }
     const parsed = parseListing(url, page.html, page.text, externalId);
     if (!parsed.priceAmount && parsed.status !== "removed")
       throw new Error(`MISSING_PRICE: ${externalId} (${url})`);
@@ -292,11 +301,30 @@ export function buildSearchUrl(
 }
 
 function externalIdFromUrl(url: string) {
-  const id = url.match(/-([a-z]\d[a-z]\d[a-z]\d)(?:$|[?#])/i)?.[1]?.toLowerCase();
+  const id = new URL(url).pathname.match(/-([a-z]\d[a-z]\d[a-z]\d)\/?$/i)?.[1]?.toLowerCase();
   return `adresowo-${id ?? createHash("sha256").update(url).digest("hex").slice(0, 16)}`;
 }
 
+function isAdresowoHost(hostname: string) {
+  return hostname === "adresowo.pl" || hostname.endsWith(".adresowo.pl");
+}
+
+function isAdresowoSearchRedirect({ url, finalUrl }: FetchedListingDocument) {
+  if (!finalUrl || !new URL(url).pathname.startsWith("/o/")) return false;
+  const target = new URL(finalUrl);
+  return (
+    isAdresowoHost(target.hostname) &&
+    /^\/(?:f|mieszkania|domy|dzialki|nieruchomosci-komercyjne)(?:\/|$)/i.test(target.pathname)
+  );
+}
+
 async function fetchHtml(url: string) {
+  const document = await fetchDocument(url);
+  if (document.statusCode >= 400) throw new Error(`HTTP ${document.statusCode}: ${url}`);
+  return document.html;
+}
+
+async function fetchDocument(url: string): Promise<FetchedListingDocument> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
@@ -304,11 +332,18 @@ async function fetchHtml(url: string) {
         headers: requestHeaders,
         signal: AbortSignal.timeout(45_000),
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
-      return response.text();
+      if (!response.ok && response.status !== 404 && response.status !== 410)
+        throw new Error(`HTTP ${response.status}: ${url}`);
+      return {
+        url,
+        finalUrl: response.url || url,
+        statusCode: response.status,
+        html: await response.text(),
+      };
     } catch (error) {
       if (error instanceof TypeError && error.message === "fetch failed") {
-        return fetchTrustedAdresowoPage(url);
+        const document = await fetchTrustedAdresowoPage(url);
+        return { ...document, url };
       }
       lastError = error;
       if (attempt < 3) await delay(attempt * 900);
@@ -317,9 +352,9 @@ async function fetchHtml(url: string) {
   throw lastError instanceof Error ? lastError : new Error(`Adresowo fetch failed: ${url}`);
 }
 
-function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<string> {
+function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<FetchedListingDocument> {
   const target = new URL(url);
-  if (target.hostname !== "adresowo.pl" && !target.hostname.endsWith(".adresowo.pl")) {
+  if (!isAdresowoHost(target.hostname)) {
     return Promise.reject(
       new Error(`Refusing TLS fallback for untrusted Adresowo host ${target.hostname}`),
     );
@@ -334,10 +369,7 @@ function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<strin
         if (location && status >= 300 && status < 400 && redirectsLeft > 0) {
           response.resume();
           const redirectedUrl = new URL(location, url);
-          if (
-            redirectedUrl.hostname !== "adresowo.pl" &&
-            !redirectedUrl.hostname.endsWith(".adresowo.pl")
-          ) {
+          if (!isAdresowoHost(redirectedUrl.hostname)) {
             rejectPage(
               new Error(`Refusing untrusted Adresowo redirect to ${redirectedUrl.hostname}`),
             );
@@ -349,14 +381,21 @@ function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<strin
           );
           return;
         }
-        if (status < 200 || status >= 300) {
+        if ((status < 200 || status >= 300) && status !== 404 && status !== 410) {
           response.resume();
           rejectPage(new Error(`HTTP ${status}: ${url}`));
           return;
         }
         const chunks: Buffer[] = [];
         response.on("data", (chunk: Buffer | Uint8Array) => chunks.push(Buffer.from(chunk)));
-        response.on("end", () => resolvePage(Buffer.concat(chunks).toString("utf8")));
+        response.on("end", () =>
+          resolvePage({
+            url,
+            finalUrl: url,
+            statusCode: status,
+            html: Buffer.concat(chunks).toString("utf8"),
+          }),
+        );
       },
     );
     request.on("timeout", () =>
@@ -368,8 +407,8 @@ function fetchTrustedAdresowoPage(url: string, redirectsLeft = 4): Promise<strin
 }
 
 async function fetchStaticPage(url: string) {
-  const html = await fetchHtml(url);
-  return { html, text: strip(html) };
+  const document = await fetchDocument(url);
+  return { ...document, text: strip(document.html) };
 }
 
 async function fetchRenderedPage(url: string) {
@@ -378,7 +417,15 @@ async function fetchRenderedPage(url: string) {
   try {
     const page = await browser.newPage();
     const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60_000 });
-    if (response && response.status() >= 400) throw new Error(`HTTP ${response.status()}: ${url}`);
+    const statusCode = response?.status() ?? 200;
+    const finalUrl = page.url();
+    if (
+      statusCode === 404 ||
+      statusCode === 410 ||
+      isAdresowoSearchRedirect({ url, finalUrl, statusCode, html: "" })
+    )
+      return { url, finalUrl, statusCode, html: await page.content(), text: "" };
+    if (statusCode >= 400) throw new Error(`HTTP ${statusCode}: ${url}`);
     for (const name of ["Tylko niezbędne", "Akceptuj"]) {
       const button = page.getByRole("button", { name: new RegExp(name, "i") }).first();
       if (await button.count()) {
@@ -407,7 +454,13 @@ async function fetchRenderedPage(url: string) {
       await description.click({ timeout: 4_000, force: true }).catch(() => undefined);
       await page.waitForTimeout(150);
     }
-    return { html: await page.content(), text: await page.locator("body").innerText() };
+    return {
+      url,
+      finalUrl: page.url(),
+      statusCode,
+      html: await page.content(),
+      text: await page.locator("body").innerText(),
+    };
   } finally {
     await browser.close();
   }
@@ -473,7 +526,7 @@ export function parseListing(
     latitude: amount(string(geo?.latitude)),
     longitude: amount(string(geo?.longitude)),
     sourceContactPhone: phone,
-    priceAmount: amount(string(offer?.price) ?? text.match(/([\d\s.]+)\s*zł/i)?.[1]),
+    priceAmount: amount(string(offer?.price)),
     areaSqm: area,
     rooms,
     floor,

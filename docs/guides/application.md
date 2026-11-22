@@ -410,7 +410,9 @@ Jeśli również przeglądarka odmawia dostępu (403/429), OLX odkłada pozosta�
 i wstrzymuje kolejne partie na 30 minut. Zachowuje zapisane oferty; odmowa dostępu
 nie oznacza, że ogłoszenie zostało usunięte.
 
-Adresowo: komunikat **Ogłoszenie usunięte** oznacza ofertę archiwalną.
+Adresowo archiwizuje zapisane ogłoszenie po komunikacie **Ogłoszenie usunięte**,
+odpowiedzi HTTP 404/410 lub przekierowaniu na listę wyników. Cena pochodzi z danych
+konkretnego ogłoszenia.
 Maxon odczytuje aktualne linki `/oferta/…-ID` i dane strukturalne oferty, w tym cenę,
 metraż i zdjęcia. Stary adres `/mieszkania/oferta/…` jest dopasowywany do mapy strony
 wyłącznie po identycznym ID. Brak odpowiednika lub przekierowanie na listę ofert

@@ -4,7 +4,9 @@
 
 - [x] Odtworzono błąd na bieżącej odpowiedzi HTTP. Adres niedostępnego ogłoszenia przekierowuje na wyniki dzielnicy z kodem 200. Parser oznacza je jako aktywne i zapisuje średnią cenę za m² jako cenę całkowitą. Synchronizacja wybiera tę wartość jako najniższą w grupie.
 - [x] Zestawiono migawki portali i zdarzenia cenowe. Otodom oraz Domiporta potwierdzają aktualną kwotę. Zmiany pochodzące z przekierowania stanowią 47 błędnych wpisów w historii głównej oferty. Dokładny dzień realnej obniżki jest nieznany.
-- [ ] Zapobiec zapisywaniu średniej z listy wyników jako ceny konkretnej oferty. Ustalić zakres skażonych danych i sposób odtworzenia historii z migawek źródłowych.
+- [x] Kolektor rozpoznaje przekierowanie na wyniki i HTTP 404/410. Odczytuje cenę z danych konkretnego ogłoszenia i odrzuca przekierowanie do innej oferty. Regresja kolektora: 14 testów, odczyt aktualnej strony oferty i odpowiedzi przekierowania, build Docker. Pełny zestaw: 333 API i 158 web poprawnych, 15 testów API pominiętych środowiskowo.
+- [x] Po kopii zapasowej naprawiono zgłoszoną grupę. Przywrócono cenę z dwóch aktualnych źródeł i usunięto 47 błędnych zdarzeń z każdej z trzech kopii. Historię odbudowano z migawek, a datę obniżki zapisano według pierwszej poprawnej obserwacji nowej ceny.
+- [x] Ponowne pobranie starego adresu przez API zarchiwizowało kopię bez nowej migawki. Chromium na 1440 i 390 px potwierdził cenę 1 790 000 zł, historię obniżki z 1 820 000 zł i linki do dwóch aktywnych portali. Kopia zapasowa i logi w `.local/runs/2026-11-22-listing-price/`.
 
 ## Historia i pojedyncze decyzje o wcześniejszych ofertach (2026-11-22)
 
