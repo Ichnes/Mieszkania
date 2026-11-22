@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Diagnoza ceny z przekierowania Adresowo (2026-11-22)
+
+- [x] Odtworzono błąd na bieżącej odpowiedzi HTTP. Adres niedostępnego ogłoszenia przekierowuje na wyniki dzielnicy z kodem 200. Parser oznacza je jako aktywne i zapisuje średnią cenę za m² jako cenę całkowitą. Synchronizacja wybiera tę wartość jako najniższą w grupie.
+- [x] Zestawiono migawki portali i zdarzenia cenowe. Otodom oraz Domiporta potwierdzają aktualną kwotę. Zmiany pochodzące z przekierowania stanowią 47 błędnych wpisów w historii głównej oferty. Dokładny dzień realnej obniżki jest nieznany.
+- [ ] Zapobiec zapisywaniu średniej z listy wyników jako ceny konkretnej oferty. Ustalić zakres skażonych danych i sposób odtworzenia historii z migawek źródłowych.
+
 ## Historia i pojedyncze decyzje o wcześniejszych ofertach (2026-11-22)
 
 - [x] Ustalono, że połączone wcześniej ogłoszenie było zapisane, ale szczegóły pokazywały jedynie kopie bieżącej grupy. Zatwierdzenie wcześniejszej oferty usuwało propozycje całej grupy.
