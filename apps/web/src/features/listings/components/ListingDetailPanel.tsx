@@ -594,7 +594,7 @@ export function ListingDetailPanel(input: {
                     {input.listing.imageUrls.map((imageUrl, index) => (
                       <img
                         key={`${input.listing.id}-${imageUrl}`}
-                        className="detail-image detail-image-primary"
+                        className="detail-image"
                         src={imageUrl}
                         alt={`${input.listing.title}, zdjęcie ${index + 1}`}
                         loading={index === 0 ? "eager" : "lazy"}
@@ -603,7 +603,7 @@ export function ListingDetailPanel(input: {
                   </div>
                 </button>
               ) : (
-                <div className="detail-image detail-image-empty">Brak zdjęć</div>
+                <div className="detail-image listing-photo-empty">Brak zdjęć</div>
               )}
               {input.listing.imageUrls.length > 1 ? (
                 <div className="detail-thumbs" role="tablist" aria-label="Miniatury zdjęć oferty">

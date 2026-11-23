@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Wymiary galerii ofert bez zdjęć (2026-11-23)
+
+- [x] Potwierdzono brak zdjęć w zgłoszonej ofercie. Karta pomijała miniaturę, a pole w szczegółach miało inny limit wysokości niż zdjęcie.
+- [x] Dodano czarne pole „Brak zdjęć” na karcie i w szczegółach, z tymi samymi wymiarami co miniatura i zdjęcie główne.
+- [x] Wdrożono lokalnie. Chromium przy 1680, 1280 i 390 px potwierdził identyczne wymiary miejsca na miniaturę i zdjęcie główne oraz otwieranie karty bez zdjęć. Sprawdzono też przełączanie dwóch zdjęć. Przeszło 158 testów web, kontrola formatowania i build Docker. Zrzuty i wyniki w `.local/runs/2026-11-23-empty-listing-gallery/`.
+
 ## Wyciszenie nieaktualnych adresów Maxona (2026-11-23)
 
 - [x] Sprawdzono dziennik importów i API. Panel wyświetlał 10 z 17 błędów `MAXON_LEGACY_URL`. W aktualnej mapie 1620 ofert nie ma żadnego z tych identyfikatorów, a stare adresy przekierowywały na listę.

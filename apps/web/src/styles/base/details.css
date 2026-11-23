@@ -150,14 +150,11 @@
 
 .detail-image {
   width: 100%;
+  max-height: 520px;
   aspect-ratio: 16 / 10;
   object-fit: cover;
   border-radius: 18px;
   background: rgba(23, 32, 42, 0.08);
-}
-
-.detail-image-primary {
-  max-height: 520px;
 }
 
 .detail-gallery-nav {
@@ -241,12 +238,6 @@
 .detail-image-dots button.active {
   width: 20px;
   background: #fff;
-}
-
-.detail-image-empty {
-  display: grid;
-  place-items: center;
-  color: #4d5965;
 }
 
 .detail-thumbs {

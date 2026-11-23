@@ -128,7 +128,9 @@ export function ListingSection(input: {
                     compact
                   />
                 </div>
-              ) : null}
+              ) : (
+                <div className="listing-thumb-wrap listing-photo-empty">Brak zdjęć</div>
+              )}
               <div className="listing-card-content">
                 {!listing.thumbnailUrl && listing.aiAssessment && (
                   <span className="listing-ai-inline">

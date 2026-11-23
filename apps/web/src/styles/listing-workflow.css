@@ -336,6 +336,13 @@
   border-radius: 20px;
   background: #0e1714;
 }
+.listing-photo-empty {
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #000;
+  line-height: 1.4;
+}
 .detail-section-tabs {
   gap: 5px;
   margin-top: 14px;
