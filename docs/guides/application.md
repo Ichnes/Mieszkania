@@ -417,6 +417,8 @@ Maxon odczytuje aktualne linki `/oferta/…-ID` i dane strukturalne oferty, w ty
 metraż i zdjęcia. Stary adres `/mieszkania/oferta/…` jest dopasowywany do mapy strony
 wyłącznie po identycznym ID. Brak odpowiednika lub przekierowanie na listę ofert
 ma osobny komunikat, a automatyczne ponowienie następuje po 24 godzinach.
+HTTP 404/410 pod adresem właściwej oferty archiwizuje zapisane ogłoszenie. Kolejka
+kończy ten wpis, zachowując ostatnią zapisaną migawkę.
 Nie pobieramy wówczas ceny z rekomendacji i nie uznajemy mieszkania za sprzedane.
 Maxon: tak samo traktujemy **OFERTA NIEAKTUALNA** oraz komunikat
 „Poszukiwana oferta … nie jest już aktualna”. Pełne pobranie danych i odświeżenie

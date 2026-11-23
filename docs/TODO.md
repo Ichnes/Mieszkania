@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Audyt 19 błędów Maxona (2026-11-23)
+
+- [x] Sprawdzono dziennik importów, wszystkie wpisy kolejki i bieżącą mapę Maxona (1613 ofert). Dwa aktualne adresy zwracały 410 dla tych samych identyfikatorów. Pozostałe 17 starych adresów przekierowuje na listę mieszkań i nie ma odpowiedników po ID w mapie.
+- [x] Maxon rozpoznaje HTTP 404/410 dla właściwego ogłoszenia i zachowuje jego migawkę. Rozbieżny adres albo lista wyników zachowują ścieżkę błędu. Testy: 14 ukierunkowanych, 335 API i 158 web poprawnych, 15 pominięć środowiskowych API. Build Docker poprawny.
+- [x] Po wdrożeniu lokalnym ponowiono dwa wpisy z 410. Obie oferty zarchiwizowano z zachowaniem cen źródłowych i migawek. API zwraca 82 ukończone oraz 17 błędów typu MAXON_LEGACY_URL. Dla pozostałych wpisów aktualna mapa nie daje podstawy do powiązania z nowym adresem. Logi w `.local/runs/2026-11-22-maxon-queue/`.
+
 ## Diagnoza ceny z przekierowania Adresowo (2026-11-22)
 
 - [x] Odtworzono błąd na bieżącej odpowiedzi HTTP. Adres niedostępnego ogłoszenia przekierowuje na wyniki dzielnicy z kodem 200. Parser oznacza je jako aktywne i zapisuje średnią cenę za m² jako cenę całkowitą. Synchronizacja wybiera tę wartość jako najniższą w grupie.

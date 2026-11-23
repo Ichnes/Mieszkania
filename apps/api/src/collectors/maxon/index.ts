@@ -176,14 +176,19 @@ export class MaxonCollector {
   ) {
     const isPriceOnlyRefresh = options?.refreshMode === "price_only";
     url = await resolveMaxonLegacyUrl(url, externalId);
+    const archiveIfUnavailable = (page: { html: string; finalUrl: string; statusCode: number }) => {
+      assertMaxonDetailUrl(url, page.finalUrl);
+      if (page.statusCode !== 404 && page.statusCode !== 410) assertMaxonDetailPage(page.html);
+      return this.archiveUnavailable({
+        sourceKey,
+        externalId,
+        url,
+        html: page.html,
+        statusCode: page.statusCode,
+      });
+    };
     let rendered = await fetchStaticPage(url);
-    assertMaxonDetailPage(rendered.html);
-    const unavailable = await this.archiveUnavailable({
-      sourceKey,
-      externalId,
-      url,
-      html: rendered.html,
-    });
+    const unavailable = await archiveIfUnavailable(rendered);
     if (unavailable) return unavailable;
     // Queue rows are keyed by the ID that owns the existing listing. Some old
     // Maxon records predate numeric OfferId discovery and use a URL hash. During
@@ -195,12 +200,7 @@ export class MaxonCollector {
     let parsed = parseListing(url, rendered.html, rendered.text, storedExternalId);
     if (isPriceOnlyRefresh && !parsed.priceAmount) {
       rendered = await fetchRenderedPage(url, { mode: "price_only" });
-      const unavailable = await this.archiveUnavailable({
-        sourceKey,
-        externalId,
-        url,
-        html: rendered.html,
-      });
+      const unavailable = await archiveIfUnavailable(rendered);
       if (unavailable) return unavailable;
       parsed = parseListing(url, rendered.html, rendered.text, storedExternalId);
     }
@@ -302,17 +302,32 @@ function extractReferences(html: string) {
 }
 
 async function fetchHtml(url: string) {
+  const page = await fetchStaticPage(url);
+  if (page.statusCode >= 400) throw new Error(`HTTP ${page.statusCode}: ${url}`);
+  return page.html;
+}
+
+async function fetchStaticPage(url: string) {
   const response = await fetch(url, {
     headers: requestHeaders,
     signal: AbortSignal.timeout(30_000),
   });
-  if (!response.ok) throw new Error(`HTTP ${response.status}: ${url}`);
-  return response.text();
+  const statusCode = response.status;
+  if (!response.ok && statusCode !== 404 && statusCode !== 410)
+    throw new Error(`HTTP ${statusCode}: ${url}`);
+  const html = await response.text();
+  return { html, text: html.replace(/<[^>]+>/g, " "), statusCode, finalUrl: response.url || url };
 }
 
-async function fetchStaticPage(url: string) {
-  const html = await fetchHtml(url);
-  return { html, text: html.replace(/<[^>]+>/g, " ") };
+function assertMaxonDetailUrl(url: string, finalUrl: string) {
+  const target = new URL(finalUrl);
+  const requestedId = new URL(url).pathname.match(/^\/oferta\/[^/]+-(\d+)\/?$/i)?.[1];
+  if (!requestedId) return;
+  const finalId = target.pathname.match(/^\/oferta\/[^/]+-(\d+)\/?$/i)?.[1];
+  if (!["www.maxon.pl", "maxon.pl"].includes(target.hostname) || finalId !== requestedId)
+    throw new Error(
+      `MAXON_LISTING_REDIRECT: portal przekierował poza ogłoszenie ${requestedId}. ${url}`,
+    );
 }
 
 async function fetchRenderedPage(url: string, options?: { mode?: "full" | "price_only" }) {
@@ -321,7 +336,10 @@ async function fetchRenderedPage(url: string, options?: { mode?: "full" | "price
   try {
     const page = await browser.newPage();
     const response = await page.goto(url, { waitUntil: "domcontentloaded", timeout: 60000 });
-    if (response && response.status() >= 400) throw new Error(`HTTP ${response.status()}: ${url}`);
+    const statusCode = response?.status() ?? 200;
+    if (statusCode === 404 || statusCode === 410)
+      return { html: await page.content(), text: "", statusCode, finalUrl: page.url() };
+    if (statusCode >= 400) throw new Error(`HTTP ${statusCode}: ${url}`);
     for (const consent of ["Akceptuj", "Zgadzam się", "Tylko niezbędne"]) {
       const button = page.getByRole("button", { name: new RegExp(consent, "i") }).first();
       if (await button.count()) {
@@ -337,7 +355,12 @@ async function fetchRenderedPage(url: string, options?: { mode?: "full" | "price
       }
     }
     await page.waitForTimeout(options?.mode === "price_only" ? 100 : 400);
-    return { html: await page.content(), text: await page.locator("body").innerText() };
+    return {
+      html: await page.content(),
+      text: await page.locator("body").innerText(),
+      statusCode,
+      finalUrl: page.url(),
+    };
   } finally {
     await browser.close();
   }
