@@ -1,5 +1,5 @@
 import type { ExposureDirection } from "@mieszkania/shared";
-import { getDescriptionMentionStatus } from "@mieszkania/shared";
+import { getDescriptionMentionStatus, pragaDistrictNamePattern } from "@mieszkania/shared";
 export { getSunExposure, type ExposureDirection } from "@mieszkania/shared";
 
 export type DescriptionHighlightPart = {
@@ -79,7 +79,7 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
     `\\d[\\d\\s.,]*(?:zł|pln|m²|m2|mkw)`,
   ].join("|");
   const importantPattern = new RegExp(
-    `(${contextualPremium}|${contextualPositive}|${contextualNeutral}|${negative}|${positive}|${neutral})`,
+    `(${pragaDistrictNamePattern.source}|${contextualPremium}|${contextualPositive}|${contextualNeutral}|${negative}|${positive}|${neutral})`,
     "giu",
   );
   const negativePattern = new RegExp(`^(?:${negative})$`, "iu");

@@ -37,6 +37,12 @@ const cases: Array<[string, ReturnType<typeof parse>]> = [
   ],
   ["Miejsce postojowe: 30 000 zł", { garage: 30000 }],
   ["MIEJSCE POSTOJOWE W GARAŻU PODZIEMNYM W CENIE 60 000 ZŁ.", { garage: 60000 }],
+  [
+    "Na osiedlu są miejsca dla gości. Do mieszkania przynależą: 1 miejsce postojowe w garażu podziemnym w dodatkowej cenie 50,000 PLN Komórka lokatorska w cenie 25.000 PLN",
+    { garage: 50000, storage: 25000 },
+  ],
+  ["Garaż: 50,000.50 PLN.", { garage: 50000.5 }],
+  ["Garaż: 50,5 tys. zł.", { garage: 50500 }],
   ["Garaż: 60.000,-. Miejsce postojowe przed budynkiem: 20 000 zł.", { garage: 80000 }],
   [
     "Miejsce postojowe: 30 000 zł. Miejsce postojowe dodatkowo płatne 30 000 zł.",

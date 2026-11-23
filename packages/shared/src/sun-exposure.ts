@@ -1,4 +1,8 @@
 export type ExposureDirection = "N" | "NE" | "E" | "SE" | "S" | "SW" | "W" | "NW";
+
+export const pragaDistrictNamePattern =
+  /(?<!\p{L})(?:prag[aeęąio]|pradze)(?:\s+|\s*[-‐‑–—]\s*)(?:po[łl]udni|p[óo][łl]noc)\p{L}*/giu;
+
 function normalizeListingText(value: string) {
   return value
     .toLowerCase()
@@ -21,6 +25,7 @@ export function getSunExposure(description?: string, override?: ExposureDirectio
         ? bearing.toUpperCase()
         : bearing,
     )
+    .replace(pragaDistrictNamePattern, " ")
     // A compound bearing is diagonal unless an explicit two-sided layout
     // identifies it as a pair of cardinal directions (resolved below).
     .replace(/\bpoludniow\w*\s*[-–—]?\s*zachod\w*\b/g, " SW ")
@@ -28,7 +33,6 @@ export function getSunExposure(description?: string, override?: ExposureDirectio
     .replace(/\bpolnocn\w*\s*[-–—]?\s*zachod\w*\b/g, " NW ")
     .replace(/\bpolnocn\w*\s*[-–—]?\s*wschod\w*\b/g, " NE ")
     .replace(/\bgaleri\w*\s+polnoc\w*/g, " ")
-    .replace(/\b(?:prag\w*|pradz\w*)\s*[-–—]?\s*(?:poludni|polnoc)\w*/g, " ")
     .replace(/\bwarszaw(?:a|y|ie|e)\s+(?:wschod|zachod)\w*/g, " ")
     .replace(/\b(?:wschod|zachod)\w*\s+slonc\w*/g, " ")
     // Infrastructure names can contain a direction in either word order.

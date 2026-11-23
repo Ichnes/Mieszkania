@@ -41,7 +41,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
   let otherParking: number | undefined;
   const includedInBundle = { garage: false, storage: false };
   for (const match of text.matchAll(
-    /(\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:,(\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
+    /(\d{1,3}(?:,\d{3})+|\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:[,.](\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
   )) {
     const index = match.index!;
     let before = text
@@ -98,7 +98,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       /wynaj\w*|czynsz|dzierzaw\w*/.test(before)
     )
       continue;
-    const baseAmount = Number(match[1].replace(/[ .]/g, "") + "." + (match[2] ?? "0"));
+    const baseAmount = Number(`${match[1].replace(/[ ,.]/g, "")}.${match[2] ?? "0"}`);
     if (/tys/.test(match[3]) && baseAmount > 1000000) {
       (result.warnings ??= []).push(
         `Dopłata „${match[1]} tys.” ma niejednoznaczną kwotę. Potwierdź ją ze sprzedającym; nie doliczono jej do ceny zakupu.`,

@@ -1052,7 +1052,11 @@ export {
   getPriceDropPoints,
   getListingAgePoints,
 } from "./dream-score.js";
-export { getSunExposure, type ExposureDirection } from "./sun-exposure.js";
+export {
+  getSunExposure,
+  pragaDistrictNamePattern,
+  type ExposureDirection,
+} from "./sun-exposure.js";
 export {
   exposureDirections,
   normalizeExposureDirections,

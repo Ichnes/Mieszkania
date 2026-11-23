@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Dopłata do garażu i nazwy dzielnic w opisie (2026-11-23)
+
+- [x] Potwierdzono, że API dolicza 25 000 zł za komórkę i pomija zapis `50,000 PLN` za miejsce postojowe. Wyróżnianie kierunków obejmuje nazwy Praga-Północ i Praga-Południe w opisach ze wzmianką o ekspozycji.
+- [x] Parser rozpoznaje przecinek jako separator tysięcy przy grupach trzech cyfr. Wspólny wzorzec nazw Pragi-Północ i Pragi-Południe chroni je w opisie i w rozpoznawaniu ekspozycji. Testy regresji objęły różne zapisy kwot i nazwy z łącznikiem lub spacją.
+- [x] Przeszło 338 testów API i 159 web, 16 testów API pominięto ze względu na środowisko. Build Docker poprawny. Odczyt zapisanego opisu po poprawce daje 50 000 zł za garaż i 25 000 zł za komórkę.
+- [x] Po wdrożeniu lokalne API zgłoszonej oferty zwraca 75 000 zł dopłat i 1 805 750 zł łącznie. Chromium przy 1680, 1280 i 390 px potwierdził te kwoty oraz 22 432 zł/m². Nazwy dzielnic pozostają zwykłym tekstem, a rzeczywiste kierunki okien nadal są wyróżniane. Sprawdzono też skrót NW po nazwie dzielnicy. Wyniki w `.local/runs/2026-11-23-purchase-costs-districts/`.
+
 ## Wymiary galerii ofert bez zdjęć (2026-11-23)
 
 - [x] Potwierdzono brak zdjęć w zgłoszonej ofercie. Karta pomijała miniaturę, a pole w szczegółach miało inny limit wysokości niż zdjęcie.

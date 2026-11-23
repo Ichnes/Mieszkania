@@ -113,6 +113,20 @@ test("recognizes windows facing three cardinal directions", () => {
   assert.deepEqual(new Set(result.directions), new Set(["N", "E", "S"]));
 });
 
+test("keeps Praga district names unhighlighted beside real window directions", () => {
+  for (const district of ["Praga-Północ", "Praga Południe", "Praga‑Południe", "Pradze – Północ"]) {
+    const text = `Mieszkanie w dzielnicy ${district}. Okna na zachód i południe.`;
+    const parts = getDescriptionHighlightParts(text);
+    assert.equal(parts.map((part) => part.text).join(""), text);
+    assert.deepEqual(
+      parts.filter((part) => part.tone).map((part) => part.text),
+      ["zachód", "południe"],
+      district,
+    );
+    assert.deepEqual(getSunExposure(text).directions, ["W", "S"], district);
+  }
+});
+
 test("recognizes an unspecified three-sided exposure", () => {
   const result = getSunExposure("Mieszkanie ma okna na trzy strony świata.");
 

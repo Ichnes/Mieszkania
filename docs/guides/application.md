@@ -331,7 +331,7 @@ mieszkania**. Komórka z osobną ceną ma własny wiersz. Gdy opis podaje jedną
 za oba dodatki, widzisz **Garaż i komórka — … łącznie**; suma zakupu dolicza tę
 kwotę tylko raz. Reguły obejmują istniejące opisy bez ponownego pobierania ofert.
 Garaż i osobne miejsce przed budynkiem sumują się w polu **Garaż / parking**.
-Parser rozpoznaje również zapis `60 000,-` oraz etykietę `Miejsce postojowe: 30 000 zł`.
+Parser rozpoznaje również zapis `60 000,-`, `50,000 PLN` oraz etykietę `Miejsce postojowe: 30 000 zł`.
 Piwnica i ogródek są osobnymi dopłatami i nie zwiększają ceny samego parkingu.
 
 ### Dojazdy do pracy
