@@ -32,6 +32,15 @@ export function maxonCurrentReferences(html: string) {
 
 let sitemap: { expires: number; urls: Map<string, string> } | undefined;
 let loading: Promise<Map<string, string>> | undefined;
+
+export class MaxonLegacyUrlError extends Error {
+  constructor(url: string, externalId: string) {
+    super(
+      `MAXON_LEGACY_URL: stary adres oferty ${externalId}; brak potwierdzonego odpowiednika w aktualnej mapie Maxona. ${url}`,
+    );
+  }
+}
+
 export async function resolveMaxonLegacyUrl(url: string, externalId: string) {
   if (!new URL(url).pathname.startsWith("/mieszkania/oferta/")) return url;
   if (!sitemap || sitemap.expires < Date.now()) {
@@ -51,10 +60,7 @@ export async function resolveMaxonLegacyUrl(url: string, externalId: string) {
     await loading;
   }
   const current = sitemap!.urls.get(externalId);
-  if (!current)
-    throw new Error(
-      `MAXON_LEGACY_URL: stary adres oferty ${externalId}; brak potwierdzonego odpowiednika w aktualnej mapie Maxona. ${url}`,
-    );
+  if (!current) throw new MaxonLegacyUrlError(url, externalId);
   return current;
 }
 

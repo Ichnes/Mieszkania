@@ -85,14 +85,32 @@ export async function getListingExternalIdsWithFewImages(input: {
 const staleProcessingMinutes = 30;
 const completedRefreshAfterHours = 24;
 const terminalListingStatusesSql = "('removed', 'sold')";
+export const stalePriceRefreshFilterSql = `
+  l.status not in ${terminalListingStatusesSql}
+  and l.last_seen_at < now() - interval '24 hours'
+  and not exists (
+    select 1 from listing_import_queue q
+    where q.source_key = s.key and q.external_id = l.external_id
+      and q.payload_raw->>'skippedUrl' = l.canonical_url
+  )`;
+
+export async function skipFailedMaxonLegacyImports(db: Pick<import("pg").Pool, "query">) {
+  return db.query(`
+    update listing_import_queue
+    set status = 'skipped', attempts = 0, started_at = null, last_error = null,
+        payload_raw = payload_raw || jsonb_build_object('skippedUrl', canonical_url)
+    where source_key = 'maxon' and status = 'failed'
+      and canonical_url ~ '^https?://(www[.])?maxon[.]pl/mieszkania/oferta/'
+      and last_error like 'MAXON\\_LEGACY\\_URL:%'
+  `);
+}
 
 /** Dodaje przeterminowane oferty do widocznej kolejki aktualizacji cen. */
 export async function enqueueStaleListingPriceUpdates() {
   return withDb(async (db) => {
     const dueResult = await db.query<{ count: string }>(`
-      select count(*)::text as count from listings
-      where status not in ${terminalListingStatusesSql}
-        and last_seen_at < now() - interval '24 hours'
+      select count(*)::text as count from listings l join sources s on s.id = l.source_id
+      where ${stalePriceRefreshFilterSql}
     `);
     const due = Number(dueResult.rows[0]?.count ?? 0);
     if (due === 0) return { due: 0, queued: 0 };
@@ -105,8 +123,7 @@ export async function enqueueStaleListingPriceUpdates() {
       select s.key, l.external_id, l.canonical_url, coalesce(l.city, ''), 90,
         jsonb_build_object('priceRefreshQueuedAt', now()), 'pending', now(), null, null
       from listings l join sources s on s.id = l.source_id
-      where l.status not in ${terminalListingStatusesSql}
-        and l.last_seen_at < now() - interval '24 hours'
+      where ${stalePriceRefreshFilterSql}
       on conflict (source_key, external_id) do update set
         canonical_url = excluded.canonical_url,
         city = excluded.city,
@@ -129,6 +146,7 @@ export async function enqueueStaleListingPriceUpdates() {
           when listing_import_queue.status = 'pending' and listing_import_queue.next_attempt_at > now() then listing_import_queue.last_error
           else null
         end
+      where listing_import_queue.payload_raw->>'skippedUrl' is distinct from excluded.canonical_url
       returning id
     `);
     return { due, queued: queued.rows.length };
@@ -210,6 +228,7 @@ export async function enqueueListingImports(input: {
                   then listing_import_queue.last_error
                 else null
               end
+            where listing_import_queue.payload_raw->>'skippedUrl' is distinct from excluded.canonical_url
             returning (xmax = 0) as inserted, status
           )
           select
@@ -332,6 +351,26 @@ export async function completeListingImport(id: string, metadata?: Record<string
   );
 }
 
+export async function skipListingImportUrl(id: string, url: string) {
+  return retryQueueWrite(() =>
+    withDb((db) =>
+      db.query(
+        `
+        update listing_import_queue
+        set status = case when canonical_url = $2 then 'skipped' else 'pending' end,
+            attempts = 0,
+            next_attempt_at = now(),
+            started_at = null,
+            last_error = null,
+            payload_raw = payload_raw || jsonb_build_object('skippedUrl', $2::text)
+        where id = $1 and status = 'processing'
+        `,
+        [id, url],
+      ),
+    ),
+  );
+}
+
 /**
  * Przesuwa chwilowo zablokowany import bez oznaczania go jako trwały błąd.
  * Używane m.in. przy 429, kiedy ponawianie kolejnych pozycji tylko pogarsza blokadę portalu.
@@ -372,12 +411,11 @@ export async function failListingImport(input: {
   attempts: number;
   metadata?: Record<string, unknown>;
 }) {
-  const retryDelayMinutes =
-    input.error.startsWith("MAXON_LEGACY_URL:") || input.error.startsWith("MAXON_LISTING_REDIRECT:")
-      ? 24 * 60
-      : input.error.includes("RATE_LIMITED")
-        ? 30
-        : Math.min(120, Math.max(5, input.attempts * 10));
+  const retryDelayMinutes = input.error.startsWith("MAXON_LISTING_REDIRECT:")
+    ? 24 * 60
+    : input.error.includes("RATE_LIMITED")
+      ? 30
+      : Math.min(120, Math.max(5, input.attempts * 10));
 
   return retryQueueWrite(() =>
     withDb(async (db) => {

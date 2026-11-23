@@ -2,6 +2,7 @@ import { withDb } from "./index";
 import { DECISION_NOTES_SCHEMA } from "../services/listings/decision-notes";
 import { AI_ASSESSMENT_SCHEMA } from "../services/listings/ai-assessment-repository";
 import { syncAllDuplicateGroupPrices } from "../services/duplicates/group-prices";
+import { skipFailedMaxonLegacyImports } from "../services/collecting/listing-import-queue";
 
 export async function ensureRuntimeSchema() {
   await withDb(async (db) => {
@@ -480,6 +481,7 @@ export async function ensureRuntimeSchema() {
       create index if not exists idx_listing_import_queue_status
       on listing_import_queue(source_key, status, next_attempt_at, priority desc, discovered_at asc);
     `);
+    await skipFailedMaxonLegacyImports(db);
 
     await db.query(`
       alter table transaction_rcn

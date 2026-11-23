@@ -6,7 +6,10 @@ import {
   getListingAutomationPaused,
   setListingAutomationPaused,
 } from "../services/collecting/listing-automation";
-import { enqueueStaleListingPriceUpdates } from "../services/collecting/listing-import-queue";
+import {
+  enqueueStaleListingPriceUpdates,
+  stalePriceRefreshFilterSql,
+} from "../services/collecting/listing-import-queue";
 export function createListingAutomation(app: FastifyInstance, collectors: Collectors) {
   const {
     otodomCollector,
@@ -76,9 +79,8 @@ export function createListingAutomation(app: FastifyInstance, collectors: Collec
     return withDb(async (db) => {
       const result = await db.query<{ count: string }>(`
       select count(*)::text as count
-      from listings
-      where status not in ('removed', 'sold')
-        and last_seen_at < now() - interval '24 hours'
+      from listings l join sources s on s.id = l.source_id
+      where ${stalePriceRefreshFilterSql}
     `);
       return Number(result.rows[0]?.count ?? 0);
     });
@@ -93,10 +95,7 @@ export function createListingAutomation(app: FastifyInstance, collectors: Collec
         last_checked_at: string | null;
       }>(`
       select
-        count(*) filter (
-          where status not in ('removed', 'sold')
-            and last_seen_at < now() - interval '24 hours'
-        )::text as due,
+        count(*) filter (where ${stalePriceRefreshFilterSql})::text as due,
         count(*) filter (
           where status not in ('removed', 'sold')
             and last_seen_at >= now() - interval '24 hours'
@@ -108,7 +107,7 @@ export function createListingAutomation(app: FastifyInstance, collectors: Collec
         max(last_seen_at) filter (
           where status not in ('removed', 'sold')
         )::text as last_checked_at
-      from listings
+      from listings l join sources s on s.id = l.source_id
     `);
       const row = result.rows[0];
       return {

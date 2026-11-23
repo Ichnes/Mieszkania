@@ -12,6 +12,7 @@ import {
   getKnownListingExternalIds,
   getListingImportQueueStatus,
   retryFailedListingImportsNow,
+  skipListingImportUrl,
 } from "../../services/collecting/listing-import-queue";
 import { geocodeListing } from "../../services/geography/geocoding";
 import { downloadListingMedia } from "../../services/media/media-downloader";
@@ -28,6 +29,7 @@ import {
   maxonCurrentReferences,
   resolveMaxonLegacyUrl,
   assertMaxonDetailPage,
+  MaxonLegacyUrlError,
 } from "./document";
 
 const sourceKey = "maxon";
@@ -112,6 +114,7 @@ export class MaxonCollector {
     const concurrency = Math.max(1, Math.min(2, input?.concurrency ?? 2));
     let completed = 0;
     let failed = 0;
+    let skipped = 0;
     const failures: Array<{ externalId: string; url: string; error: string }> = [];
     for (let offset = 0; offset < claimed.length; offset += concurrency) {
       const batch = claimed.slice(offset, offset + concurrency);
@@ -133,6 +136,9 @@ export class MaxonCollector {
         } else if (result.reason instanceof ListingUnavailableBeforeImportError) {
           completed += 1;
           await completeListingImport(item.id, { unavailableBeforeImport: true });
+        } else if (result.reason instanceof MaxonLegacyUrlError) {
+          await skipListingImportUrl(item.id, item.canonical_url);
+          skipped += 1;
         } else {
           failed += 1;
           const error = result.reason instanceof Error ? result.reason.message : "unknown error";
@@ -141,7 +147,7 @@ export class MaxonCollector {
         }
       }
     }
-    return { claimed: claimed.length, completed, failed, failures };
+    return { claimed: claimed.length, completed, failed, skipped, failures };
   }
 
   async getQueueStatus() {

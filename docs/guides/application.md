@@ -415,8 +415,10 @@ odpowiedzi HTTP 404/410 lub przekierowaniu na listę wyników. Cena pochodzi z d
 konkretnego ogłoszenia.
 Maxon odczytuje aktualne linki `/oferta/…-ID` i dane strukturalne oferty, w tym cenę,
 metraż i zdjęcia. Stary adres `/mieszkania/oferta/…` jest dopasowywany do mapy strony
-wyłącznie po identycznym ID. Brak odpowiednika lub przekierowanie na listę ofert
-ma osobny komunikat, a automatyczne ponowienie następuje po 24 godzinach.
+wyłącznie po identycznym ID. Gdy aktualna mapa nie zawiera tego ID, kolejka pomija
+stary adres i zachowuje zapisane ogłoszenie. Znalezienie nowego adresu dla tego samego
+ID wznawia import. Przekierowanie z aktualnego adresu na listę ofert pozostaje błędem,
+który można ponowić.
 HTTP 404/410 pod adresem właściwej oferty archiwizuje zapisane ogłoszenie. Kolejka
 kończy ten wpis, zachowując ostatnią zapisaną migawkę.
 Nie pobieramy wówczas ceny z rekomendacji i nie uznajemy mieszkania za sprzedane.

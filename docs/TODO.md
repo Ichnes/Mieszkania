@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Wyciszenie nieaktualnych adresów Maxona (2026-11-23)
+
+- [x] Sprawdzono dziennik importów i API. Panel wyświetlał 10 z 17 błędów `MAXON_LEGACY_URL`. W aktualnej mapie 1620 ofert nie ma żadnego z tych identyfikatorów, a stare adresy przekierowywały na listę.
+- [x] Zmieniono kolejkę tak, by pomijała stary adres bez odpowiednika w mapie Maxona. Wykrycie nowego adresu dla tego samego ID wznawia import. Zapisane oferty i ich historia są zachowane.
+- [x] Test regresji PostgreSQL sprawdza migrację, ponowienie, automatyczne odświeżanie i wznowienie po zmianie URL. Przeszło też 335 testów API i 158 web. Standardowy przebieg pominął 16 testów API, w tym regresję PostgreSQL uruchomioną osobno. Build Docker poprawny.
+- [x] Po wdrożeniu lokalnym oba endpointy statusu zwracają 0 błędów Maxona i pustą listę ostatnich błędów. Ręczne ponowienie i przetwarzanie nie podjęły wpisów, a automat nie ma zaległych aktualizacji. Porównanie z bazą sprzed wdrożenia potwierdziło zgodność wszystkich 17 ogłoszeń, migawek i historii cen. Logi w `.local/runs/2026-11-23-clear-maxon-errors/`.
+
 ## Audyt 19 błędów Maxona (2026-11-23)
 
 - [x] Sprawdzono dziennik importów, wszystkie wpisy kolejki i bieżącą mapę Maxona (1613 ofert). Dwa aktualne adresy zwracały 410 dla tych samych identyfikatorów. Pozostałe 17 starych adresów przekierowuje na listę mieszkań i nie ma odpowiedników po ID w mapie.
