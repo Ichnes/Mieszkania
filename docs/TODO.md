@@ -1331,3 +1331,5 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Commit i push na bieżącą gałąź `main`.
 
 - [x] Historia ponownych wystawień w statystykach oferty i etykietach osi czasu. Zweryfikowano build API i WWW oraz odpowiedź lokalnego API dla zgłoszonej pary: początek 27 lipca, zmiana ceny −7,19%, pokrycie 100%. Brak dalszych prac dla zgłoszenia.
+
+- [x] Audyt 400 najnowszych publikacji z sześciu portali. Skorygowano potwierdzone przesunięcie przecinka w metrażu Otodom i cenę za m² w lokalnym rekordzie. Trzy konflikty roku budowy wymagają niezależnego potwierdzenia. Testy parsera 9/9. Karta rzeczywistych przecen zachowuje kwotę mediany do grosza.

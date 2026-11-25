@@ -152,3 +152,24 @@ test("discovery keeps separate offers with the same idealny title fragment", () 
     ["otodom-4BSBL", "otodom-4BmyQ"].sort(),
   );
 });
+
+test("Otodom reconciles an exact decimal shift with the explicit apartment area", async () => {
+  for (const [m, expected] of [
+    [731, 73.1],
+    [75, 75],
+  ]) {
+    const ad = {
+      attributes: { m },
+      description: "Mieszkanie o powierzchni 73.10 m2 + balkon 6 m2.",
+    };
+    const parsed = await new OtodomParser().parse({
+      url: "https://www.otodom.pl/pl/oferta/test-ID4area",
+      statusCode: 200,
+      html:
+        '<script id="__NEXT_DATA__" type="application/json">' +
+        JSON.stringify({ props: { pageProps: { ad } } }) +
+        "</script>",
+    });
+    assert.equal(parsed.areaSqm, expected);
+  }
+});

@@ -73,7 +73,7 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
             <strong className="insight-number">
               {signals.medianCutAmount == null
                 ? "Brak obniżek"
-                : `−${number(Math.round(signals.medianCutAmount))} zł`}
+                : `−${signals.medianCutAmount.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} zł`}
             </strong>
             <p>
               Mediana ostatniej obniżki w okresie

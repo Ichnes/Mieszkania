@@ -69,11 +69,26 @@ export class OtodomParser implements ListingParser {
       readNumber(adNode, "price", "value"),
       readNumber(adNode, "totalPrice", "value"),
     );
-    const areaSqm = firstNumber(
+    const structuredArea = firstNumber(
       readNumber(adNode, "attributes", "m"),
       readNumber(productNode, "floorSize", "value"),
       readNumber(productNode, "floorSize"),
     );
+    // Correct a misplaced decimal only when the description explicitly identifies the flat's area.
+    const statedAreas = Array.from(
+      (description ?? "").matchAll(
+        /(?:mieszkanie|lokal)\s+o\s+powierzchni\s+(\d{1,3}(?:[.,]\d{1,2})?)\s*m(?:²|2)/gi,
+      ),
+      (match) => Number(match[1].replace(",", ".")),
+    );
+    const stated = statedAreas[0];
+    const areaSqm =
+      stated >= 15 &&
+      statedAreas.every((area) => area === stated) &&
+      structuredArea !== null &&
+      Math.abs(structuredArea - stated * 10) < 0.001
+        ? stated
+        : structuredArea;
     const rooms = firstNumber(
       readNumber(adNode, "attributes", "rooms_num"),
       readNumber(productNode, "numberOfRooms"),
