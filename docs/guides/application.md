@@ -170,6 +170,7 @@ brak informacji −4, obecność +10. Brak roku budowy daje −3 pkt.
 Prysznic, kabina prysznicowa lub natrysk dają +3 pkt.
 Brak podanej kwoty czynszu daje −2 pkt. Kwota w polach portalu też się liczy;
 wyraźnie bezczynszowe mieszkanie nie dostaje tej kary.
+Gdy kwoty brakuje, aplikacja sprawdza połączone duplikaty z innych portali. Przy zgodnej kwocie w szczegółach można otworzyć ogłoszenie źródłowe i sprawdzić, czy jest archiwalne. Rozłączenie ofert usuwa podstawę takiego uzupełnienia.
 
 Rok budowy: do 1980 −4; 1981–1990 −2; 1991–2000 0; 2001–2005 +4;
 2006–2010 +6; 2011–2015 +8; 2016–2020 +10; po 2020 +12.

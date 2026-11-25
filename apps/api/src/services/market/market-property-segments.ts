@@ -2,11 +2,17 @@ import { readMonthlyFee } from "../listings/maintenance-fee";
 export { readMonthlyFee } from "../listings/maintenance-fee";
 import type { Pool } from "pg";
 import type { MarketSegment } from "@mieszkania/shared";
-import { extractFeaturesFromPayload, inferFinishQuality } from "../listings/listing-repository";
+import {
+  extractFeaturesFromPayload,
+  inferFinishQuality,
+  linkedFees,
+  needsPeerFee,
+} from "../listings/listing-repository";
 import { marketSnapshotPayloadSql } from "./market-snapshot";
 import { mapPriceSample } from "./market-sample";
 
 export type PropertySegmentRow = {
+  inheritedFee?: number;
   description: string | null;
   payload_raw: Record<string, unknown> | null;
   price_amount: string | null;
@@ -30,10 +36,11 @@ export function classifyProperty(row: PropertySegmentRow) {
       : /gotow|do zamieszkania|wykonczon|ready|to_use/.test(finish)
         ? "ready"
         : inferFinishQuality(description);
-  const fee = readMonthlyFee(
-    features.find((f) => f.key === "fees" && f.source === "payload")?.value,
-    description,
-  );
+  const fee =
+    readMonthlyFee(
+      features.find((f) => f.key === "fees" && f.source === "payload")?.value,
+      description,
+    ) ?? row.inheritedFee;
   return {
     finish:
       quality === "ready"
@@ -105,13 +112,19 @@ export function buildPropertySegments(rows: PropertySegmentRow[]) {
 }
 
 export async function getMarketPropertySegments(db: Pool, filters: string, periodDays: number) {
-  const result = await db.query<PropertySegmentRow>(`
-    select l.description,l.price_amount,l.area_sqm,snapshot.payload_raw
+  const result = await db.query<PropertySegmentRow & { id: string }>(`
+    select l.id,l.description,l.price_amount,l.area_sqm,snapshot.payload_raw
     from listings l left join lateral (
       select ${marketSnapshotPayloadSql} payload_raw
       from listing_snapshots where listing_id=l.id order by captured_at desc limit 1
     ) snapshot on true
     where lower(l.city)='warszawa' and l.first_seen_at >= now()-make_interval(days => ${periodDays}) and ${filters}
   `);
+  const missing = result.rows.filter((r) => needsPeerFee(r.description, r.payload_raw));
+  const fees = await linkedFees(
+    db,
+    missing.map((r) => r.id),
+  );
+  for (const r of missing) r.inheritedFee = fees.get(r.id)?.amount;
   return buildPropertySegments(result.rows);
 }

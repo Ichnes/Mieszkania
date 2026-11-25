@@ -1057,8 +1057,26 @@ export function ListingDetailPanel(input: {
               </table>
               {maintenanceFee ? (
                 <p className="muted listing-facts-hint">
-                  Czynsz odczytano informacyjnie z opisu oferty (np. „czynsz administracyjny” z
-                  zaliczkami). Podobne zapisy automatycznie uzupełniają tę wartość.
+                  {input.listing.maintenanceFeeSource ? (
+                    <>
+                      Czynsz podano w połączonym ogłoszeniu
+                      {input.listing.maintenanceFeeSource.archived ? " archiwalnym" : ""} na portalu{" "}
+                      <button
+                        type="button"
+                        className="text-link-button"
+                        onClick={() =>
+                          void input.onOpenRelatedListing(
+                            input.listing.maintenanceFeeSource!.listingId,
+                          )
+                        }
+                      >
+                        {input.listing.maintenanceFeeSource.portal}
+                      </button>
+                      .
+                    </>
+                  ) : (
+                    "Czynsz według danych podanych w tym ogłoszeniu."
+                  )}
                 </p>
               ) : null}
               <ListingDescription value={input.listing.description} />

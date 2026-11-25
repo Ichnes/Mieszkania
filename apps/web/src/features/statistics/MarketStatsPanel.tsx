@@ -476,7 +476,8 @@ export function MarketStatsPanel({
                 )}
                 {segment.title === "Czynsz miesięczny" && (
                   <p className="stats-segment-hint">
-                    Deklarowane opłaty miesięczne. Mediana i zakres poniżej to ceny zakupu za m².
+                    Aktywne i archiwalne oferty wykryte w wybranym okresie. Czynsz może pochodzić z
+                    połączonego ogłoszenia. Mediana i zakres pokazują ceny zakupu za m².
                   </p>
                 )}
                 {segment.title === "Metraż" && (

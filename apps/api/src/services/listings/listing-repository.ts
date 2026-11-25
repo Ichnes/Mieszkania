@@ -1,4 +1,6 @@
 import { readMonthlyFee } from "./maintenance-fee";
+import type { Pool } from "pg";
+import { marketSnapshotPayloadSql } from "../market/market-snapshot";
 import {
   isRealPriceChange,
   realPriceChangeSql,
@@ -97,6 +99,7 @@ const representativeRelistingJoin = `
 `;
 
 type ListingRow = {
+  peerFee?: PeerFee;
   id: string;
   canonical_url: string;
   status: string | null;
@@ -539,6 +542,71 @@ export async function addListingContactEvent(
   });
 }
 
+type PeerFee = { amount: number; source: NonNullable<ListingDetail["maintenanceFeeSource"]> };
+
+export function ownFee(description: string | null, payload?: Record<string, unknown> | null) {
+  const structured = extractFeaturesFromPayload(payload ?? undefined).find(
+    (f) => f.key === "fees",
+  )?.value;
+  return readMonthlyFee(structured, description ?? "");
+}
+
+export function needsPeerFee(description: string | null, payload?: Record<string, unknown> | null) {
+  // A stated range or rate per m² belongs to this listing even when it cannot be
+  // placed in a monthly-total bucket.
+  if (extractFeaturesFromPayload(payload ?? undefined).some((f) => f.key === "fees")) return false;
+  const text = cleanPortalDescription(decodeListingText(description ?? ""));
+  if (/bezczynszow|brak czynszu administracyjnego|bez czynszu/i.test(text)) return false;
+  if (
+    /\bczynsz[^.!?\n]{0,80}?\d[\d .,]*(?:\s*(?:zł|pln))?\s*(?:[-–—]|do)\s*\d|\bczynsz[^.!?\n]{0,60}?\d[\d ,.]*\s*(?:zł|pln)\s*(?:\/\s*(?:m[²2]|rok)|rocznie)/iu.test(
+      text,
+    )
+  )
+    return false;
+  return readMonthlyFee(undefined, text) == null;
+}
+
+export async function linkedFees(db: Pick<Pool, "query">, ids: string[]) {
+  const fees = new Map<string, PeerFee>();
+  if (!ids.length) return fees;
+  const { rows } = await db.query<{
+    target: string;
+    id: string;
+    portal: string;
+    status: string;
+    description: string | null;
+    payload: Record<string, unknown> | null;
+  }>(
+    `
+    select m.listing_id as target, p.id, s.name as portal, p.status, p.description, snap.payload
+    from listing_duplicate_group_members m
+    join listings focus on focus.id=m.listing_id
+    join listing_duplicate_group_members peer using(group_id)
+    join listings p on p.id=peer.listing_id and p.source_id<>focus.source_id
+      and coalesce(p.exclusion_reason,'') <> 'manual_rejected'
+    join sources s on s.id=p.source_id
+    left join lateral (select ${marketSnapshotPayloadSql} payload from listing_snapshots
+      where listing_id=p.id order by captured_at desc limit 1) snap on true
+    where m.listing_id=any($1::uuid[]) order by (p.status='active') desc,p.last_seen_at desc,p.id
+  `,
+    [ids],
+  );
+  const conflicts = new Set<string>();
+  for (const r of rows) {
+    const value = ownFee(r.description, r.payload);
+    if (value == null) continue;
+    const prev = fees.get(r.target);
+    if (!prev)
+      fees.set(r.target, {
+        amount: value,
+        source: { listingId: r.id, portal: r.portal, archived: r.status === "removed" },
+      });
+    else if (prev.amount !== value) conflicts.add(r.target);
+  }
+  for (const id of conflicts) fees.delete(id);
+  return fees;
+}
+
 export async function getListingDetail(listingId: string): Promise<ListingDetail | null> {
   const settings = await getFamilySettings();
   await commuteRouteCache.load();
@@ -656,6 +724,8 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     const imageUrls = resolvedImages.map((image) => image.resolvedUrl);
     const primaryImage = resolvedImages.find((image) => image.isPrimary) ?? resolvedImages[0];
     const snapshotPayload = row.snapshot_payload_raw ?? undefined;
+    if (needsPeerFee(row.description, snapshotPayload))
+      row.peerFee = (await linkedFees(db, [listingId])).get(listingId);
     const sourceContactPhone =
       normalizePhone(row.source_contact_phone) ??
       extractSourceContactPhoneFromPayload(snapshotPayload ?? undefined) ??
@@ -1191,6 +1261,14 @@ async function getListingsPageByScope(
       if (row.snapshot_id) row.snapshot_payload_raw = payloads.get(row.snapshot_id);
     }
     measure("snapshot-payloads");
+    const missingFees = listingsResult.rows.filter((r) =>
+      needsPeerFee(r.description, r.snapshot_payload_raw),
+    );
+    const inherited = await linkedFees(
+      db,
+      missingFees.map((r) => r.id),
+    );
+    for (const r of missingFees) r.peerFee = inherited.get(r.id);
     // Score all candidates before pagination, but enrich only the visible page.
     // Photos do not influence the matching score; fetching them for every
     // candidate can exhaust the database pool on a larger local collection.
@@ -1760,11 +1838,13 @@ function mapListingSummary(
     )
       ? "to_finish"
       : inferFinishQuality(row.description),
-    maintenanceFeeLabel: (
-      extractedFeatures.find(
-        (feature) => feature.key === "fees" && feature.source === "description",
-      ) ?? extractedFeatures.find((feature) => feature.key === "fees")
-    )?.value,
+    maintenanceFeeLabel: row.peerFee
+      ? `${row.peerFee.amount.toLocaleString("pl-PL")} PLN`
+      : (
+          extractedFeatures.find((f) => f.key === "fees" && f.source === "payload") ??
+          extractedFeatures.find((f) => f.key === "fees")
+        )?.value,
+    maintenanceFeeSource: row.peerFee?.source,
     additionalPurchaseCosts,
     totalAcquisitionPrice:
       priceAmount && additionalPurchaseCosts

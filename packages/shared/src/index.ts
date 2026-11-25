@@ -382,6 +382,7 @@ export type ListingSummary = {
   hasStreetParking?: boolean;
   finishQuality?: "ready" | "to_finish" | "unknown";
   maintenanceFeeLabel?: string;
+  maintenanceFeeSource?: { listingId: string; portal: string; archived: boolean };
   additionalPurchaseCosts?: {
     warnings?: string[];
     parkingCount?: number;

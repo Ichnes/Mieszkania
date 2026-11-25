@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Czynsz w połączonych ogłoszeniach (2026-11-25)
+
+- [x] Sprawdzono 2235 ofert bez jednoznacznej kwoty w segmencie za 180 dni. W próbie było 880 aktywnych i 1355 archiwalnych. Dodatkowe sformułowania i pola własnej oferty dały 26 kwot, zapisane duplikaty z innych portali kolejne 175 (w tym 86 ze źródła archiwalnego).
+- [x] Lista, szczegóły i statystyki korzystają z aktualnego składu grupy. Przy sprzecznych kwotach z innych portali wartość pozostaje nieuzupełniona. Szczegóły podają źródło z przejściem do jego ogłoszenia.
+- [x] API statystyk po zmianie pokazało 2035 ofert bez jednej kwoty (23,2%). Jedno wcześniejsze przypisanie do kwoty 1250 zł okazało się zakresem 1250–1280 zł. Chromium sprawdził kwoty i otwarcie źródła na ekranach 390, 1280 i 1680 px.
+- [x] Przeszło 385 testów API i 161 web, 18 pominięto w głównym przebiegu. Osobny test PostgreSQL sprawdził zgodność kwot, archiwalne źródło, konflikt i rozłączenie grupy.
+
 ## Bilans tygodniowy, archiwum i brakujące lata (2026-11-25)
 
 - [x] Wykres bilansu rozciąga się do dolnego marginesu karty. Chromium zmierzył 419 px na desktopie i 250 px przy szerokości 390 px.
