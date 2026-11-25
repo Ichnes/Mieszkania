@@ -220,7 +220,6 @@ export function compareListings(rows: Observation[], today: number, target?: Obs
         ? peers
             .slice()
             .sort((a, b) => Math.abs(a.area - row.area) - Math.abs(b.area - row.area))
-            .slice(0, 3)
             .map((p) => ({ id: p.id, area: p.area, price: p.price }))
         : [],
       scope:

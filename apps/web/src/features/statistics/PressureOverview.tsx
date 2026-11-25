@@ -318,11 +318,7 @@ export function PressureOverview({
           </div>
         )}
       </section>
-      <div className="buyer-summary">{metrics.slice(0, 3).map(renderMetric)}</div>
-      <details className="buyer-method">
-        <summary>Więcej wskaźników · ekspozycja, ceny i podaż</summary>
-        <div className="buyer-summary">{metrics.slice(3).map(renderMetric)}</div>
-      </details>
+      <div className="buyer-summary pressure-kpis">{metrics.map(renderMetric)}</div>
       <details className="buyer-method">
         <summary>Jak liczymy indeks i jaki jest zakres obserwacji?</summary>
         <section>

@@ -2,7 +2,7 @@ import { calibratedPressure } from "@mieszkania/shared";
 import { marketActivitySql } from "./market-activity";
 import { getBuyerMarket } from "./buyer-market";
 import { pressureScope, recordPressure } from "./pressure-history";
-import { replayHistory } from "./pressure-replay";
+import { growingPressureWindow, replayHistory } from "./pressure-replay";
 import { normalizeMarketLocation, marketLocationJoinSql } from "./market-locations";
 import {
   mapPriceSample,
@@ -214,8 +214,21 @@ async function computeMarketStats(
         {};
       const shorterPressure: NonNullable<MarketStatsResponse["buyerMarket"]>["shorterPressure"] =
         {};
-      for (const days of [90, 60, 30].filter((days) => days < periodDays)) {
-        const monthly = await loadPressure(days, buyerData);
+      const candidates = new Set([90, 60, 30].filter((n) => n < periodDays));
+      if (periodDays > 30) {
+        const { rows } = await db.query<{ day: number | null }>(
+          "select floor(extract(epoch from min(captured_at))/86400)::int as day from listing_snapshots",
+        );
+        if (rows[0]?.day != null) {
+          const growing = growingPressureWindow(periodDays, buyerData.today, rows[0].day);
+          // A one-day-shorter window can also measure supply from the first inventory.
+          for (const n of [growing, growing - 1]) if (n >= 30 && n < periodDays) candidates.add(n);
+        }
+      }
+      for (const days of [...candidates].sort((a, b) => b - a)) {
+        const monthly = [90, 60, 30].includes(days)
+          ? await loadPressure(days, buyerData)
+          : await replayHistory(db, searchContract, query, buyerData.today, days);
         const current = monthly.filter((f) => f.day === buyerData.today);
         for (const key of new Set(current.flatMap((f) => Object.keys(f.groups)))) {
           if (shorterPressure[key]) continue;

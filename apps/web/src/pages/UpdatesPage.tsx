@@ -1,3 +1,4 @@
+import { discoveryRange } from "../features/imports/discovery-range";
 import {
   CircleAlert,
   ClipboardCheck,
@@ -32,6 +33,8 @@ export function UpdatesPage({
     | "isRefreshingQueueStatus"
     | "discoverAllCity"
     | "setSettingsOpen"
+    | "discoverAllStartPage"
+    | "setDiscoverAllStartPage"
     | "discoverAllMaxPages"
     | "setDiscoverAllMaxPages"
     | "runDiscoverAllPortals"
@@ -70,6 +73,8 @@ export function UpdatesPage({
     isRefreshingQueueStatus,
     discoverAllCity,
     setSettingsOpen,
+    discoverAllStartPage,
+    setDiscoverAllStartPage,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,
@@ -95,6 +100,7 @@ export function UpdatesPage({
     streetEnrichmentResult,
     rcnError,
   } = model;
+  const range = discoveryRange(discoverAllStartPage, discoverAllMaxPages);
   return (
     <>
       {activeTab === "backfill" ? (
@@ -260,7 +266,7 @@ export function UpdatesPage({
                 <p>Wyszukaj nowe ogłoszenia i zmiany w istniejących ofertach.</p>
               </div>
               <div className="sync-step-body">
-                <div className="sync-step-fields">
+                <div className="sync-step-fields scan-range-fields">
                   <label className="field-label">
                     <span>Miasto z preferencji</span>
                     <input
@@ -278,6 +284,18 @@ export function UpdatesPage({
                     </button>
                   </label>
                   <label className="field-label">
+                    <span>Od strony</span>
+                    <input
+                      className="text-input"
+                      inputMode="numeric"
+                      value={discoverAllStartPage}
+                      onChange={(event) =>
+                        setDiscoverAllStartPage(event.target.value.replace(/\D/g, ""))
+                      }
+                      placeholder="1"
+                    />
+                  </label>
+                  <label className="field-label">
                     <span>Ile stron na portal</span>
                     <input
                       className="text-input"
@@ -288,17 +306,23 @@ export function UpdatesPage({
                       }
                       placeholder="50"
                     />
-                    <small className="field-hint">Zwykle wystarczy 20–50 stron.</small>
                   </label>
                 </div>
               </div>
+              <p className="field-hint" role="status">
+                {range
+                  ? range.maxPages > 250
+                    ? `Otodom: strony ${range.startPage}–${range.endPage}. Pozostałe portale: ${range.startPage}–${range.startPage + 249}.`
+                    : `Zakres skanu: strony ${range.startPage}–${range.endPage}.`
+                  : "Podaj stronę od 1 do 100 000 i liczbę stron od 1 do 5000."}
+              </p>
               <DiscoveryProgress discovering={isDiscoveringAllPortals} />
               <div className="sync-step-footer">
                 <button
                   className="action-button sync-main-button"
                   type="button"
                   onClick={() => void runDiscoverAllPortals()}
-                  disabled={isDiscoveringAllPortals}
+                  disabled={isDiscoveringAllPortals || !range}
                 >
                   {isDiscoveringAllPortals ? (
                     <LoaderCircle size={17} className="icon-spin" aria-hidden="true" />

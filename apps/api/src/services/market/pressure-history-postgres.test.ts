@@ -45,3 +45,10 @@ test(
     }
   },
 );
+
+test("the available replay window grows one day per day and stops at the selected period", async () => {
+  const { growingPressureWindow } = await import("./pressure-replay");
+  assert.equal(growingPressureWindow(180, 120, 0), 61);
+  assert.equal(growingPressureWindow(180, 121, 0), 62);
+  assert.equal(growingPressureWindow(60, 121, 0), 60);
+});

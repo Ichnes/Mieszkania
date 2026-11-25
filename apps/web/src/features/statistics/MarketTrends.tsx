@@ -15,7 +15,7 @@ export function MarketTrends({
 }) {
   const [view, setView] = useState("prices");
   return (
-    <section className="market-trends">
+    <section className="market-trends" id="trendy">
       <div className="stats-card-heading">
         <h2>Rynek w czasie</h2>
         <label className="analysis-selector">

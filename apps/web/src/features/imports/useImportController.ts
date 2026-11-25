@@ -1,3 +1,4 @@
+import { discoveryRange } from "./discovery-range";
 import { discoveryRequest } from "./discovery-request";
 import { queuePollDelay } from "./lib/queue-monitor";
 import { apiFetch } from "../../shared/lib/http";
@@ -53,6 +54,7 @@ export function useImportController({
 
   const discoverAllCity = searchCity;
 
+  const [discoverAllStartPage, setDiscoverAllStartPage] = useState("1");
   const [discoverAllMaxPages, setDiscoverAllMaxPages] = useState("50");
 
   const [discoverAllBatchPages, setDiscoverAllBatchPages] = useState("5");
@@ -335,6 +337,11 @@ export function useImportController({
   }
 
   async function runDiscoverAllPortals() {
+    const range = discoveryRange(discoverAllStartPage, discoverAllMaxPages);
+    if (!range) {
+      setQueueError("Sprawdź numer pierwszej strony i liczbę stron.");
+      return;
+    }
     setIsDiscoveringAllPortals(true);
     setQueueError(null);
     setQueueErrorAction(null);
@@ -355,8 +362,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: toOptionalNumber(discoverAllMaxPages) ?? 50,
+            startPage: range.startPage,
+            maxPages: range.maxPages,
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -365,8 +372,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -375,8 +382,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -388,8 +395,8 @@ export function useImportController({
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               city: discoverAllCity.trim(),
-              startPage: 1,
-              maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+              startPage: range.startPage,
+              maxPages: Math.min(range.maxPages, 250),
               batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
             }),
           },
@@ -399,8 +406,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -409,8 +416,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -419,8 +426,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -429,8 +436,8 @@ export function useImportController({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             city: discoverAllCity.trim(),
-            startPage: 1,
-            maxPages: Math.min(toOptionalNumber(discoverAllMaxPages) ?? 250, 250),
+            startPage: range.startPage,
+            maxPages: Math.min(range.maxPages, 250),
             batchPages: toOptionalNumber(discoverAllBatchPages) ?? 5,
           }),
         }),
@@ -1256,6 +1263,8 @@ export function useImportController({
     queueStatusCheckedAt,
     isRefreshingQueueStatus,
     discoverAllCity,
+    discoverAllStartPage,
+    setDiscoverAllStartPage,
     discoverAllMaxPages,
     setDiscoverAllMaxPages,
     runDiscoverAllPortals,

@@ -93,7 +93,7 @@ export function DistrictExplorer({
   ];
 
   return (
-    <div className="stats-layout">
+    <div className="stats-layout" id="lokalizacje" data-rank={sort}>
       <div className="panel stats-map">
         <StatsDistrictMap
           stats={stats}

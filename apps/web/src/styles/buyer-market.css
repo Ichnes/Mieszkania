@@ -771,3 +771,49 @@
     max-width: 100%;
   }
 }
+
+.offer-peers > summary:is(:hover, :focus, :active),
+.offer-peers .peer-list-toggle:is(:hover, :focus, :active) {
+  scale: none;
+  transform: none;
+  translate: none;
+  transition: none;
+}
+.peer-list-toggle {
+  margin-block-start: 0.65rem;
+}
+.stats-jumps {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.7rem;
+}
+.stats-jumps a {
+  color: var(--ink);
+  text-underline-offset: 0.2em;
+}
+#lokalizacje,
+#segmenty,
+#trendy {
+  scroll-margin-top: 5rem;
+}
+.buyer-monitor > .pressure-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+@media (max-width: 760px) {
+  .buyer-monitor > .pressure-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .pressure-kpis > div {
+    min-width: 0;
+  }
+  .stats-layout
+    .district-stats-row:not(.is-selected)
+    > :is(.stats-mobile-days, .stats-mobile-flow, .stats-mobile-drops) {
+    display: none;
+  }
+  .stats-layout[data-rank="archive"] .district-stats-row:not(.is-selected) > .stats-mobile-flow,
+  .stats-layout[data-rank="drops"] .district-stats-row:not(.is-selected) > .stats-mobile-drops {
+    display: block;
+  }
+}

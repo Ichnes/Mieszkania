@@ -25,11 +25,13 @@ export function ListingMarketComparison({
     | null
   >();
   const [failed, setFailed] = useState(false);
+  const [showAllPeers, setShowAllPeers] = useState(false);
   const [attempt, retry] = useState(0);
   useEffect(() => {
     const c = new AbortController();
     setFailed(false);
     setResult(undefined);
+    setShowAllPeers(false);
     apiFetch(`${apiBaseUrl}/api/listings/${id}/market-comparison`, { signal: c.signal })
       .then((r) => {
         if (!r.ok) throw Error();
@@ -190,9 +192,13 @@ export function ListingMarketComparison({
         </p>
         {result.examples.length > 0 && (
           <>
-            <h4>Najbliższy metraż</h4>
+            <h4>
+              Najbliższy metraż ·{" "}
+              {showAllPeers ? result.examples.length : Math.min(3, result.examples.length)} z{" "}
+              {result.count}
+            </h4>
             <div className="buyer-list">
-              {result.examples.map((p) => (
+              {(showAllPeers ? result.examples : result.examples.slice(0, 3)).map((p) => (
                 <a key={p.id} href={`/oferty?listing=${p.id}`}>
                   <b>
                     {row.district} · {p.area.toLocaleString("pl-PL")} m²
@@ -203,6 +209,16 @@ export function ListingMarketComparison({
                 </a>
               ))}
             </div>
+            {result.examples.length > 3 && (
+              <button
+                className="ghost-button peer-list-toggle"
+                type="button"
+                aria-expanded={showAllPeers}
+                onClick={() => setShowAllPeers(!showAllPeers)}
+              >
+                {showAllPeers ? "Zwiń do 3" : `Pokaż wszystkie (${result.examples.length})`}
+              </button>
+            )}
           </>
         )}
       </details>

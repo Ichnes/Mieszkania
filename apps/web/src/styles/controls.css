@@ -667,3 +667,15 @@
     border-color: var(--line);
   }
 }
+
+.sync-step-fields.scan-range-fields {
+  grid-template-columns: minmax(0, 1.3fr) repeat(2, minmax(0, 0.75fr));
+}
+@media (max-width: 760px) {
+  .sync-step-fields.scan-range-fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scan-range-fields > label:first-child {
+    grid-column: 1/-1;
+  }
+}

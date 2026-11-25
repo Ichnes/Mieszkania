@@ -65,6 +65,11 @@ export function MarketStatsPanel({
 
   return (
     <section className="stats-panel">
+      <nav className="stats-jumps" aria-label="Przejdź do analizy">
+        <a href="#lokalizacje">Lokalizacje</a>
+        {stats.buyerMarket && <a href="#segmenty">Segmenty</a>}
+        <a href="#trendy">Trendy</a>
+      </nav>
       <div className="section-topline">
         <div>
           <p className="eyebrow">

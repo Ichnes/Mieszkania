@@ -75,6 +75,8 @@ test("changing only the asking price changes value and leaves negotiation indepe
     history: [[0, 1000000]],
   }));
   const cheap = compareListings(peers, 91, { ...peers[0], price: 800000 })[0];
+  assert.ok(cheap.count > 3);
+  assert.equal(cheap.examples.length, cheap.count);
   const expensive = compareListings(peers, 91, { ...peers[0], price: 1200000 })[0];
   assert.equal(cheap.valueScore, 100);
   assert.equal(expensive.valueScore, 0);

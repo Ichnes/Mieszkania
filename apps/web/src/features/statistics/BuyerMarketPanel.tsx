@@ -187,7 +187,7 @@ export default function BuyerMarketPanel({
       <div className="buyer-plot-grid">
         <article className="buyer-card">
           <p className="eyebrow">Dzielnica × metraż</p>
-          <h3>Mapa segmentów</h3>
+          <h3 id="segmenty">Mapa segmentów</h3>
           <label>
             Miara{" "}
             <Select label="Miara na mapie segmentów" value={metric} onChange={setMetric}>

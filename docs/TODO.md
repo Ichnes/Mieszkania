@@ -1,11 +1,19 @@
 # Bieżące zadania
 
+## Etap 5 statystyk i ręczny zakres skanu (2026-11-25)
+
+- [x] Indeks sprawdza także okno rosnące z liczbą dni historii. Do zmiany podaży bierze stan dokładnie na początku tego okna. W odbiorze przy wyborze 180 dni użył 61 dni. Siedem miar monitora jest stale widocznych.
+- [x] Odtworzono utratę kliknięcia na brzegu „Podobne mieszkania”. Usunięto skalowanie kontrolki; lista zaczyna od 3 pozycji i rozwija się do wszystkich ofert użytych do wyceny.
+- [x] Odbiór w Playwright na 390/1024/1440 px w obu motywach: zwykłe i restrykcyjne filtry, powrót do pełnej próby, wybór MSI klawiaturą, tooltip tygodniowy, otwarcie statystyk i porównań, brak poziomego przepełnienia. Wysokość na telefonie 10 956 px (pierwotnie 22 088 px).
+- [x] Dodano początek skanu ośmiu portali z podglądem rzeczywistego zakresu, walidacją i zachowaniem limitów. Kontrolę żądań wykonuje się z przechwyceniem POST, aby odbiór UI nie uruchamiał pobierania.
+- [x] Produkcyjny build oraz testy: API 386 zaliczonych, 19 pominiętych; web 173 zaliczone. Kolejne okresy indeksu będą zależeć od dostępności danych.
+
 ## Etap 4 statystyk — trendy, struktura, budżet i dostępny indeks (2026-11-25)
 
 - [x] Rynek w czasie łączy sześć analiz w jednym przełączniku, a struktura ofert siedem podziałów ze wspólną skalą kwartylową. Budżet pokazuje kwotę po odjęciu rezerwy oraz dopasowania wśród ofert ze znaną ceną.
 - [x] Dodano okres 60 dni w aplikacji, API i zapisie pomiarów. Przy niedostatecznej historii panel pokazuje indeks dla najdłuższego dostępnego okna w tym samym segmencie oraz korekty z całego wybranego okresu. Dostępne miesięczne odczyty mają własne daty.
 - [x] Sprawdzono wybór wykresów, wszystkie podziały i rezerwę większą od budżetu na 390/1024/1440 px. Dla wyboru 180 dni odtworzono wynik 14,3/100 z okna 60 dni i 1064 obniżki oraz 316 podwyżek z okna 180 dni.
-- [ ] Etap 5 obejmuje odbiór całego widoku względem kryteriów z audytu.
+- [x] Etap 5 zakończony. Wyniki odbioru znajdują się powyżej.
 
 ## Redesign statystyk — lokalizacje i okna indeksu (2026-11-25)
 

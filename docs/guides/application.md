@@ -15,6 +15,13 @@ Adresy można odświeżać i otwierać bezpośrednio. Przyciski Wstecz/Dalej prz
 zmieniają widok. Link z `?listing=UUID` otwiera szczegóły konkretnej lokalnej oferty;
 stare linki zaczynające się od `/` pozostają obsługiwane.
 
+W **Aktualizacja → Sprawdź portale** podaj **Od strony** i **Ile stron na portal**.
+Wartości 30 i 10 oznaczają strony od 30 do 39 włącznie. Po sprawdzeniu stron 1–30
+zacznij od 31, jeśli chcesz pominąć stronę 30. Pusty początek oznacza stronę 1.
+Zakres jest stosowany dla każdej grupy lokalizacji. Skan może zakończyć się wcześniej,
+gdy skończą się wyniki. Otodom pozwala w tym panelu na 5000 stron, pozostałe portale
+na 250. Wznowienie przerwanego skanu Otodom korzysta z zapisanego zakresu.
+
 Przy starcie aplikacja czeka na ustawienia i region. Lista ofert, podsumowanie bazy
 i kalendarz wczytują się niezależnie po wejściu na **Oferty**. Kalkulator i porównanie
 nie czekają na ranking ofert ani odczyt kalendarza. Przejście do innej strony anuluje
@@ -586,18 +593,23 @@ Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarc
 Komunikat **Niezastosowane zmiany** oznacza, że wyniki nadal odpowiadają ostatnio
 zatwierdzonym filtrom. W **Monitorze kupującego** przełącznik 30/60/90/180 dni zmienia
 okno obliczeń indeksu presji. Każdy okres ma własną historię porównawczą. Gdy jest za
-krótka, panel wybiera najdłuższe z krótszych dostępnych okien dla tego samego segmentu.
+krótka, panel sprawdza też okno wynikające z liczby dni zapisanej historii, z miejscem
+na dwa wcześniejsze odczyty oddalone o 30 dni. Okno może przyrastać o dzień z każdym
+kolejnym dniem historii. Odczyt nadal wymaga pokrycia co najmniej 70% wag dla segmentu.
+Historyczna rekonstrukcja obejmuje cechy, które można odtworzyć z zapisów portali.
 Nagłówek wskazuje rzeczywisty okres indeksu. Liczby obniżek i podwyżek obejmują zakres
 wybrany na stronie. Przy dłuższych okresach poniżej widać również dostępne odczyty
 indeksu 30-dniowego. Zmiany punktowe za 30 i 90 dni porównują
 odczyty indeksu obliczonego dla tego samego okna.
-**Więcej wskaźników** rozwija miary ekspozycji, zmian cen i podaży.
+Miary ekspozycji, zmian cen i podaży są zawsze widoczne pod indeksem.
 Pod skrótem monitora wybór miary w rankingu dzielnic zmienia również skalę kolorów mapy.
 Wybierz dzielnicę, a następnie numerowany obszar MSI, aby zobaczyć liczebność i średnią
 cenę aktywnych ofert przypisanych do tej nazwy. **Cała Warszawa** przywraca widok dzielnic.
 Na telefonie ranking początkowo obejmuje pięć pozycji oraz wybraną dzielnicę.
 Kliknięcie mieszkania na liście pod heatmapą otwiera statystyki tego ogłoszenia.
 Zamknięcie szczegółów przywraca listę z tym samym segmentem i sortowaniem.
+W statystykach mieszkania **Podobne mieszkania** pokazuje całkowitą liczebność grupy.
+Po otwarciu widać trzy najbliższe metrażem oferty. **Pokaż wszystkie** rozwija pełną listę.
 W sekcji **Rynek w czasie** wybierz jeden z sześciu wykresów. Podpis wskazuje, czy
 analiza dotyczy całego zakresu filtrów strony, czy segmentu wybranego w monitorze.
 W **Strukturze ofert** wybierz wymiar, np. czynsz. Grupy mają wspólną skalę cen za m².

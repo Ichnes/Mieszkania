@@ -21,6 +21,10 @@ type Event = {
   rooms: number | null;
 };
 const cached = createStatsCache<PressureFrame[]>(3600000, 5);
+// Two earlier readings, taken 30 days apart, must each cover the entire window.
+export function growingPressureWindow(requested: number, today: number, first: number) {
+  return Math.min(requested, today - first + 1 - 2 * 30);
+}
 export function replayHistory(
   db: Pool,
   contract: SearchContract,
@@ -39,7 +43,8 @@ export function replayHistory(
     return Promise.resolve([]);
   const scope = "portal-v1:" + pressureScope(contract, query, days);
   return cached(scope + today, async () => {
-    const saved = await pressureHistory(db, scope, today);
+    const fixedWindow = [30, 60, 90, 180].includes(days);
+    const saved = fixedWindow ? await pressureHistory(db, scope, today) : [];
     if (saved.some((f) => f.day === today)) return saved.map((f) => ({ ...f, replayed: true }));
     const result =
       await db.query<Event>(`select id,floor(extract(epoch from observed)/86400)::int as day,status,title,address,price,area,rooms from (
@@ -54,11 +59,15 @@ export function replayHistory(
     const frames: PressureFrame[] = [];
     let index = 0;
     const first = result.rows[0]?.day ?? today;
-    for (
-      let day = today - 30 * Math.min(24, Math.floor((today - first) / 30));
-      day <= today;
-      day += 30
-    ) {
+    const anchors = new Set<number>();
+    for (let day = today; day >= Math.max(first, today - 720); day -= 30) anchors.add(day);
+    // Supply needs inventory exactly one window earlier, including off-cycle dates.
+    const dates = new Set([
+      ...anchors,
+      ...[...anchors].map((day) => day - days).filter((day) => day >= first),
+    ]);
+    const inventory = new Map<number, PressureFrame>();
+    for (const day of [...dates].sort((a, b) => a - b)) {
       while (index < result.rows.length && result.rows[index].day <= day) {
         const event = result.rows[index++];
         let r = records.get(event.id);
@@ -116,12 +125,7 @@ export function replayHistory(
           r.area >= Math.max(contract.minArea, Number(query.minArea) || 0) &&
           (!Number(query.maxArea) || r.area <= Number(query.maxArea)),
       );
-      const frame = makePressureFrame(
-        rows,
-        day,
-        frames.find((f) => f.day === day - days),
-        days,
-      );
+      const frame = makePressureFrame(rows, day, inventory.get(day - days), days);
       for (const s of Object.values(frame.groups)) {
         s.values.returns = null;
         if (day - first < days - 1) {
@@ -129,8 +133,10 @@ export function replayHistory(
             s.values[key] = null;
         }
       }
-      frames.push(frame);
+      inventory.set(day, frame);
+      if (anchors.has(day)) frames.push(frame);
     }
+    if (!fixedWindow) return frames.map((f) => ({ ...f, replayed: true }));
     if (frames.length)
       await db.query(
         `insert into market_pressure_daily(scope,day,groups) select $1,d.day,d.groups from jsonb_to_recordset($2::jsonb) as d(day int,groups jsonb) on conflict do nothing`,
