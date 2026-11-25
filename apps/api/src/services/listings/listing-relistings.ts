@@ -425,10 +425,15 @@ function scoreRelisting(
   const previousNumber = previous.addressKey.match(/\d+[a-z]?(?:[/-]\d+[a-z]?)?$/)?.[0];
   const currentNumber = current.addressKey.match(/\d+[a-z]?(?:[/-]\d+[a-z]?)?$/)?.[0];
   const conflictingNumbers = previousNumber && currentNumber && previousNumber !== currentNumber;
+  const surnameOnly = (full: string, short: string) =>
+    /^[a-z]{3,}(?:skiego|ckiego)$/.test(short) && full.endsWith(" " + short);
+  const abbreviatedStreet =
+    surnameOnly(previous.streetKey, current.streetKey) || surnameOnly(current.streetKey, previous.streetKey);
   const plausible =
     !conflictingFloors &&
     !conflictingNumbers &&
-    ((sameStreet && sameFloor && areaDifference <= 1) ||
+    ((abbreviatedStreet && sameFloor && areaDifference < 0.01) ||
+      (sameStreet && sameFloor && areaDifference <= 1) ||
       (descriptionSimilarity >= 0.55 && areaDifference <= 1 && (sameStreet || nearbyCoordinates)));
   if (!strong && !plausible) return null;
 
@@ -535,7 +540,7 @@ function prepareRow(row: RelistingMatchRow): PreparedRelistingRow {
         : "",
     addressKey: usableStreet ? normalizeCompact(street) : "",
     streetKey: usableStreet
-      ? normalizeCompact(street.replace(/\s+\d+[a-z]?(?:[/-]\d+[a-z]?)?$/iu, ""))
+      ? normalizeWords(street.replace(/\s+\d+[a-z]?(?:[/-]\d+[a-z]?)?$/iu, "")).join(" ")
       : "",
   };
 }

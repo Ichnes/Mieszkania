@@ -16,6 +16,7 @@ export async function reviewRelisting(
   previousId: string,
   decision: RelistingReview["decision"],
   db: Pool = pool,
+  manual = false,
 ) {
   const client = await db.connect();
   try {
@@ -47,6 +48,14 @@ export async function reviewRelisting(
         [currentId, previousId],
       )
     ).rows[0]?.match_payload;
+    if (manual && decision === "confirmed") {
+      await client.query(
+        `insert into listing_relistings(current_listing_id,previous_listing_id,confidence_score,reason_summary,previous_price_amount,relisted_price_amount)
+        select l.id,a.id,100,'Wskazane przez użytkownika',a.price_amount,l.price_amount from listings l join listings a on a.id=$2 where l.id=$1
+        on conflict(current_listing_id,previous_listing_id) do nothing`,
+        [currentId, previousId],
+      );
+    }
     const match =
       candidate ??
       existing?.match_payload ??

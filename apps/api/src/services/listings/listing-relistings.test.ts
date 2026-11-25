@@ -213,3 +213,12 @@ test("partial description similarity can suggest an archive when the floor is mi
     assert.equal(result.candidates.length, sharedWords === 24 ? 1 : 0);
   }
 });
+
+test("short and full street patron names suggest a relisting with identical area and floor", () => {
+  const result = findRelistedListingRows([
+    row({id:"old",status:"removed",addressText:"Władysława Umińskiego, Warszawa",description:"Stary opis"}),
+    row({id:"new",status:"active",addressText:"Umińskiego 6, Goclaw, Warszawa",description:"Nowe zdjęcia",firstSeenAt:"2026-03-01"})
+  ]);
+  assert.equal(result.matches.length,0);
+  assert.equal(result.candidates.length,1);
+});

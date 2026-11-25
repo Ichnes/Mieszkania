@@ -15,6 +15,10 @@ Adresy można odświeżać i otwierać bezpośrednio. Przyciski Wstecz/Dalej prz
 zmieniają widok. Link z `?listing=UUID` otwiera szczegóły konkretnej lokalnej oferty;
 stare linki zaczynające się od `/` pozostają obsługiwane.
 
+W panelu ponownych wystawień rozwiń **Połącz ręcznie po ID**, wpisz identyfikatory
+aktywnej i archiwalnej oferty, a następnie wybierz **Połącz jako ponowne wystawienie**.
+Można tak potwierdzić także parę pominiętą przez automatyczne propozycje.
+
 W **Aktualizacja → Sprawdź portale** podaj **Od strony** i **Ile stron na portal**.
 Przycisk **Zmień w preferencjach** na końcu pola miasta otwiera ustawienia zakresu ofert.
 Wartości 30 i 10 oznaczają strony od 30 do 39 włącznie. Po sprawdzeniu stron 1–30

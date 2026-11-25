@@ -26,6 +26,9 @@ export function RelistingsPanel({
   scanError: string | null;
   scanResult: RelistedListingsScanResponse | null;
 }) {
+  const [currentId, setCurrentId] = useState("");
+  const [previousId, setPreviousId] = useState("");
+  const [saving, setSaving] = useState(false);
   const [pages, setPages] = useState({ linked: 1, potential: 1 });
   const [offsets, setOffsets] = useState({ linked: [0], potential: [0] });
   const [sorts, setSorts] = useState<Record<"linked" | "potential", RelistingSort>>({
@@ -181,6 +184,64 @@ export function RelistingsPanel({
           {error}
         </p>
       )}
+      <details className="panel">
+        <summary>Połącz ręcznie po ID</summary>
+        <form
+          className="sync-step-fields"
+          onSubmit={async (e) => {
+            e.preventDefault();
+            setSaving(true);
+            setNotice("");
+            setError("");
+            try {
+              const response = await apiFetch(
+                `${apiBaseUrl}/api/listings/${encodeURIComponent(currentId.trim())}/relisting-review`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    previousId: previousId.trim(),
+                    decision: "confirmed",
+                    manualRelisting: true,
+                  }),
+                },
+              );
+              if (!response.ok)
+                throw new Error((await response.json()).message ?? "Nie udało się połączyć ofert.");
+              setNotice("Połączono aktywne ogłoszenie z archiwalnym.");
+              setCurrentId("");
+              setPreviousId("");
+              setRevision((v) => v + 1);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : "Nie udało się zapisać połączenia.");
+            } finally {
+              setSaving(false);
+            }
+          }}
+        >
+          <label>
+            ID aktywnej oferty
+            <input
+              className="text-input"
+              required
+              value={currentId}
+              onChange={(e) => setCurrentId(e.target.value)}
+            />
+          </label>
+          <label>
+            ID archiwalnej oferty
+            <input
+              className="text-input"
+              required
+              value={previousId}
+              onChange={(e) => setPreviousId(e.target.value)}
+            />
+          </label>
+          <button className="action-button" disabled={saving}>
+            {saving ? "Zapisywanie…" : "Połącz jako ponowne wystawienie"}
+          </button>
+        </form>
+      </details>
       {loading ? (
         <p role="status">Wczytywanie zapisanych powiązań…</p>
       ) : (

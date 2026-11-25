@@ -1,5 +1,7 @@
 # Bieżące zadania
 
+- [x] Ręczne powiązanie ponownego wystawienia po dwóch ID i proponowanie par przy skróconej nazwie ulicy patrona, takim samym piętrze i metrażu. Test regresji oraz 12 pozostałych testów dopasowań przeszły.
+
 - [x] Skrócono formularz zakresu skanu i wyrównano podpis do pierwszej strony. Statystyki mają pasek skrótów z ikonami, wartości na końcach wspólnej osi kwartylowej i większą liczebność próby. Produkcyjny build i Playwright dla 390/1440 px przeszły.
 
 ## Stabilne rozwijanie zasięgu portali i pola skanu (2026-11-25)
