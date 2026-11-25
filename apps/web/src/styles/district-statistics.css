@@ -791,7 +791,7 @@
 }
 .stats-segments-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 310px), 1fr));
   gap: 12px;
   margin-top: 12px;
 }
@@ -814,6 +814,7 @@
 .stats-segment-sample {
   grid-column: 1 / -1;
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 112px), 1fr));
   gap: 9px;
   min-width: 0;
   margin: 0;
@@ -823,14 +824,14 @@
 }
 .stats-segment-sample dt {
   color: var(--ink-soft);
-  font-size: 0.65rem;
+  font-size: 0.74rem;
   font-weight: 600;
   line-height: 1.5;
 }
 .stats-segment-sample dd {
   margin: 0;
   color: var(--ink);
-  font-size: 0.75rem;
+  font-size: 0.86rem;
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
@@ -863,15 +864,15 @@
 }
 .stats-segment-item-heading > span {
   color: var(--ink);
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
 .stats-segment-list i {
-  height: 6px;
+  height: 4px;
   overflow: hidden;
   border-radius: 999px;
-  background: var(--surface-muted);
+  background: var(--line);
 }
 .stats-segment-list i b {
   display: block;
@@ -881,12 +882,19 @@
   background: var(--brand);
 }
 .stats-segment-item-heading > strong {
-  font-size: 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.8rem;
   white-space: nowrap;
 }
 .stats-segment-list small {
-  color: var(--ink-soft);
-  font-size: 0.62rem;
+  padding: 2px 7px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 0.74rem;
   font-weight: 650;
 }
 

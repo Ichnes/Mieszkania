@@ -36,6 +36,9 @@ export function getDescriptionHighlightParts(value: string): DescriptionHighligh
     `(?:dębow${suffix}\\s+desk${suffix})`,
   ].join("|");
   const contextualNeutral = [
+    `(?:grunt(?:y)?\\s+(?:(?:jest|są)\\s+)?nieuregulowan${suffix}|nieuregulowan${suffix}\\s+grunt${suffix})`,
+    `cesj(?:a|i|ę)\\s+(?:praw(?:\\s+z\\s+umowy\\s+deweloperskiej)?|umowy\\s+deweloperskiej)`,
+    `obecnie\\s+wynajmowan${suffix}`,
     `głośność\\s*:\\s*(?:umiarkowanie\\s+)?cich${suffix}`,
     `(?<![\\p{L}])nie\\s+(?:(?:jest|są|bywa)\\s+)?głośn(?:y|a|e|o|ym|ych|ego|ej|ymi|ą)(?![\\p{L}])`,
     `zakup\\s+obligatoryjn${suffix}\\s*[-–—,:]?\\s*nie\\s+ma\\s+możliwoś${suffix}\\s+zakupu[^.!?;]{0,80}?bez\\s+(?:miejsc${suffix}\\s+(?:postojow${suffix}|parkingow${suffix}|garażow${suffix}))`,

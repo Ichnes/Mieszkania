@@ -390,3 +390,17 @@ test("recognizes abbreviated north-east exposure regardless of letter case", () 
   assert.deepEqual(getSunExposure("Ekspozycja NE").directions, ["NE"]);
   assert.deepEqual(getSunExposure("Okna: ne").directions, ["NE"]);
 });
+test("marks explicit transaction and tenancy terms for review", () => {
+  for (const phrase of [
+    "Grunt jest nieuregulowany",
+    "cesji praw z umowy deweloperskiej",
+    "obecnie wynajmowane",
+  ]) {
+    assert.deepEqual(
+      getDescriptionHighlightParts(phrase)
+        .filter((part) => part.tone)
+        .map((part) => [part.text, part.tone]),
+      [[phrase, "neutral"]],
+    );
+  }
+});

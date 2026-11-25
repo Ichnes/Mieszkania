@@ -494,7 +494,7 @@ export function MarketStatsPanel({
                     <strong
                       title={`${item.count.toLocaleString("pl-PL")} ofert w grupie; ${item.pricedListings.toLocaleString("pl-PL")} z ceną i metrażem`}
                     >
-                      {item.count.toLocaleString("pl-PL")}{" "}
+                      <span>Oferty: {item.count.toLocaleString("pl-PL")}</span>
                       <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
                     </strong>
                   </div>

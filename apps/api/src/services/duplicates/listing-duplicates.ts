@@ -955,6 +955,48 @@ export async function unmergeDuplicateListing(
   });
 }
 
+export async function dissolveDuplicateGroup(groupId: string, expectedMembers: string[]) {
+  return withDb(async (pool) => {
+    const db = await pool.connect();
+    try {
+      await db.query("begin");
+      await db.query("select pg_advisory_xact_lock(735189241)");
+      const { rows } = await db.query<{ listing_id: string }>(
+        "select listing_id from listing_duplicate_group_members where group_id=$1 order by listing_id for update",
+        [groupId],
+      );
+      if (
+        rows.length < 2 ||
+        rows.length !== expectedMembers.length ||
+        rows.some((row) => !expectedMembers.includes(row.listing_id))
+      ) {
+        await db.query("rollback");
+        return false;
+      }
+      await db.query(
+        `insert into listing_duplicate_reviews (pair_key,listing_id_left,listing_id_right,status,notes,reviewed_at)
+        select concat(a.listing_id, ':', b.listing_id),a.listing_id,b.listing_id,'different_listing','Ręcznie rozłączono całą grupę',now()
+        from listing_duplicate_group_members a join listing_duplicate_group_members b on a.group_id=b.group_id and a.listing_id<b.listing_id
+        where a.group_id=$1 on conflict(pair_key) do update set status=excluded.status,notes=excluded.notes,reviewed_at=excluded.reviewed_at`,
+        [groupId],
+      );
+      await db.query(
+        "update listings set hidden_duplicate_of_id=null,hidden_at=null,updated_at=now() where id=any($1::uuid[]) and hidden_duplicate_of_id=any($1::uuid[])",
+        [expectedMembers],
+      );
+      for (const row of rows) await restoreSourcePrice(db, row.listing_id);
+      await db.query("delete from listing_duplicate_groups where id=$1", [groupId]);
+      await db.query("commit");
+      return true;
+    } catch (error) {
+      await db.query("rollback");
+      throw error;
+    } finally {
+      db.release();
+    }
+  });
+}
+
 export async function confirmDuplicateGroup(primaryListingId: string) {
   return withDb(async (db) => {
     const result = await db.query<{ group_id: string }>(

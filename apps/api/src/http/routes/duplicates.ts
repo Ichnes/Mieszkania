@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import "../../config";
 import {
   confirmDuplicateGroup,
+  dissolveDuplicateGroup,
   DuplicateAreaConflict,
   getDuplicateCandidates,
   getDuplicateGroupOverviews,
@@ -66,6 +67,34 @@ export function registerDuplicatesRoutes(app: FastifyInstance) {
     },
   );
 
+  app.post<{ Body: { groupId: string; memberIds: string[] } }>(
+    "/api/duplicates/dissolve",
+    {
+      schema: {
+        body: {
+          type: "object",
+          required: ["groupId", "memberIds"],
+          properties: {
+            groupId: { type: "string", format: "uuid" },
+            memberIds: {
+              type: "array",
+              minItems: 2,
+              uniqueItems: true,
+              items: { type: "string", format: "uuid" },
+            },
+          },
+        },
+      },
+    },
+    async (request, reply) => {
+      const ok = await dissolveDuplicateGroup(request.body.groupId, request.body.memberIds);
+      return ok
+        ? { dissolved: true }
+        : reply
+            .code(409)
+            .send({ message: "Skład grupy zmienił się. Odśwież listę przed rozłączeniem." });
+    },
+  );
   app.post<{ Body: { primaryListingId?: string } }>(
     "/api/duplicates/confirm",
     async (request, reply) => {

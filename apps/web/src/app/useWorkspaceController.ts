@@ -563,6 +563,8 @@ export function useWorkspaceController() {
     loadDuplicateGroups,
     isLoadingDuplicateGroups,
     unmergeDuplicate,
+    dissolveDuplicateGroup: (groupId: string, memberIds: string[]) =>
+      saveDuplicateSeparation(groupId, "dissolve", { groupId, memberIds }),
     confirmDuplicateGroup,
     runCollector,
     collectUrl,
@@ -827,15 +829,27 @@ export function useWorkspaceController() {
   }
 
   async function unmergeDuplicate(primaryListingId: string, duplicateListingId: string) {
+    return saveDuplicateSeparation(primaryListingId, "unmerge", {
+      primaryListingId,
+      duplicateListingId,
+    });
+  }
+  async function saveDuplicateSeparation(
+    actionId: string,
+    operation: "unmerge" | "dissolve",
+    body: object,
+  ) {
     if (duplicateAction) return false;
-    setDuplicateAction(primaryListingId);
+    setDuplicateAction(actionId);
     setDuplicateError(null);
     try {
-      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/unmerge`, {
+      const response = await apiFetch(`${apiBaseUrl}/api/duplicates/${operation}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ primaryListingId, duplicateListingId }),
+        body: JSON.stringify(body),
       });
+      if (response.status === 409)
+        throw new Error("Skład grupy zmienił się. Odśwież listę przed rozłączeniem.");
       if (!response.ok)
         throw new Error("Nie udało się rozłączyć ofert. Odśwież grupy i spróbuj ponownie.");
       duplicateCandidateCache.clear();

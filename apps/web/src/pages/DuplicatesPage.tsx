@@ -28,6 +28,7 @@ export function DuplicatesPage({
     | "isLoadingDuplicateGroups"
     | "openListing"
     | "unmergeDuplicate"
+    | "dissolveDuplicateGroup"
     | "confirmDuplicateGroup"
   >;
 }) {
@@ -151,9 +152,8 @@ export function DuplicatesPage({
               onReload={() => void loadDuplicateGroups()}
               isLoading={isLoadingDuplicateGroups}
               onOpen={(id) => void openListing(id)}
-              onUnmerge={(primaryListingId, duplicateListingId) =>
-                void unmergeDuplicate(primaryListingId, duplicateListingId)
-              }
+              onUnmerge={unmergeDuplicate}
+              onDissolve={model.dissolveDuplicateGroup}
               onConfirm={(primaryListingId) => void confirmDuplicateGroup(primaryListingId)}
             />
           ) : null}

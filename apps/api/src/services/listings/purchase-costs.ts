@@ -32,8 +32,35 @@ function amenities(text: string) {
 
 export function extractAdditionalPurchaseCosts(description: string): PurchaseCosts {
   let text = normalize(description.replace(/<[^>]*>/g, " "))
+    .replace(/(?:\n\s*|,\s*-\s*)(?=cena\s*:\s*\d)/g, "; ")
     .replace(/\s+/g, " ")
     .replace(/\blokatrosk/g, "lokatorsk")
+    .replace(
+      /\bmiejsce garazowe i komorka lokatorska wymaga(?:ja)? odrebnej oplaty w wysokosci (\d+ tys\.?) i (\d+ tys)/g,
+      "miejsce garazowe dodatkowo $1; komorka lokatorska dodatkowo $2",
+    )
+    .replace(/\bschowek\s*:(?=\s*\d)/g, "komorka:")
+    .replace(/\bplatn\w*\s+(\d{1,3}\.\d{3})(?=\.(?:\s|$))/g, "platne $1 zl")
+    .replace(/\(obok miejsc\w* postojow\w*\)/g, "")
+    .replace(/\bcena za (\d+) miejsca to(?=\s+\d)/g, "cena za $1 miejsca postojowe:")
+    .replace(
+      /dodatkowo platne\s*\(lacznie ([\d .,]+\s*(?:zl|pln))\)\s*:\s*-\s*(miejsce postojowe w garazu podziemnym)\s*-\s*(?:duza |mala )?(piwnica|komorka)/g,
+      "$2 i $3 dodatkowo $1",
+    )
+    .replace(
+      /\(dodatkowo platne\)\s+(miejsce w garazu podziemnym)(?=\s+\d)/g,
+      "; $1 dodatkowo platne ",
+    )
+    .replace(
+      /\b(dwa|trzy|cztery) miejsca naziemne(?=\s+\d)/g,
+      "$1 miejsca parkingowe naziemne dodatkowo",
+    )
+    .replace(/(dodatkowo platn\w*\s+\d{1,3}[ .]\d{3})(?=\s*[);])/g, "$1 zl")
+    .replace(/\b(\d+)\.\s+(?=pietrze)/g, "$1 ")
+    .replace(
+      /\bplus obligatoryjnie\s+(\d+\s*tys\.?\s*zl)\s+za\s+(\d+ miejsc\w* postojow\w* wraz z komork\w*)/g,
+      "; $2 dodatkowo $1",
+    )
     .replace(
       /\blaczny koszt (dwoch|trzech|czterech) miejsc\s*:/g,
       "laczny koszt $1 miejsc postojowych:",
@@ -47,6 +74,15 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     .replace(/!\)/g, ")")
     .replace(/(\d)\s*m\.(?=\s)/g, "$1 m");
   const result: PurchaseCosts = {};
+  if (
+    /cena niezaleznego miejsca postojowego/.test(text) &&
+    /cena rodzinnego m-ca postojowego/.test(text)
+  ) {
+    result.warnings = [
+      "Opis zawiera cennik różnych miejsc. Potwierdź wariant parkingu dla tego lokalu.",
+    ];
+    text = text.split(/cena m-ca postojowego|cena niezaleznego miejsca postojowego/, 1)[0];
+  }
   if (/opcjonalnie miejsce[^.!?]{0,120}opcjonalnie komork/.test(text)) {
     result.warnings = ["Parking i komórka są opcjonalne. Koszt zależy od wybranych dodatków."];
     text = text.replace(
@@ -81,6 +117,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
   let previousEnd = 0;
   let indoorParking: number | undefined;
   let otherParking: number | undefined;
+  let secondParking: number | undefined;
   const includedInBundle = { garage: false, storage: false };
   for (const match of text.matchAll(
     /(\d{1,3}(?:,\d{3})+|\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:[,.](\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl(?:otych|ote|oty)?\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
@@ -88,9 +125,12 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     const index = match.index!;
     const clauses = text.slice(Math.max(previousEnd, index - 400), index).split(/[.!?](?!\d)|[•;]/);
     let before = clauses.at(-1)!;
+    before = before.replace(/\([^()]*\bprzy miejscach postojowych[^()]*\)\s*:\s*$/, ":");
     before = before.replace(/^.*?\bdo mieszkania przynalez\w*\s+/, "");
     if (
-      /^\s*(?:(?:oba\s+sa\s+)?dodatkowo\s+platn|cena za oba miejsca\b)/.test(before) &&
+      /^\s*(?:(?:oba\s+sa\s+)?dodatkowo\s+platn|(?:laczna )?cena za (?:oba|dwa) miejsca\b)/.test(
+        before,
+      ) &&
       clauses.length > 1
     ) {
       const previous = clauses.at(-2)!;
@@ -119,6 +159,8 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     if (/\bprzy\s+miejscu\s+postojowym\s*\(?\s*(?:dodatkowo\s+platne)?\s*$/.test(before))
       mentioned.storage = false;
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
+    if (/\bcena laczna nieruchomosci\b/.test(before)) continue;
+    if (/\blaczna cena z (?:miejscem|garazem|komorka)\b/.test(before)) continue;
     if (/\bcena\s*[-–—]\s*$/.test(before) && /^\s*\+/.test(after)) continue;
     // Nearby amenity mentions do not turn the apartment price or unit price into a surcharge.
     if (/\bcena\s+(?:mieszkania|apartamentu|lokalu|za\s+m[²2])\s*[:=—–-]?\s*$/.test(before))
@@ -182,15 +224,25 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
         result.parkingUnitPrice = amount;
       }
       if (/garaz\w*|podziemn\w*/.test(before)) indoorParking = parkingAmount;
+      else if (/^\s*drugie miejsce (?:parkingowe|postojowe)\s*:/.test(before))
+        secondParking = parkingAmount;
       else if (parkingAmount !== indoorParking || /naziemn|zewnetrz|przed budynkiem/.test(before))
         otherParking = parkingAmount;
-      result.garage = (indoorParking ?? 0) + (otherParking ?? 0);
+      result.garage = (indoorParking ?? 0) + (otherParking ?? 0) + (secondParking ?? 0);
     } else if (mentioned.storage) {
       const boxes = /^\s*\/\s*boks/.test(after)
         ? Number(before.match(/\b(\d{1,2}) boksow rowerowych/)?.[1])
         : 0;
       result.storage = amount * (boxes || 1);
     } else result.garden = amount;
+  }
+  if (
+    result.parkingCount &&
+    result.parkingUnitPrice &&
+    result.garage !== result.parkingCount * result.parkingUnitPrice
+  ) {
+    delete result.parkingCount;
+    delete result.parkingUnitPrice;
   }
   for (const clause of text.split(/[.!?](?!\d)/)) {
     for (const match of clause.matchAll(/w\s+cenie\b/g)) {

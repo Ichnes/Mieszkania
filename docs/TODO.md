@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Przegląd kolejnych 400 i 500 ofert (2026-11-25)
+
+- [x] Wylosowano dwie rozłączne próby, z wyłączeniem poprzednich 1100 rekordów. Łącznie 2000 unikalnych ofert. Porównano opis, koszty, cechy, adresy, pinezki, ceny jednostkowe i powiązania. Jedna oferta z próby 400 nie miała opisu. W próbach było odpowiednio 218 i 280 grup duplikatów oraz 110 i 148 powiązań lub propozycji ponownego wystawienia.
+- [x] Poprawiono podział cen pakietów oraz wykrywanie ceny całego mieszkania przy opisie dodatków. Siedem sum zweryfikowano po wdrożeniu w lokalnym API. Szczegółowe wyniki i raporty powiązań znajdują się w prywatnych katalogach `kolejne-400` i `kolejne-500` w bieżącym audycie.
+- [x] Oznaczono warunki transakcji na kartach i w szczegółach. W 2000 opisach wykryto 14 ofert z nieuregulowanym gruntem i 8 cesji mieszkania. Sprawdzono wpływ na surowe punkty oceny wymarzonego mieszkania i widoczność obu etykiet w działającym API.
+- [x] Rozdzielono liczebność, udział i ceny w segmentach statystyk. Chromium potwierdził dwie kolumny miar bez poziomego przewijania przy 390, 1280 i 1680 px.
+- [x] Rozłączenie jednego członka zachowuje widok większej grupy. Dodano rozłączenie całej grupy. Test przeglądarkowy z kontrolowaną odpowiedzią sprawdził pozostanie w grupie, rozłączenie pary, anulowanie i potwierdzenie operacji grupowej. Osobny test PostgreSQL sprawdził zmianę składu przed zapisem, zachowanie ofert, przywrócenie cen i odrzucenie wszystkich trzech par. Zestaw projektu: 366 testów API i 161 web przeszło, 16 API pominięto.
+- [ ] Do dalszej oceny pozostały niejednoznaczne koszty wariantowe, sprzeczne pinezki i historyczne połączenia z rozbieżnymi danymi. Sama różnica pól nie rozstrzyga tożsamości lokalu.
+
 ## Audyt opisów, adresów i grup oraz codzienna obsługa (2026-11-25)
 
 - [x] Końcowa weryfikacja: 358 testów API i 159 testów web przeszło, 16 testów API pominięto w głównym przebiegu. Osobno przeszły 4 testy z PostgreSQL.

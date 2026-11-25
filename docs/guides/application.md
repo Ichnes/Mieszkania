@@ -668,6 +668,17 @@ propozycje do rozstrzygnięcia. W zakładce **Duplikaty** sekcja **Powiązane wc
 ogłoszenia** pokazuje historię z linkami i połączonymi kopiami. Każdą parę można
 rozłączyć osobno. Ręcznie odrzucone pary są pomijane podczas kolejnych skanów.
 
+W widoku połączonych duplikatów **Rozłącz** przy ogłoszeniu odłącza tylko tę ofertę.
+Jeśli w grupie zostały co najmniej dwie oferty, możesz od razu porównać je ponownie.
+**Wróć do listy grup** przywraca poprzednie filtry i stronę. **Rozłącz całą grupę**
+pyta o potwierdzenie, przywraca każdej ofercie jej cenę źródłową i zapisuje odrzucenie
+wszystkich par z tej grupy.
+
+Etykiety **Nieuregulowany grunt** i **Cesja mieszkania** pojawiają się na podstawie
+treści ogłoszenia. W ocenie wymarzonego mieszkania pierwsza odejmuje 12 punktów
+surowych, druga 5. Rozpiska oceny pokazuje je w pozycji **Warunki transakcji**.
+Podstawą do oznaczenia cesji jest informacja o transakcji dotyczącej mieszkania.
+
 Automatyczne powiązanie wymaga mocnych zgodności, wyniku co najmniej 90% i braku
 sprzeczności w piętrze/numerze budynku. Niższe wyniki, np. 70%, sprawdź przyciskami
 **Połącz jako ponowne wystawienie** albo **To inne mieszkania**. Decyzje są trwałe:

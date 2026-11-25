@@ -3,6 +3,28 @@ import test from "node:test";
 import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
+  ["Garaż i komórka płatne dodatkowo\nLOKALIZACJA – park\nCENA: 967 900 zł", {}],
+  ["Piwnica: tak, - miejsce postojowe: tak, - stan prawny: własność, - cena: 1 185 500 zł", {}],
+  [
+    "Miejsce postojowe 60 000 PLN. Komórka: 30 000 PLN Cena łączna nieruchomości wraz z miejscem postojowym: 1 780 000 zł",
+    { garage: 60000, storage: 30000 },
+  ],
+  [
+    "Garaż (dodatkowo płatne 55.000); komórka (dodatkowo płatne 35.000).",
+    { garage: 55000, storage: 35000 },
+  ],
+  [
+    "Cena miejsca postojowego: 50 000 zł • Cena mieszkania: 1 320 000 zł • Łączna cena z miejscem postojowym: 1 370 000 zł",
+    { garage: 50000 },
+  ],
+  [
+    "Cena 1 875 000 zł plus obligatoryjnie 150tys zł za 3 miejsca postojowe wraz z komórką.",
+    { garageAndStorage: 150000 },
+  ],
+  [
+    "Dwa miejsca postojowe (jedno za drugim): 90 000 zł Komórka lokatorska (5,29 m², bezpośrednio przy miejscach postojowych): 45 000 zł",
+    { garage: 90000, storage: 45000 },
+  ],
   [
     "Dwa miejsca parkingowe przy domu – po 35 000 zł każde.",
     { garage: 70000, parkingCount: 2, parkingUnitPrice: 35000 },

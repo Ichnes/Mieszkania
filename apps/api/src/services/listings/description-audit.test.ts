@@ -1,6 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { cleanPortalDescription } from "./listing-text";
+import { transactionBadges } from "./transaction-badges";
+
+test("transaction badges describe the apartment rather than an optional assignment", () => {
+  assert.deepEqual(
+    transactionBadges(
+      "",
+      "Grunty pod budynkiem są nieuregulowane. Sprzedaż w formie cesji umowy deweloperskiej.",
+    ),
+    ["Nieuregulowany grunt", "Cesja mieszkania"],
+  );
+  for (const description of [
+    "Grunty uregulowane. Opcja cesji praw za odstępnym do garażu.",
+    "Możliwość cesji umowy internetu.",
+    "Brak możliwości cesji umowy deweloperskiej.",
+  ])
+    assert.deepEqual(transactionBadges("", description), []);
+});
 import { extractFeatures, inferFinishQuality } from "./listing-repository";
 
 test("portal recommendations cannot add features or costs to the saved listing text", () => {

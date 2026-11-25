@@ -31,6 +31,23 @@ const base = {
 const evaluate = (changes: Partial<ListingSummary> = {}, profile = settings.dreamProfile) =>
   computeDreamEvaluation({ ...base, ...changes }, profile, [], now);
 
+test("transaction flags subtract raw points without changing the scale", () => {
+  const plain = evaluate();
+  for (const [badges, penalty] of [
+    [["Nieuregulowany grunt"], 12],
+    [["Cesja mieszkania"], 5],
+    [["Cesja mieszkania", "Nieuregulowany grunt"], 17],
+  ] as const) {
+    const result = evaluate({ badges: [...badges] });
+    assert.equal(result.points, plain.points - penalty);
+    assert.equal(result.maxPoints, plain.maxPoints);
+    assert.equal(
+      result.rows.find((row) => row.label === "Warunki transakcji")?.dataStatus,
+      "known",
+    );
+  }
+});
+
 test("garage earns 15, outdoor parking is an alternative, and no parking or lift retains strong penalties", () => {
   const row = (result: ReturnType<typeof evaluate>, label: string) =>
     result.rows.find((r) => r.label === label)!;

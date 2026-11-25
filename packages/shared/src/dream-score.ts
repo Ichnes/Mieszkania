@@ -563,6 +563,18 @@ export function computeDreamEvaluation(
     "Prowizja dla kupującego: −15 pkt. Oferta prywatna lub bezpośrednia bez oznaczenia prowizji: +10 pkt. Jeśli oferta ma oznaczenie prowizji, nie dostaje jednocześnie premii za sprzedaż bezpośrednią. Pozostałe oferty: 0 pkt.",
     listing.badges.join(", "),
   );
+  const landFlag = listing.badges.includes("Nieuregulowany grunt");
+  const assignmentFlag = listing.badges.includes("Cesja mieszkania");
+  if (landFlag || assignmentFlag) {
+    points -= (landFlag ? 12 : 0) + (assignmentFlag ? 5 : 0);
+    record(
+      "Warunki transakcji",
+      "Nieuregulowany grunt: −12 pkt. Cesja mieszkania: −5 pkt.",
+      [landFlag && "Nieuregulowany grunt", assignmentFlag && "Cesja mieszkania"]
+        .filter(Boolean)
+        .join(", "),
+    );
+  }
   maxPoints += 3;
   if (descriptionFacts.shower) {
     points += 3;
@@ -646,12 +658,15 @@ export function computeDreamEvaluation(
     ),
     Prysznic: descriptionFacts.shower,
     "Informacja o czynszu": Boolean(hasMaintenanceFee),
+    "Warunki transakcji": landFlag || assignmentFlag,
     "Szacowana rata": Boolean(mortgage),
   };
   const evaluatedRows = rows.map((row) => ({
     ...row,
     dataStatus: (row.maxPoints === 0 &&
-    !["Informacja o czynszu", "Wynajem miejsc parkingowych"].includes(row.label)
+    !["Informacja o czynszu", "Wynajem miejsc parkingowych", "Warunki transakcji"].includes(
+      row.label,
+    )
       ? "inactive"
       : known[row.label]
         ? "known"

@@ -43,6 +43,7 @@ import type {
   ListingSummary,
 } from "@mieszkania/shared";
 import { computeDreamScore, getListingAgePoints } from "@mieszkania/shared";
+import { transactionBadges } from "./transaction-badges";
 import { withDb } from "../../db";
 import { activeRegion } from "../../domain/region";
 import { getRelatedCounts, getRelatedListings } from "../duplicates/listing-duplicates";
@@ -1769,7 +1770,10 @@ function mapListingSummary(
     imageCount,
     imageUrls,
     badges: buildListingBadges({
-      commercialBadges: commercialInfo.badges,
+      commercialBadges: [
+        ...transactionBadges(row.title, row.description),
+        ...commercialInfo.badges,
+      ],
       amenityBadges,
       manualBadges,
       relatedCount,
