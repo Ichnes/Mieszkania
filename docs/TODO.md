@@ -1,11 +1,19 @@
 # Bieżące zadania
 
+## Redesign statystyk — lokalizacje i okna indeksu (2026-11-25)
+
+- [x] Mapa i ranking są bezpośrednio pod skrótem monitora, z jedną miarą dla obu widoków. Wybór MSI pokazuje dane według nazwy lokalizacji; ranking i mapa synchronizują wybór w obie strony. Widok mobilny ma rozwijany ranking. Prosta mediana dzielnicy jest widoczna od 4 znanych cen.
+- [x] Oferta wybrana z heatmapy otwiera statystyki mieszkania nad bieżącą stroną. Zamknięcie zachowuje segment i sortowanie.
+- [x] Okres 30/90/180 zmienia pomiar, historyczną rekonstrukcję i zapis indeksu. Przy braku kalibracji widoczne są liczby i struktura rzeczywiście zaobserwowanych korekt cen.
+- [x] Produkcyjny build i testy: 385 API, 19 pominiętych; 172 web. Dodatkowo test zapisu w PostgreSQL. Playwright sprawdził trzy okresy, mapę, Augustówkę, sortowanie i otwarcie/zamknięcie statystyk oferty na 390/1024/1440 px. Na telefonie początek bloku lokalizacji przy 3989 px, wcześniej nagłówek mapy przy 8510 px.
+- [ ] Następny etap projektu obejmuje eksplorator trendów, strukturę segmentów i budżet.
+
 ## Redesign statystyk — filtry, sygnały i skrót monitora (2026-11-25)
 
 - [x] Uporządkowano górne cztery sekcje. Kompas i okresy pozostały na górze. Filtry sygnalizują oczekujące zmiany, monitor pokazuje pięciosegmentowy wskaźnik, zakres próby, zmiany 30/90 i rozwijane dodatkowe miary.
 - [x] Rozróżniono udziały obniżek według zdarzeń i udokumentowanej historii cen. Ranking udziałów pokazuje surowe wyniki od 5 aktywnych ofert, liczebność i ocenę próby.
 - [x] Produkcyjny build, 385 zaliczonych testów API (19 pominiętych), 171 testów web. Playwright sprawdził 390/1024/1440 px, kompas, zastosowanie i reset filtrów, dodatkowe miary, zmianę okresów i brak poziomego przepełnienia. Obejrzano mobilny wskaźnik w ciemnym motywie.
-- [ ] Następny etap z audytu obejmuje wspólny blok mapy i rankingu, lokalny nagłówek MSI oraz przejście z segmentu do oferty.
+- [x] Wdrożono blok mapy i rankingu, lokalny nagłówek MSI oraz przejście z segmentu do oferty.
 
 ## Kalibracja wskaźników i obsługa budżetu (2026-11-25)
 

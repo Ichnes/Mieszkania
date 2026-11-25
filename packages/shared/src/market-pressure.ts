@@ -24,10 +24,13 @@ export function measurePressure(
   rows: BuyerObservation[],
   today: number,
   previous?: PressureSample,
+  days = 30,
 ): PressureSample {
   const active = rows.filter((r) => r.end === null);
-  const exposed = rows.filter((r) => r.end === null || r.end > today - 30);
-  const priced = exposed.filter((r) => r.history.some(([d]) => d <= Math.max(today - 30, r.start)));
+  const exposed = rows.filter((r) => r.end === null || r.end > today - days);
+  const priced = exposed.filter((r) =>
+    r.history.some(([d]) => d <= Math.max(today - days, r.start)),
+  );
   const cuts: number[] = [];
   let increases = 0,
     discounted = 0;
@@ -35,7 +38,7 @@ export function measurePressure(
     let hasCut = false;
     for (let i = 1; i < r.history.length; i++) {
       const [day, p] = r.history[i];
-      if (day <= today - 30 || day > today) continue;
+      if (day <= today - days || day > today) continue;
       const old = r.history[i - 1][1];
       if (p < old) {
         cuts.push(100 * (1 - p / old));
@@ -44,7 +47,7 @@ export function measurePressure(
     }
     if (hasCut) discounted++;
   }
-  const fresh = exposed.filter((r) => r.start > today - 30);
+  const fresh = exposed.filter((r) => r.start > today - days);
   return {
     active: active.length,
     values: {
@@ -69,6 +72,7 @@ export function makePressureFrame(
   rows: BuyerObservation[],
   day: number,
   previous?: PressureFrame,
+  days = 30,
 ): PressureFrame {
   const buckets = new Map<string, BuyerObservation[]>();
   for (const row of rows) {
@@ -82,7 +86,7 @@ export function makePressureFrame(
   }
   const groups: PressureFrame["groups"] = {};
   for (const [key, bucket] of buckets)
-    groups[key] = measurePressure(bucket, day, previous?.groups[key]);
+    groups[key] = measurePressure(bucket, day, previous?.groups[key], days);
   return { day, groups };
 }
 function evaluatePressure(frames: PressureFrame[], key: string, day: number, required: number) {
@@ -132,7 +136,7 @@ export function calibratedPressure(frames: PressureFrame[], key: string, day: nu
     day,
     2,
   );
-  return replay.score !== null
+  return replay.score !== null || (daily.score === null && replay.months > daily.months)
     ? { ...replay, preliminary: true }
     : { ...daily, preliminary: false };
 }

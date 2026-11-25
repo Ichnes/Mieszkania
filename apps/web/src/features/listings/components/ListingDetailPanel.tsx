@@ -220,7 +220,7 @@ export function ListingDetailPanel(input: {
     setActiveImageIndex(0);
     setLightboxImageIndex(null);
     setIsDismissConfirmOpen(false);
-    setActiveDetailTab("overview");
+    setActiveDetailTab(window.location.pathname === "/statystyki" ? "statistics" : "overview");
     setUnmergeSuccess("");
     setOfferStepError(null);
     setManualFeedback(null);

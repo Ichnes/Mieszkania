@@ -200,11 +200,12 @@ async function computeMarketStats(
           pressureFrames: [
             ...(await recordPressure(
               db,
-              pressureScope(searchContract, query),
+              pressureScope(searchContract, query, periodDays),
               buyerData.today,
               buyerData.observations,
+              periodDays,
             )),
-            ...(await replayHistory(db, searchContract, query, buyerData.today)),
+            ...(await replayHistory(db, searchContract, query, buyerData.today, periodDays)),
           ],
         }
       : undefined;

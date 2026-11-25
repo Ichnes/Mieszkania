@@ -1,6 +1,8 @@
+import { Link } from "react-router-dom";
+import { listingHref } from "../listings/lib/links";
 import { PressureOverview } from "./PressureOverview";
 import { BuyerBudget } from "./BuyerBudget";
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { Select } from "../../components/Select";
 import {
   Area,
@@ -33,7 +35,15 @@ const date = (day: number) =>
 const areaBands = ["<60", "60–<80", "80–<100", "100+"];
 const band = (area: number) => (area < 60 ? 0 : area < 80 ? 1 : area < 100 ? 2 : 3);
 type Data = NonNullable<MarketStatsResponse["buyerMarket"]>;
-export default function BuyerMarketPanel({ data, days }: { data: Data; days: number }) {
+export default function BuyerMarketPanel({
+  data,
+  days,
+  locations,
+}: {
+  data: Data;
+  days: number;
+  locations: ReactNode;
+}) {
   const [district, setDistrict] = useState(""),
     [rooms, setRooms] = useState(""),
     [size, setSize] = useState<number | null>(null);
@@ -150,6 +160,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
         </div>
       </div>
       <PressureOverview
+        locations={locations}
         frames={data.pressureFrames ?? []}
         rows={rows}
         day={today}
@@ -343,6 +354,29 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
         <article className="buyer-card">
           <p className="eyebrow">Aktywne ogłoszenia</p>
           <h3>Mieszkania do sprawdzenia</h3>
+          <p aria-live="polite">
+            {[
+              district || "Cała Warszawa",
+              size === null ? null : areaBands[size] + " m²",
+              rooms ? rooms + " pok." : null,
+            ]
+              .filter(Boolean)
+              .join(" · ")}{" "}
+            · {ranked.length} wyników
+          </p>
+          {(district || size !== null || rooms) && (
+            <button
+              type="button"
+              onClick={() => {
+                setSize(null);
+                setDistrict("");
+                setRooms("");
+                setLimit(8);
+              }}
+            >
+              Wyczyść segment
+            </button>
+          )}
           <label>
             Sortowanie{" "}
             <Select
@@ -357,7 +391,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
           </label>
           <div className="buyer-list" id="buyer-negotiations">
             {ranked.slice(0, limit).map(({ row, delta, count, signals }) => (
-              <a key={row.id} href={`/oferty?listing=${row.id}`}>
+              <Link key={row.id} to={listingHref(row.id)} preventScrollReset>
                 <span>
                   <b>
                     {row.district} · {fmt(row.area)} m² · {row.rooms} pok.
@@ -377,7 +411,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
                       ? fmt(delta!) + "%"
                       : signals.length + " sygn."}
                 </strong>
-              </a>
+              </Link>
             ))}
           </div>
           {ranked.length > limit && (

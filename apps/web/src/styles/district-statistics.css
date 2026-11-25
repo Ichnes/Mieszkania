@@ -1310,3 +1310,74 @@
 .market-chart-tooltip b {
   color: #fff;
 }
+
+.stats-panel .stats-layout {
+  align-items: start;
+}
+.district-map-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+}
+.district-map-legend i {
+  width: 4rem;
+  height: 0.45rem;
+  border-radius: 3px;
+  background: linear-gradient(to right, color-mix(in srgb, #cf8b55 22%, var(--surface)), #cf8b55);
+}
+.district-map-legend small {
+  color: var(--ink-soft);
+}
+.district-local-summary {
+  margin: 0.5rem 0;
+}
+.stats-map .msi-area-selection {
+  display: grid;
+  gap: 0.2rem;
+  min-height: 3rem;
+}
+.msi-area-selection span {
+  font-size: 0.85rem;
+}
+.area-rank-choice {
+  background: transparent;
+  color: var(--ink);
+  border: 0;
+  padding: 0.4rem 0;
+  text-align: left;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.location-rank-toggle {
+  display: none;
+}
+@media (min-width: 881px) {
+  .stats-panel .stats-layout {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.25fr);
+  }
+  .stats-layout .stats-table-scroll {
+    max-height: min(76vh, 48rem);
+    overflow: auto;
+  }
+  .stats-layout .stats-table-scroll thead {
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+}
+@media (max-width: 880px) {
+  .stats-panel .stats-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .stats-layout .district-stats-row.beyond-top-five {
+    display: none;
+  }
+  .location-rank-toggle {
+    display: block;
+    margin: 0.75rem auto;
+  }
+}

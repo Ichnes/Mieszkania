@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import { SegmentedLinearGauge, SampleSizeIndicator } from "./MarketIndicators";
 import { Select } from "../../components/Select";
 import {
@@ -99,6 +99,7 @@ function observations(rows: BuyerObservation[], today: number, days: number) {
   };
 }
 type Props = {
+  locations: ReactNode;
   frames: PressureFrame[];
   rows: BuyerObservation[];
   day: number;
@@ -110,6 +111,7 @@ type Props = {
   onDistrict: (d: string) => void;
 };
 export function PressureOverview({
+  locations,
   frames,
   rows,
   day,
@@ -154,7 +156,7 @@ export function PressureOverview({
       : "Brak porównania";
   };
   const series = comparableFrames
-    .filter((f) => f.day >= day - 360)
+    .filter((f) => f.day >= day - days)
     .map((f) => ({
       date: new Date(f.day * 86400000).toLocaleDateString("pl-PL", {
         month: "short",
@@ -202,7 +204,7 @@ export function PressureOverview({
     [
       "Zmiana aktywnej podaży",
       percent(supply == null ? null : 100 * supply),
-      "Względem zapisu sprzed 30 dni",
+      `Względem zapisu sprzed ${days} dni`,
     ],
   ];
   const renderMetric = ([label, value, sub]: string[]) => (
@@ -216,11 +218,11 @@ export function PressureOverview({
     <>
       <section className="pressure-lead" aria-label="Indeks presji na sprzedających">
         <div>
-          <p className="eyebrow">Indeks presji na sprzedających · 30 dni</p>
+          <p className="eyebrow">Indeks presji na sprzedających · {days} dni</p>
           <h3>{level ?? "W kalibracji"}</h3>
           <p>
             {model.score === null
-              ? "Za mało porównywalnych danych do oceny segmentu."
+              ? `Wcześniejsze porównywalne odczyty dla ${days} dni: ${model.months}. Wynik wstępny wymaga co najmniej dwóch, próby 5 ofert i pokrycia 70% wag.`
               : "Względem wcześniejszych obserwacji tego samego segmentu."}
           </p>
           <SampleSizeIndicator
@@ -228,19 +230,43 @@ export function PressureOverview({
             unit={model.preliminary ? "publikacji" : "mieszkań"}
           />
           <small>
-            {model.preliminary ? "Wynik wstępny · " : ""}pokrycie wag {model.coverage}%
+            {model.preliminary && model.score !== null ? "Wynik wstępny · " : ""}pokrycie wag{" "}
+            {model.coverage}%
           </small>
         </div>
         <div>
-          <SegmentedLinearGauge score={model.score} />
-          <div className="pressure-deltas">
-            <span>
-              W ciągu 30 dni <b>{delta(30)}</b>
-            </span>
-            <span>
-              W ciągu 90 dni <b>{delta(90)}</b>
-            </span>
-          </div>
+          {model.score === null ? (
+            <div className="pressure-changes">
+              <small>Zarejestrowane zmiany cen · {days} dni</small>
+              {data.down + data.up > 0 ? (
+                <>
+                  <strong>{percent((100 * data.down) / (data.down + data.up))} korekt w dół</strong>
+                  <div className="pressure-change-track" aria-hidden="true">
+                    <i style={{ width: (100 * data.down) / (data.down + data.up) + "%" }} />
+                  </div>
+                  <div className="pressure-ticks">
+                    <span>Obniżki · {number(data.down)}</span>
+                    <span>Podwyżki · {number(data.up)}</span>
+                  </div>
+                </>
+              ) : (
+                <p>Brak zapisanych zmian cen w wybranym okresie.</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {" "}
+              <SegmentedLinearGauge score={model.score} />
+              <div className="pressure-deltas">
+                <span>
+                  W ciągu 30 dni <b>{delta(30)}</b>
+                </span>
+                <span>
+                  W ciągu 90 dni <b>{delta(90)}</b>
+                </span>
+              </div>
+            </>
+          )}
         </div>
       </section>
       <div className="buyer-summary">{metrics.slice(0, 3).map(renderMetric)}</div>
@@ -269,11 +295,11 @@ export function PressureOverview({
             presji widocznej w ogłoszeniach. Indeks nie mierzy popytu transakcyjnego.
           </p>
           <p>
-            Porównujemy ostatnie 30 dni z maksymalnie 12 wcześniejszymi zapisami co 30 dni. W serii
-            docelowej każda składowa wymaga sześciu historycznych porównań i co najmniej 5 aktywnych
-            ofert w segmencie. Przy pokryciu co najmniej 70% skalujemy dostępne wagi do 100%.
-            Poniżej progu wynik pozostaje niepełny. Wagi są robocze, a część sygnałów może być
-            skorelowana.
+            Porównujemy ostatnie {days} dni z maksymalnie 12 wcześniejszymi zapisami tego samego
+            zakresu co 30 dni. Dłuższe okna mogą się nakładać. W serii docelowej każda składowa
+            wymaga sześciu historycznych porównań i co najmniej 5 aktywnych ofert w segmencie. Przy
+            pokryciu co najmniej 70% skalujemy dostępne wagi do 100%. Poniżej progu wynik pozostaje
+            niepełny. Wagi są robocze, a część sygnałów może być skorelowana.
           </p>
           <dl>
             {model.components.map((p) => (
@@ -324,6 +350,7 @@ export function PressureOverview({
           )}
         </section>
       </details>
+      {locations}
       <div className="buyer-plot-grid">
         <article className="buyer-card">
           <h3>Presja cenowa według wieku ogłoszenia</h3>

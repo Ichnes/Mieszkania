@@ -31,7 +31,7 @@ export function StatsControls(input: {
         <div>
           <p className="eyebrow">Zakres danych</p>
           <h2>Ustaw analizowany rynek</h2>
-          <small>Okres dotyczy historii ogłoszeń. Indeks presji obejmuje ostatnie 30 dni.</small>
+          <small>Okres wyznacza zakres historii ogłoszeń i indeksu presji.</small>
         </div>
         <div className="stats-period-bar" aria-label="Zakres analizy">
           {([30, 90, 180] as const).map((days) => (

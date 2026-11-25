@@ -11,11 +11,13 @@ const { app, automation } = createApp();
 async function capturePressure() {
   const day = Math.floor(Date.now() / 86400000);
   const { searchContract } = await getFamilySettings();
-  const saved = await pool.query("select 1 from market_pressure_daily where day=$1 and scope=$2", [
-    day,
-    pressureScope(searchContract),
-  ]);
-  if (!saved.rowCount) await getMarketStats({ buyer: "1", period: "30" });
+  for (const days of [30, 90, 180]) {
+    const saved = await pool.query(
+      "select 1 from market_pressure_daily where day=$1 and scope=$2",
+      [day, pressureScope(searchContract, {}, days)],
+    );
+    if (!saved.rowCount) await getMarketStats({ buyer: "1", period: String(days) });
+  }
 }
 process.on("unhandledRejection", (error) =>
   app.log.error({ err: error }, "Background task failed"),

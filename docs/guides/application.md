@@ -584,9 +584,18 @@ ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
 Komunikat **Niezastosowane zmiany** oznacza, że wyniki nadal odpowiadają ostatnio
-zatwierdzonym filtrom. W **Monitorze kupującego** wskaźnik presji ma stały zakres
-30 dni. Obok wyniku widać próbę, pokrycie wag i dostępne porównania w czasie.
+zatwierdzonym filtrom. W **Monitorze kupującego** przełącznik 30/90/180 dni zmienia
+okno obliczeń indeksu presji. Każdy okres ma własną historię porównawczą. Gdy jest za
+krótka, panel pokazuje liczbę wcześniejszych odczytów oraz rzeczywiście zarejestrowane
+obniżki i podwyżki w wybranym okresie. Zmiany punktowe za 30 i 90 dni porównują
+odczyty indeksu obliczonego dla tego samego okna.
 **Więcej wskaźników** rozwija miary ekspozycji, zmian cen i podaży.
+Pod skrótem monitora wybór miary w rankingu dzielnic zmienia również skalę kolorów mapy.
+Wybierz dzielnicę, a następnie numerowany obszar MSI, aby zobaczyć liczebność i średnią
+cenę aktywnych ofert przypisanych do tej nazwy. **Cała Warszawa** przywraca widok dzielnic.
+Na telefonie ranking początkowo obejmuje pięć pozycji oraz wybraną dzielnicę.
+Kliknięcie mieszkania na liście pod heatmapą otwiera statystyki tego ogłoszenia.
+Zamknięcie szczegółów przywraca listę z tym samym segmentem i sortowaniem.
 W podsumowaniu rynku odsetek obniżek dotyczy wszystkich aktywnych ofert.
 Monitor porównuje kolejne udokumentowane ceny ofert ze znaną ceną odniesienia.
 W **Ustaw analizowany rynek** można zaznaczyć **Komórka / piwnica** oraz wybrać

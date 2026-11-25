@@ -660,3 +660,21 @@
     gap: 0.2rem;
   }
 }
+
+.pressure-changes strong {
+  display: block;
+  font-size: clamp(1.4rem, 2.6vw, 2rem);
+  margin-block: 0.4rem;
+}
+.pressure-change-track {
+  height: 0.6rem;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #b7855c;
+  margin-block: 0.6rem;
+}
+.pressure-change-track i {
+  display: block;
+  height: 100%;
+  background: #47866d;
+}

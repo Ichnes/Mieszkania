@@ -7,7 +7,7 @@ import {
 import type { Pool } from "pg";
 import { createHash } from "node:crypto";
 import type { MarketStatsQuery } from "./market-stats";
-export function pressureScope(contract: SearchContract, query: MarketStatsQuery = {}) {
+export function pressureScope(contract: SearchContract, query: MarketStatsQuery = {}, days = 30) {
   const scope = [
     contract.city,
     contract.roomsMin,
@@ -21,6 +21,7 @@ export function pressureScope(contract: SearchContract, query: MarketStatsQuery 
     query.storage === "true",
     query.directions?.split(",").filter(Boolean).sort() ?? [],
   ];
+  if (days !== 30) scope.push(days);
   return createHash("sha256").update(JSON.stringify(scope)).digest("hex");
 }
 export async function pressureHistory(
@@ -39,13 +40,15 @@ export async function recordPressure(
   scope: string,
   day: number,
   rows: BuyerObservation[],
+  days = 30,
 ) {
   const frames = await pressureHistory(db, scope, day);
   if (frames.some((f) => f.day === day)) return frames;
   const frame = makePressureFrame(
     rows,
     day,
-    frames.find((f) => f.day === day - 30),
+    frames.find((f) => f.day === day - days),
+    days,
   );
   const inserted = await db.query(
     "insert into market_pressure_daily(scope,day,groups) values($1,$2,$3) on conflict do nothing",

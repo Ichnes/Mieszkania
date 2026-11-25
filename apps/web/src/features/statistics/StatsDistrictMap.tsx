@@ -13,8 +13,14 @@ export function StatsDistrictMap({
   selected,
   onSelect,
   onAreaSelect,
+  selectedArea,
+  metricLabel,
+  metricValue,
 }: {
   stats: MarketStatsResponse;
+  selectedArea: string | null;
+  metricLabel: string;
+  metricValue: (row: MarketStatsResponse["districts"][number]) => number | null;
   selected: string | null;
   onSelect: (district: string) => void;
   onAreaSelect: (area: string | null) => void;
@@ -22,7 +28,7 @@ export function StatsDistrictMap({
   const [data, setData] = useState<MsiCollection | null>(null);
   const [failed, setFailed] = useState(false);
   const [attempt, setAttempt] = useState(0);
-  const [areaId, setAreaId] = useState<number | null>(null);
+
   useEffect(() => {
     const controller = new AbortController();
     setFailed(false);
@@ -37,14 +43,6 @@ export function StatsDistrictMap({
       });
     return () => controller.abort();
   }, [attempt]);
-  useEffect(() => {
-    setAreaId(null);
-    onAreaSelect(null);
-  }, [selected, onAreaSelect]);
-  function selectArea(id: number, name: string) {
-    setAreaId(id);
-    onAreaSelect(name);
-  }
   const areas = useMemo(
     () =>
       (data?.features ?? [])
@@ -72,13 +70,20 @@ export function StatsDistrictMap({
     [selected, areas, districts],
   );
   const labelSize = Math.max(bounds.width, bounds.height) / 30;
-  const active = areas.find((a) => a.id === areaId);
+  const active = areas.find((a) => a.properties.name === selectedArea);
+  const areaId = active?.id;
+  const localDistrict = stats.districts.find((row) => row.district === selected);
+  const local = localDistrict?.neighborhoods.find((row) => row.neighborhood === selectedArea);
+  const values = districts.flatMap((row) => metricValue(row) ?? []);
+  const min = Math.min(...values),
+    max = Math.max(...values);
+  const fmt = (n: number) => Math.round(n).toLocaleString("pl-PL");
   return (
     <>
       <div className="stats-card-heading">
         <div>
           <p className="eyebrow">Rzeczywiste granice</p>
-          <h3>{selected ?? "Mapa dzielnic"}</h3>
+          <h3>{selected ? selected + " · obszary MSI" : "Mapa dzielnic"}</h3>
         </div>
         {selected ? (
           <button
@@ -92,6 +97,24 @@ export function StatsDistrictMap({
           <span>Wybierz dzielnicę</span>
         )}
       </div>
+      {selected && (
+        <p className="district-local-summary">
+          {localDistrict?.active ?? 0} aktywnych mieszkań · {stats.periodDays} dni historii
+        </p>
+      )}
+      {!selected && (
+        <p className="district-map-legend">
+          {metricLabel}{" "}
+          {values.length > 0 && (
+            <>
+              <b>{fmt(min)}</b>
+              <i aria-hidden="true" />
+              <b>{fmt(max)}</b>
+            </>
+          )}
+          <small>Szary · brak danych</small>
+        </p>
+      )}
       <FullscreenFrame label="Mapa statystyk dzielnic" className="stats-map-fullscreen">
         <svg
           className="district-svg msi-map"
@@ -106,6 +129,12 @@ export function StatsDistrictMap({
                   d={d.path}
                   fillRule="evenodd"
                   className="district-polygon"
+                  style={{
+                    fill:
+                      metricValue(d) == null
+                        ? "var(--line)"
+                        : `color-mix(in srgb, #cf8b55 ${22 + (72 * (metricValue(d)! - min)) / (max - min || 1)}%, var(--surface))`,
+                  }}
                   role="button"
                   tabIndex={0}
                   aria-label={`Wybierz dzielnicę ${d.district}`}
@@ -117,7 +146,10 @@ export function StatsDistrictMap({
                     }
                   }}
                 >
-                  <title>{d.district}</title>
+                  <title>
+                    {d.district} · {metricLabel} ·{" "}
+                    {metricValue(d) == null ? "Brak danych" : fmt(metricValue(d)!)}
+                  </title>
                 </path>
               ))
             : areas.map((a, index) => (
@@ -130,11 +162,11 @@ export function StatsDistrictMap({
                     tabIndex={0}
                     aria-pressed={a.id === areaId}
                     aria-label={a.properties.name}
-                    onClick={() => selectArea(a.id, a.properties.name)}
+                    onClick={() => onAreaSelect(a.properties.name)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        selectArea(a.id, a.properties.name);
+                        onAreaSelect(a.properties.name);
                       }
                     }}
                   >
@@ -178,10 +210,18 @@ export function StatsDistrictMap({
             nazwy poniżej.
           </p>
           <div className="msi-area-selection" aria-live="polite">
-            {active ? (
-              <strong>{active.properties.name}</strong>
+            {selectedArea ? (
+              <>
+                <strong>{selectedArea}</strong>
+                <span>
+                  {local
+                    ? `${local.active} aktywnych · ${local.averagePricePerSqm > 0 ? "średnio " + fmt(local.averagePricePerSqm) + " zł/m²" : "brak cen"}`
+                    : "Brak aktywnych ofert przypisanych do tej nazwy"}
+                  {local && !active && " · nazwa z ogłoszenia bez granicy MSI"}
+                </span>
+              </>
             ) : (
-              "Dotknij obszaru, aby zobaczyć jego nazwę."
+              "Wybierz obszar, aby zobaczyć ceny i liczebność."
             )}
           </div>
           <div className="msi-area-list" aria-label="Obszary MSI">
@@ -191,7 +231,7 @@ export function StatsDistrictMap({
                 type="button"
                 className={a.id === areaId ? "is-selected" : ""}
                 aria-pressed={a.id === areaId}
-                onClick={() => selectArea(a.id, a.properties.name)}
+                onClick={() => onAreaSelect(a.properties.name)}
               >
                 <span className={`msi-key msi-color-${index % 6}`}>{index + 1}</span>
                 {a.properties.name}

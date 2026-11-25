@@ -26,6 +26,7 @@ export function replayHistory(
   contract: SearchContract,
   query: MarketStatsQuery,
   today: number,
+  days = 30,
 ) {
   // Older snapshots don't reliably record manual amenity overrides and building years.
   if (
@@ -36,7 +37,7 @@ export function replayHistory(
     Number(query.minYear) > 0
   )
     return Promise.resolve([]);
-  const scope = "portal-v1:" + pressureScope(contract, query);
+  const scope = "portal-v1:" + pressureScope(contract, query, days);
   return cached(scope + today, async () => {
     const saved = await pressureHistory(db, scope, today);
     if (saved.some((f) => f.day === today)) return saved.map((f) => ({ ...f, replayed: true }));
@@ -108,17 +109,22 @@ export function replayHistory(
       }
       const rows = [...records.values()].filter(
         (r) =>
-          (r.end === null || r.end > day - 30) &&
+          (r.end === null || r.end > day - days) &&
           r.price >= contract.minPrice &&
           r.price <= contract.maxPrice &&
           r.rooms >= contract.roomsMin &&
           r.area >= Math.max(contract.minArea, Number(query.minArea) || 0) &&
           (!Number(query.maxArea) || r.area <= Number(query.maxArea)),
       );
-      const frame = makePressureFrame(rows, day, frames.at(-1));
+      const frame = makePressureFrame(
+        rows,
+        day,
+        frames.find((f) => f.day === day - days),
+        days,
+      );
       for (const s of Object.values(frame.groups)) {
         s.values.returns = null;
-        if (day - first < 29) {
+        if (day - first < days - 1) {
           for (const key of Object.keys(s.values) as (keyof typeof s.values)[])
             s.values[key] = null;
         }

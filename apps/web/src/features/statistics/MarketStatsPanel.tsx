@@ -1,8 +1,8 @@
 import type { MarketStatsResponse } from "@mieszkania/shared";
-import { ChevronRight, LoaderCircle } from "lucide-react";
-import { Fragment, lazy, Suspense, useState } from "react";
-import { StatsDistrictMap } from "./StatsDistrictMap";
-import { hasActiveMarketFilters, type MarketStatsFilters } from "./types";
+import { LoaderCircle } from "lucide-react";
+import { lazy, Suspense } from "react";
+import { DistrictExplorer } from "./DistrictExplorer";
+import { type MarketStatsFilters } from "./types";
 
 export const MarketActivityChart = lazy(() => import("./MarketActivityChart"));
 const BuyerMarketPanel = lazy(() => import("./BuyerMarketPanel"));
@@ -19,9 +19,6 @@ export function MarketStatsPanel({
   baseline: MarketStatsResponse | null;
   onFiltersChange: (filters: MarketStatsFilters) => void;
 }) {
-  const [selected, setSelected] = useState<string | null>(null);
-  const [selectedArea, setSelectedArea] = useState<string | null>(null);
-  const [sort, setSort] = useState<"active" | "price" | "archive" | "drops">("active");
   if (loading || !stats)
     return (
       <section className="panel stats-loading" aria-busy="true" aria-live="polite">
@@ -57,79 +54,13 @@ export function MarketStatsPanel({
       </section>
     );
 
-  const names = [
-    "Bemowo",
-    "Białołęka",
-    "Bielany",
-    "Mokotów",
-    "Ochota",
-    "Praga-Północ",
-    "Praga-Południe",
-    "Rembertów",
-    "Śródmieście",
-    "Targówek",
-    "Ursus",
-    "Ursynów",
-    "Wawer",
-    "Wesoła",
-    "Wilanów",
-    "Włochy",
-    "Wola",
-    "Żoliborz",
-    "Bez dzielnicy",
-  ];
-  const districtRows = (input: MarketStatsResponse | null) =>
-    names.map(
-      (name) =>
-        input?.districts.find((row) => row.district === name) ?? {
-          district: name,
-          active: 0,
-          archived: 0,
-          averagePricePerSqm: 0,
-          medianPricePerSqm: 0,
-          pricedListings: 0,
-          averageArea: 0,
-          archiveRate: 0,
-          priceDrops: 0,
-          priceIncreases: 0,
-          newLast7Days: 0,
-          newInPeriod: 0,
-          archivedInPeriod: 0,
-          medianDaysOnMarket: null,
-          neighborhoods: [],
-        },
-    );
-  const rows = districtRows(stats);
-  const baselineRows = districtRows(baseline);
-  const reliablePrice = (row: MarketStatsResponse["districts"][number]) =>
-    row.pricedListings >= (stats.minimumSampleSize ?? 5) ? row.medianPricePerSqm : -1;
-  const sorted = [...rows].sort((left, right) =>
-    sort === "price"
-      ? reliablePrice(right) - reliablePrice(left)
-      : sort === "archive"
-        ? right.archivedInPeriod - left.archivedInPeriod
-        : sort === "drops"
-          ? right.priceDrops - left.priceDrops
-          : right.active - left.active,
-  );
   const formatPrice = (value: number) =>
     value > 0 ? `${Math.round(value).toLocaleString("pl-PL")} zł/m²` : "Brak danych";
-  const formatDelta = (value: number) =>
-    `${value > 0 ? "+" : value < 0 ? "−" : "±"}${Math.abs(Math.round(value)).toLocaleString("pl-PL")} zł/m²`;
   const deltaClass = (value: number) =>
     value > 0 ? "is-positive" : value < 0 ? "is-negative" : "is-neutral";
-  const offerPercent = (count: number, active: number) =>
-    active > 0 ? Math.round((count / active) * 100) : 0;
   const formatPercentDelta = (value: number | null) =>
     value === null ? "brak porównania" : `${value > 0 ? "+" : ""}${value.toLocaleString("pl-PL")}%`;
-  const toggleSelected = (name: string) =>
-    setSelected((current) => (current === name ? null : name));
-  const sortOptions: Array<{ key: typeof sort; label: string }> = [
-    { key: "active", label: "Liczba ofert" },
-    { key: "price", label: "Cena za m²" },
-    { key: "archive", label: "Archiwizacje" },
-    { key: "drops", label: "Obniżki" },
-  ];
+  const locations = <DistrictExplorer stats={stats} baseline={baseline} filters={filters} />;
 
   return (
     <section className="stats-panel">
@@ -219,223 +150,17 @@ export function MarketStatsPanel({
           <span>bilans wykryć i archiwizacji, łącznie z pierwszym zapełnieniem bazy</span>
         </div>
       </div>
-      {stats.buyerMarket && (
+      {stats.buyerMarket ? (
         <Suspense fallback={<p>Wczytywanie analizy kupującego…</p>}>
-          <BuyerMarketPanel data={stats.buyerMarket} days={stats.periodDays} />
-        </Suspense>
-      )}
-      <div className="stats-layout">
-        <div className="panel stats-map">
-          <StatsDistrictMap
-            stats={stats}
-            selected={selected}
-            onSelect={toggleSelected}
-            onAreaSelect={setSelectedArea}
+          <BuyerMarketPanel
+            data={stats.buyerMarket}
+            days={stats.periodDays}
+            locations={locations}
           />
-        </div>
-        <div className="panel stats-table">
-          <div className="stats-table-header">
-            <div>
-              <p className="eyebrow">Ranking lokalizacji</p>
-              <h3>Dzielnice</h3>
-              <span>
-                {rows.filter((row) => row.active > 0).length} dzielnic · mediana i przepływ dla{" "}
-                {stats.periodDays} dni
-              </span>
-            </div>
-            <div className="stats-sort-buttons" aria-label="Sortowanie dzielnic">
-              {sortOptions.map((option) => (
-                <button
-                  type="button"
-                  key={option.key}
-                  className={sort === option.key ? "is-active" : ""}
-                  onClick={() => setSort(option.key)}
-                >
-                  {option.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="stats-table-scroll">
-            <table>
-              <thead>
-                <tr>
-                  <th>Dzielnica</th>
-                  <th>Aktywne teraz</th>
-                  <th>Mediana zł/m²</th>
-                  <th className="stats-col-secondary">Wykryte / zniknęły</th>
-                  <th className="stats-col-secondary">Obniżki</th>
-                  <th className="stats-col-secondary">Mediana dni</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sorted.map((district, index) => {
-                  const expanded = selected === district.district;
-                  const baselineDistrict = baselineRows.find(
-                    (row) => row.district === district.district,
-                  );
-                  const districtDelta =
-                    district.medianPricePerSqm -
-                    (baselineDistrict?.medianPricePerSqm ?? district.medianPricePerSqm);
-                  return (
-                    <Fragment key={district.district}>
-                      <tr
-                        className={
-                          expanded ? "district-stats-row is-selected" : "district-stats-row"
-                        }
-                        onClick={() => toggleSelected(district.district)}
-                        onKeyDown={(event) => {
-                          if (event.key === "Enter" || event.key === " ") {
-                            event.preventDefault();
-                            toggleSelected(district.district);
-                          }
-                        }}
-                        tabIndex={0}
-                        aria-expanded={expanded}
-                      >
-                        <td>
-                          <div className="district-name-cell">
-                            <span className="district-rank">{index + 1}</span>
-                            <div>
-                              <strong>{district.district}</strong>
-                              <small>{district.neighborhoods.length} poddzielnic</small>
-                            </div>
-                            <ChevronRight
-                              className="district-expand-icon"
-                              size={18}
-                              aria-hidden="true"
-                            />
-                          </div>
-                        </td>
-                        <td data-label="Aktywne teraz" className="stats-mobile-active">
-                          <span className="stats-count-pill">
-                            {district.active.toLocaleString("pl-PL")}
-                          </span>
-                        </td>
-                        <td data-label="Mediana ceny za m²" className="stats-mobile-price">
-                          <strong className="stats-price-value">
-                            {district.pricedListings >= (stats.minimumSampleSize ?? 5)
-                              ? formatPrice(district.medianPricePerSqm)
-                              : "Mała próba"}
-                          </strong>
-                          {hasActiveMarketFilters(filters) &&
-                          baseline &&
-                          district.pricedListings >= (stats.minimumSampleSize ?? 5) &&
-                          (baselineDistrict?.pricedListings ?? 0) >=
-                            (stats.minimumSampleSize ?? 5) ? (
-                            <small className={`stats-row-delta ${deltaClass(districtDelta)}`}>
-                              {formatDelta(districtDelta)} względem zakresu bez filtrów
-                            </small>
-                          ) : null}
-                          <small>{district.pricedListings} ofert z ceną</small>
-                        </td>
-                        <td
-                          data-label={`Ruch ofert · ${stats.periodDays} dni`}
-                          className="stats-col-secondary stats-mobile-flow"
-                        >
-                          <span className="stats-flow-pair">
-                            <b>+{district.newInPeriod} wykrytych</b>
-                            <b>−{district.archivedInPeriod} zniknęło</b>
-                          </span>
-                        </td>
-                        <td
-                          data-label={`Obniżki · ${stats.periodDays} dni`}
-                          className="stats-col-secondary stats-mobile-drops"
-                        >
-                          <span className="change-pill is-drop">↓ {district.priceDrops}</span>
-                          <small>{offerPercent(district.priceDrops, district.active)}% ofert</small>
-                        </td>
-                        <td data-label="Mediana ekspozycji" className="stats-mobile-days">
-                          <strong>
-                            {district.medianDaysOnMarket === null
-                              ? "—"
-                              : `${district.medianDaysOnMarket} dni`}
-                          </strong>
-                        </td>
-                      </tr>
-                      {expanded ? (
-                        <tr className="neighborhood-expansion-row">
-                          <td colSpan={6}>
-                            <div className="neighborhood-expansion">
-                              <div className="neighborhood-expansion-heading">
-                                <div>
-                                  <p className="eyebrow">Poddzielnice · {district.district}</p>
-                                  <h4>Dokładniejszy obraz lokalnego rynku</h4>
-                                </div>
-                                <p>
-                                  Różnica ceny jest liczona względem tej samej poddzielnicy bez
-                                  żadnych filtrów.
-                                </p>
-                              </div>
-                              {district.neighborhoods.length ? (
-                                <div className="neighborhood-grid">
-                                  {district.neighborhoods.map((neighborhood) => {
-                                    const baselineNeighborhood =
-                                      baselineDistrict?.neighborhoods.find(
-                                        (item) => item.neighborhood === neighborhood.neighborhood,
-                                      );
-                                    const hasBaseline = Boolean(
-                                      baselineNeighborhood?.averagePricePerSqm,
-                                    );
-                                    const delta = hasBaseline
-                                      ? neighborhood.averagePricePerSqm -
-                                        (baselineNeighborhood?.averagePricePerSqm ?? 0)
-                                      : 0;
-                                    return (
-                                      <article
-                                        className={`neighborhood-stat-card${selectedArea === neighborhood.neighborhood ? " is-map-selected" : ""}`}
-                                        aria-current={
-                                          selectedArea === neighborhood.neighborhood
-                                            ? "true"
-                                            : undefined
-                                        }
-                                        key={neighborhood.neighborhood}
-                                      >
-                                        <div className="neighborhood-card-top">
-                                          <strong>{neighborhood.neighborhood}</strong>
-                                          <span>
-                                            {neighborhood.active.toLocaleString("pl-PL")} ofert
-                                          </span>
-                                        </div>
-                                        <div className="neighborhood-card-price">
-                                          <b>{formatPrice(neighborhood.averagePricePerSqm)}</b>
-                                          {hasActiveMarketFilters(filters) &&
-                                          baseline &&
-                                          hasBaseline ? (
-                                            <span className={deltaClass(delta)}>
-                                              ({formatDelta(delta)} względem zakresu bez filtrów)
-                                            </span>
-                                          ) : (
-                                            <span className="is-neutral">
-                                              brak punktu odniesienia
-                                            </span>
-                                          )}
-                                        </div>
-                                      </article>
-                                    );
-                                  })}
-                                </div>
-                              ) : (
-                                <div className="neighborhood-empty">
-                                  <strong>Brak poddzielnic do pokazania</strong>
-                                  <span>
-                                    Nowy estymator uzupełni je przy kolejnym zapisie lub migracji
-                                    danych.
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ) : null}
-                    </Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+        </Suspense>
+      ) : (
+        locations
+      )}
       <div className="stats-analysis-grid">
         <Suspense fallback={<div className="panel">Ładowanie wykresu…</div>}>
           <MarketActivityChart stats={stats} />
