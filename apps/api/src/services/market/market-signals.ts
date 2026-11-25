@@ -15,6 +15,7 @@ export async function getMarketSignals(
     aged: string;
     repeated: string;
     discounted: string;
+    relistings: string;
     fresh: string;
     observation_days: string;
     median_amount: number | null;
@@ -29,21 +30,46 @@ export async function getMarketSignals(
     ), history as (
       select greatest(0, floor(max(extract(epoch from (now()-first_seen_at))/86400)))::int days
       from eligible
-    ), cuts as (
-      select pe.listing_id, count(*) over (partition by pe.listing_id) cut_count,
-        pe.previous_price_amount-pe.new_price_amount amount,
-        100.0*(pe.previous_price_amount-pe.new_price_amount)/pe.previous_price_amount percent,
-        row_number() over (partition by pe.listing_id order by pe.changed_at desc, pe.id desc) position
+    ), transitions as (
+      -- Several archived ads can describe the same predecessor. Use the last
+      -- observed asking price before the successor's first snapshot, once.
+      select distinct on (e.id) e.id listing_id, opening.captured_at changed_at,
+        archived.price_amount previous_price_amount, opening.price_amount new_price_amount
+      from eligible e
+      join listing_relisting_reviews review on review.current_listing_id=e.id
+        and review.decision='confirmed'
+      cross join lateral (
+        select captured_at,price_amount from listing_snapshots where listing_id=e.id
+        order by captured_at,id limit 1
+      ) opening
+      cross join lateral (
+        select captured_at,price_amount from listing_snapshots where listing_id=review.previous_listing_id
+          and captured_at < opening.captured_at and price_amount > 0
+        order by captured_at desc,id desc limit 1
+      ) archived
+      where opening.captured_at between now()-make_interval(days => $1) and now()
+      order by e.id,archived.captured_at desc,review.previous_listing_id
+    ), events as (
+      select pe.listing_id,pe.changed_at,pe.previous_price_amount,pe.new_price_amount,
+        pe.id tie,(pe.event_type='relisted') relisting
       from price_events pe join eligible e on e.id=pe.listing_id
-      where pe.event_type='price_drop' and pe.changed_at >= now()-make_interval(days => $1)
-        and pe.previous_price_amount > pe.new_price_amount and pe.new_price_amount > 0
+      where pe.event_type in ('price_drop','relisted') and pe.changed_at between now()-make_interval(days => $1) and now()
+        and (pe.snapshot_id is not null or pe.source_url is null)
+      union all
+      select listing_id,changed_at,previous_price_amount,new_price_amount,null,true from transitions
+    ), cuts as (
+      select listing_id, count(*) over (partition by listing_id) cut_count,
+        previous_price_amount-new_price_amount amount,
+        100.0*(previous_price_amount-new_price_amount)/previous_price_amount percent,
+        relisting, row_number() over (partition by listing_id order by changed_at desc,relisting,tie desc) position
+      from events where previous_price_amount > new_price_amount and new_price_amount > 0
     )
     select coalesce(nullif(trim(e.district),''),'Bez dzielnicy') district,
       grouping(e.district) is_total, count(*)::text active,
       count(*) filter (where e.first_seen_at <= now()-make_interval(days => (select days from history)))::text aged,
       floor(max(extract(epoch from (now()-e.first_seen_at))/86400))::text observation_days,
       count(*) filter (where c.cut_count >= 2)::text repeated,
-      count(c.listing_id)::text discounted,
+      count(c.listing_id)::text discounted, count(*) filter (where c.relisting)::text relistings,
       count(*) filter (where e.last_seen_at >= now()-interval '48 hours')::text fresh,
       percentile_cont(0.5) within group (order by c.amount) median_amount,
       percentile_cont(0.5) within group (order by c.percent) median_percent
@@ -58,6 +84,7 @@ export async function getMarketSignals(
     oldestObserved: Number(total?.aged ?? 0),
     observationDays: Math.max(0, Number(total?.observation_days ?? 0)),
     repeatedCuts: Number(total?.repeated ?? 0),
+    relistingDiscounted: Number(total?.relistings ?? 0),
     discounted: Number(total?.discounted ?? 0),
     freshLast48Hours: Number(total?.fresh ?? 0),
     medianCutAmount: total?.median_amount == null ? null : Number(total.median_amount),

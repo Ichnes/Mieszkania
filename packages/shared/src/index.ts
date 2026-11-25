@@ -64,6 +64,7 @@ export type MarketStatsResponse = {
     observationDays: number;
     repeatedCuts: number;
     discounted: number;
+    relistingDiscounted?: number;
     medianCutAmount: number | null;
     medianCutPercent: number | null;
     freshLast48Hours: number;

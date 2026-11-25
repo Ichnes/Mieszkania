@@ -81,6 +81,8 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
                 ? "."
                 : ` · ${number(signals.medianCutPercent)}%.`}{" "}
               Dotyczy {number(signals.discounted)} aktywnych ofert z {number(signals.active)}.
+              {signals.relistingDiscounted != null &&
+                ` W tym przy ponownym wystawieniu: ${number(signals.relistingDiscounted)}.`}
             </p>
           </article>
           <article className="insight-category">

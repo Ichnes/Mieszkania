@@ -962,3 +962,5 @@ oznacza kierunek SW. Dwie osobno wymienione ekspozycje ukośne (np. NE i SW) poz
 dwoma kierunkami ukośnymi. Ręczna korekta ma pierwszeństwo.
 
 W statystykach mieszkania potwierdzenie ponownego wystawienia rozszerza historię używaną przez Negotiation Score. Wiek oznacza czas od pierwszej obserwacji w aplikacji i może obejmować przerwy między publikacjami. Data publikacji na portalu jest pokazana osobno na osi czasu.
+
+Karta „Rzeczywiste przeceny” bierze ostatnią obniżkę każdej aktywnej oferty w wybranym okresie. Przy potwierdzonym ponownym wystawieniu porównuje pierwszy zapis ceny nowego ogłoszenia z ostatnim dostępnym zapisem ceny poprzednika sprzed tej daty. Data ręcznego powiązania nie przesuwa obniżki w czasie. Techniczna synchronizacja ceny między portalami nie jest obniżką.
