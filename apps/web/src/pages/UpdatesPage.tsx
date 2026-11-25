@@ -267,22 +267,25 @@ export function UpdatesPage({
               </div>
               <div className="sync-step-body">
                 <div className="sync-step-fields scan-range-fields">
-                  <label className="field-label">
-                    <span>Miasto z preferencji</span>
-                    <input
-                      className="text-input"
-                      value={discoverAllCity}
-                      readOnly
-                      placeholder="Miasto z zakresu ofert"
-                    />
-                    <button
-                      className="action-button secondary-button"
-                      type="button"
-                      onClick={() => setSettingsOpen(true)}
-                    >
-                      Zmień w preferencjach
-                    </button>
-                  </label>
+                  <div className="field-label scan-city-field">
+                    <label htmlFor="scan-city">Miasto z preferencji</label>
+                    <div className="scan-city-control">
+                      <input
+                        id="scan-city"
+                        className="text-input"
+                        value={discoverAllCity}
+                        readOnly
+                        placeholder="Miasto z zakresu ofert"
+                      />
+                      <button
+                        className="scan-city-edit"
+                        type="button"
+                        onClick={() => setSettingsOpen(true)}
+                      >
+                        Zmień w preferencjach
+                      </button>
+                    </div>
+                  </div>
                   <label className="field-label">
                     <span>Od strony</span>
                     <input

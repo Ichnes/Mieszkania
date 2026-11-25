@@ -16,6 +16,7 @@ zmieniają widok. Link z `?listing=UUID` otwiera szczegóły konkretnej lokalnej
 stare linki zaczynające się od `/` pozostają obsługiwane.
 
 W **Aktualizacja → Sprawdź portale** podaj **Od strony** i **Ile stron na portal**.
+Przycisk **Zmień w preferencjach** na końcu pola miasta otwiera ustawienia zakresu ofert.
 Wartości 30 i 10 oznaczają strony od 30 do 39 włącznie. Po sprawdzeniu stron 1–30
 zacznij od 31, jeśli chcesz pominąć stronę 30. Pusty początek oznacza stronę 1.
 Zakres jest stosowany dla każdej grupy lokalizacji. Skan może zakończyć się wcześniej,

@@ -2,7 +2,6 @@
 button,
 a.action-button,
 a.tab-button,
-summary,
 [role="button"]:not(.leaflet-marker-icon, .msi-map path, .offer-price-gauge g),
 input[type="checkbox"],
 input[type="radio"] {
@@ -16,7 +15,6 @@ input[type="radio"] {
 button:not(:disabled):not([aria-disabled="true"]):active,
 a.action-button:active,
 a.tab-button:active,
-summary:active,
 [role="button"]:not(.leaflet-marker-icon, .msi-map path, .offer-price-gauge g):not([aria-disabled="true"]):active {
   scale: 0.96;
 }

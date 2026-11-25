@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Stabilne rozwijanie zasięgu portali i pola skanu (2026-11-25)
+
+- [x] Odtworzono utratę kliknięcia przy krawędzi „Zasięg portali” wskutek skalowania nagłówków do 96%. Usunięto skalowanie natywnych nagłówków rozwijanych sekcji.
+- [x] Umieszczono „Zmień w preferencjach” na prawym końcu pola miasta. Na desktopie i laptopie miasto, początek i liczba stron mieszczą się w jednym rzędzie. Na telefonie pola stron są obok siebie pod miastem.
+- [x] Produkcyjny build i 173 testy web. Playwright na 1440, 1024 i 390 px sprawdził wysokość pól (40 px), przejście do preferencji, kliknięcie przy krawędzi nagłówka oraz zamknięcie klawiaturą.
+
 ## Etap 5 statystyk i ręczny zakres skanu (2026-11-25)
 
 - [x] Indeks sprawdza także okno rosnące z liczbą dni historii. Do zmiany podaży bierze stan dokładnie na początku tego okna. W odbiorze przy wyborze 180 dni użył 61 dni. Siedem miar monitora jest stale widocznych.
