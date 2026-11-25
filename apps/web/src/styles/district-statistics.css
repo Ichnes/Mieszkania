@@ -1062,7 +1062,8 @@
 
 .stats-panel .district-svg {
   max-height: 585px;
-  border-color: color-mix(in srgb, var(--brand) 19%, var(--line));
+  aspect-ratio: 1;
+  border: 0;
   background: linear-gradient(
     145deg,
     color-mix(in srgb, #4ca58c 9%, var(--surface)),
@@ -1098,6 +1099,11 @@
   vector-effect: non-scaling-stroke;
   cursor: pointer;
 }
+.msi-map path[role="button"] {
+  outline: none;
+  transition: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .msi-color-0 {
   --msi-color: #488e7b;
 }
@@ -1116,12 +1122,15 @@
 .msi-color-5 {
   --msi-color: #98ae64;
 }
-.msi-area:hover,
-.msi-area:focus-visible,
+.msi-area:hover {
+  fill: color-mix(in srgb, var(--msi-color) 84%, white);
+}
 .msi-area.is-selected {
+  fill: color-mix(in srgb, var(--msi-color) 58%, #153e36);
+}
+.msi-area:focus-visible {
   stroke: var(--ink);
   stroke-width: 2;
-  outline: none;
 }
 .msi-area-number {
   fill: #13251f;
@@ -1197,6 +1206,7 @@
   cursor: pointer;
 }
 .msi-map-caption {
+  display: none;
   position: absolute;
   bottom: 12px;
   left: 12px;
@@ -1209,6 +1219,9 @@
   font-weight: 700;
   overflow-wrap: anywhere;
   pointer-events: none;
+}
+.stats-map-fullscreen.is-expanded .msi-map-caption {
+  display: block;
 }
 @media (max-width: 480px) {
   .msi-area-list {

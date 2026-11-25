@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Kliknięcie bezpośrednio w mapę MSI (2026-11-25)
+
+- [x] Wyłączono skalowanie naciskanych wielokątów, ustabilizowano wymiary mapy i usunięto prostokątny obrys. Obszar zmienia wypełnienie, a fokus klawiatury podąża za granicą obszaru. Etykieta na mapie pojawia się tylko w pełnym ekranie.
+- [x] Chromium sprawdził pozycję i wymiary kształtu przed naciśnięciem, w trakcie i po zwolnieniu na ekranach 390, 1280 i 1680 px. Sprawdzono również wybór dotykiem i klawiaturą. Przeszło 161 testów web.
+
 ## Dymek bilansu i rozwijanie dzielnic (2026-11-25)
 
 - [x] Bilans tygodniowy pokazuje datę, wykryte i zarchiwizowane ogłoszenia oraz wynik ze znakiem. Sprawdzono zakres archiwum w zapytaniach statystyk.
