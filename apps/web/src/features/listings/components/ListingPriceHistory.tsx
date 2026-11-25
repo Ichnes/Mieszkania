@@ -29,7 +29,11 @@ const timeFormat = new Intl.DateTimeFormat("pl-PL", {
   timeZone: "Europe/Warsaw",
 });
 
-function eventTitle(event: TimelineEvent) {
+function eventTitle(event: TimelineEvent, hasEarlierPublication: boolean) {
+  if (hasEarlierPublication && !event.archive) {
+    if (event.eventType === "published") return "Ponowna publikacja ogłoszenia";
+    if (event.eventType === "created") return "Pierwszy zapis ponownego wystawienia w aplikacji";
+  }
   switch (event.eventType) {
     case "published":
       return event.archive ? "Publikacja wcześniejszego ogłoszenia" : "Publikacja ogłoszenia";
@@ -143,7 +147,7 @@ export function ListingPriceHistory({
                     {timeFormat.format(new Date(event.changedAt))}
                   </time>
                   <div className="history-event">
-                    <span className="history-event-title">{eventTitle(event)}</span>
+                    <span className="history-event-title">{eventTitle(event, archiveCount > 0)}</span>
                     {event.newPriceAmount != null && event.eventType !== "removed" && (
                       <span className="history-price">
                         {changedPrice && event.previousPriceAmount != null && (

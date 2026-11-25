@@ -960,3 +960,5 @@ południowo-zachodnia”, oznacza **południe i zachód**. Reguła działa równ
 pozostałych par kierunków, filtrów i oceny ofert. Sama „ekspozycja południowo-zachodnia”
 oznacza kierunek SW. Dwie osobno wymienione ekspozycje ukośne (np. NE i SW) pozostają
 dwoma kierunkami ukośnymi. Ręczna korekta ma pierwszeństwo.
+
+W statystykach mieszkania potwierdzenie ponownego wystawienia rozszerza historię używaną przez Negotiation Score. Wiek oznacza czas od pierwszej obserwacji w aplikacji i może obejmować przerwy między publikacjami. Data publikacji na portalu jest pokazana osobno na osi czasu.

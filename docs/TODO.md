@@ -1329,3 +1329,5 @@ Nie powtarzać wykonanych migracji tylko w celu testowania.
 - [x] Weryfikacja: 457 testów zaliczonych, 13 środowiskowych pominiętych; typecheck i build Docker poprawne. Po doprecyzowaniu ceny ponownie 52 testy kosztów bez błędów.
 - [x] Przywrócono formatowanie 8852 opisów zgodnych ze źródłem. Wskazana oferta: 27 akapitów, garaż i komórka w cenie, suma dopłat 0 zł. Playwright 1440/1280/390 px: brak przepełnień, brak fałszywego wyróżnienia Grzybków i błędów JS. Aplikacja uruchomiona lokalnie.
 - [x] Commit i push na bieżącą gałąź `main`.
+
+- [x] Historia ponownych wystawień w statystykach oferty i etykietach osi czasu. Zweryfikowano build API i WWW oraz odpowiedź lokalnego API dla zgłoszonej pary: początek 27 lipca, zmiana ceny −7,19%, pokrycie 100%. Brak dalszych prac dla zgłoszenia.

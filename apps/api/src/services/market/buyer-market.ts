@@ -68,6 +68,42 @@ export async function getOfferComparison(id: string) {
   );
   const target = data.observations.find((r) => r.id === id);
   if (!target) return null;
+  // Rebuild the comparison from confirmed publication chains at read time, including peers.
+  // A successor takes over the price series when it is first observed.
+  const chains = await pool.query<{
+    root: string;
+    start: number;
+    history: (typeof data.observations)[number]["history"];
+  }>(
+    `with recursive family(root,id) as (
+      select current_listing_id, previous_listing_id from listing_relisting_reviews
+      where current_listing_id=any($1::uuid[]) and decision='confirmed'
+      union
+      select f.root,r.previous_listing_id from family f join listing_relisting_reviews r
+        on r.current_listing_id=f.id and r.decision='confirmed'
+    ), members as (
+      select root,id from family union select root,root from family
+    ), periods as (
+      select m.*, l.first_seen_at,
+        lead(l.first_seen_at) over(partition by root order by l.first_seen_at,(m.id=root),m.id) as until
+      from members m join listings l on l.id=m.id
+    )
+    select root, floor(extract(epoch from min(first_seen_at))/86400)::int as start,
+      coalesce(jsonb_agg(jsonb_build_array(floor(extract(epoch from pe.changed_at)/86400)::int,
+        pe.new_price_amount) order by pe.changed_at,pe.id) filter(where pe.id is not null),'[]') as history
+    from periods p left join price_events pe on pe.listing_id=p.id
+      and pe.changed_at>=p.first_seen_at and (p.until is null or pe.changed_at<p.until)
+      and pe.event_type in ('created','price_drop','price_increase','relisted') and pe.new_price_amount>0
+      and pe.changed_at<=now() and (pe.snapshot_id is not null or pe.source_url is null)
+    group by root`,
+    [data.observations.map((row) => row.id)],
+  );
+  const byId = new Map(data.observations.map((row) => [row.id, row]));
+  for (const chain of chains.rows) {
+    const row = byId.get(chain.root)!;
+    row.start = chain.start;
+    row.history = chain.history;
+  }
   const settings = await getFamilySettings();
   const history = await pressureHistory(pool, pressureScope(settings.searchContract), data.today);
   const replay = await replayHistory(pool, settings.searchContract, {}, data.today);
