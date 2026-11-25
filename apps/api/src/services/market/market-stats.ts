@@ -107,7 +107,7 @@ async function computeMarketStats(
       sourceSegments,
       marketTypeSegments,
       boundaries,
-      signals,
+      { signals, changesByDistrict },
       propertySegments,
       buyerData,
     ] = await Promise.all([
@@ -130,14 +130,12 @@ async function computeMarketStats(
         median_price: string | null;
         priced: string;
         avg_area: string | null;
-        drops: string;
-        increases: string;
         new_7: string;
         new_period: string;
         archived_period: string;
         median_days: string | null;
       }>(
-        `select location.district district, count(*) filter (where l.status='active')::text active, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected')::text archived, round(avg(l.price_amount/nullif(l.area_sqm,0)) filter (where l.status='active' and l.price_amount>0 and l.area_sqm > 0))::text avg_price, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_price, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text priced, round(avg(l.area_sqm) filter (where l.status='active' and l.area_sqm > 0),1)::text avg_area, count(*) filter (where l.status='active' and exists (select 1 from price_events pe where pe.listing_id=l.id and pe.event_type='price_drop' and pe.changed_at >= now()-make_interval(days => ${periodDays})))::text drops, count(*) filter (where l.status='active' and exists (select 1 from price_events pe where pe.listing_id=l.id and pe.event_type='price_increase' and pe.changed_at >= now()-make_interval(days => ${periodDays})))::text increases, count(*) filter (where l.status='active' and l.first_seen_at >= now()-interval '7 days')::text new_7, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}))::text new_period, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays}))::text archived_period, percentile_cont(0.5) within group (order by extract(epoch from (l.removed_at-l.first_seen_at))/86400) filter (where l.status='removed' and l.removed_at >= now()-make_interval(days => ${periodDays}) and l.removed_at >= l.first_seen_at)::text median_days from listings l ${marketLocationJoinSql} where lower(l.city)='warszawa' and ${aliasedStatsFilters} group by 1 order by count(*) filter (where l.status='active') desc`,
+        `select location.district district, count(*) filter (where l.status='active')::text active, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected')::text archived, round(avg(l.price_amount/nullif(l.area_sqm,0)) filter (where l.status='active' and l.price_amount>0 and l.area_sqm > 0))::text avg_price, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_price, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text priced, round(avg(l.area_sqm) filter (where l.status='active' and l.area_sqm > 0),1)::text avg_area, count(*) filter (where l.status='active' and l.first_seen_at >= now()-interval '7 days')::text new_7, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}))::text new_period, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays}))::text archived_period, percentile_cont(0.5) within group (order by extract(epoch from (l.removed_at-l.first_seen_at))/86400) filter (where l.status='removed' and l.removed_at >= now()-make_interval(days => ${periodDays}) and l.removed_at >= l.first_seen_at)::text median_days from listings l ${marketLocationJoinSql} where lower(l.city)='warszawa' and ${aliasedStatsFilters} group by 1 order by count(*) filter (where l.status='active') desc`,
         [locationMapping],
       ),
       db.query<{
@@ -167,10 +165,9 @@ async function computeMarketStats(
         archived_previous: string;
         median_current: string | null;
         median_previous: string | null;
-        drops: string;
         median_days: string | null;
       }>(
-        `select count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}))::text new_current, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays * 2}) and l.first_seen_at < now()-make_interval(days => ${periodDays}))::text new_previous, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays}))::text archived_current, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays * 2}) and l.removed_at < now()-make_interval(days => ${periodDays}))::text archived_previous, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_current, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays * 2}) and l.first_seen_at < now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_previous, count(*) filter (where l.status='active' and exists (select 1 from price_events pe where pe.listing_id=l.id and pe.event_type='price_drop' and pe.changed_at >= now()-make_interval(days => ${periodDays})))::text drops, percentile_cont(0.5) within group (order by extract(epoch from (l.removed_at-l.first_seen_at))/86400) filter (where l.status='removed' and l.removed_at >= now()-make_interval(days => ${periodDays}) and l.removed_at >= l.first_seen_at)::text median_days from listings l where lower(l.city)='warszawa' and ${aliasedStatsFilters}`,
+        `select count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}))::text new_current, count(*) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays * 2}) and l.first_seen_at < now()-make_interval(days => ${periodDays}))::text new_previous, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays}))::text archived_current, count(*) filter (where l.status='removed' and coalesce(l.exclusion_reason,'') <> 'manual_rejected' and l.removed_at >= now()-make_interval(days => ${periodDays * 2}) and l.removed_at < now()-make_interval(days => ${periodDays}))::text archived_previous, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_current, percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0)) filter (where l.first_seen_at >= now()-make_interval(days => ${periodDays * 2}) and l.first_seen_at < now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0)::text median_previous, percentile_cont(0.5) within group (order by extract(epoch from (l.removed_at-l.first_seen_at))/86400) filter (where l.status='removed' and l.removed_at >= now()-make_interval(days => ${periodDays}) and l.removed_at >= l.first_seen_at)::text median_days from listings l where lower(l.city)='warszawa' and ${aliasedStatsFilters}`,
       ),
       db.query<{ label: string; count: string } & PriceSampleRow>(
         `select bucket.label, count(*)::text count, ${priceSampleSql.replaceAll("l.", "bucket.")} from (select l.price_amount,l.area_sqm, case when l.rooms is null then 'Brak danych' when l.rooms < 2 then '1 pokój' when l.rooms < 3 then '2 pokoje' when l.rooms < 4 then '3 pokoje' when l.rooms < 5 then '4 pokoje' else '5+ pokoi' end label, case when l.rooms is null then 6 when l.rooms < 2 then 1 when l.rooms < 3 then 2 when l.rooms < 4 then 3 when l.rooms < 5 then 4 else 5 end position from listings l where lower(l.city)='warszawa' and l.first_seen_at >= now()-make_interval(days => ${periodDays}) and ${aliasedStatsFilters}) bucket group by bucket.label order by min(bucket.position)`,
@@ -269,9 +266,10 @@ async function computeMarketStats(
     const previousNewListings = Number(c.new_previous ?? 0);
     const archivedListings = Number(c.archived_current ?? 0);
     const previousArchivedListings = Number(c.archived_previous ?? 0);
-    const medianNewPricePerSqm = Number(c.median_current ?? 0);
-    const previousMedianNewPricePerSqm = Number(c.median_previous ?? 0);
-    const priceDrops = Number(c.drops ?? 0);
+    const medianNewPricePerSqm = c.median_current == null ? null : Number(c.median_current);
+    const previousMedianNewPricePerSqm =
+      c.median_previous == null ? null : Number(c.median_previous);
+    const priceDrops = signals.discounted;
     const distributionTotal = distribution.rows.reduce((sum, row) => sum + Number(row.count), 0);
     const mapSegments = (rows: Array<{ label: string; count: string } & PriceSampleRow>) => {
       const total = rows.reduce((sum, row) => sum + Number(row.count), 0);
@@ -306,7 +304,10 @@ async function computeMarketStats(
         archivedListingsChangePercent: percentChange(archivedListings, previousArchivedListings),
         medianNewPricePerSqm,
         previousMedianNewPricePerSqm,
-        medianPriceChangePercent: percentChange(medianNewPricePerSqm, previousMedianNewPricePerSqm),
+        medianPriceChangePercent:
+          medianNewPricePerSqm == null || previousMedianNewPricePerSqm == null
+            ? null
+            : percentChange(medianNewPricePerSqm, previousMedianNewPricePerSqm),
         priceDrops,
         priceDropSharePercent:
           Number(t.active) > 0 ? Math.round((priceDrops / Number(t.active)) * 1_000) / 10 : 0,
@@ -329,8 +330,8 @@ async function computeMarketStats(
           pricedListings: Number(row.priced ?? 0),
           averageArea: Number(row.avg_area ?? 0),
           archiveRate: active + archived ? Math.round((archived / (active + archived)) * 100) : 0,
-          priceDrops: Number(row.drops ?? 0),
-          priceIncreases: Number(row.increases ?? 0),
+          priceDrops: changesByDistrict.get(district)?.drops ?? 0,
+          priceIncreases: changesByDistrict.get(district)?.increases ?? 0,
           newLast7Days: Number(row.new_7 ?? 0),
           newInPeriod: Number(row.new_period ?? 0),
           archivedInPeriod: Number(row.archived_period ?? 0),

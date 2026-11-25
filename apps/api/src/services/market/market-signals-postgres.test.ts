@@ -1,4 +1,4 @@
-﻿import assert from "node:assert/strict";
+import assert from "node:assert/strict";
 import test from "node:test";
 import pg from "pg";
 import { getMarketSignals } from "./market-signals";
@@ -20,7 +20,7 @@ test(
       insert into listing_snapshots values(1,1,now()-interval '10 days',750000),(2,2,now()-interval '12 days',1000000),(3,3,now()-interval '15 days',900000),(4,4,now()-interval '11 days',2000000);
       insert into price_events values(1,1,now(),750000,700000,'price_drop',null,'duplicate');`);
       const read = () => getMarketSignals(db, "true", 30, "[{}]");
-      const first = await read();
+      const { signals: first } = await read();
       assert.equal(first.discounted, 1);
       assert.equal(first.relistingDiscounted, 1);
       assert.equal(first.repeatedCuts, 0);
@@ -28,10 +28,26 @@ test(
       await db.query(
         "insert into price_events values(2,1,now(),750000,730000,'price_drop',5,null)",
       );
-      const next = await read();
+      const { signals: next } = await read();
       assert.equal(next.medianCutAmount, 20000);
       assert.equal(next.repeatedCuts, 1);
       assert.equal(next.relistingDiscounted, 0);
+      await db.query(`insert into listing_snapshots values
+        (6,1,now()-interval '2 hours',710000),(7,1,now()-interval '1 hour',720000);
+        insert into price_events values (3,1,now()-interval '2 hours',750000,710000,'price_drop',6,null)`);
+      const { changesByDistrict } = await read();
+      assert.deepEqual(changesByDistrict.get("Bez dzielnicy"), { drops: 1, increases: 1 });
+      await db.query("delete from price_events where id in (2,3)");
+      assert.equal((await read()).signals.medianCutAmount, 40000);
+      await db.query(`delete from price_events;
+        delete from listing_snapshots where id in (6,7);
+        update listing_snapshots set price_amount=1000000 where id=1;
+        insert into listing_relisting_reviews values(2,5,'confirmed');
+        insert into listing_snapshots values(8,5,now()-interval '20 days',1250000);`);
+      const chain = await read();
+      assert.equal(chain.signals.medianCutAmount, 250000);
+      assert.equal(chain.signals.repeatedCuts, 0);
+      assert.equal((await getMarketSignals(db, "true", 5, "[{}]")).signals.discounted, 0);
     } finally {
       await db.end();
     }

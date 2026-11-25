@@ -964,3 +964,5 @@ dwoma kierunkami ukośnymi. Ręczna korekta ma pierwszeństwo.
 W statystykach mieszkania potwierdzenie ponownego wystawienia rozszerza historię używaną przez Negotiation Score. Wiek oznacza czas od pierwszej obserwacji w aplikacji i może obejmować przerwy między publikacjami. Data publikacji na portalu jest pokazana osobno na osi czasu.
 
 Karta „Rzeczywiste przeceny” bierze ostatnią obniżkę każdej aktywnej oferty w wybranym okresie. Przy potwierdzonym ponownym wystawieniu porównuje pierwszy zapis ceny nowego ogłoszenia z ostatnim dostępnym zapisem ceny poprzednika sprzed tej daty. Data ręcznego powiązania nie przesuwa obniżki w czasie. Techniczna synchronizacja ceny między portalami nie jest obniżką.
+
+Licznik obniżek w podsumowaniu rynku, wykres dzielnic i karta rzeczywistych przecen korzystają ze wspólnej historii zmian. Wliczane są również różnice między kolejnymi zapisami ceny tej samej publikacji oraz wcześniejsze obniżki z potwierdzonego łańcucha wystawień w wybranym okresie. Na dashboardzie „Zmiany cen” obejmują oba kierunki. Kliknięcie otwiera listę dla tego samego okresu i zakresu dashboardu.

@@ -15,7 +15,9 @@ test(
           id int, status text, city text, hidden_duplicate_of_id int,
           rooms int, price_amount numeric, area_sqm numeric
         );
-        create temporary table price_events (listing_id int, event_type text, changed_at timestamptz);
+        create temporary table price_events (listing_id int, event_type text, changed_at timestamptz, id serial, previous_price_amount numeric default 100,new_price_amount numeric default 90,snapshot_id int,source_url text);
+        create temporary table listing_snapshots(id int,listing_id int,captured_at timestamptz,price_amount numeric);
+        create temporary table listing_relisting_reviews(current_listing_id int,previous_listing_id int,decision text);
         insert into listings
           select id, 'active', 'Warszawa', null, 3, 900000, 60 from generate_series(1, 14) id;
         insert into price_events values

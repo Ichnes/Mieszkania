@@ -92,8 +92,8 @@ export type MarketStatsResponse = {
     archivedListings: number;
     previousArchivedListings: number;
     archivedListingsChangePercent: number | null;
-    medianNewPricePerSqm: number;
-    previousMedianNewPricePerSqm: number;
+    medianNewPricePerSqm: number | null;
+    previousMedianNewPricePerSqm: number | null;
     medianPriceChangePercent: number | null;
     priceDrops: number;
     priceDropSharePercent: number;

@@ -1,3 +1,4 @@
+import { invalidateMarketStatsCache } from "../market/stats-cache";
 import type { RelistedListingMatch } from "@mieszkania/shared";
 import type { Pool } from "pg";
 import { pool } from "../../db";
@@ -98,6 +99,7 @@ export async function reviewRelisting(
     );
     await client.query("update listings set updated_at=now() where id=$1", [currentId]);
     await client.query("commit");
+    invalidateMarketStatsCache();
     return { decision, match: reviewed };
   } catch (error) {
     await client.query("rollback");

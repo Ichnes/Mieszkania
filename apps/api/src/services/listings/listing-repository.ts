@@ -1,15 +1,9 @@
 import { readMonthlyFee } from "./maintenance-fee";
 import type { Pool } from "pg";
 import { marketSnapshotPayloadSql } from "../market/market-snapshot";
-import {
-  isRealPriceChange,
-  realPriceChangeSql,
-  realRelistingPriceChangeSql,
-  relistingPriceChange,
-  getPriceChangePercent,
-} from "./price-change";
+import { getPriceChangePercent } from "./price-change";
 import { commuteRouteCache } from "../insights/commute-route-cache";
-import { dashboardPriceChangesSql, dashboardPriceEventPredicate } from "./dashboard-price-changes";
+import { dashboardPriceChangesSql, changedListingsSql } from "./dashboard-price-changes";
 import {
   dashboardPeriods,
   dashboardNewListingsSql,
@@ -154,6 +148,7 @@ type ListingRow = {
 };
 
 type PriceEventRow = {
+  relisting?: boolean;
   source_label?: string | null;
   source_url?: string | null;
   listing_id: string;
@@ -269,22 +264,14 @@ export async function getMapListings() {
         l.rooms::text as rooms,
         l.published_at::text as published_at,
         l.first_seen_at::text as first_seen_at,
-        coalesce(pe.previous_price_amount, case when ${realRelistingPriceChangeSql} then lr.previous_price_amount end)::text as previous_price_amount,
-        coalesce(pe.new_price_amount, case when ${realRelistingPriceChangeSql} then lr.relisted_price_amount end)::text as new_price_amount,
+        pe.previous_price_amount::text as previous_price_amount,
+        pe.new_price_amount::text as new_price_amount,
         case when l.latitude is null or l.longitude is null then null else 'approximate' end as coordinate_accuracy,
         cover.source_url as thumbnail_url
       from listings l
       join sources s on s.id = l.source_id
-      ${representativeRelistingJoin}
       left join listing_manual_overrides lmo on lmo.listing_id = l.id
-      left join lateral (
-        select previous_price_amount, new_price_amount
-        from price_events pe
-        where pe.listing_id = l.id
-          and ${realPriceChangeSql}
-        order by changed_at desc
-        limit 1
-      ) pe on true
+      left join (${changedListingsSql("select id from listings where status='active' and hidden_duplicate_of_id is null")}) pe on pe.listing_id=l.id
       left join lateral (
         select li.source_url
         from listing_images li
@@ -694,6 +681,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       relatedListings,
       aiAssessments,
       earlierPublications,
+      latestChange,
     ] = await Promise.all([
       getListingImages(row.id),
       db.query<PriceEventRow>(
@@ -710,6 +698,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       getRelatedListings(listingId),
       getAiAssessments([listingId]),
       getEarlierPublications(db, listingId),
+      db.query<PriceEventRow>(changedListingsSql("select $1::uuid id"), [listingId]),
     ]);
 
     const resolvedImages = images
@@ -732,7 +721,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       undefined;
     const detail = mapListingSummary(
       { ...row, snapshot_payload_raw: snapshotPayload },
-      [...priceHistoryResult.rows].reverse().find(isRealPriceChange),
+      latestChange.rows[0],
       null,
       images.length,
       primaryImage?.resolvedUrl,
@@ -1128,28 +1117,19 @@ async function getListingsPageByScope(
       clauses.push("l.is_shortlisted = true");
     }
 
-    if (filters.priceChangedOnly) {
-      clauses.push(`
-        (exists (
-          select 1
-          from price_events pe
-          where pe.listing_id = l.id
-            and ${realPriceChangeSql}
-        ) or exists (
-          select 1 from listing_relistings lr
-          where lr.current_listing_id = l.id and ${realRelistingPriceChangeSql}
-        ))
-      `);
-    }
-
     if (filters.newWithinDays) {
       clauses.push(`l.first_seen_at >= now() - make_interval(days => $${paramIndex++}::int)`);
       values.push(filters.newWithinDays);
     }
-    if (filters.priceChangedWithinDays) {
-      clauses.push(`exists (select 1 from price_events pe where pe.listing_id = l.id
-        and ${dashboardPriceEventPredicate} and pe.changed_at >= now() - make_interval(days => $${paramIndex++}::int))`);
-      values.push(filters.priceChangedWithinDays);
+    if (filters.priceChangedOnly || filters.priceChangedWithinDays) {
+      const days = filters.priceChangedWithinDays ? `$${paramIndex++}::int` : undefined;
+      const changes = changedListingsSql(
+        `select l.id from listings l left join listing_manual_overrides lmo on lmo.listing_id=l.id
+         where ${clauses.join(" and ")}`,
+        days,
+      );
+      clauses.push(`l.id in (select listing_id from (${changes}) changed)`);
+      if (filters.priceChangedWithinDays) values.push(filters.priceChangedWithinDays);
     }
 
     const totalResult = await db.query<{ total: string }>(
@@ -1276,15 +1256,7 @@ async function getListingsPageByScope(
     measure("decode-rows");
     // Price changes must be available before global scoring and pagination.
     const priceEventsResult = await db.query<PriceEventRow>(
-      `
-        select distinct on (pe.listing_id)
-          pe.listing_id, pe.event_type,
-          pe.previous_price_amount::text, pe.new_price_amount::text, pe.changed_at::text
-        from price_events pe
-        where pe.listing_id = any($1::uuid[])
-          and ${realPriceChangeSql}
-        order by pe.listing_id, pe.changed_at desc
-      `,
+      changedListingsSql("select unnest($1::uuid[]) id"),
       [pageRows.map((row) => row.id)],
     );
     const latestPriceEvents = new Map(priceEventsResult.rows.map((row) => [row.listing_id, row]));
@@ -1641,14 +1613,7 @@ function mapListingSummary(
   relatedCount = 0,
   potentialDuplicateCount = 0,
 ): ListingSummary {
-  const relistedEvent = relistingPriceChange(
-    row.relisting_previous_price_amount,
-    row.relisting_relisted_price_amount,
-  );
-  const usesRelistingChange = !latestEvent && Boolean(relistedEvent);
-  latestEvent ??= relistedEvent
-    ? { ...relistedEvent, listing_id: row.id, changed_at: row.first_seen_at ?? "" }
-    : undefined;
+  const usesRelistingChange = latestEvent?.relisting;
   const contactStatus = parseListingContactStatus(row.manual_contact_status);
   const decisionStage = parseListingDecisionStage(row.manual_decision_stage);
   const advertisedPriceAmount = row.price_amount ? Number(row.price_amount) : null;
