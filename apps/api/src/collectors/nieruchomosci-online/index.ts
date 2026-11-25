@@ -21,6 +21,7 @@ import { geocodeListing } from "../../services/geography/geocoding";
 import {
   inferConstructionYear,
   inferStructuredConstructionYear,
+  statedApartmentArea,
 } from "../../services/listings/listing-description-facts";
 import {
   extractStreetFromLocationTitle,
@@ -543,13 +544,18 @@ export function parseListing(
   const price = number(
     text(offer.price) ?? priceNearLabel(visibleText) ?? description.match(/([0-9\s]+)\s*zł/i)?.[1],
   );
-  const area = number(
-    text(product.floorSize) ?? visibleText.match(/([0-9]+(?:[,.][0-9]+)?)\s*m(?:²|2)/i)?.[1],
-  );
+  const isDomiporta = new URL(url).hostname.toLowerCase().includes("domiporta.pl");
+  const area =
+    (isDomiporta
+      ? number(readDomiportaFeature(html, "Powierzchnia")?.match(/\d+(?:[.,]\d+)?/)?.[0])
+      : undefined) ??
+    number(text(product.floorSize)) ??
+    statedApartmentArea(description) ??
+    inferVisibleArea(visibleText);
   // Domiporta keeps the authoritative room count in its feature grid. Its
   // descriptive text often contains unrelated numbers, so never infer rooms
   // from that text before reading the dedicated field.
-  const domiportaRooms = new URL(url).hostname.toLowerCase().includes("domiporta.pl")
+  const domiportaRooms = isDomiporta
     ? number(readDomiportaFeature(html, "LICZBA POKOI"))
     : undefined;
   const rooms =
@@ -833,6 +839,18 @@ function extractPortalPrice(url: string, html: string) {
     .replace(/PLN/gi, "zł")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function inferVisibleArea(visibleText: string) {
+  for (const match of visibleText.matchAll(/(\d+(?:[,.]\d+)?)\s*m(?:²|2)/gi)) {
+    const prefix = visibleText.slice(Math.max(0, match.index! - 40), match.index);
+    if (
+      !/(?:balkon|taras|ogród|piwnic|komórk)\p{L}*\s*(?:o pow(?:ierzchni|\.)?\s*)?[:–-]?\s*$/iu.test(
+        prefix,
+      )
+    )
+      return number(match[1]);
+  }
 }
 
 function readDomiportaFeature(html: string, label: string) {

@@ -242,7 +242,7 @@ create table transaction_rcn (
   latitude numeric(9,6),
   longitude numeric(9,6),
   property_type text not null,
-  market_type market_type not null,
+  market_type market_type,
   area_sqm numeric(10,2),
   price_amount numeric(12,2) not null,
   price_per_sqm numeric(12,2),

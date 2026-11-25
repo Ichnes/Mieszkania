@@ -31,6 +31,10 @@ Kliknij **Nowe** lub **Zmiany cen**, aby przejść do pierwszej strony ofert z w
 Kliknięcie zastępuje wcześniejsze filtry listy. Nagłówek wyników pokazuje rodzaj i okres wyboru.
 Przycisk **Wyczyść filtry** przywraca pełną listę.
 
+W filtrach ofert dolna i górna granica ceny, metrażu, roku budowy i liczby pokoi są obok siebie.
+Pola ceny mieszkania oraz ceny za m² grupują tysiące już podczas pisania, np. **1 250 000**.
+Możesz wkleić kwotę ze spacjami i dopiskiem „zł”. Przycisk **Filtruj** stosuje wpisane granice.
+
 W **Aktywnych ofertach** i **Średniej cenie / m²** główna liczba nadal opisuje
 obecny stan, a wybrany okres określa porównanie do stanu sprzed 7, 30 lub 60 dni.
 Średnia dotyczy Warszawy. Przy zbyt krótkiej historii pojawia się informacja
@@ -304,8 +308,12 @@ W sekcji **Pierwsze uruchomienie** zobaczysz, czy katalog ulic jest już dostęp
 pozwala go odświeżyć. Pobieranie może potrwać kilka minut. Import aktualizuje istniejące
 odcinki, więc ponowne uruchomienie nie tworzy ich duplikatów.
 Poniżej dodasz pojedynczą ofertę z dowolnego obsługiwanego portalu lub dane cen RCN.
-RCN jest opcjonalne: panel pokazuje liczbę już zapisanych transakcji i datę ostatniego
-zapisu. Odczyt statusu można ponowić po błędzie. W Aktualizacji sekcja **Ulice i ceny transakcyjne**
+**Uruchom import RCN** pobiera najnowszy datowany plik ZIP/GML z [portalu m.st. Warszawy](https://architektura.um.warszawa.pl/udostepniane-dane-rcn1).
+Import porównuje identyfikatory transakcji i lokali z lokalną bazą. Panel pokazuje liczbę
+zapisanych transakcji, datę ostatniego dodania oraz datę najnowszego aktu dla
+porównywalnego mieszkania. Uwzględnia lokale mieszkalne z podaną własną ceną,
+powierzchnią 20–250 m² i ceną 3000–50 000 zł/m². Pomija wskazane udziały ułamkowe.
+Odczyt statusu można ponowić po błędzie. W Aktualizacji sekcja **Ulice i ceny transakcyjne**
 zawiera dopasowanie ulic i przycisk **Importuj transakcje**, prowadzący do RCN.
 Przycisk **Wróć do aktualizacji** prowadzi do głównego panelu pobierania ofert.
 
@@ -835,24 +843,20 @@ ogrzewanie”, brak opisu i niejednoznaczne wzmianki dają **Ogrzewanie nieustal
 Wynik aktualizuje się razem z opisem; nie jest potwierdzeniem urzędowym ani ręczną
 deklaracją użytkownika. Szczegóły: [źródła danych o ogrzewaniu](../reference/heating-networks.md).
 
-# Ustalenia, oglądanie i następny kontakt
+## Zapisana analiza okolicy
 
-W szczegółach oferty otwórz **Ustalenia**. Pytania dotyczą brakujących informacji
-oraz rzeczy wymagających potwierdzenia: ogrzewania, dokumentów i remontów.
-Po rozwinięciu pytania wpisz odpowiedź, źródło (osobę, dokument lub link) i datę.
-Zaznaczenie „Potwierdzone na podstawie źródła” wymaga tych trzech informacji.
-Możesz też zapisać niepotwierdzoną odpowiedź jako szkic. Zapisane odpowiedzi
-pozostają widoczne, nawet gdy po odświeżeniu ogłoszenia pytanie przestanie wynikać
-z braków danych. Aktualizacja danych portalu nie weryfikuje ponownie ustaleń użytkownika.
+Pełna analiza w sekcji **Okolica** zapisuje się przy ofercie. Przy ponownym otwarciu
+tej samej lokalizacji aplikacja odczytuje wynik z bazy, także po restarcie.
+Odległość do metra jest mierzona w linii prostej od pinezki do stacji z lokalnego
+katalogu. Zmiana pinezki powoduje odczyt lub analizę nowej lokalizacji. Przycisk
+**Odśwież analizę okolicy** pobiera aktualne dane mapowe. Jeśli serwer zwróci błąd
+lub niepełną odpowiedź, ostatnia pełna analiza pozostaje dostępna.
 
-W sekcji **Następny krok** w Ustaleniach oferty możesz nadal zapisać czynność i termin
-oraz oznaczyć czynność jako wykonaną lub anulowaną. Zbiorcza lista **Następne kroki**
-została usunięta z ekranu głównego; zapisane czynności pozostają w ofertach.
+## Rozstrzygnięcia w duplikatach i wydruk porównania
 
 W **Duplikatach** rozwiń **Zapisz rozstrzygnięcie i źródło**, następnie wczytaj
 ustalenia. Można zapisać poprawną powierzchnię, liczbę pokoi, piętro i wyjaśnienie
-historii/tożsamości mieszkania. Są powiązane z główną ofertą i widoczne również
-w jej Ustaleniach. To zapis weryfikacji, nie automatyczne nadpisanie danych portali
+historii/tożsamości mieszkania. Są powiązane z główną ofertą. To zapis weryfikacji, nie automatyczne nadpisanie danych portali
 ani rankingu. Potwierdzenie lub rozdzielenie grupy nadal wykonuje się istniejącymi
 przyciskami po sprawdzeniu ogłoszeń. Sam konflikt nie dowodzi błędnego scalenia.
 Przy równoczesnej edycji starszy formularz zostanie odrzucony; odczytaj aktualny

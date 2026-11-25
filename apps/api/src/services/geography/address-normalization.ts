@@ -64,6 +64,7 @@ export function sanitizeStreetCandidate(value?: string | null) {
     ),
   );
   const street = (narrativeIndex >= 0 ? clause.slice(0, narrativeIndex) : clause)
+    .replace(/\s+(?:oraz|i)\s+ul\.?$/iu, "")
     .replace(/[.:-]+$/, "")
     .trim();
 

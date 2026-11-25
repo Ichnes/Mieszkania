@@ -3,6 +3,56 @@ import test from "node:test";
 import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
+  [
+    "Miejsce postojowe w garażu podziemnym: 35 000 PLN. Łączna cena nieruchomości wraz z miejscem postojowym wynosi 1 215 000 PLN.",
+    { garage: 35000 },
+  ],
+  ["Duża piwnica 12 m² - mieszkanie gotowe do wprowadzenia Cena: 990 000 zł", {}],
+  [
+    "67,7 m², 3 pokoje, wysoki parter, balkon + piwnica 4,60 m² i schowek 2 m², 2 miejsca postojowe Cena: 969 000 zł",
+    {},
+  ],
+  [
+    "Opłaty za garaż i komórkę,\n- miejsca postojowe w garażu podziemnym dodatkowo płatne - cena 60 000 zł,\n- komórka lokatorska dodatkowo płatna - cena 40 000 zł",
+    { garage: 60000, storage: 40000 },
+  ],
+  [
+    "Miejsce postojowe w garażu podziemnym 60.000 zł Komórka lokatorska (4,3 m kw.) 45.000 zł",
+    { garage: 60000, storage: 45000 },
+  ],
+  [
+    "Miejsce postojowe w garażu podziemnym (na oddzielnej KW). Cena miejsca: 40 000 zł (dodatkowo płatne).",
+    { garage: 40000 },
+  ],
+  [
+    "Dwa miejsca parkingowe w garażu podziemnym: - miejsce szersze niż standardowe - 45 000 zł, - miejsce standardowe - 40 000 zł.",
+    { garage: 85000 },
+  ],
+  [
+    "Do mieszkania przynależy (dodatkowo płatne 160 000 zł) : -murowana komórka lokatorska, znajdująca się na poziomie 0, -dwa prywatne miejsca postojowe.",
+    { garageAndStorage: 160000 },
+  ],
+  [
+    "Miejsce postojowe w garażu podziemnym — dodatkowo 50 000 Lokalizacja przy parku.",
+    { garage: 50000 },
+  ],
+  [
+    "Miejsce garażowe i komórka w cenie | 1.250.000 zł",
+    { garageIncluded: true, storageIncluded: true },
+  ],
+  [
+    "CENA 1 100 000 zł – lokal wykończony pod klucz 30 000 zł – 2 miejsca postojowe ŁĄCZNIE: 1 130 000 zł",
+    { garage: 30000 },
+  ],
+  [
+    "Mieszkanie 60 m² z ogródkiem – 1 129 000 zł, • miejsce postojowe – 50 000 zł, • komórka lokatorska – 20 000 zł.",
+    { garage: 50000, storage: 20000 },
+  ],
+  ["Garaż: 50 000 zł Cena łączna z miejscem parkingowym: 1 234 000 zł", { garage: 50000 }],
+  [
+    "Dwa miejsca postojowe (każde w cenie 60 000 zł). Łączna kwota za mieszkanie + 2 miejsca postojowe + dodatkowe miejsce postojowe z komórką wynosi 1.660.000 PLN",
+    { garage: 120000, parkingCount: 2, parkingUnitPrice: 60000 },
+  ],
   ["Garaż i komórka płatne dodatkowo\nLOKALIZACJA – park\nCENA: 967 900 zł", {}],
   ["Piwnica: tak, - miejsce postojowe: tak, - stan prawny: własność, - cena: 1 185 500 zł", {}],
   [

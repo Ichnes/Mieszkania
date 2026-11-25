@@ -486,6 +486,7 @@ export async function ensureRuntimeSchema() {
     await db.query(`
       alter table transaction_rcn
       add column if not exists street text;
+      alter table transaction_rcn alter column market_type drop not null;
     `);
 
     await db.query(`

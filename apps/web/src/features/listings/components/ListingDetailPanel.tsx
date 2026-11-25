@@ -181,7 +181,7 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates" | "decisions"
+    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
@@ -731,21 +731,7 @@ export function ListingDetailPanel(input: {
                 <Link2 size={16} aria-hidden="true" />
                 <span>Duplikaty ({input.listing.relatedListings.length})</span>
               </button>
-              <button
-                type="button"
-                className={tabClass(activeDetailTab === "decisions")}
-                onClick={() => setActiveDetailTab("decisions")}
-              >
-                <ClipboardCheck size={16} aria-hidden="true" /> <span>Ustalenia</span>
-              </button>
             </div>
-            {activeDetailTab === "decisions" && (
-              <DecisionNotebook
-                key={input.listing.id}
-                listingId={input.listing.id}
-                listing={input.listing}
-              />
-            )}
             {activeDetailTab === "ai" && input.listing.aiAssessment && (
               <ListingAiAssessment
                 assessment={input.listing.aiAssessment}
@@ -1465,6 +1451,16 @@ export function ListingDetailPanel(input: {
 
             <div className="result-box detail-sidebar-box">
               <strong>Okolica</strong>
+              {input.listing.amenityAnalysis?.status === "available" && (
+                <button
+                  className="action-button secondary-button"
+                  type="button"
+                  disabled={input.isLoadingInsights}
+                  onClick={() => void input.onRefreshInsights()}
+                >
+                  <RefreshCw size={15} aria-hidden="true" /> Odśwież analizę okolicy
+                </button>
+              )}
               {input.listing.amenityAnalysis?.message && (
                 <p className="muted" role="status">
                   {hasKnownSurroundings && input.listing.amenityAnalysis.status === "unavailable"
@@ -1736,4 +1732,3 @@ export function ListingDetailPanel(input: {
     setContactEvent(createEmptyContactEventDraft(manual.contactName));
   }
 }
-import { DecisionNotebook } from "../../decisions/DecisionNotebook";

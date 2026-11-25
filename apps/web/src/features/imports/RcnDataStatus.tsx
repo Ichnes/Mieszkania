@@ -3,9 +3,24 @@ import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 
 export function RcnDataStatus({ importing }: { importing: boolean }) {
-  const [status, setStatus] = useState<{ count: number; updatedAt?: string } | null>(null);
+  const [status, setStatus] = useState<{
+    count: number;
+    updatedAt?: string;
+    latestTransaction?: string;
+  } | null>(null);
   const [error, setError] = useState(false);
   const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    const refreshVisible = () => {
+      if (document.visibilityState === "visible") setAttempt((value) => value + 1);
+    };
+    window.addEventListener("focus", refreshVisible);
+    const timer = window.setInterval(refreshVisible, 30_000);
+    return () => {
+      window.removeEventListener("focus", refreshVisible);
+      window.clearInterval(timer);
+    };
+  }, []);
   useEffect(() => {
     if (importing) return;
     const controller = new AbortController();
@@ -31,6 +46,8 @@ export function RcnDataStatus({ importing }: { importing: boolean }) {
           {status.updatedAt
             ? ` Ostatni zapis: ${new Date(status.updatedAt).toLocaleDateString("pl-PL")}.`
             : ""}
+          {status.latestTransaction &&
+            ` Najnowsza transakcja: ${new Date(status.latestTransaction + "T12:00:00").toLocaleDateString("pl-PL")}.`}
         </p>
       )}
       {importing ? (

@@ -42,10 +42,7 @@ export function DecisionReminders({ onOpen }: { onOpen: (id: string) => unknown 
         {items.some((item) => Date.parse(item.dueAt) <= Date.now()) ? " · są zaległe terminy" : ""}
         {error ? " · błąd odczytu" : ""}
       </summary>
-      <p className="muted">
-        Przypomnienia w aplikacji, również dla ofert archiwalnych. Termin i wykonanie zmienisz w
-        zakładce „Ustalenia” oferty.
-      </p>
+      <p className="muted">Zapisane przypomnienia, również dla ofert archiwalnych.</p>
       {loading && <p role="status">Wczytuję terminy…</p>}
       {error && <p role="alert">{error}</p>}
       <button

@@ -261,6 +261,11 @@ test("counts private parking spaces separately from guest parking and recognizes
 });
 
 test("shows a lift image badge only when the listing explicitly has no lift", () => {
+  const planned = extractFeatures({
+    description: "Perspektywa budowy windy omawiana na zebraniach. Lokal w budynku bez windy.",
+  });
+  assert.ok(planned.some((f) => f.key === "no_lift"));
+  assert.ok(!planned.some((f) => f.key === "lift"));
   const withLift = extractFeatures({ description: "W budynku znajduje się winda." });
   const withoutLift = extractFeatures({ description: "Czwarte piętro bez windy." });
 

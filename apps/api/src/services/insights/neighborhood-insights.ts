@@ -10,7 +10,6 @@ import { withDb } from "../../db";
 import { fetchExternalJson } from "../http/external-json";
 
 const RADIUS_METERS = 2_000;
-const CACHE_TTL_DAYS = 7;
 const CACHE_VERSION = 2;
 const SUCCESS_CACHE_MS = 12 * 60 * 60 * 1_000;
 const FAILURE_CACHE_MS = 60 * 1_000;
@@ -38,6 +37,8 @@ type AmenityCategory = {
 };
 
 type CachedNeighborhoodRow = {
+  listing_id: string;
+  fetched_at: Date;
   insights_json: {
     cacheVersion?: number;
     amenities: NearbyAmenitySummary[];
@@ -182,7 +183,14 @@ async function getCachedOrFreshAmenities(
   force: boolean,
 ) {
   const cached = await readCache(listingId, latitude, longitude);
-  if (!force && cached) return cached;
+  if (!force && cached) {
+    if (cached.listing_id !== listingId)
+      await saveCache(listingId, latitude, longitude, cached.insights_json, cached.fetched_at);
+    return {
+      amenities: cached.insights_json.amenities,
+      amenityAnalysis: cached.insights_json.amenityAnalysis,
+    };
+  }
 
   const locationKey = `${latitude.toFixed(6)}:${longitude.toFixed(6)}`;
   let request = amenitiesInFlight.get(locationKey);
@@ -201,19 +209,18 @@ async function getCachedOrFreshAmenities(
     !surroundings.amenityAnalysis.partial
   ) {
     await saveCache(listingId, latitude, longitude, surroundings);
-  } else if (surroundings.amenityAnalysis.status === "unavailable") {
+  } else if (cached) {
     // A public Overpass instance can have a short outage. In that case an older,
     // successful analysis is still more useful than replacing it with an error.
-    const stale = cached ?? (await readCache(listingId, latitude, longitude, true));
-    if (stale)
-      return {
-        ...stale,
-        amenityAnalysis: {
-          ...stale.amenityAnalysis,
-          stale: true,
-          message: "Serwery mapowe nie odpowiedziały. Pokazujemy ostatnią zapisaną analizę.",
-        },
-      };
+    const stale = cached.insights_json;
+    return {
+      ...stale,
+      amenityAnalysis: {
+        ...stale.amenityAnalysis,
+        stale: true,
+        message: "Nie udało się odświeżyć pełnej analizy. Pokazujemy ostatni zapisany wynik.",
+      },
+    };
   }
   return surroundings;
 }
@@ -537,28 +544,21 @@ function distanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) 
   return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-async function readCache(
-  listingId: string,
-  latitude: number,
-  longitude: number,
-  allowExpired = false,
-) {
+async function readCache(listingId: string, latitude: number, longitude: number) {
   return withDb(async (db) => {
     const result = await db.query<CachedNeighborhoodRow>(
       `
-      select insights_json
+      select listing_id, fetched_at, insights_json
       from listing_neighborhood_context
-      where abs(latitude - $2) < 0.000001
-        and abs(longitude - $3) < 0.000001
-        and ($4::boolean or fetched_at >= now() - make_interval(days => $5))
+      where latitude = round($2::numeric, 6)
+        and longitude = round($3::numeric, 6)
+        and insights_json->>'cacheVersion' = $4
       order by (listing_id = $1) desc, fetched_at desc
       limit 1
     `,
-      [listingId, latitude, longitude, allowExpired, CACHE_TTL_DAYS],
+      [listingId, latitude, longitude, String(CACHE_VERSION)],
     );
-    const cached = result.rows[0]?.insights_json;
-    if (!cached || cached.cacheVersion !== CACHE_VERSION) return null;
-    return { amenities: cached.amenities, amenityAnalysis: cached.amenityAnalysis };
+    return result.rows[0] ?? null;
   });
 }
 
@@ -567,23 +567,25 @@ async function saveCache(
   latitude: number,
   longitude: number,
   surroundings: { amenities: NearbyAmenitySummary[]; amenityAnalysis: AmenityAnalysis },
+  fetchedAt = new Date(),
 ) {
   await withDb((db) =>
     db.query(
       `
     insert into listing_neighborhood_context (listing_id, latitude, longitude, insights_json, fetched_at)
-    values ($1,$2,$3,$4,now())
+    values ($1,$2,$3,$4,$5)
     on conflict (listing_id) do update set
       latitude = excluded.latitude,
       longitude = excluded.longitude,
       insights_json = excluded.insights_json,
-      fetched_at = now()
+      fetched_at = excluded.fetched_at
   `,
       [
         listingId,
         latitude,
         longitude,
         JSON.stringify({ cacheVersion: CACHE_VERSION, ...surroundings }),
+        fetchedAt,
       ],
     ),
   );
@@ -623,5 +625,5 @@ function buildInsightsCacheKey(
         `${workplace.key}:${workplace.latitude ?? "x"}:${workplace.longitude ?? "x"}:${workplace.workMode ?? "onsite"}`,
     )
     .join("|");
-  return `${listingId}:${latitude.toFixed(5)}:${longitude.toFixed(5)}:${workplacesKey}`;
+  return `${listingId}:${latitude.toFixed(6)}:${longitude.toFixed(6)}:${workplacesKey}`;
 }

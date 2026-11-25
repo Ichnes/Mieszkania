@@ -1,5 +1,15 @@
 # Bieżące zadania
 
+## Filtry, RCN, okolica i audyt do 3900 ogłoszeń (2026-11-25)
+
+- [x] Cztery kolejne rozłączne próby obejmowały 500, 500, 300 i 600 ogłoszeń. Razem z wcześniejszymi zapisami potwierdzono 3900 unikalnych identyfikatorów. W ostatniej próbie wszystkie rekordy były archiwalne, osiem bez opisu. Sprawdzono pola, adresy, pinezki, koszty, 272 grupy duplikatów (1202 pary) i 85 powiązań lub propozycji ponownego wystawienia. Prywatne wyniki znajdują się w katalogach partii w `.local/runs/2026-11-25-audyt/`.
+- [x] Skorygowano m.in. ceny całych nieruchomości uznawane za dopłaty, oddzielne kwoty parkingu i komórki, ceny pakietów oraz wskazanie metrażu balkonu zamiast mieszkania przez importer. Szczegóły sygnalizują sprzeczny metraż mieszkania, piętro, liczbę pokoi i dokładną pinezkę w innej dzielnicy.
+- [x] Usunięto zakładkę Ustalenia. Pełny wynik analizy okolicy pozostaje zapisany przy ofercie do zmiany współrzędnych, wersji analizy lub odświeżenia przez użytkownika. Weryfikacja PostgreSQL objęła odczyt starego wyniku, kopiowanie dla drugiej oferty i przeliczenie dla zmienionej lokalizacji.
+- [x] Zmieniono import warszawski na datowany zbiór miejski ZIP/GML, dodano obsługę usterek i odrębne daty aktu oraz zapisu. Import lokalny dodał 12 082 transakcje (łącznie 28 646), ponowienie dodało zero. Najnowszy zakwalifikowany akt pochodzi z 14 sierpnia 2026. Zbiór pozostaje dostępny przez Import.
+- [x] Ułożono parami zakresy ceny, metrażu, roku budowy i pokoi. W filtrach ceny i ceny jednostkowej wprowadzono grupowanie tysięcy oraz obsługę wklejania.
+- [x] Chromium potwierdził ułożenie czterech zakresów, grupowanie, edycję przy separatorze, wklejanie, grosze i wartości wysyłane do API przy szerokości 390, 1280 i 1680 px. Testy projektu: 382 API i 161 web zakończonych powodzeniem, 16 pominiętych. Zweryfikowano dziesięć poprawionych wyliczeń dopłat przez lokalne API. Poprawiono zapis potwierdzonego mieszkania z 10 na 61,2 m² i sprawdzono nową cenę jednostkową w API.
+- [ ] Wśród dawnych rekordów RCN jedna para bez kompletu identyfikatorów wygląda na powtórzenie. Do ręcznego rozstrzygnięcia pozostają historyczne grupy i ponowne wystawienia z rozbieżnościami. Raport wskazuje różniące się pola dla każdej pary.
+
 ## Przegląd kolejnych 400 i 500 ofert (2026-11-25)
 
 - [x] Wylosowano dwie rozłączne próby, z wyłączeniem poprzednich 1100 rekordów. Łącznie 2000 unikalnych ofert. Porównano opis, koszty, cechy, adresy, pinezki, ceny jednostkowe i powiązania. Jedna oferta z próby 400 nie miała opisu. W próbach było odpowiednio 218 i 280 grup duplikatów oraz 110 i 148 powiązań lub propozycji ponownego wystawienia.

@@ -314,13 +314,17 @@ export function useImportController({
   async function runRcnImport() {
     setIsImportingRcn(true);
     setRcnError(null);
+    setRcnResult(null);
     try {
       const response = await apiFetch(`${apiBaseUrl}/api/collectors/rcn/import`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scope: "warsaw-metropolitan" }),
       });
-      if (!response.ok) throw new Error(`RCN import failed with status ${response.status}`);
+      if (!response.ok) {
+        const detail = await response.json().catch(() => null);
+        throw new Error(detail?.message ?? `Import RCN nie powiódł się (HTTP ${response.status}).`);
+      }
       setRcnResult((await response.json()) as RcnImportResponse);
       await Promise.all([refreshDashboard(), applyFilters()]);
     } catch (error) {

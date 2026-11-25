@@ -8,6 +8,7 @@ test("cuts district clauses from the reported street candidates and stored addre
     ["Postępu 12A na Mokotowie znajduje się apartament", "Postępu 12A"],
     ["Długa w Śródmieściu znajduje się blisko metra", "Długa"],
     ["Grójecka na Ochocie", "Grójecka"],
+    ["Sikorskiego oraz ul", "Sikorskiego"],
     ["Na Uboczu na Ursynowie", "Na Uboczu"],
   ]) {
     assert.equal(sanitizeStreetCandidate(candidate), street);

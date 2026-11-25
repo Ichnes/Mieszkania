@@ -7,7 +7,7 @@ export function transactionBadges(title: string, description?: string | null) {
   if (
     clauses.some(
       (clause) =>
-        /(?:grunt(?:y|u)?(?: pod budynkiem)? (?:jest |są )?nieuregulowan|nieuregulowan\p{L}* (?:stan (?:prawny )?)?grunt)/u.test(
+        /(?:grunt(?:y|u)?(?: pod budynkiem)? (?:jest |są |ma(?:ją)? status )?nieuregulowan|nieuregulowan\p{L}* (?:stan (?:prawny )?)?grunt)/u.test(
           clause,
         ) && !/(?:nie dotyczy|brak problemu z) nieuregulowan/u.test(clause),
     )

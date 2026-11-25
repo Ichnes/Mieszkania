@@ -2,6 +2,17 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { extractNieruchomosciOnlineConstructionYear, parseListing } from "./index";
 
+test("Domiporta separates the apartment area from a balcony size in the headline", () => {
+  const url = "https://www.domiporta.pl/nieruchomosci/123";
+  const headline = "Mieszkanie z balkonem 10 m²";
+  const description = "Mieszkanie o powierzchni 61,2m2 składa się z trzech pokoi.";
+  const feature =
+    '<p class="features-short__name">Powierzchnia</p><p class="features-short__value">61,25 m2</p>';
+  assert.equal(parseListing(url, feature, "123", headline, description).areaSqm, 61.25);
+  assert.equal(parseListing(url, "", "123", headline, description).areaSqm, 61.2);
+  assert.equal(parseListing(url, "", "123", headline, "Trzy pokoje.").areaSqm, undefined);
+});
+
 test("Domiporta floor fractions are not concatenated into floor 713", () => {
   for (const [value, expected] of [
     ["7/13", 7],

@@ -99,8 +99,8 @@ export function ImportPage({
               <h3>Ceny transakcyjne RCN</h3>
               <RcnDataStatus importing={isImportingRcn} />
               <p className="muted">
-                To jest nadal warstwa robocza. Import próbuje pobrać publiczne dane WFS dla Warszawy
-                i okolic. Jeśli źródło powiatu nic nie zwraca, zobaczysz mało albo zero rekordów.
+                Import pobiera najnowszy datowany zbiór Urzędu m.st. Warszawy i dodaje brakujące
+                transakcje mieszkań.
               </p>
               <button
                 className="action-button"
@@ -111,8 +111,12 @@ export function ImportPage({
               </button>
               {rcnError ? <p className="error-text">{rcnError}</p> : null}
               {rcnResult ? (
-                <div className="result-box">
-                  <strong>Transakcje: {rcnResult.importedTransactions}</strong>
+                <div className="result-box" role="status">
+                  <strong>
+                    {rcnResult.importedTransactions
+                      ? `Dodano transakcje: ${rcnResult.importedTransactions.toLocaleString("pl-PL")}.`
+                      : "Sprawdzono zbiór. Wszystkie pasujące transakcje są już w bazie."}
+                  </strong>
                 </div>
               ) : null}
             </article>

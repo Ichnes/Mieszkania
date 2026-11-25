@@ -4,6 +4,9 @@ import { cleanPortalDescription } from "./listing-text";
 import { transactionBadges } from "./transaction-badges";
 
 test("transaction badges describe the apartment rather than an optional assignment", () => {
+  assert.deepEqual(transactionBadges("", "Grunty pod budynkiem mają status nieuregulowany."), [
+    "Nieuregulowany grunt",
+  ]);
   assert.deepEqual(
     transactionBadges(
       "",

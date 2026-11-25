@@ -38,7 +38,7 @@ export function getDescriptionMentionStatus(
   if (/\bmozliwosc\s+(?:przywolania|korzystania\s+z|wjazdu|zjazdu)\s*$/.test(optionContext))
     return "present";
   if (
-    /\b(?:mozliwosc|mozliwy|mozliwa|planowan\w*|przygotowan\w*|instalacj\w*\s+pod|imituj\w*|imitacj\w*)\b[^.!?;]{0,75}$/.test(
+    /\b(?:mozliwosc|mozliwy|mozliwa|perspektyw\w*\s+(?:budowy|montazu)|planowan\w*|przygotowan\w*|instalacj\w*\s+pod|imituj\w*|imitacj\w*)\b[^.!?;]{0,75}$/.test(
       optionContext,
     ) ||
     /^\s*(?:(?:jest|sa|wylacznie|tylko)\s+)*(?:planowan\w*|do\s+(?:montazu|wykonania|wynajecia)|na\s+wynajem)\b/.test(

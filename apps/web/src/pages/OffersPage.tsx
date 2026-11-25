@@ -1,3 +1,4 @@
+import { FilterPriceInput } from "../features/listings/components/FilterPriceInput";
 import { DistrictFilter } from "../features/listings/components/DistrictFilter";
 import { Select } from "../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";
@@ -231,148 +232,136 @@ export function OffersPage({
                       setFilters((current) => ({ ...current, district: undefined, districts }))
                     }
                   />
-                  <label className="filter-field">
-                    <span>Cena od</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.minPrice)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          minPrice: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Cena do</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.maxPrice)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          maxPrice: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
+                  <div className="offer-filter-range">
+                    <label className="filter-field">
+                      <span>Cena od</span>
+                      <FilterPriceInput
+                        value={filters.minPrice}
+                        onChange={(amount) =>
+                          setFilters((current) => ({ ...current, minPrice: amount }))
+                        }
+                      />
+                    </label>
+                    <label className="filter-field">
+                      <span>Cena do</span>
+                      <FilterPriceInput
+                        value={filters.maxPrice}
+                        onChange={(amount) =>
+                          setFilters((current) => ({ ...current, maxPrice: amount }))
+                        }
+                      />
+                    </label>
+                  </div>
                   <label className="filter-field">
                     <span>Cena za m² od (zł)</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.minPricePerSqm)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          minPricePerSqm: toOptionalNumber(event.target.value),
-                        }))
+                    <FilterPriceInput
+                      value={filters.minPricePerSqm}
+                      onChange={(amount) =>
+                        setFilters((current) => ({ ...current, minPricePerSqm: amount }))
                       }
                     />
                   </label>
                   <label className="filter-field">
                     <span>Cena za m² do (zł)</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.maxPricePerSqm)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          maxPricePerSqm: toOptionalNumber(event.target.value),
-                        }))
+                    <FilterPriceInput
+                      value={filters.maxPricePerSqm}
+                      onChange={(amount) =>
+                        setFilters((current) => ({ ...current, maxPricePerSqm: amount }))
                       }
                     />
                   </label>
-                  <label className="filter-field">
-                    <span>Metraż od</span>
-                    <input
-                      className="text-input"
-                      inputMode="decimal"
-                      value={stringValue(filters.minArea)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          minArea: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Metraż do</span>
-                    <input
-                      className="text-input"
-                      inputMode="decimal"
-                      value={stringValue(filters.maxArea)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          maxArea: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Rok budowy od</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.minYearBuilt)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          minYearBuilt: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                      placeholder="np. 2000"
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Rok budowy do</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.maxYearBuilt)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          maxYearBuilt: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                      placeholder="np. 2020"
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Pokoje od</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.roomsMin)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          roomsMin: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Pokoje do</span>
-                    <input
-                      className="text-input"
-                      inputMode="numeric"
-                      value={stringValue(filters.roomsMax)}
-                      onChange={(event) =>
-                        setFilters((current) => ({
-                          ...current,
-                          roomsMax: toOptionalNumber(event.target.value),
-                        }))
-                      }
-                    />
-                  </label>
+                  <div className="offer-filter-range">
+                    <label className="filter-field">
+                      <span>Metraż od</span>
+                      <input
+                        className="text-input"
+                        inputMode="decimal"
+                        value={stringValue(filters.minArea)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            minArea: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="filter-field">
+                      <span>Metraż do</span>
+                      <input
+                        className="text-input"
+                        inputMode="decimal"
+                        value={stringValue(filters.maxArea)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            maxArea: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
+                  <div className="offer-filter-range">
+                    <label className="filter-field">
+                      <span>Rok budowy od</span>
+                      <input
+                        className="text-input"
+                        inputMode="numeric"
+                        value={stringValue(filters.minYearBuilt)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            minYearBuilt: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                        placeholder="np. 2000"
+                      />
+                    </label>
+                    <label className="filter-field">
+                      <span>Rok budowy do</span>
+                      <input
+                        className="text-input"
+                        inputMode="numeric"
+                        value={stringValue(filters.maxYearBuilt)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            maxYearBuilt: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                        placeholder="np. 2020"
+                      />
+                    </label>
+                  </div>
+                  <div className="offer-filter-range">
+                    <label className="filter-field">
+                      <span>Pokoje od</span>
+                      <input
+                        className="text-input"
+                        inputMode="numeric"
+                        value={stringValue(filters.roomsMin)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            roomsMin: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                    <label className="filter-field">
+                      <span>Pokoje do</span>
+                      <input
+                        className="text-input"
+                        inputMode="numeric"
+                        value={stringValue(filters.roomsMax)}
+                        onChange={(event) =>
+                          setFilters((current) => ({
+                            ...current,
+                            roomsMax: toOptionalNumber(event.target.value),
+                          }))
+                        }
+                      />
+                    </label>
+                  </div>
                   <label className="filter-field">
                     <span>Szukaj w ofercie</span>
                     <input

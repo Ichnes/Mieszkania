@@ -1,8 +1,10 @@
 import type { RcnImportRunResult, RcnPowiatConfig } from "./types";
 import { warsawAreaRcnPowiatConfigs } from "./warsaw-region-config";
 import { importRcnTransactions } from "./wfs-importer";
+import { importCityFlats } from "./warsaw-city-import";
 
 export class RcnCollector {
+  private cityImport?: ReturnType<typeof importCityFlats>;
   async planWarsawAreaImport(): Promise<RcnImportRunResult> {
     return {
       scope: "warsaw-metropolitan",
@@ -34,6 +36,12 @@ export class RcnCollector {
   }
 
   async importScope(scope?: string) {
+    if (!scope || scope === "warsaw-metropolitan" || scope === "m-st-warszawa") {
+      this.cityImport ??= importCityFlats().finally(() => {
+        this.cityImport = undefined;
+      });
+      return this.cityImport;
+    }
     return importRcnTransactions(scope);
   }
 }
