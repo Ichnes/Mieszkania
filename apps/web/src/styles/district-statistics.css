@@ -176,9 +176,6 @@
 
 .stats-panel .district-stats-row {
   cursor: pointer;
-  transition:
-    background 0.18s ease,
-    box-shadow 0.18s ease;
 }
 
 .stats-panel .district-stats-row:hover {
@@ -230,7 +227,6 @@
 
 .district-expand-icon {
   color: var(--ink-soft);
-  transition: transform 0.18s ease;
 }
 
 .district-stats-row.is-selected .district-expand-icon {
@@ -325,23 +321,7 @@
 
 .neighborhood-expansion {
   padding: 20px;
-  border-top: 1px solid color-mix(in srgb, #e6a13e 35%, var(--line));
-  border-bottom: 1px solid color-mix(in srgb, #e6a13e 24%, var(--line));
-  background:
-    radial-gradient(circle at 90% 0, color-mix(in srgb, #e6a13e 12%, transparent), transparent 32%),
-    color-mix(in srgb, var(--surface-muted) 74%, var(--surface));
-  animation: neighborhood-open 0.2s ease-out;
-}
-
-@keyframes neighborhood-open {
-  from {
-    opacity: 0;
-    transform: translateY(-5px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  background: var(--surface-muted);
 }
 
 .neighborhood-expansion-heading {
@@ -374,13 +354,11 @@
   padding: 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  box-shadow: 0 6px 18px rgba(24, 65, 54, 0.045);
+  background: var(--surface);
 }
 .neighborhood-stat-card.is-map-selected {
-  outline: 3px solid var(--accent, #1c7566);
-  outline-offset: -3px;
-  box-shadow: inset 0 0 0 1px var(--surface, #fff);
+  border-color: var(--brand);
+  background: var(--brand-soft);
 }
 
 .neighborhood-card-top {
@@ -1115,7 +1093,8 @@
 .msi-area {
   fill: var(--msi-color);
   stroke: var(--surface);
-  stroke-width: 1.5;
+  stroke-width: 1;
+  stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   cursor: pointer;
 }
@@ -1141,14 +1120,14 @@
 .msi-area:focus-visible,
 .msi-area.is-selected {
   stroke: var(--ink);
-  stroke-width: 3;
-  filter: brightness(1.15);
+  stroke-width: 2;
   outline: none;
 }
 .msi-area-number {
   fill: #13251f;
   stroke: #fff;
   stroke-width: 2px;
+  vector-effect: non-scaling-stroke;
   paint-order: stroke;
   font-weight: 800;
   pointer-events: none;
@@ -1308,6 +1287,10 @@
   height: 9px;
   border-radius: 50%;
   margin-right: 6px;
+}
+.weekly-balance-total {
+  border-top: 1px solid #667785;
+  padding-top: 6px;
 }
 .market-chart-tooltip strong,
 .market-chart-tooltip span,

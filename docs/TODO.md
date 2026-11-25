@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Dymek bilansu i rozwijanie dzielnic (2026-11-25)
+
+- [x] Bilans tygodniowy pokazuje datę, wykryte i zarchiwizowane ogłoszenia oraz wynik ze znakiem. Sprawdzono zakres archiwum w zapytaniach statystyk.
+- [x] Usunięto animację rozwijania dzielnicy, uproszczono ramki kart i obrysy obszarów MSI.
+- [x] Przeszło 161 testów web. Po przebudowie Chromium sprawdził dymek, rozwinięcie tabeli i wybór obszaru MSI na ekranach 390, 1280 i 1680 px.
+
 ## Czynsz w połączonych ogłoszeniach (2026-11-25)
 
 - [x] Sprawdzono 2235 ofert bez jednoznacznej kwoty w segmencie za 180 dni. W próbie było 880 aktywnych i 1355 archiwalnych. Dodatkowe sformułowania i pola własnej oferty dały 26 kwot, zapisane duplikaty z innych portali kolejne 175 (w tym 86 ze źródła archiwalnego).

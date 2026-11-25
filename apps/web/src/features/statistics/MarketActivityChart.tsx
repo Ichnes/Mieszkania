@@ -182,7 +182,34 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
                 <XAxis dataKey="week" tickFormatter={shortDate} minTickGap={24} />
                 <YAxis width={38} allowDecimals={false} />
                 <ReferenceLine y={0} stroke="currentColor" />
-                <Tooltip labelFormatter={(v) => shortDate(String(v))} />
+                <Tooltip
+                  cursor={{ fill: "currentColor", fillOpacity: 0.08 }}
+                  content={({ active, label }) => {
+                    const row = active && balance.find((point) => point.week === label);
+                    if (!row) return null;
+                    return (
+                      <div className="market-chart-tooltip">
+                        <strong>
+                          Tydzień od {new Date(row.week + "T12:00:00").toLocaleDateString("pl-PL")}
+                        </strong>
+                        <div>
+                          <span>Wykryte</span>
+                          <b>{row.newListings.toLocaleString("pl-PL")}</b>
+                        </div>
+                        <div>
+                          <span>Zarchiwizowane</span>
+                          <b>{row.archivedListings.toLocaleString("pl-PL")}</b>
+                        </div>
+                        <div className="weekly-balance-total">
+                          <strong>Bilans</strong>
+                          <b>
+                            {row.balance.toLocaleString("pl-PL", { signDisplay: "exceptZero" })}
+                          </b>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
                 <Bar dataKey="balance" name="Bilans ofert" fill="#287b68" />
               </BarChart>
             </ResponsiveContainer>
