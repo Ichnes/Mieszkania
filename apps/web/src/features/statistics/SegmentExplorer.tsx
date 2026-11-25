@@ -91,7 +91,15 @@ export function SegmentExplorer({ stats }: { stats: MarketStatsResponse }) {
                   <b style={{ left: position(item.medianPricePerSqm) + "%" }} />
                 </div>
               )}
-            <small>{item.pricedListings.toLocaleString("pl-PL")} ofert z ceną i metrażem</small>
+            {item.sufficientSample && valid.length > 0 && (
+              <div className="quartile-axis">
+                <span>{formatPrice(low)}</span>
+                <span>{formatPrice(high)}</span>
+              </div>
+            )}
+            <small className="priced-sample">
+              {item.pricedListings.toLocaleString("pl-PL")} ofert z ceną i metrażem
+            </small>
             <dl className="stats-segment-sample">
               {item.sufficientSample && item.medianPricePerSqm != null ? (
                 <>

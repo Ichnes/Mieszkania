@@ -682,7 +682,7 @@
 .sync-center .scan-range-fields .field-label > span,
 .scan-city-field > label {
   color: var(--ink-soft);
-  font-size: .78rem;
+  font-size: 0.78rem;
   font-weight: 650;
   letter-spacing: normal;
   text-transform: none;
@@ -697,7 +697,7 @@
 }
 .sync-center .scan-city-control .text-input {
   flex: 1;
-  padding-inline: .5rem .15rem;
+  padding-inline: 0.5rem 0.15rem;
   border-color: transparent;
   background: transparent;
   text-overflow: ellipsis;
@@ -724,6 +724,21 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   .scan-range-fields > .scan-city-field {
+    grid-column: 1/-1;
+  }
+}
+
+.sync-step-fields.scan-range-fields {
+  max-width: 31rem;
+  width: 100%;
+}
+.scan-range-fields .scan-caption {
+  grid-column: 2/-1;
+  margin: 0;
+  text-align: left;
+}
+@media (max-width: 760px) {
+  .scan-range-fields .scan-caption {
     grid-column: 1/-1;
   }
 }

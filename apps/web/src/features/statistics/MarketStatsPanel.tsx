@@ -1,5 +1,5 @@
 import type { MarketStatsResponse } from "@mieszkania/shared";
-import { LoaderCircle } from "lucide-react";
+import { MapPin, Grid2X2, TrendingUp, LoaderCircle } from "lucide-react";
 import { lazy, Suspense } from "react";
 import { DistrictExplorer } from "./DistrictExplorer";
 import { type MarketStatsFilters } from "./types";
@@ -66,9 +66,17 @@ export function MarketStatsPanel({
   return (
     <section className="stats-panel">
       <nav className="stats-jumps" aria-label="Przejdź do analizy">
-        <a href="#lokalizacje">Lokalizacje</a>
-        {stats.buyerMarket && <a href="#segmenty">Segmenty</a>}
-        <a href="#trendy">Trendy</a>
+        <a href="#lokalizacje">
+          <MapPin size={16} aria-hidden="true" /> Lokalizacje
+        </a>
+        {stats.buyerMarket && (
+          <a href="#segmenty">
+            <Grid2X2 size={16} aria-hidden="true" /> Segmenty
+          </a>
+        )}
+        <a href="#trendy">
+          <TrendingUp size={16} aria-hidden="true" /> Trendy
+        </a>
       </nav>
       <div className="section-topline">
         <div>

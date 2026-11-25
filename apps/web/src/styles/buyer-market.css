@@ -817,3 +817,40 @@
     display: block;
   }
 }
+
+.stats-jumps {
+  gap: 0.3rem;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-muted);
+}
+.stats-jumps a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 38px;
+  padding: 0 0.65rem;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+.stats-jumps a svg {
+  color: var(--brand);
+}
+.stats-jumps a:is(:hover, :focus-visible) {
+  background: var(--surface);
+  color: var(--brand);
+}
+.quartile-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--ink-soft);
+  font-size: 0.75rem;
+}
+.stats-segment-list .priced-sample {
+  font-size: 0.9rem;
+}

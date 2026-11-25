@@ -310,15 +310,15 @@ export function UpdatesPage({
                       placeholder="50"
                     />
                   </label>
+                  <p className="field-hint scan-caption" role="status">
+                    {range
+                      ? range.maxPages > 250
+                        ? `Otodom: strony ${range.startPage}–${range.endPage}. Pozostałe portale: ${range.startPage}–${range.startPage + 249}.`
+                        : `Zakres skanu: strony ${range.startPage}–${range.endPage}.`
+                      : "Podaj stronę od 1 do 100 000 i liczbę stron od 1 do 5000."}
+                  </p>
                 </div>
               </div>
-              <p className="field-hint" role="status">
-                {range
-                  ? range.maxPages > 250
-                    ? `Otodom: strony ${range.startPage}–${range.endPage}. Pozostałe portale: ${range.startPage}–${range.startPage + 249}.`
-                    : `Zakres skanu: strony ${range.startPage}–${range.endPage}.`
-                  : "Podaj stronę od 1 do 100 000 i liczbę stron od 1 do 5000."}
-              </p>
               <DiscoveryProgress discovering={isDiscoveringAllPortals} />
               <div className="sync-step-footer">
                 <button
