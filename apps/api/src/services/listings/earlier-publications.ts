@@ -7,6 +7,9 @@ export async function getEarlierPublications(db: Pick<Pool, "query">, listingId:
     id: string;
     source: string;
     known_since: Date;
+    first_recorded_at: Date;
+    first_recorded_price: string | null;
+    removed_at: Date | null;
     date_origin: "portal" | "first_seen";
   }>(
     `
@@ -27,12 +30,24 @@ export async function getEarlierPublications(db: Pick<Pool, "query">, listingId:
         and coalesce(next_listing.exclusion_reason, '') <> 'manual_rejected'
     )
     select old.id, s.name as source,
+      coalesce(first_record.changed_at, old.first_seen_at) as first_recorded_at,
+      first_record.new_price_amount as first_recorded_price,
+      coalesce(old.removed_at, (
+        select case when pe.event_type = 'removed' then pe.changed_at end
+        from price_events pe where pe.listing_id = old.id and pe.event_type in ('removed', 'relisted')
+        order by pe.changed_at desc, pe.id desc limit 1
+      )) as removed_at,
       least(old.published_at, old.first_seen_at) as known_since,
       case when old.published_at <= old.first_seen_at then 'portal' else 'first_seen' end as date_origin
     from history h
     join listings old on old.id = h.id
     join sources s on s.id = old.source_id
     join listings focus on focus.id = $1
+    left join lateral (
+      select changed_at, new_price_amount from price_events
+      where listing_id = old.id and event_type = 'created'
+      order by changed_at, id limit 1
+    ) first_record on true
     where old.id <> focus.id and old.status = 'removed'
       and least(old.published_at, old.first_seen_at) < least(focus.published_at, focus.first_seen_at)
     order by known_since, old.id
@@ -43,6 +58,10 @@ export async function getEarlierPublications(db: Pick<Pool, "query">, listingId:
     id: row.id,
     source: row.source,
     knownSince: row.known_since.toISOString(),
+    firstRecordedAt: row.first_recorded_at.toISOString(),
+    firstRecordedPrice:
+      row.first_recorded_price == null ? undefined : Number(row.first_recorded_price),
+    removedAt: row.removed_at?.toISOString(),
     dateOrigin: row.date_origin,
   })) satisfies NonNullable<ListingDetail["earlierPublications"]>;
 }

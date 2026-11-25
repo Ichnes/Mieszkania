@@ -3,7 +3,7 @@ import type {
   ListingContactStatus,
   ListingDetail,
 } from "@mieszkania/shared";
-import { formatOptionalPln, formatPln, toDatetimeInputValue } from "../../../shared/lib/format";
+import { formatPln, toDatetimeInputValue } from "../../../shared/lib/format";
 
 export function toContactStatus(value: string): ListingContactStatus | undefined {
   const allowed: ListingContactStatus[] = [
@@ -46,39 +46,6 @@ export function toDecisionStage(value: string): ListingDetail["manual"]["decisio
   return allowed.includes(value as NonNullable<ListingDetail["manual"]["decisionStage"]>)
     ? (value as NonNullable<ListingDetail["manual"]["decisionStage"]>)
     : undefined;
-}
-
-export function formatPriceEvent(event: ListingDetail["priceHistory"][number]) {
-  const dateLabel = new Date(event.changedAt).toLocaleString("pl-PL", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  if (event.eventType === "published")
-    return `${dateLabel} · Publikacja tego ogłoszenia${event.sourceLabel ? ` · ${event.sourceLabel}` : ""}`;
-  if (event.eventType === "created")
-    return `${dateLabel} · Pierwszy zapis w aplikacji${event.newPriceAmount ? ` · ${formatPln(event.newPriceAmount)}` : ""}`;
-
-  if (event.eventType === "price_drop") {
-    return `${dateLabel}: obniżka ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}${event.sourceLabel ? ` · portal: ${event.sourceLabel}` : ""}`;
-  }
-
-  if (event.eventType === "price_increase") {
-    return `${dateLabel}: wzrost ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}${event.sourceLabel ? ` · portal: ${event.sourceLabel}` : ""}`;
-  }
-
-  if (event.eventType === "relisted") {
-    return `${dateLabel} · Ponownie odnotowano ofertę${event.newPriceAmount ? ` · ${formatPln(event.newPriceAmount)}` : ""}`;
-  }
-
-  if (event.eventType === "removed") {
-    return `${dateLabel} · Odnotowano zniknięcie oferty z portalu`;
-  }
-
-  return `${dateLabel}: ${event.eventType}${event.newPriceAmount ? `, cena ${formatPln(event.newPriceAmount)}` : ""}`;
 }
 
 export function formatContactEvent(event: ListingDetail["contactHistory"][number]) {

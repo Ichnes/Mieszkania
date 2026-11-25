@@ -444,21 +444,91 @@
   border-radius: 16px;
   background: var(--surface);
 }
-.publication-history-archive {
-  margin-block: 0.6rem;
-  padding-inline-start: 0.8rem;
-  border-inline-start: 3px solid var(--brand-strong);
+.publication-history h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 1rem;
 }
-.publication-history-entry {
+.history-day {
+  margin-block-start: 1rem;
+}
+.history-day h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.84rem;
+  color: var(--ink-soft);
+}
+.history-day ol {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.history-day li {
+  position: relative;
   display: grid;
+  grid-template-columns: 2.9rem minmax(0, 1fr);
+  gap: 0.6rem;
+  padding: 0.4rem 0 0.4rem 0.9rem;
+  margin: 0 0 0 0.18rem;
+  border-inline-start: 1px solid var(--line);
+}
+.history-day li::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: -4px;
+  top: 0.82rem;
+  width: 7px;
+  height: 7px;
+  background: var(--brand);
+  border-radius: 50%;
+}
+.history-day .history-removed::before {
+  background: var(--ink-soft);
+}
+.history-day time {
+  font-size: 0.82rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+}
+.history-event {
+  display: grid;
+  gap: 0.13rem;
   justify-items: start;
-  gap: 0.25rem;
-  margin-block: 0.4rem;
   overflow-wrap: anywhere;
 }
-.publication-history-entry button {
-  color: var(--brand-strong);
+.history-event-title {
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.35;
+}
+.history-event small,
+.history-price span {
+  color: var(--ink-soft);
+}
+.history-price {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+.history-price span {
+  font-weight: 400;
+}
+.history-archive-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0;
+  background: none;
+  border: 0;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: start;
   text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
 }
 .duplicate-candidate-card {
   padding: 14px;

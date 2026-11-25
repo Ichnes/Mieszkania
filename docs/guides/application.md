@@ -31,7 +31,7 @@ Kliknij **Nowe** lub **Zmiany cen**, aby przejść do pierwszej strony ofert z w
 Kliknięcie zastępuje wcześniejsze filtry listy. Nagłówek wyników pokazuje rodzaj i okres wyboru.
 Przycisk **Wyczyść filtry** przywraca pełną listę.
 
-W filtrach ofert dolna i górna granica ceny, metrażu, roku budowy i liczby pokoi są obok siebie.
+W filtrach ofert dolna i górna granica ceny, ceny za m², metrażu, roku budowy i liczby pokoi są obok siebie.
 Pola ceny mieszkania oraz ceny za m² grupują tysiące już podczas pisania, np. **1 250 000**.
 Możesz wkleić kwotę ze spacjami i dopiskiem „zł”. Przycisk **Filtruj** stosuje wpisane granice.
 
@@ -661,7 +661,7 @@ dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobień
 dzielnicy nie wystarcza. Sprzeczne piętra lub numery budynków wykluczają automatyczne
 połączenie; przy mocnej zgodności opisu para może trafić do ręcznej weryfikacji.
 
-W szczegółach **Historia ogłoszenia i ceny** pokazuje osobno datę publikacji podaną przez portal i pierwszy zapis ceny w aplikacji. Jeśli to samo mieszkanie ma starszą archiwalną ofertę w połączonej grupie lub w historii ponownych wystawień, zobaczysz jej najwcześniejszą znaną datę, portal i przycisk **Otwórz archiwalne ogłoszenie**. Przy braku daty publikacji aplikacja podaje datę pierwszej obserwacji. Wstępne propozycje dopasowania są dostępne osobno do sprawdzenia.
+W szczegółach **Historia ogłoszenia i ceny** grupuje zdarzenia według dnia, od najnowszego. Widać osobno publikację na portalu, pierwszy zapis w aplikacji, zmiany ceny i moment odnotowania zdjęcia oferty. Oś obejmuje również najwcześniejsze powiązane ogłoszenie archiwalne. Przycisk **Archiwum** z nazwą portalu otwiera jego szczegóły. Możesz rozwinąć pozostałe wcześniejsze ogłoszenia. Gdy brakuje daty zdjęcia, przy odnośniku do archiwum widać informację o braku daty.
 
 Karty pokazują zdjęcia, obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
 zdjęcia lub tytułu otwiera szczegóły nad bieżącą listą. W szczegółach można przeglądać

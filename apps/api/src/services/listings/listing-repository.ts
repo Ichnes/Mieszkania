@@ -103,6 +103,7 @@ type ListingRow = {
   source_name: string | null;
   published_at: string | null;
   first_seen_at: string | null;
+  removed_at?: string | null;
   title: string;
   description: string | null;
   city: string;
@@ -552,6 +553,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
           l.published_at::text,
           l.first_seen_at::text,
           l.title,
+          case when l.status = 'removed' and coalesce(l.exclusion_reason, '') <> 'manual_rejected' then l.removed_at end::text as removed_at,
           l.description,
           l.city,
           l.district,
@@ -686,6 +688,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     return {
       ...detail,
       earlierPublications,
+      removedAt: row.removed_at ? new Date(row.removed_at).toISOString() : undefined,
       publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
       firstSeenAt: row.first_seen_at ? new Date(row.first_seen_at).toISOString() : undefined,
       descriptionDiscrepancies: discrepancies,

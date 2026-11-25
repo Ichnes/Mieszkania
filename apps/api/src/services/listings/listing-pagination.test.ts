@@ -30,6 +30,7 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
     if (sql.includes("select value from app_settings")) return { rows: [{ value: settings }] };
     if (sql.includes("count(*)::text as total")) return { rows: [{ total: String(rows.length) }] };
     if (sql.includes("l.canonical_url")) return { rows };
+    if (sql.includes("with recursive history(id)")) return { rows: [] };
     if (sql.includes("from price_events")) {
       if (sql.includes("select distinct on (pe.listing_id)"))
         assert.equal((values[0] as string[]).length, rows.length);

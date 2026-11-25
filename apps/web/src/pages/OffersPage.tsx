@@ -252,24 +252,30 @@ export function OffersPage({
                       />
                     </label>
                   </div>
-                  <label className="filter-field">
-                    <span>Cena za m² od (zł)</span>
-                    <FilterPriceInput
-                      value={filters.minPricePerSqm}
-                      onChange={(amount) =>
-                        setFilters((current) => ({ ...current, minPricePerSqm: amount }))
-                      }
-                    />
-                  </label>
-                  <label className="filter-field">
-                    <span>Cena za m² do (zł)</span>
-                    <FilterPriceInput
-                      value={filters.maxPricePerSqm}
-                      onChange={(amount) =>
-                        setFilters((current) => ({ ...current, maxPricePerSqm: amount }))
-                      }
-                    />
-                  </label>
+                  <div
+                    className="offer-filter-range"
+                    role="group"
+                    aria-label="Cena za metr kwadratowy"
+                  >
+                    <label className="filter-field">
+                      <span>Cena za m² od (zł)</span>
+                      <FilterPriceInput
+                        value={filters.minPricePerSqm}
+                        onChange={(amount) =>
+                          setFilters((current) => ({ ...current, minPricePerSqm: amount }))
+                        }
+                      />
+                    </label>
+                    <label className="filter-field">
+                      <span>m² do (zł)</span>
+                      <FilterPriceInput
+                        value={filters.maxPricePerSqm}
+                        onChange={(amount) =>
+                          setFilters((current) => ({ ...current, maxPricePerSqm: amount }))
+                        }
+                      />
+                    </label>
+                  </div>
                   <div className="offer-filter-range">
                     <label className="filter-field">
                       <span>Metraż od</span>

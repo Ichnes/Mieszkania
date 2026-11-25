@@ -461,11 +461,15 @@ export {
 } from "./description-context.js";
 
 export type ListingDetail = ListingSummary & {
+  removedAt?: string;
   earlierPublications?: Array<{
     id: string;
     source: string;
     knownSince: string;
     dateOrigin: "portal" | "first_seen";
+    firstRecordedAt?: string;
+    firstRecordedPrice?: number;
+    removedAt?: string;
   }>;
   descriptionDiscrepancies?: string[];
   aiAssessment?: AiAssessment;

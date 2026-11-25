@@ -2,6 +2,9 @@
 
 ## Historia wcześniejszych wystawień (2026-11-25)
 
+- [x] Ułożono historię bieżącej oferty i archiwum na wspólnej osi według dni. Oś uwzględnia pierwszy zapis ceny i odnotowane zdjęcie archiwalnego ogłoszenia. W filtrach umieszczono obie granice ceny za m² w jednym wierszu.
+- [x] Przy 390, 1280 i 1680 px sprawdzono datę archiwizacji, przejście do archiwum, układ filtrów i obie wartości zapytania. Sprawdzono jasny i ciemny motyw oraz wariant z nieznaną datą zdjęcia. Przeszły testy projektu i osobny test PostgreSQL dla źródeł dat.
+
 - [x] Rozdzielono w szczegółach publikację na portalu i datę pierwszego zapisu w aplikacji. Historia wskazuje najwcześniejszą powiązaną archiwalną ofertę oraz pozwala otworzyć pozostałe. Uwzględniono starszych członków grup duplikatów i zapisane łańcuchy ponownych wystawień.
 - [x] Chromium przy szerokościach 390, 1280 i 1680 px potwierdził publikację archiwalną z 6 maja, daty listopadowej publikacji i zapisu oraz otwarcie historii archiwalnej. Przeszły 382 testy API i 161 web, a osobno również test PostgreSQL dla łańcuchów, cykli i źródeł dat. Historia obejmuje powiązania już zapisane w bazie.
 
