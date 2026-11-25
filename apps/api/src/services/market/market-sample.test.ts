@@ -17,9 +17,9 @@ test("district aliases and neighborhoods produce the same aggregation key", () =
     "Bez dzielnicy",
   );
 });
-test("small samples withhold quartiles and median; ten priced observations suffice", () => {
-  const sample = { priced: "9", median_price: "20000", q1: "18000", q3: "22000" };
+test("small samples withhold quartiles and median; five priced observations suffice", () => {
+  const sample = { priced: "4", median_price: "20000", q1: "18000", q3: "22000" };
   assert.equal(mapPriceSample(sample).medianPricePerSqm, null);
-  assert.equal(mapPriceSample({ ...sample, priced: "10" }).lowerQuartilePricePerSqm, 18000);
-  assert.equal(mapPriceSample({ ...sample, priced: "10" }).sufficientSample, true);
+  assert.equal(mapPriceSample({ ...sample, priced: "5" }).lowerQuartilePricePerSqm, 18000);
+  assert.equal(mapPriceSample({ ...sample, priced: "5" }).sufficientSample, true);
 });

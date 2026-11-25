@@ -29,8 +29,8 @@ test("matches exclude the target and broaden only after testing the local cohort
   assert.equal(result.count, 10);
   assert.equal(Math.round(result.delta!), -20);
   assert.equal(result.percentile, 0);
-  rows[1].district = "Wola";
-  assert.equal(compareListings(rows, 90, rows[0])[0].reference, null);
+  assert.ok(compareListings(rows.slice(0, 6), 90, rows[0])[0].reference);
+  assert.equal(compareListings(rows.slice(0, 5), 90, rows[0])[0].reference, null);
 });
 test("matched index keeps unchanged pairs and never backfills a missing week", () => {
   const rows = Array.from({ length: 10 }, (_, i) => offer(i));
@@ -39,7 +39,7 @@ test("matched index keeps unchanged pairs and never backfills a missing week", (
   assert.equal(chart[0].index, null);
   assert.equal(chart[1].index, 100);
   assert.equal(Math.round(chart[3].index!), 90);
-  rows[0].history = [];
+  rows.slice(0, 6).forEach((r) => (r.history = []));
   assert.equal(buyerTrend(rows, 21, 22)[3].index, null);
 });
 test("withdrawal before a cut competes with first discount; active offers stay under observation", () => {

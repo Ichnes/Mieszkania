@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+## Kalibracja wskaźników i obsługa budżetu (2026-11-25)
+
+- [x] Wstępny indeks odtworzono z zapisanych wersji ogłoszeń. Negocjacje uwzględniają krótki czas obserwacji; porównania działają od pięciu mieszkań. W próbie 2896 aktywnych liczba zer spadła z 472 do 6. Testy API: 385 zaliczonych i 19 pominiętych, web: 169 zaliczonych. Osobno potwierdzono niezmienność zapisów w PostgreSQL oraz działanie interfejsu na 390, 1280 i 1680 px.
+- [x] Przeprowadzono [audyt i przygotowano plan redesignu statystyk](statystyki-audyt-i-plan.md). Zmierzono pełną stronę na 390, 1024 i 1440 px, sprawdzono oba motywy i wybór Mokotów → Augustówka. Kolejny etap obejmuje kontrakt danych i układ pierwszych czterech sekcji.
+
+- [x] Zastąpiono indeks progowy historyczną kalibracją siedmiu składowych. Dodano trwałe dzienne zapisy segmentów, pokrycie wag, wkłady, zmiany 30/90 dni i ranking dzielnic.
+- [x] Monitor pokazuje osiem miar i tabelę przecen według wieku. Kwota i procent łącznej przeceny mają ten sam zbiór odniesienia. W szczegółach mieszkania oceny rynku, negocjacji i pozycji ceny są rozdzielone.
+- [x] Pola budżetu mają własny układ i formatowanie kwot. Wpisywanie nie renderuje ponownie całej analityki. Odtworzono utratę kliknięcia przy brzegu rozwijanej metody i usunięto skalowanie tej kontrolki.
+
 ## Monitor kupującego i porównania na karcie mieszkania (2026-11-25)
 
 - [x] Dodano porównania aktywnych mieszkań, przesłanki negocjacyjne i przejście z rankingu do oferty. W szczegółach mieszkania otwartego z dashboardu zakładka Statystyki obok Przeglądu pokazuje rozkład cen, wielkość próby i zakres dopasowania.

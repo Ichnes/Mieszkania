@@ -1,4 +1,4 @@
-import { FilterPriceInput } from "../features/listings/components/FilterPriceInput";
+import { PriceInput as FilterPriceInput } from "../shared/components/PriceInput";
 import { DistrictFilter } from "../features/listings/components/DistrictFilter";
 import { Select } from "../components/Select";
 import { defaultDownPayment } from "@mieszkania/shared";

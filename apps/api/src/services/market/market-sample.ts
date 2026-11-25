@@ -1,4 +1,4 @@
-export const MIN_MARKET_SAMPLE = 10;
+export const MIN_MARKET_SAMPLE = 5;
 
 export type PriceSampleRow = {
   priced: string;

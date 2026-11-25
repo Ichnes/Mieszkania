@@ -137,8 +137,8 @@ export function OfferPriceChart({
       </div>
       <p>
         {median === null
-          ? `Mała próba · ${prices.length} porównań. Mediana od 10 ofert.`
-          : `Mediana podobnych · ${amount(median)} zł/m²`}
+          ? `Mała próba · ${prices.length} porównań. Mediana od 5 ofert.`
+          : `Mediana podobnych · ${amount(median)} zł/m²${prices.length < 10 ? " · mała próba" : ""}`}
       </p>
     </figure>
   );

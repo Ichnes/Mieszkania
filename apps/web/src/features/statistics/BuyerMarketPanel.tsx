@@ -1,3 +1,5 @@
+import { PressureOverview } from "./PressureOverview";
+import { BuyerBudget } from "./BuyerBudget";
 import { useMemo, useState } from "react";
 import { Select } from "../../components/Select";
 import {
@@ -31,33 +33,6 @@ const date = (day: number) =>
 const areaBands = ["<60", "60–<80", "80–<100", "100+"];
 const band = (area: number) => (area < 60 ? 0 : area < 80 ? 1 : area < 100 ? 2 : 3);
 type Data = NonNullable<MarketStatsResponse["buyerMarket"]>;
-function pressure(rows: BuyerObservation[], day: number) {
-  const active = (d: number) => rows.filter((r) => r.start <= d && (r.end === null || r.end > d));
-  const stock = active(day),
-    previous = active(day - 30);
-  if (stock.length < 10 || previous.length < 10) return null;
-  const drops = stock.flatMap((r) =>
-    buyerPriceCuts(r)
-      .filter(([t]) => t > day - 30 && t <= day)
-      .map(([t, v]) => {
-        const i = r.history.findIndex(([d, p]) => d === t && p === v);
-        return i > 0 ? 100 * (1 - v / r.history[i - 1][1]) : 0;
-      }),
-  );
-  const cutShare =
-    stock.filter((r) => buyerPriceCuts(r).some(([d]) => d > day - 30 && d <= day)).length /
-    stock.length;
-  const clamp = (v: number) => Math.min(1, Math.max(0, v));
-  const age = buyerMedian(stock.map((r) => day - r.start)) ?? 0;
-  const parts = [
-    clamp(cutShare / 0.3) * 30,
-    clamp((buyerMedian(drops) ?? 0) / 10) * 15,
-    clamp(age / 120) * 20,
-    clamp(0.5 + (stock.length / previous.length - 1) / 0.4) * 25,
-    clamp(stock.filter((r) => r.relisted).length / stock.length / 0.1) * 10,
-  ];
-  return Math.round(parts.reduce((a, b) => a + b, 0));
-}
 export default function BuyerMarketPanel({ data, days }: { data: Data; days: number }) {
   const [district, setDistrict] = useState(""),
     [rooms, setRooms] = useState(""),
@@ -105,9 +80,6 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
         ),
     [compared, ranking],
   );
-  const score = useMemo(() => (days >= 30 ? pressure(rows, today) : null), [rows, today, days]);
-  const [budget, setBudget] = useState(""),
-    [extras, setExtras] = useState("");
   const heat = useMemo(() => {
     const groups = new Map<string, BuyerObservation[]>();
     for (const r of base)
@@ -128,27 +100,14 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
               : (100 *
                   g.filter((r) => buyerPriceCuts(r).some(([day]) => day > today - days)).length) /
                 g.length;
-        return { n: g.length, v: g.length >= 10 ? v : null };
+        return { n: g.length, v: g.length >= 5 ? v : null };
       }),
     }));
   }, [base, districts, metric, today, days]);
   const values = heat.flatMap((r) => r.cells.flatMap((c) => (c.v === null ? [] : [c.v])));
   const min = Math.min(...values),
     max = Math.max(...values);
-  const active = rows.filter((r) => r.end === null),
-    archived = rows.filter((r) => r.end !== null);
-  function cutShare(group: BuyerObservation[]) {
-    return group.length
-      ? `${fmt((100 * group.filter((r) => buyerPriceCuts(r).some(([d]) => d > today - days)).length) / group.length)}%`
-      : "—";
-  }
-  const reductions = active.flatMap((r) =>
-    r.history[0]?.[0] === r.start && r.history.at(-1)![1] < r.history[0][1]
-      ? [r.history[0][1] - r.history.at(-1)![1]]
-      : [],
-  );
-  const ages = archived.map((r) => r.end! - r.start).sort((a, b) => a - b);
-  const affordable = active.filter((r) => r.price <= Number(budget) - Number(extras));
+  const active = rows.filter((r) => r.end === null);
   const portals = new Map<string, { any: number; exclusive: number }>();
   for (const r of active)
     for (const name of r.portals ?? []) {
@@ -190,43 +149,24 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
           )}
         </div>
       </div>
-      <div className="buyer-summary">
-        <div>
-          <small>Indeks siły kupującego</small>
-          <b>
-            {score ?? "—"}
-            <em> / 100</em>
-          </b>
-        </div>
-        <div>
-          <small>Oferty z obniżką · aktywne / archiwalne</small>
-          <b>
-            {cutShare(active)} / {cutShare(archived)}
-          </b>
-        </div>
-        <div>
-          <small>Łączna przecena · mediana przecenionych aktywnych</small>
-          <b>{reductions.length ? fmt(buyerMedian(reductions)! / 1000) + " tys. zł" : "—"}</b>
-        </div>
-        <div>
-          <small>Ekspozycja archiwalnych · środkowe 50%</small>
-          <b>
-            {ages.length >= 10
-              ? `${ages[Math.floor((ages.length - 1) * 0.25)]}–${ages[Math.ceil((ages.length - 1) * 0.75)]} dni`
-              : "—"}
-          </b>
-        </div>
-      </div>
-      <details>
-        <summary>Jak liczymy indeks i jaki jest zakres obserwacji?</summary>
-        <p>
-          {active.length} aktywnych, {archived.length} zarchiwizowanych w okresie. Indeks opisuje
-          zachowanie ogłoszeń. Częstość obniżek daje do 30 pkt (30% ofert w 30 dni), skala obniżek
-          do 15 (mediana 10%), wiek aktywnych do 20 (120 dni), zmiana podaży do 25 (od −20% do
-          +20%), potwierdzone powroty do 10 (10% aktywnych). Potrzeba po 10 aktywnych na obu końcach
-          okresu 30 dni. Bilans od początku zbierania obejmuje także pierwsze zapełnienie bazy.
-        </p>
-      </details>
+      <PressureOverview
+        frames={data.pressureFrames ?? []}
+        rows={rows}
+        day={today}
+        days={days}
+        district={district}
+        rooms={rooms}
+        size={size}
+        districts={districts}
+        onDistrict={(d) => {
+          setDistrict(d);
+          setRanking("signals");
+          setLimit(8);
+          document
+            .getElementById("buyer-negotiations")
+            ?.scrollIntoView({ behavior: "instant", block: "center" });
+        }}
+      />
       <div className="buyer-plot-grid">
         <article className="buyer-card">
           <p className="eyebrow">Ceny ofertowe</p>
@@ -279,7 +219,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
           )}
           <small>
             Średnia geometryczna zmian cen tych samych ogłoszeń, w tym bez zmian. Luka kończy serię.
-            Każdy odcinek wymaga 10 par.
+            Każdy odcinek wymaga 5 par.
           </small>
         </article>
         <article className="buyer-card">
@@ -396,7 +336,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
             </table>
           </div>
           <small>
-            Kliknij komórkę, aby zawęzić wykresy i listę mieszkań. Minimum 10 aktywnych ofert na
+            Kliknij komórkę, aby zawęzić wykresy i listę mieszkań. Minimum 5 aktywnych ofert na
             wynik.
           </small>
         </article>
@@ -415,7 +355,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
               <option value="all">Wszystkie w segmencie · od najtańszych</option>
             </Select>
           </label>
-          <div className="buyer-list">
+          <div className="buyer-list" id="buyer-negotiations">
             {ranked.slice(0, limit).map(({ row, delta, count, signals }) => (
               <a key={row.id} href={`/oferty?listing=${row.id}`}>
                 <span>
@@ -450,48 +390,7 @@ export default function BuyerMarketPanel({ data, days }: { data: Data; days: num
         </article>
       </div>
       <div className="buyer-plot-grid">
-        <article className="buyer-card">
-          <p className="eyebrow">Twój rynek</p>
-          <h3>Ile mieszkań mieści się w budżecie?</h3>
-          <div className="buyer-control">
-            <label>
-              Budżet całkowity (zł)
-              <input
-                type="number"
-                min="0"
-                value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-              />
-            </label>
-            <label>
-              Rezerwa na dodatki (zł)
-              <input
-                type="number"
-                min="0"
-                placeholder="0"
-                value={extras}
-                onChange={(e) => setExtras(e.target.value)}
-              />
-            </label>
-          </div>
-          {Number(budget) > 0 && Number(extras) >= 0 ? (
-            <>
-              <div className="buyer-headline">
-                <strong>
-                  {affordable.length} / {active.length}
-                </strong>
-                <span>aktywnych ofert w budżecie</span>
-              </div>
-              <p>
-                {affordable.filter((r) => r.start > today - 7).length} wykryto w ostatnich 7 dniach.{" "}
-                {affordable.length > 0 &&
-                  `Mediana dostępnego metrażu: ${fmt(buyerMedian(affordable.map((r) => r.area))!)} m².`}
-              </p>
-            </>
-          ) : (
-            <p>Podaj budżet zakupu, aby sprawdzić wybrany segment.</p>
-          )}
-        </article>
+        <BuyerBudget active={active} today={today} />
         <article className="buyer-card">
           <p className="eyebrow">Zasięg portali</p>
           <h3>Gdzie występują te mieszkania?</h3>

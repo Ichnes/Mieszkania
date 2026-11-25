@@ -32,8 +32,13 @@ export {
   median as buyerMedian,
 } from "./buyer-analysis";
 export type { OfferComparison, Observation as BuyerObservation } from "./buyer-analysis";
+export * from "./market-pressure";
 export type MarketStatsResponse = {
-  buyerMarket?: { today: number; observations: import("./buyer-market").BuyerObservation[] };
+  buyerMarket?: {
+    today: number;
+    observations: import("./buyer-market").BuyerObservation[];
+    pressureFrames?: import("./market-pressure").PressureFrame[];
+  };
   minimumSampleSize?: number;
   scope?: {
     city: string;

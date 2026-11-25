@@ -3,6 +3,10 @@ import type { Pool } from "pg";
 import { marketLocationJoinSql, normalizeMarketLocation } from "./market-locations";
 import { compareListings } from "@mieszkania/shared";
 import { pool } from "../../db";
+import { pressureHistory, pressureScope } from "./pressure-history";
+import { replayHistory } from "./pressure-replay";
+import { getFamilySettings } from "../settings/family-settings";
+import { calibratedPressure, pressureKey } from "@mieszkania/shared";
 import { inferFinishQuality } from "../listings/listing-repository";
 
 export async function getBuyerMarket(
@@ -63,5 +67,18 @@ export async function getOfferComparison(id: string) {
     id,
   );
   const target = data.observations.find((r) => r.id === id);
-  return target ? compareListings(data.observations, data.today, target)[0] : null;
+  if (!target) return null;
+  const settings = await getFamilySettings();
+  const history = await pressureHistory(pool, pressureScope(settings.searchContract), data.today);
+  const replay = await replayHistory(pool, settings.searchContract, {}, data.today);
+  const pressure = calibratedPressure([...history, ...replay], pressureKey(), data.today);
+  return {
+    ...compareListings(data.observations, data.today, target)[0],
+    marketIndex: {
+      score: pressure.score,
+      coverage: pressure.coverage,
+      months: pressure.months,
+      preliminary: pressure.preliminary,
+    },
+  };
 }

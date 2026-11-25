@@ -89,6 +89,6 @@ test("segment shares cover every listing and quartiles use priced observations w
     assert.equal(groups[0].lowerQuartilePricePerSqm, 12750);
     assert.equal(groups[0].upperQuartilePricePerSqm, 18250);
   }
-  assert.equal(buildPropertySegments(rows.slice(0, 9)).finishing[0].medianPricePerSqm, null);
+  assert.equal(buildPropertySegments(rows.slice(0, 4)).finishing[0].medianPricePerSqm, null);
   assert.deepEqual(buildPropertySegments([]), { finishing: [], monthlyFees: [] });
 });

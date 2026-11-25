@@ -561,7 +561,7 @@ Zamknięcie anuluje żądania przeglądarki i zapobiega ponownemu otwarciu przez
 
 Dzielnice i poddzielnice są normalizowane przed liczeniem statystyk, dzięki czemu np.
 Gocław i Praga-Południe trafiają do jednej dzielnicy. Mediany powstają z pojedynczych ofert.
-Segmenty pokazują medianę i kwartyle cen za m² (środkowe 50%) przy co najmniej 10 ofertach
+Segmenty pokazują medianę i kwartyle cen za m² (środkowe 50%) przy co najmniej 5 ofertach
 z ceną. Mniejsze próby są oznaczone; kwartyle nie są prognozą ani przedziałem ufności.
 Przedziały metrażu uwzględniają dokładną powierzchnię bez zaokrąglania: `40–<60 m²`
 oznacza od 40 m² włącznie do mniej niż 60 m². Zarówno 59,4, jak i 59,9 m² należy
@@ -647,10 +647,33 @@ Brak udokumentowanej ceny w okresie wyklucza ofertę z obliczeń tej ceny.
 W **Monitorze kupującego** wybierz dzielnicę i liczbę pokoi. Kliknięcie komórki mapy
 cieplnej zawęża także metraż. Wykres indeksu porównuje ceny tych samych ogłoszeń,
 a wykres ekspozycji pokazuje aktywność i pierwsze obniżki od dnia wykrycia.
+
+**Buyer Power Index** mierzy eksperymentalną presję na sprzedających względem historii
+monitorowanego segmentu. Aplikacja utrwala pierwszy pomiar każdego dnia UTC. Domyślny
+zakres jest sprawdzany automatycznie podczas pracy API, a dodatkowe zestawy filtrów przy
+otwarciu Statystyk. Zapis obejmuje dzielnice i segmenty metrażu oraz pokoi. Dziury w historii
+pozostają widoczne. Do kalibracji jednej składowej potrzeba co najmniej sześciu
+wcześniejszych zapisów oddalonych o wielokrotność 30 dni. Poziom 50 oznacza historyczny
+środek, a wynik przy pokryciu od 70% do poniżej 100% wykorzystuje przeskalowane wagi.
+Rozwiń **Jak liczymy indeks i jaki jest zakres obserwacji?**, aby zobaczyć wagi, wkłady
+punktowe i porównania sprzed 30 i 90 dni. Wcześniej dostępny jest wynik wstępny względem
+przynajmniej dwóch historycznych okresów odtworzonych z wersji ogłoszeń portali.
+Każdy odczyt wykorzystuje tylko zapisane do tego dnia ceny, statusy, metraże i liczbę pokoi.
+Ogłoszenia między portalami mogą się powtarzać. W rankingu zestawiamy dzielnice z tej
+samej serii o takim samym zestawie dostępnych składowych.
+Mediany łącznej przeceny w złotych i procentach liczymy osobno dla tych samych przecenionych
+aktywnych ofert z historią od pierwszego dnia. Tabela wieku obejmuje też oferty archiwalne.
+
+W zakładce **Statystyki** mieszkania trzy osobne oceny opisują presję całego monitorowanego
+rynku, zachowanie konkretnego ogłoszenia (**Negotiation Score**) i pozycję jego ceny w grupie
+porównawczej (**Value Score**). Cena względem sąsiadów nie jest składnikiem oceny negocjacyjnej.
 Przy sortowaniu według przesłanek negocjacyjnych lista pokazuje konkretne powody.
 W szczegółach mieszkania otwartego z dashboardu wybierz **Statystyki**, obok **Przeglądu**.
 W sekcji **Cena na tle podobnych mieszkań** półkolista skala porządkuje ceny za m² od najtańszych po lewej do najdroższych po prawej. Wskazówka pokazuje pozycję mieszkania. Oferty o identycznej cenie dzielą środkową pozycję swojej grupy. Najedź na fragment łuku, dotknij go lub wybierz klawiaturą, aby odczytać przedział cen. Pod wykresem można rozwinąć grupę porównawczą i otworzyć podobne ogłoszenia.
-Mediana i różnica procentowa wymagają co najmniej 10 innych aktywnych ogłoszeń.
+Mediana i różnica procentowa wymagają co najmniej 5 innych aktywnych ogłoszeń.
+Grupy 5–9 mieszkań są oznaczone jako małe. Przy braku obniżki i obserwacji krótszej niż
+14 dni ocena negocjacyjna podaje „Krótka obserwacja”. Brak porównania wieku przy braku
+obniżek także nie uprawnia do przyznania zera.
 Dashboard uwzględnia także tańsze oferty oraz część ogłoszeń z brakującymi danymi.
 Statystyki stosują pełne warunki ceny, metrażu i liczby pokoi wskazane pod licznikiem.
 

@@ -13,7 +13,17 @@ export function ListingMarketComparison({
   id: string;
   acquisitionPrice?: number;
 }) {
-  const [result, setResult] = useState<OfferComparison | null>();
+  const [result, setResult] = useState<
+    | (OfferComparison & {
+        marketIndex: {
+          score: number | null;
+          coverage: number;
+          months: number;
+          preliminary: boolean;
+        };
+      })
+    | null
+  >();
   const [failed, setFailed] = useState(false);
   const [attempt, retry] = useState(0);
   useEffect(() => {
@@ -130,6 +140,46 @@ export function ListingMarketComparison({
           </>
         )}
       </div>
+      <section className="offer-independent-scores" aria-label="Trzy niezależne oceny">
+        <div>
+          <h4>Buyer Power Index</h4>
+          <strong>
+            {result.marketIndex.score === null
+              ? "W kalibracji"
+              : Math.round(result.marketIndex.score) + " / 100"}
+          </strong>
+          <small>
+            Presja na sprzedających w monitorowanym segmencie Warszawy.{" "}
+            {result.marketIndex.score === null
+              ? `Historia: ${result.marketIndex.months} okresów odniesienia.`
+              : `${result.marketIndex.preliminary ? "Wstępny · zapisy portali. " : ""}Historia: ${result.marketIndex.months} okresów. Pokrycie wag: ${result.marketIndex.coverage}%.`}
+          </small>
+        </div>
+        <div>
+          <h4>Negotiation Score</h4>
+          <strong>
+            {result.negotiationScore === null
+              ? (result.negotiationReason ?? "Za mało danych")
+              : result.negotiationScore + " / 100"}
+          </strong>
+          <small>
+            Sygnały tej oferty. Wiek względem podobnych (30%), liczba obniżek (35%), łączna przecena
+            (30%) i potwierdzone ponowne wystawienie (5%). Pokrycie wag:{" "}
+            {result.negotiationCoverage}%. Bez obniżki zbieramy minimum 14 dni obserwacji i
+            porównujemy wiek z co najmniej 5 ofertami.
+          </small>
+        </div>
+        <div>
+          <h4>Value Score</h4>
+          <strong>
+            {result.valueScore === null ? "Mała próba" : result.valueScore + " / 100"}
+          </strong>
+          <small>
+            Pozycja ceny za m² wśród {result.count} podobnych ofert. Tańsza oferta ma wyższy wynik.
+            Minimum 5 porównań.{result.count >= 5 && result.count < 10 ? " Mała próba." : ""}
+          </small>
+        </div>
+      </section>
       <details className="offer-peers">
         <summary>
           Podobne mieszkania <span>{result.count}</span>

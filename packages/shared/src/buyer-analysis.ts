@@ -1,7 +1,7 @@
 import type { MarketStatsResponse } from "./index";
 
 export type Observation = NonNullable<MarketStatsResponse["buyerMarket"]>["observations"][number];
-export const minSample = 10;
+export const minSample = 5;
 export function median(values: number[]) {
   if (!values.length) return null;
   const sorted = [...values].sort((a, b) => a - b);
@@ -142,11 +142,74 @@ export function compareListings(rows: Observation[], today: number, target?: Obs
       (row.end ?? today) - row.start >= 90 && "Co najmniej 90 dni obserwacji",
       reductions.length >= 2 && "Co najmniej dwie obniżki",
       net !== null && net <= -5 && "Cena spadła łącznie o co najmniej 5%",
-      delta !== null && delta >= 5 && "Co najmniej 5% powyżej podobnych",
       row.relisted && "Potwierdzone ponowne wystawienie",
     ].filter((s): s is string => typeof s === "string");
+    const percentileOf = (v: number, values: number[]) =>
+      values.length < minSample
+        ? null
+        : (values.filter((p) => p < v).length + 0.5 * values.filter((p) => p === v).length) /
+          values.length;
+    const comparableHistory = peers.filter((p) => p.history[0]?.[0] === p.start);
+    const age = (row.end ?? today) - row.start;
+    const observedLongEnough = age >= 14 || reductions.length > 0;
+    const ageRank = percentileOf(
+      age,
+      eligible.map((p) => today - p.start),
+    );
+    const negParts = target
+      ? [
+          {
+            weight: 30,
+            v: observedLongEnough ? ageRank : null,
+          },
+          {
+            weight: 35,
+            v:
+              net === null || !observedLongEnough
+                ? null
+                : reductions.length === 0
+                  ? 0
+                  : percentileOf(
+                      reductions.length,
+                      comparableHistory.map((p) => cuts(p).length),
+                    ),
+          },
+          {
+            weight: 30,
+            v:
+              net === null || !observedLongEnough
+                ? null
+                : net >= 0
+                  ? 0
+                  : percentileOf(
+                      -net,
+                      comparableHistory.map(
+                        (p) => 100 * (1 - p.history.at(-1)![1] / p.history[0][1]),
+                      ),
+                    ),
+          },
+          { weight: 5, v: row.relisted ? 1 : 0 },
+        ]
+      : [];
+    const negotiationCoverage = negParts.reduce((n, p) => n + (p.v === null ? 0 : p.weight), 0);
     return {
       row,
+      negotiationCoverage,
+      negotiationReason: !observedLongEnough
+        ? "Krótka obserwacja"
+        : ageRank === null && !reductions.length
+          ? "Za mało porównań wieku"
+          : null,
+      negotiationScore:
+        negotiationCoverage >= 65 && (ageRank !== null || reductions.length > 0)
+          ? Math.round(
+              (negParts.reduce((n, p) => n + (p.v ?? 0) * p.weight, 0) * 100) / negotiationCoverage,
+            )
+          : null,
+      valueScore:
+        reference === null
+          ? null
+          : Math.round(100 * (1 - percentileOf(row.price / row.area, prices)!)),
       delta,
       reference,
       count: peers.length,

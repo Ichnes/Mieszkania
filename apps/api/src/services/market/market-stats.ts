@@ -1,5 +1,7 @@
 import { marketActivitySql } from "./market-activity";
 import { getBuyerMarket } from "./buyer-market";
+import { pressureScope, recordPressure } from "./pressure-history";
+import { replayHistory } from "./pressure-replay";
 import { normalizeMarketLocation, marketLocationJoinSql } from "./market-locations";
 import {
   mapPriceSample,
@@ -105,7 +107,7 @@ async function computeMarketStats(
       boundaries,
       signals,
       propertySegments,
-      buyerMarket,
+      buyerData,
     ] = await Promise.all([
       db.query<{
         active: string;
@@ -192,6 +194,20 @@ async function computeMarketStats(
         ? getBuyerMarket(db, aliasedStatsFilters, locationMapping, periodDays)
         : undefined,
     ]);
+    const buyerMarket = buyerData
+      ? {
+          ...buyerData,
+          pressureFrames: [
+            ...(await recordPressure(
+              db,
+              pressureScope(searchContract, query),
+              buyerData.today,
+              buyerData.observations,
+            )),
+            ...(await replayHistory(db, searchContract, query, buyerData.today)),
+          ],
+        }
+      : undefined;
     const t = totals.rows[0] ?? ({} as any);
     const c = comparison.rows[0] ?? ({} as any);
     const percentChange = (current: number, previous: number) =>

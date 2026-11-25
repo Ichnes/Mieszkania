@@ -8,7 +8,7 @@ function formatAmount(text: string) {
   return fraction === undefined ? whole : (whole || "0") + "," + fraction;
 }
 
-export function FilterPriceInput({
+export function PriceInput({
   value,
   onChange,
 }: {

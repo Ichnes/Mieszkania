@@ -102,7 +102,7 @@ export function MarketStatsPanel({
   const rows = districtRows(stats);
   const baselineRows = districtRows(baseline);
   const reliablePrice = (row: MarketStatsResponse["districts"][number]) =>
-    row.pricedListings >= (stats.minimumSampleSize ?? 10) ? row.medianPricePerSqm : -1;
+    row.pricedListings >= (stats.minimumSampleSize ?? 5) ? row.medianPricePerSqm : -1;
   const sorted = [...rows].sort((left, right) =>
     sort === "price"
       ? reliablePrice(right) - reliablePrice(left)
@@ -142,7 +142,7 @@ export function MarketStatsPanel({
           <p className="muted">
             Bieżący okres porównujemy z bezpośrednio poprzednimi {stats.periodDays} dniami. Ceny
             dzielnic pokazujemy jako medianę ofert wykrytych w wybranym okresie. Porównania cen
-            wymagają co najmniej {stats.minimumSampleSize ?? 10} ofert z ceną. Zakres środkowych 50%
+            wymagają co najmniej {stats.minimumSampleSize ?? 5} ofert z ceną. Zakres środkowych 50%
             cen w segmentach to kwartyle 25–75%, nie prognoza ani przedział ufności.
           </p>
         </div>
@@ -313,15 +313,15 @@ export function MarketStatsPanel({
                         </td>
                         <td data-label="Mediana ceny za m²" className="stats-mobile-price">
                           <strong className="stats-price-value">
-                            {district.pricedListings >= (stats.minimumSampleSize ?? 10)
+                            {district.pricedListings >= (stats.minimumSampleSize ?? 5)
                               ? formatPrice(district.medianPricePerSqm)
                               : "Mała próba"}
                           </strong>
                           {hasActiveMarketFilters(filters) &&
                           baseline &&
-                          district.pricedListings >= (stats.minimumSampleSize ?? 10) &&
+                          district.pricedListings >= (stats.minimumSampleSize ?? 5) &&
                           (baselineDistrict?.pricedListings ?? 0) >=
-                            (stats.minimumSampleSize ?? 10) ? (
+                            (stats.minimumSampleSize ?? 5) ? (
                             <small className={`stats-row-delta ${deltaClass(districtDelta)}`}>
                               {formatDelta(districtDelta)} względem zakresu bez filtrów
                             </small>
@@ -537,7 +537,7 @@ export function MarketStatsPanel({
                     ) : (
                       <div className="stats-segment-range">
                         <dt>Za mało danych</dt>
-                        <dd>Potrzeba co najmniej {stats.minimumSampleSize ?? 10} ofert z ceną</dd>
+                        <dd>Potrzeba co najmniej {stats.minimumSampleSize ?? 5} ofert z ceną</dd>
                       </div>
                     )}
                   </dl>
