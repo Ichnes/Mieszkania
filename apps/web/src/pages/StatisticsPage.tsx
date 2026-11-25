@@ -47,6 +47,7 @@ export function StatisticsPage({
           <StatsControls
             period={marketStatsPeriod}
             draft={marketStatsDraftFilters}
+            pending={JSON.stringify(marketStatsDraftFilters) !== JSON.stringify(marketStatsFilters)}
             onPeriodChange={setMarketStatsPeriod}
             onDraftChange={setMarketStatsDraftFilters}
             onApply={() => {

@@ -1,3 +1,4 @@
+import { SampleSizeIndicator } from "../../statistics/MarketIndicators";
 import type { ImmediateSurroundingsFinding, MarketStatsResponse } from "@mieszkania/shared";
 import { groupSurroundings } from "../lib/analysis-insights";
 
@@ -62,8 +63,7 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
         <p className="market-scope">
           {stats.scope.city} · od {stats.scope.minArea} m²
           {stats.scope.maxArea ? ` do ${stats.scope.maxArea} m²` : ""} · {stats.scope.roomsMin}+
-          pokoi · {number(stats.scope.minPrice)}–{number(stats.scope.maxPrice)} zł. Zakres zgodny z
-          Waszymi kryteriami i filtrami.
+          pokoi · {number(stats.scope.minPrice)}–{number(stats.scope.maxPrice)} zł.
         </p>
       ) : null}
       {signals ? (
@@ -79,27 +79,19 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
               Mediana ostatniej obniżki w okresie
               {signals.medianCutPercent == null
                 ? "."
-                : ` · ${signals.medianCutPercent.toFixed(1)}%.`}{" "}
-              Dotyczy {number(signals.discounted)} aktywnych ofert ({share(signals.discounted)}%).
+                : ` · ${number(signals.medianCutPercent)}%.`}{" "}
+              Dotyczy {number(signals.discounted)} aktywnych ofert z {number(signals.active)}.
             </p>
-            <small>
-              Porównujemy kolejne ceny ofert. Dla połączonych duplikatów śledzimy najniższą dostępną
-              cenę w grupie portali.
-            </small>
           </article>
           <article className="insight-category">
             <span className="eyebrow">Kolejna obniżka</span>
             <strong className="insight-number">{number(signals.repeatedCuts)}</strong>
             <p>Ofert z co najmniej dwiema obniżkami w ciągu {stats.periodDays} dni.</p>
-            <small>
-              Powtarzające się korekty są powodem, żeby przyjrzeć się historii ceny przed rozmową o
-              budżecie.
-            </small>
           </article>
           <article className="insight-category">
             <span className="eyebrow">Najdłużej obserwowane</span>
             <strong className="insight-number">
-              {share(signals.oldestObserved)}%{" "}
+              {signals.active ? share(signals.oldestObserved) + "%" : "Brak danych"}{" "}
               <small>· {number(signals.oldestObserved)} ofert</small>
             </strong>
             <p>
@@ -109,10 +101,6 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
                   ? "Historia krótsza niż jeden dzień — pokazujemy oferty z pierwszego dnia obserwacji."
                   : `Aktywne i obserwowane od co najmniej ${signals.observationDays} dni — najdłuższa dostępna historia w tej próbie.`}
             </p>
-            <small>
-              Czas liczymy od pierwszej obserwacji. Ponowne wystawienie lub późne wykrycie może
-              skrócić tę historię.
-            </small>
           </article>
           <article className="insight-category market-pressure">
             <span className="eyebrow">Gdzie częściej obniżają ceny</span>
@@ -125,23 +113,30 @@ export function MarketPulse({ stats }: { stats: MarketStatsResponse }) {
                   </div>
                   <progress max="100" value={district.sharePercent} />
                   <small>
-                    {district.discounted} przecenionych / {district.active} aktywnych ofert
+                    {district.discounted} z {district.active} aktywnych miało obniżkę
                   </small>
+                  <SampleSizeIndicator count={district.active} unit="ofert" />
                 </div>
               ))
             ) : (
-              <p>Za mało danych: minimum 20 aktywnych ofert i 3 przecenione w dzielnicy.</p>
+              <p>Brak dzielnic z obniżką i próbą co najmniej 5 aktywnych ofert.</p>
             )}
           </article>
         </div>
       ) : (
         <p>Brak danych do analizy historii cen.</p>
       )}
-      <p className="muted market-signal-note">
-        Aktualność próby: {number(signals?.freshLast48Hours ?? 0)} z {number(signals?.active ?? 0)}{" "}
-        aktywnych ofert sprawdzonych przez ostatnie 48 godzin. To ceny ofertowe; obniżka ani
-        archiwizacja nie potwierdza ceny sprzedaży.
-      </p>
+      {signals && (
+        <details className="market-signal-detail">
+          <summary>Zakres i aktualność sygnałów</summary>
+          <p className="muted market-signal-note">
+            Dla połączonych publikacji śledzimy najniższą dostępną cenę. Wiek liczymy od pierwszej
+            obserwacji. Aktualność próby: {number(signals?.freshLast48Hours ?? 0)} z{" "}
+            {number(signals?.active ?? 0)} aktywnych ofert sprawdzonych przez ostatnie 48 godzin. To
+            ceny ofertowe; obniżka ani archiwizacja nie potwierdza ceny sprzedaży.
+          </p>
+        </details>
+      )}
     </section>
   );
 }

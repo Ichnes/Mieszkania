@@ -63,7 +63,7 @@ export async function getMarketSignals(
     medianCutAmount: total?.median_amount == null ? null : Number(total.median_amount),
     medianCutPercent: total?.median_percent == null ? null : Number(total.median_percent),
     pressureDistricts: result.rows
-      .filter((row) => !row.is_total && Number(row.active) >= 20 && Number(row.discounted) >= 3)
+      .filter((row) => !row.is_total && Number(row.active) >= 5 && Number(row.discounted) > 0)
       .map((row) => ({
         district: row.district,
         active: Number(row.active),

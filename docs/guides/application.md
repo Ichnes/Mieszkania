@@ -583,6 +583,12 @@ liczba aktywnych i główna mediana aktywnych opisują bieżący stan. Ceny są 
 ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
+Komunikat **Niezastosowane zmiany** oznacza, że wyniki nadal odpowiadają ostatnio
+zatwierdzonym filtrom. W **Monitorze kupującego** wskaźnik presji ma stały zakres
+30 dni. Obok wyniku widać próbę, pokrycie wag i dostępne porównania w czasie.
+**Więcej wskaźników** rozwija miary ekspozycji, zmian cen i podaży.
+W podsumowaniu rynku odsetek obniżek dotyczy wszystkich aktywnych ofert.
+Monitor porównuje kolejne udokumentowane ceny ofert ze znaną ceną odniesienia.
 W **Ustaw analizowany rynek** można zaznaczyć **Komórka / piwnica** oraz wybrać
 kierunki w kompasie. Wystarczy co najmniej jeden wybrany kierunek: N obejmuje
 także mieszkania północ–południe, a S + SE + SW obejmuje oferty z dowolnym z tych

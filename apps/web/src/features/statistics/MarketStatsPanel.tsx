@@ -139,12 +139,7 @@ export function MarketStatsPanel({
             Monitorowany segment rynku warszawskiego · ostatnie {stats.periodDays} dni
           </p>
           <h2>Co dzieje się teraz na rynku</h2>
-          <p className="muted">
-            Bieżący okres porównujemy z bezpośrednio poprzednimi {stats.periodDays} dniami. Ceny
-            dzielnic pokazujemy jako medianę ofert wykrytych w wybranym okresie. Porównania cen
-            wymagają co najmniej {stats.minimumSampleSize ?? 5} ofert z ceną. Zakres środkowych 50%
-            cen w segmentach to kwartyle 25–75%, nie prognoza ani przedział ufności.
-          </p>
+          <p className="muted">Zmiany względem poprzednich {stats.periodDays} dni.</p>
         </div>
       </div>
       <div className="stats-kpi-grid stats-kpi-grid-insight">
@@ -160,9 +155,11 @@ export function MarketStatsPanel({
         <div className="stats-kpi">
           <span>Mediana aktywnych</span>
           <strong>
-            {Math.round(stats.totals.medianPricePerSqm).toLocaleString("pl-PL")} zł/m²
+            {stats.totals.medianPricePerSqm > 0
+              ? formatPrice(Math.round(stats.totals.medianPricePerSqm))
+              : "Brak danych"}
           </strong>
-          <small>zamiast podatnej na skrajności średniej</small>
+          <small>cena ofertowa za m²</small>
         </div>
         <div className="stats-kpi">
           <span>Nowo wykryte</span>
@@ -201,12 +198,16 @@ export function MarketStatsPanel({
       </div>
       <div className="stats-signal-strip">
         <div>
-          <strong>{stats.comparison.priceDrops.toLocaleString("pl-PL")}</strong>
-          <span>aktywnych ofert miało obniżkę</span>
-        </div>
-        <div>
-          <strong>{stats.comparison.priceDropSharePercent.toLocaleString("pl-PL")}%</strong>
-          <span>aktywnych ofert przeceniono w okresie</span>
+          <strong>
+            {stats.totals.active
+              ? stats.comparison.priceDropSharePercent.toLocaleString("pl-PL") + "%"
+              : "Brak danych"}
+          </strong>
+          <span>
+            {stats.comparison.priceDrops.toLocaleString("pl-PL")} z{" "}
+            {stats.totals.active.toLocaleString("pl-PL")} aktywnych ofert z zapisanym zdarzeniem
+            obniżki w okresie
+          </span>
         </div>
         <div>
           <strong>

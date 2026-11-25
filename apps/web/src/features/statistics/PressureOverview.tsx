@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { SegmentedLinearGauge, SampleSizeIndicator } from "./MarketIndicators";
 import { Select } from "../../components/Select";
 import {
   AreaChart,
@@ -173,55 +174,88 @@ export function PressureOverview({
         ),
     )
     .sort((a, b) => b.index.score! - a.index.score!);
+  const metrics = [
+    [
+      "Obniżka w historii cen · aktywne",
+      share(0),
+      `${number(data.shares[0].cuts)} z ${number(data.shares[0].n)} z ceną odniesienia · archiwalne: ${share(1)} (${number(data.shares[1].cuts)} z ${number(data.shares[1].n)})`,
+    ],
+    [
+      "Mediana łącznej przeceny",
+      data.amount === null ? "Brak danych" : number(data.amount) + " zł",
+      data.pct === null
+        ? "Brak pełnej historii przeceny"
+        : "Mediana procentowa: " + percent(data.pct),
+    ],
+    ["Czas ekspozycji", data.age, "Środkowe 50% archiwalnych"],
+    [
+      "Czas do pierwszej obniżki",
+      data.first === null ? "Brak danych" : number(data.first) + " dni",
+      "Mediana wśród ofert z obniżką",
+    ],
+    ["Oferty zalegające 90+ dni", percent(data.aged), "Udział w aktywnych ofertach"],
+    [
+      "Obniżki do podwyżek",
+      data.shares.some((s) => s.n > 0) ? data.down + " : " + data.up : "Brak danych",
+      `Zdarzenia cenowe · ${days} dni`,
+    ],
+    [
+      "Zmiana aktywnej podaży",
+      percent(supply == null ? null : 100 * supply),
+      "Względem zapisu sprzed 30 dni",
+    ],
+  ];
+  const renderMetric = ([label, value, sub]: string[]) => (
+    <div key={label}>
+      <small>{label}</small>
+      <b>{value}</b>
+      <small>{sub}</small>
+    </div>
+  );
   return (
     <>
-      <div className="buyer-summary">
-        {[
-          [
-            "Buyer Power Index",
-            model.score === null ? "W kalibracji" : number(model.score) + " / 100",
-            model.score === null
-              ? model.months < 6
-                ? `${model.months} / 6 wcześniejszych okresów`
-                : `Pokrycie ${model.coverage}% · wymagane 70% i 5 ofert`
-              : `${model.preliminary ? "Wstępny · " : ""}${level} · pokrycie ${model.coverage}% · 30 dni: ${delta(30)} · 90 dni: ${delta(90)}`,
-          ],
-          ["Aktywne oferty z obniżką", share(0), "Archiwalne: " + share(1)],
-          [
-            "Mediana łącznej przeceny",
-            data.amount === null ? "Brak danych" : number(data.amount) + " zł",
-            data.pct === null
-              ? "Brak pełnej historii przeceny"
-              : "Mediana procentowa: " + percent(data.pct),
-          ],
-          ["Czas ekspozycji", data.age, "Środkowe 50% archiwalnych"],
-          [
-            "Czas do pierwszej obniżki",
-            data.first === null ? "Brak danych" : number(data.first) + " dni",
-            "Mediana wśród ofert z obniżką",
-          ],
-          ["Oferty zalegające 90+ dni", percent(data.aged), "Udział w aktywnych ofertach"],
-          [
-            "Obniżki do podwyżek",
-            data.shares.some((s) => s.n > 0) ? data.down + " : " + data.up : "Brak danych",
-            `Zdarzenia cenowe · ${days} dni`,
-          ],
-          [
-            "Zmiana aktywnej podaży",
-            percent(supply == null ? null : 100 * supply),
-            "Względem zapisu sprzed 30 dni",
-          ],
-        ].map(([label, value, sub]) => (
-          <div key={label}>
-            <small>{label}</small>
-            <b>{value}</b>
-            <small>{sub}</small>
+      <section className="pressure-lead" aria-label="Indeks presji na sprzedających">
+        <div>
+          <p className="eyebrow">Indeks presji na sprzedających · 30 dni</p>
+          <h3>{level ?? "W kalibracji"}</h3>
+          <p>
+            {model.score === null
+              ? "Za mało porównywalnych danych do oceny segmentu."
+              : "Względem wcześniejszych obserwacji tego samego segmentu."}
+          </p>
+          <SampleSizeIndicator
+            count={current?.active}
+            unit={model.preliminary ? "publikacji" : "mieszkań"}
+          />
+          <small>
+            {model.preliminary ? "Wynik wstępny · " : ""}pokrycie wag {model.coverage}%
+          </small>
+        </div>
+        <div>
+          <SegmentedLinearGauge score={model.score} />
+          <div className="pressure-deltas">
+            <span>
+              W ciągu 30 dni <b>{delta(30)}</b>
+            </span>
+            <span>
+              W ciągu 90 dni <b>{delta(90)}</b>
+            </span>
           </div>
-        ))}
-      </div>
+        </div>
+      </section>
+      <div className="buyer-summary">{metrics.slice(0, 3).map(renderMetric)}</div>
+      <details className="buyer-method">
+        <summary>Więcej wskaźników · ekspozycja, ceny i podaż</summary>
+        <div className="buyer-summary">{metrics.slice(3).map(renderMetric)}</div>
+      </details>
       <details className="buyer-method">
         <summary>Jak liczymy indeks i jaki jest zakres obserwacji?</summary>
         <section>
+          <p>
+            Udziały w monitorze liczymy dla ofert ze znaną ceną na początku okresu lub obserwacji.
+            Zliczamy spadek między kolejnymi zapisami cen. W podsumowaniu rynku mianownikiem są
+            wszystkie aktywne oferty, a licznikiem oferty z zapisanym zdarzeniem obniżki.
+          </p>
           <h3>Eksperymentalny indeks presji na sprzedających</h3>
           <p>
             Wynik wstępny wykorzystuje co najmniej dwa wcześniejsze okresy z zapisanych wersji
@@ -235,10 +269,11 @@ export function PressureOverview({
             presji widocznej w ogłoszeniach. Indeks nie mierzy popytu transakcyjnego.
           </p>
           <p>
-            Porównujemy ostatnie 30 dni z maksymalnie 12 wcześniejszymi zapisami co 30 dni. W serii docelowej każda
-            składowa wymaga sześciu historycznych porównań i co najmniej 5 aktywnych ofert w
-            segmencie. Przy pokryciu co najmniej 70% skalujemy dostępne wagi do 100%. Poniżej progu
-            wynik pozostaje niepełny. Wagi są robocze, a część sygnałów może być skorelowana.
+            Porównujemy ostatnie 30 dni z maksymalnie 12 wcześniejszymi zapisami co 30 dni. W serii
+            docelowej każda składowa wymaga sześciu historycznych porównań i co najmniej 5 aktywnych
+            ofert w segmencie. Przy pokryciu co najmniej 70% skalujemy dostępne wagi do 100%.
+            Poniżej progu wynik pozostaje niepełny. Wagi są robocze, a część sygnałów może być
+            skorelowana.
           </p>
           <dl>
             {model.components.map((p) => (

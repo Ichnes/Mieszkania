@@ -6,6 +6,7 @@ import { ExposureFilterCompass } from "./ExposureFilterCompass";
 export function StatsControls(input: {
   period: 30 | 90 | 180;
   draft: MarketStatsFilters;
+  pending: boolean;
   onPeriodChange: (period: 30 | 90 | 180) => void;
   onDraftChange: (filters: MarketStatsFilters) => void;
   onApply: () => void;
@@ -30,13 +31,14 @@ export function StatsControls(input: {
         <div>
           <p className="eyebrow">Zakres danych</p>
           <h2>Ustaw analizowany rynek</h2>
-          <small>Okres zmienia wszystkie wskaźniki, nie tylko wykres.</small>
+          <small>Okres dotyczy historii ogłoszeń. Indeks presji obejmuje ostatnie 30 dni.</small>
         </div>
         <div className="stats-period-bar" aria-label="Zakres analizy">
           {([30, 90, 180] as const).map((days) => (
             <button
               type="button"
               key={days}
+              aria-pressed={input.period === days}
               className={input.period === days ? "is-active" : ""}
               onClick={() => input.onPeriodChange(days)}
             >
@@ -91,7 +93,8 @@ export function StatsControls(input: {
             <small>m²</small>
           </div>
         </label>
-        <div className="stats-filter-toggles" aria-label="Udogodnienia">
+        <div className="stats-filter-toggles" role="group" aria-label="Udogodnienia">
+          <small className="stats-filter-caption">Udogodnienia</small>
           <label className={input.draft.elevator ? "is-active" : ""}>
             <input
               type="checkbox"
@@ -128,11 +131,14 @@ export function StatsControls(input: {
           onChange={(directions) => input.onDraftChange({ ...input.draft, directions })}
         />
         <div className="stats-filter-actions">
+          {input.pending && <small role="status">Niezastosowane zmiany</small>}
           <button
             type="button"
             className="stats-filter-clear"
             onClick={input.onClear}
-            disabled={activeFilterCount === 0 && input.draft.directions.length === 0}
+            disabled={
+              !input.pending && activeFilterCount === 0 && input.draft.directions.length === 0
+            }
           >
             Wyczyść
           </button>

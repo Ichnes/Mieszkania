@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Redesign statystyk — filtry, sygnały i skrót monitora (2026-11-25)
+
+- [x] Uporządkowano górne cztery sekcje. Kompas i okresy pozostały na górze. Filtry sygnalizują oczekujące zmiany, monitor pokazuje pięciosegmentowy wskaźnik, zakres próby, zmiany 30/90 i rozwijane dodatkowe miary.
+- [x] Rozróżniono udziały obniżek według zdarzeń i udokumentowanej historii cen. Ranking udziałów pokazuje surowe wyniki od 5 aktywnych ofert, liczebność i ocenę próby.
+- [x] Produkcyjny build, 385 zaliczonych testów API (19 pominiętych), 171 testów web. Playwright sprawdził 390/1024/1440 px, kompas, zastosowanie i reset filtrów, dodatkowe miary, zmianę okresów i brak poziomego przepełnienia. Obejrzano mobilny wskaźnik w ciemnym motywie.
+- [ ] Następny etap z audytu obejmuje wspólny blok mapy i rankingu, lokalny nagłówek MSI oraz przejście z segmentu do oferty.
+
 ## Kalibracja wskaźników i obsługa budżetu (2026-11-25)
 
 - [x] Wstępny indeks odtworzono z zapisanych wersji ogłoszeń. Negocjacje uwzględniają krótki czas obserwacji; porównania działają od pięciu mieszkań. W próbie 2896 aktywnych liczba zer spadła z 472 do 6. Testy API: 385 zaliczonych i 19 pominiętych, web: 169 zaliczonych. Osobno potwierdzono niezmienność zapisów w PostgreSQL oraz działanie interfejsu na 390, 1280 i 1680 px.
