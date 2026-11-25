@@ -176,6 +176,9 @@ export class GratkaParser implements ListingParser {
       rooms: rooms ?? undefined,
       floor: floor ?? undefined,
       totalFloors: totalFloors ?? undefined,
+      yearBuilt: redirectedAwayFromOffer
+        ? undefined
+        : extractGratkaBuildingYear(document.html, listingUrl, description),
       publishedAt: publishedAt ?? undefined,
       marketType,
       offerType: "sale",
@@ -229,6 +232,39 @@ function extractPublishedAt(
     extractMetaContent(primaryHtml, "datePublished"),
     extractMetaContent(html, "datePublished"),
   );
+}
+
+export function extractGratkaBuildingYear(html: string, url: string, description?: string | null) {
+  const payload = html.match(
+    /<script\b[^>]*\bid=["']__NUXT_DATA__["'][^>]*>([\s\S]*?)<\/script>/i,
+  )?.[1];
+  if (!payload) return undefined;
+  try {
+    const nodes = JSON.parse(payload);
+    if (!Array.isArray(nodes)) return undefined;
+    const path = new URL(url).pathname.replace(/\/$/, "");
+    const key = "property-details-" + path;
+    const keys = [key, key + "-false", key + "-true"];
+    const entry = nodes.find((node) => node && keys.some((k) => Object.hasOwn(node, k)));
+    const matched = keys.find((k) => entry && Object.hasOwn(entry, k));
+    if (!matched) return undefined;
+    const details = nodes[nodes[entry[matched]]?.data];
+    const fields = nodes[nodes[details?.propertyData]?.buildingDetailedInformation];
+    if (!Array.isArray(fields)) return undefined;
+    for (const index of fields) {
+      const field = nodes[index];
+      if (nodes[field?.label] !== "Rok budowy") continue;
+      const year = Number(nodes[field.value]);
+      const handover = description?.match(
+        /\btermin oddania\s*[:–-]?\s*(?:[IV1-4]+\s*kwarta[łl]\s*)?(20\d\d)\b/i,
+      );
+      if (handover && Number(handover[1]) > year) return undefined;
+      if (Number.isInteger(year) && year >= 1800 && year <= new Date().getFullYear()) return year;
+    }
+  } catch {
+    // Older pages and incomplete hydration payloads may have no structured details.
+  }
+  return undefined;
 }
 
 function extractExternalId(url: string) {

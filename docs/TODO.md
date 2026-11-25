@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Bilans tygodniowy, archiwum i brakujące lata (2026-11-25)
+
+- [x] Wykres bilansu rozciąga się do dolnego marginesu karty. Chromium zmierzył 419 px na desktopie i 250 px przy szerokości 390 px.
+- [x] Zbadano kolejne 500 różnych ogłoszeń archiwalnych z siedmiu portali, łącznie 4400 unikalnych rekordów audytu. Dla 200 z ostatniej próby odczytano HTML i zapis parsera. Poprawiono odczyt cennika dodatków bez waluty w każdym wierszu oraz sygnalizację rozbieżności roku budowy. Prywatny raport i rejestr porównań są w katalogu partia-4400 bieżącego audytu.
+- [x] Sprawdzono 447 ofert z segmentu bez roku w okresie 180 dni. Uzupełniono 46 lat, w tym 27 z pola budynku właściwego ogłoszenia Gratki, 12 z opisów i 7 ze zgodnych połączonych kopii. API statystyk potwierdziło 401 pozostałych. Nie uzupełniano danych sprzecznych ani lat z polecanych ofert.
+- [x] Przeszły 384 testy API i 161 web. W działającym API potwierdzono dopłatę 70 tys. zł i ostrzeżenie o rozbieżnych latach 2025/2020.
+
 ## Mobilne filtry i podsumowanie ofert (2026-11-25)
 
 - [x] Rozciągnięto wybór dzielnic na cały wiersz mobilnego panelu filtrów. Zapisane wyszukiwania przewijają się razem z polami.

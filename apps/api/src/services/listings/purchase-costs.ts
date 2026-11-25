@@ -35,6 +35,15 @@ function amenities(text: string) {
 export function extractAdditionalPurchaseCosts(description: string): PurchaseCosts {
   let text = normalize(description.replace(/<[^>]*>/g, " "))
     .replace(
+      /\b(miejsce garazowe|miejsce postojowe):\s*(\d{1,3}(?:[ .]\d{3})+)\s+(piwnica|komorka lokatorska)\s*:?\s*(\d{1,3}(?:[ .]\d{3})+)\s+(?=koszty utrzymania:)/g,
+      "; $1: $2 zl; $3: $4 zl; ",
+    )
+    .replace(
+      /^(\s*(?:miejsce garazowe|miejsce postojowe|piwnica|komorka lokatorska))\s*:?\s*(\d{1,3}(?:[ .]\d{3})+)[ \t]*$/gm,
+      "; $1: $2 zl;",
+    )
+    .replace(/\bkoszty utrzymania\s*:/g, "; koszty utrzymania:")
+    .replace(
       /,?\s*\n\s*[-–•]\s*(?=(?:miejsc\w* (?:postojow|parkingow)|komork\w* lokatorsk))/g,
       "; ",
     )

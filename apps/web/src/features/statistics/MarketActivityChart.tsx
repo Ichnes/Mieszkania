@@ -172,19 +172,21 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
           ceny. Mediana dotyczy ofert wykrytych w danym tygodniu.
         </p>
       </div>
-      <section className="panel stats-activity">
+      <section className="panel stats-activity stats-weekly-balance">
         <h3>Bilans ofert w tygodniu</h3>
         <p className="muted">Liczba wykrytych ofert pomniejszona o liczbę zarchiwizowanych.</p>
         {balance.length ? (
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={balance}>
-              <XAxis dataKey="week" tickFormatter={shortDate} minTickGap={24} />
-              <YAxis width={38} allowDecimals={false} />
-              <ReferenceLine y={0} stroke="currentColor" />
-              <Tooltip labelFormatter={(v) => shortDate(String(v))} />
-              <Bar dataKey="balance" name="Bilans ofert" fill="#287b68" />
-            </BarChart>
-          </ResponsiveContainer>
+          <div className="weekly-balance-plot">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={balance}>
+                <XAxis dataKey="week" tickFormatter={shortDate} minTickGap={24} />
+                <YAxis width={38} allowDecimals={false} />
+                <ReferenceLine y={0} stroke="currentColor" />
+                <Tooltip labelFormatter={(v) => shortDate(String(v))} />
+                <Bar dataKey="balance" name="Bilans ofert" fill="#287b68" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
         ) : (
           <p>Brak danych dla wybranego okresu.</p>
         )}

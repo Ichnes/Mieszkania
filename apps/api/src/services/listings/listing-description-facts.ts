@@ -1,4 +1,4 @@
-import { decodeListingText } from "./listing-text";
+import { cleanPortalDescription, decodeListingText } from "./listing-text";
 import {
   isNonAddressPhrase,
   sanitizeStreetCandidate,
@@ -55,11 +55,17 @@ export function enrichListingFromDescription(listing: ParsedListing): ParsedList
  */
 export function inferConstructionYear(value?: string, currentYear = new Date().getFullYear()) {
   if (!value) return undefined;
-  const text = normalize(value);
+  const text = normalize(cleanPortalDescription(decodeListingText(value)));
   const year = "((?:18|19|20)\\d{2})";
   const approximate = "(?:(?:ok\\.?|okolo|circa)\\s+)?";
   const patterns = [
-    new RegExp(`\\b(?:rok|data)\\s+(?:budowy|wybudowania)\\s*[:,-]?\\s*${year}\\b`),
+    new RegExp(`\\brok (?:oddania budynku|budowy budynku)\\s*[:–-]?\\s*${year}\\b`),
+    new RegExp(`\\b(?:budynek|blok) (?:zostal )?oddany w ${year} (?:roku|r\\.)`),
+    new RegExp(`\\b(?:budynku|budynek|wiezowcu|blok) z ${year}(?= (?:roku|r\\.)|[,;.!]|$)`),
+    new RegExp(`\\bbudynku (?:z winda,? oddanym do uzytkowania w|o \\d+ pietrach, z) ${year} roku`),
+    new RegExp(`\\bbudynek [-–] \\d+ kondygnacyjny z ${year} (?:roku|r\\.)`),
+    new RegExp(`\\bwybudowan\\w* z (?:tzw\\. )?cegly \\w+ w ${year} roku`),
+    new RegExp(`\\b(?:rok|data)\\s+(?:budowy|wybudowania)\\s*[:,-]?\\s*${approximate}${year}(?=\\b|r\\.)`),
     new RegExp(
       `\\b(?:budyn|blok|kamienic|apartamentow|dom|osiedl|will|inwestyc)\\w*(?:\\s+\\w+){0,4}\\s+z\\s+${approximate}${year}\\s*(?:rok\\w*|r\\.)`,
     ),

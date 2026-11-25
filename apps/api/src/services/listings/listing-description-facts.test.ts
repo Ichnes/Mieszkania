@@ -152,6 +152,17 @@ import {
 
 test("infers construction years from common Polish listing phrases", () => {
   assert.equal(inferConstructionYear("Rok budowy: 2009", 2026), 2009);
+  assert.equal(inferConstructionYear("Rok oddania budynku: 2024. Remont w 2025 roku."), 2024);
+  assert.equal(
+    inferConstructionYear("Przy Placu 1905 Roku. Winda wymieniona w 2023 roku."),
+    undefined,
+  );
+  assert.equal(
+    inferConstructionYear(
+      "Apartament. Rozwiń Statystyki ogłoszenia: #toolbar { } Blok z 1992 roku.",
+    ),
+    undefined,
+  );
   assert.equal(inferConstructionYear("Mieszkanie w kameralnym budynku z 1998 roku.", 2026), 1998);
   assert.equal(inferConstructionYear("Apartamentowiec premium z 2019 roku.", 2026), 2019);
   assert.equal(inferConstructionYear("Mieszkanie w budynku z 1991 r.", 2026), 1991);

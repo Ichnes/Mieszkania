@@ -1725,7 +1725,7 @@ function mapListingSummary(
       row.total_floors ??
       inferredBuildingDetails.totalFloors ??
       undefined,
-    yearBuilt: inferredBuildingDetails.yearBuilt ?? row.year_built ?? undefined,
+    yearBuilt: row.year_built ?? inferredBuildingDetails.yearBuilt ?? undefined,
     hasGarage,
     hasOutdoorParking,
     hasStorage,

@@ -7,7 +7,9 @@ export function descriptionDiscrepancies(listing: ListingSummary, description: s
   const listedArea = Number.parseFloat(listing.areaLabel ?? "");
   if (area !== undefined && Math.abs(area - listedArea) > 1)
     warnings.push(`Metraż w danych oferty: ${listedArea} m². W opisie: ${area} m².`);
-  const floor = inferBuildingDetails(description).floor;
+  const { floor, yearBuilt } = inferBuildingDetails(description);
+  if (listing.yearBuilt != null && yearBuilt != null && yearBuilt !== listing.yearBuilt)
+    warnings.push(`Rok budowy w danych oferty: ${listing.yearBuilt}. W opisie: ${yearBuilt}.`);
   const roomCounts = new Set(
     [
       ...description.matchAll(

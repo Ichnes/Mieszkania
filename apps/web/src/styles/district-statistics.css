@@ -731,6 +731,20 @@
   border-radius: 18px;
 }
 
+.stats-weekly-balance {
+  display: flex;
+  flex-direction: column;
+}
+.weekly-balance-plot {
+  flex: 1;
+  position: relative;
+  min-height: clamp(250px, 30vw, 330px);
+}
+.weekly-balance-plot > .recharts-responsive-container {
+  position: absolute;
+  inset: 0;
+}
+
 .stats-chart-legend {
   display: flex;
   flex-wrap: wrap;

@@ -4,6 +4,10 @@ import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
   [
+    "Mieszkanie: 1 570 000\nmiejsce garażowe: 50 000\npiwnica 20 000\nKoszty utrzymania: około 1200 pln",
+    { garage: 50000, storage: 20000 },
+  ],
+  [
     "Miejsce postojowe w garażu podziemnym: 35 000 PLN. Łączna cena nieruchomości wraz z miejscem postojowym wynosi 1 215 000 PLN.",
     { garage: 35000 },
   ],
