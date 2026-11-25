@@ -4,7 +4,8 @@ import { lazy, Suspense } from "react";
 import { DistrictExplorer } from "./DistrictExplorer";
 import { type MarketStatsFilters } from "./types";
 
-export const MarketActivityChart = lazy(() => import("./MarketActivityChart"));
+import { SegmentExplorer } from "./SegmentExplorer";
+import { MarketTrends } from "./MarketTrends";
 const BuyerMarketPanel = lazy(() => import("./BuyerMarketPanel"));
 
 export function MarketStatsPanel({
@@ -153,126 +154,19 @@ export function MarketStatsPanel({
       {stats.buyerMarket ? (
         <Suspense fallback={<p>Wczytywanie analizy kupującego…</p>}>
           <BuyerMarketPanel
+            stats={stats}
             data={stats.buyerMarket}
             days={stats.periodDays}
             locations={locations}
           />
         </Suspense>
       ) : (
-        locations
+        <>
+          {locations}
+          <MarketTrends stats={stats} />
+        </>
       )}
-      <div className="stats-analysis-grid">
-        <Suspense fallback={<div className="panel">Ładowanie wykresu…</div>}>
-          <MarketActivityChart stats={stats} />
-        </Suspense>
-        <div className="panel stats-distribution">
-          <div className="stats-card-heading">
-            <div>
-              <p className="eyebrow">Poziom cen · {stats.periodDays} dni</p>
-              <h3>Wykryte oferty według zł/m²</h3>
-            </div>
-            <span>
-              {stats.priceDistribution
-                .reduce((sum, band) => sum + band.count, 0)
-                .toLocaleString("pl-PL")}{" "}
-              z ceną
-            </span>
-          </div>
-          <div className="price-distribution-list">
-            {stats.priceDistribution.map((band) => (
-              <div className="price-distribution-row" key={band.label}>
-                <div>
-                  <span>{band.label}</span>
-                  <strong>
-                    {band.count.toLocaleString("pl-PL")} ·{" "}
-                    {band.sharePercent.toLocaleString("pl-PL")}%
-                  </strong>
-                </div>
-                <i>
-                  <b style={{ width: `${band.sharePercent}%` }} />
-                </i>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-      <div className="stats-segments-grid">
-        {[
-          { title: "Liczba pokoi", items: stats.segments.rooms },
-          { title: "Metraż", items: stats.segments.areas },
-          { title: "Rok budowy", items: stats.segments.buildingAge },
-          { title: "Rynek", items: stats.segments.marketTypes },
-          { title: "Stan wykończenia", items: stats.segments.finishing ?? [] },
-          { title: "Czynsz miesięczny", items: stats.segments.monthlyFees ?? [] },
-          { title: "Źródła ofert", items: stats.segments.sources },
-        ].map((segment) => (
-          <div className="panel stats-segment-card" key={segment.title}>
-            <div className="stats-card-heading">
-              <div>
-                <p className="eyebrow">Struktura wykrytych · {stats.periodDays} dni</p>
-                <h3>{segment.title}</h3>
-                {segment.title === "Stan wykończenia" && (
-                  <p className="stats-segment-hint">
-                    Stan podany w ogłoszeniu lub rozpoznany z opisu. Ceny zakupu za m².
-                  </p>
-                )}
-                {segment.title === "Czynsz miesięczny" && (
-                  <p className="stats-segment-hint">
-                    Aktywne i archiwalne oferty wykryte w wybranym okresie. Czynsz może pochodzić z
-                    połączonego ogłoszenia. Mediana i zakres pokazują ceny zakupu za m².
-                  </p>
-                )}
-                {segment.title === "Metraż" && (
-                  <p className="stats-segment-hint">
-                    Dolna granica włącznie, górna wyłącznie. Bez zaokrąglania metrażu.
-                  </p>
-                )}
-              </div>
-            </div>
-            <div className="stats-segment-list">
-              {segment.items.map((item) => (
-                <div className="stats-segment-item" key={item.label}>
-                  <div className="stats-segment-item-heading">
-                    <span>{item.label}</span>
-                    <strong
-                      title={`${item.count.toLocaleString("pl-PL")} ofert w grupie; ${item.pricedListings.toLocaleString("pl-PL")} z ceną i metrażem`}
-                    >
-                      <span>Oferty: {item.count.toLocaleString("pl-PL")}</span>
-                      <small>{item.sharePercent.toLocaleString("pl-PL")}%</small>
-                    </strong>
-                  </div>
-                  <i aria-hidden="true">
-                    <b style={{ width: `${item.sharePercent}%` }} />
-                  </i>
-                  <dl className="stats-segment-sample">
-                    {item.sufficientSample && item.medianPricePerSqm != null ? (
-                      <>
-                        <div className="stats-segment-median">
-                          <dt>Mediana</dt>
-                          <dd>{formatPrice(item.medianPricePerSqm)}</dd>
-                        </div>
-                        <div className="stats-segment-range">
-                          <dt>Środkowe 50%</dt>
-                          <dd>
-                            {Math.round(item.lowerQuartilePricePerSqm!).toLocaleString("pl-PL")}–
-                            {Math.round(item.upperQuartilePricePerSqm!).toLocaleString("pl-PL")}{" "}
-                            zł/m²
-                          </dd>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="stats-segment-range">
-                        <dt>Za mało danych</dt>
-                        <dd>Potrzeba co najmniej {stats.minimumSampleSize ?? 5} ofert z ceną</dd>
-                      </div>
-                    )}
-                  </dl>
-                </div>
-              ))}
-            </div>
-          </div>
-        ))}
-      </div>
+      <SegmentExplorer stats={stats} />
     </section>
   );
 }

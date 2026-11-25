@@ -1,3 +1,4 @@
+import { calibratedPressure } from "@mieszkania/shared";
 import { marketActivitySql } from "./market-activity";
 import { getBuyerMarket } from "./buyer-market";
 import { pressureScope, recordPressure } from "./pressure-history";
@@ -64,8 +65,9 @@ async function computeMarketStats(
     const minArea = Math.max(searchContract.minArea, Number(query.minArea) || 0);
     const maxArea = Number(query.maxArea);
     const requestedPeriod = Number(query.period);
-    const periodDays = ([30, 90, 180].includes(requestedPeriod) ? requestedPeriod : 90) as
+    const periodDays = ([30, 60, 90, 180].includes(requestedPeriod) ? requestedPeriod : 90) as
       | 30
+      | 60
       | 90
       | 180;
     const scopeFilters = [
@@ -194,21 +196,58 @@ async function computeMarketStats(
         ? getBuyerMarket(db, aliasedStatsFilters, locationMapping, periodDays)
         : undefined,
     ]);
-    const buyerMarket = buyerData
-      ? {
-          ...buyerData,
-          pressureFrames: [
-            ...(await recordPressure(
-              db,
-              pressureScope(searchContract, query, periodDays),
-              buyerData.today,
-              buyerData.observations,
-              periodDays,
-            )),
-            ...(await replayHistory(db, searchContract, query, buyerData.today, periodDays)),
-          ],
+    async function loadPressure(days: number, data: NonNullable<typeof buyerData>) {
+      const captures = await recordPressure(
+        db,
+        pressureScope(searchContract, query, days),
+        data.today,
+        data.observations.filter((r) => r.end === null || r.end >= data.today - days),
+        days,
+      );
+      const replay = await replayHistory(db, searchContract, query, data.today, days);
+      return [...captures, ...replay];
+    }
+    let buyerMarket: MarketStatsResponse["buyerMarket"];
+    if (buyerData) {
+      const pressureFrames = await loadPressure(periodDays, buyerData);
+      const monthlyPressure: NonNullable<MarketStatsResponse["buyerMarket"]>["monthlyPressure"] =
+        {};
+      const shorterPressure: NonNullable<MarketStatsResponse["buyerMarket"]>["shorterPressure"] =
+        {};
+      for (const days of [90, 60, 30].filter((days) => days < periodDays)) {
+        const monthly = await loadPressure(days, buyerData);
+        const current = monthly.filter((f) => f.day === buyerData.today);
+        for (const key of new Set(current.flatMap((f) => Object.keys(f.groups)))) {
+          if (shorterPressure[key]) continue;
+          const result = calibratedPressure(monthly, key, buyerData.today);
+          if (result.score !== null) {
+            const frame = current.find((f) => Boolean(f.replayed) === result.preliminary);
+            shorterPressure[key] = {
+              days,
+              score: result.score,
+              preliminary: result.preliminary,
+              coverage: result.coverage,
+              points: result.components.map((part) => part.points),
+              active: frame!.groups[key].active,
+            };
+          }
         }
-      : undefined;
+        if (days !== 30) continue;
+        const dates = [...new Set(monthly.map((f) => f.day))]
+          .filter((d) => d > buyerData.today - periodDays)
+          .sort((a, b) => a - b);
+        for (const day of dates) {
+          const keys = new Set(
+            monthly.filter((f) => f.day === day).flatMap((f) => Object.keys(f.groups)),
+          );
+          for (const key of keys) {
+            const { score, preliminary } = calibratedPressure(monthly, key, day);
+            if (score !== null) (monthlyPressure[key] ??= []).push({ day, score, preliminary });
+          }
+        }
+      }
+      buyerMarket = { ...buyerData, pressureFrames, monthlyPressure, shorterPressure };
+    }
     const t = totals.rows[0] ?? ({} as any);
     const c = comparison.rows[0] ?? ({} as any);
     const percentChange = (current: number, previous: number) =>

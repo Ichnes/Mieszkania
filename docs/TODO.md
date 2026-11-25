@@ -1,12 +1,19 @@
 # Bieżące zadania
 
+## Etap 4 statystyk — trendy, struktura, budżet i dostępny indeks (2026-11-25)
+
+- [x] Rynek w czasie łączy sześć analiz w jednym przełączniku, a struktura ofert siedem podziałów ze wspólną skalą kwartylową. Budżet pokazuje kwotę po odjęciu rezerwy oraz dopasowania wśród ofert ze znaną ceną.
+- [x] Dodano okres 60 dni w aplikacji, API i zapisie pomiarów. Przy niedostatecznej historii panel pokazuje indeks dla najdłuższego dostępnego okna w tym samym segmencie oraz korekty z całego wybranego okresu. Dostępne miesięczne odczyty mają własne daty.
+- [x] Sprawdzono wybór wykresów, wszystkie podziały i rezerwę większą od budżetu na 390/1024/1440 px. Dla wyboru 180 dni odtworzono wynik 14,3/100 z okna 60 dni i 1064 obniżki oraz 316 podwyżek z okna 180 dni.
+- [ ] Etap 5 obejmuje odbiór całego widoku względem kryteriów z audytu.
+
 ## Redesign statystyk — lokalizacje i okna indeksu (2026-11-25)
 
 - [x] Mapa i ranking są bezpośrednio pod skrótem monitora, z jedną miarą dla obu widoków. Wybór MSI pokazuje dane według nazwy lokalizacji; ranking i mapa synchronizują wybór w obie strony. Widok mobilny ma rozwijany ranking. Prosta mediana dzielnicy jest widoczna od 4 znanych cen.
 - [x] Oferta wybrana z heatmapy otwiera statystyki mieszkania nad bieżącą stroną. Zamknięcie zachowuje segment i sortowanie.
 - [x] Okres 30/90/180 zmienia pomiar, historyczną rekonstrukcję i zapis indeksu. Przy braku kalibracji widoczne są liczby i struktura rzeczywiście zaobserwowanych korekt cen.
 - [x] Produkcyjny build i testy: 385 API, 19 pominiętych; 172 web. Dodatkowo test zapisu w PostgreSQL. Playwright sprawdził trzy okresy, mapę, Augustówkę, sortowanie i otwarcie/zamknięcie statystyk oferty na 390/1024/1440 px. Na telefonie początek bloku lokalizacji przy 3989 px, wcześniej nagłówek mapy przy 8510 px.
-- [ ] Następny etap projektu obejmuje eksplorator trendów, strukturę segmentów i budżet.
+- [x] Wdrożono eksplorator trendów, strukturę segmentów i budżet.
 
 ## Redesign statystyk — filtry, sygnały i skrót monitora (2026-11-25)
 

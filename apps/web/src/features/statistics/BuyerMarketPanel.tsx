@@ -1,3 +1,4 @@
+import { MarketTrends } from "./MarketTrends";
 import { Link } from "react-router-dom";
 import { listingHref } from "../listings/lib/links";
 import { PressureOverview } from "./PressureOverview";
@@ -16,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import {
+  pressureKey,
   buyerExposure,
   buyerTrend,
   compareListings,
@@ -39,10 +41,12 @@ export default function BuyerMarketPanel({
   data,
   days,
   locations,
+  stats,
 }: {
   data: Data;
   days: number;
   locations: ReactNode;
+  stats: MarketStatsResponse;
 }) {
   const [district, setDistrict] = useState(""),
     [rooms, setRooms] = useState(""),
@@ -161,6 +165,8 @@ export default function BuyerMarketPanel({
       </div>
       <PressureOverview
         locations={locations}
+        shorter={data.shorterPressure?.[pressureKey(district, rooms, size)]}
+        monthly={data.monthlyPressure?.[pressureKey(district, rooms, size)] ?? []}
         frames={data.pressureFrames ?? []}
         rows={rows}
         day={today}
@@ -178,114 +184,6 @@ export default function BuyerMarketPanel({
             ?.scrollIntoView({ behavior: "instant", block: "center" });
         }}
       />
-      <div className="buyer-plot-grid">
-        <article className="buyer-card">
-          <p className="eyebrow">Ceny ofertowe</p>
-          <h3>Indeks tych samych mieszkań</h3>
-          <p className="muted">Cotygodniowe pary · początek serii = 100</p>
-          {weekly.some((p) => p.index !== null) ? (
-            <ResponsiveContainer width="100%" height={245}>
-              <AreaChart data={weekly} margin={{ top: 16, right: 14, left: 0, bottom: 4 }}>
-                <defs>
-                  <linearGradient id="buyer-index-gradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#428a75" stopOpacity={0.55} />
-                    <stop offset="100%" stopColor="#428a75" stopOpacity={0.04} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid vertical={false} strokeDasharray="3 5" />
-                <XAxis dataKey="day" tickFormatter={date} minTickGap={28} />
-                <YAxis
-                  domain={["auto", "auto"]}
-                  width={50}
-                  tickFormatter={(n) => n.toLocaleString("pl-PL", { maximumFractionDigits: 2 })}
-                />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    const r = payload?.[0]?.payload;
-                    return active && r ? (
-                      <div className="market-chart-tooltip">
-                        <strong>
-                          {date(r.day)} · indeks {fmt(r.index)}
-                        </strong>
-                        <span>{r.pairs} dopasowanych par</span>
-                        <span>
-                          {r.stock} aktywnych · {r.drops} obniżek w tygodniu
-                        </span>
-                      </div>
-                    ) : null;
-                  }}
-                />
-                <Area
-                  dataKey="index"
-                  stroke="#2e8973"
-                  strokeWidth={3}
-                  fill="url(#buyer-index-gradient)"
-                  isAnimationActive={false}
-                  dot={{ r: 2 }}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          ) : (
-            <p>Za mało par z ceną znaną na oba końce tygodnia.</p>
-          )}
-          <small>
-            Średnia geometryczna zmian cen tych samych ogłoszeń, w tym bez zmian. Luka kończy serię.
-            Każdy odcinek wymaga 5 par.
-          </small>
-        </article>
-        <article className="buyer-card">
-          <p className="eyebrow">Od pierwszej obserwacji</p>
-          <h3>Jak długo oferta pozostaje na rynku?</h3>
-          <div className="buyer-chart-key">
-            <span>● Nadal aktywna</span>
-            <span className="buyer-cut-key">● Pierwsza obniżka</span>
-          </div>
-          {curve.length ? (
-            <ResponsiveContainer width="100%" height={245}>
-              <ComposedChart data={curve} margin={{ top: 16, right: 14, left: 0, bottom: 4 }}>
-                <CartesianGrid vertical={false} strokeDasharray="3 5" />
-                <XAxis dataKey="day" minTickGap={25} tickFormatter={(n) => n + " d"} />
-                <YAxis domain={[0, 100]} width={44} tickFormatter={(n) => n + "%"} />
-                <Tooltip
-                  content={({ active, payload }) => {
-                    const r = payload?.[0]?.payload;
-                    return active && r ? (
-                      <div className="market-chart-tooltip">
-                        <strong>
-                          Dzień {r.day} · {r.risk} w obserwacji
-                        </strong>
-                        <span>Nadal aktywne · {fmt(r.active)}%</span>
-                        <span>Po pierwszej obniżce · {fmt(r.cut)}%</span>
-                      </div>
-                    ) : null;
-                  }}
-                />
-                {[
-                  ["active", "#2e8973"],
-                  ["cut", "#c67b36"],
-                ].map(([key, color]) => (
-                  <Line
-                    key={key}
-                    dataKey={key}
-                    stroke={color}
-                    type="stepAfter"
-                    strokeWidth={3}
-                    dot={false}
-                    isAnimationActive={false}
-                  />
-                ))}
-              </ComposedChart>
-            </ResponsiveContainer>
-          ) : (
-            <p>Za mało ofert z obserwacją od dnia pierwszej ceny.</p>
-          )}
-          <small>
-            Kohorta wykryta w wybranym okresie. Aktywne oferty są obserwacjami otwartymi.
-            Archiwizacja kończy ekspozycję. Przy pierwszej obniżce uwzględniamy wycofania bez
-            przeceny.
-          </small>
-        </article>
-      </div>
       <div className="buyer-plot-grid">
         <article className="buyer-card">
           <p className="eyebrow">Dzielnica × metraż</p>
@@ -423,10 +321,130 @@ export default function BuyerMarketPanel({
           <small>Otwórz mieszkanie, aby zobaczyć jego grupę porównawczą i historię.</small>
         </article>
       </div>
+      <MarketTrends
+        stats={stats}
+        segment={[
+          district || "Cała Warszawa",
+          rooms && rooms + " pok.",
+          size !== null && areaBands[size] + " m²",
+        ]
+          .filter(Boolean)
+          .join(" · ")}
+        matched={
+          <article className="buyer-card">
+            <p className="eyebrow">Ceny ofertowe</p>
+            <h3>Indeks tych samych mieszkań</h3>
+            <p className="muted">Cotygodniowe pary · początek serii = 100</p>
+            {weekly.some((p) => p.index !== null) ? (
+              <ResponsiveContainer width="100%" height={245}>
+                <AreaChart data={weekly} margin={{ top: 16, right: 14, left: 0, bottom: 4 }}>
+                  <defs>
+                    <linearGradient id="buyer-index-gradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#428a75" stopOpacity={0.55} />
+                      <stop offset="100%" stopColor="#428a75" stopOpacity={0.04} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid vertical={false} strokeDasharray="3 5" />
+                  <XAxis dataKey="day" tickFormatter={date} minTickGap={28} />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    width={50}
+                    tickFormatter={(n) => n.toLocaleString("pl-PL", { maximumFractionDigits: 2 })}
+                  />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      const r = payload?.[0]?.payload;
+                      return active && r ? (
+                        <div className="market-chart-tooltip">
+                          <strong>
+                            {date(r.day)} · indeks {fmt(r.index)}
+                          </strong>
+                          <span>{r.pairs} dopasowanych par</span>
+                          <span>
+                            {r.stock} aktywnych · {r.drops} obniżek w tygodniu
+                          </span>
+                        </div>
+                      ) : null;
+                    }}
+                  />
+                  <Area
+                    dataKey="index"
+                    stroke="#2e8973"
+                    strokeWidth={3}
+                    fill="url(#buyer-index-gradient)"
+                    isAnimationActive={false}
+                    dot={{ r: 2 }}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <p>Za mało par z ceną znaną na oba końce tygodnia.</p>
+            )}
+            <small>
+              Średnia geometryczna zmian cen tych samych ogłoszeń, w tym bez zmian. Luka kończy
+              serię. Każdy odcinek wymaga 5 par.
+            </small>
+          </article>
+        }
+        exposure={
+          <article className="buyer-card">
+            <p className="eyebrow">Od pierwszej obserwacji</p>
+            <h3>Jak długo oferta pozostaje na rynku?</h3>
+            <div className="buyer-chart-key">
+              <span>● Nadal aktywna</span>
+              <span className="buyer-cut-key">● Pierwsza obniżka</span>
+            </div>
+            {curve.length ? (
+              <ResponsiveContainer width="100%" height={245}>
+                <ComposedChart data={curve} margin={{ top: 16, right: 14, left: 0, bottom: 4 }}>
+                  <CartesianGrid vertical={false} strokeDasharray="3 5" />
+                  <XAxis dataKey="day" minTickGap={25} tickFormatter={(n) => n + " d"} />
+                  <YAxis domain={[0, 100]} width={44} tickFormatter={(n) => n + "%"} />
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      const r = payload?.[0]?.payload;
+                      return active && r ? (
+                        <div className="market-chart-tooltip">
+                          <strong>
+                            Dzień {r.day} · {r.risk} w obserwacji
+                          </strong>
+                          <span>Nadal aktywne · {fmt(r.active)}%</span>
+                          <span>Po pierwszej obniżce · {fmt(r.cut)}%</span>
+                        </div>
+                      ) : null;
+                    }}
+                  />
+                  {[
+                    ["active", "#2e8973"],
+                    ["cut", "#c67b36"],
+                  ].map(([key, color]) => (
+                    <Line
+                      key={key}
+                      dataKey={key}
+                      stroke={color}
+                      type="stepAfter"
+                      strokeWidth={3}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                  ))}
+                </ComposedChart>
+              </ResponsiveContainer>
+            ) : (
+              <p>Za mało ofert z obserwacją od dnia pierwszej ceny.</p>
+            )}
+            <small>
+              Kohorta wykryta w wybranym okresie. Aktywne oferty są obserwacjami otwartymi.
+              Archiwizacja kończy ekspozycję. Przy pierwszej obniżce uwzględniamy wycofania bez
+              przeceny.
+            </small>
+          </article>
+        }
+      />
       <div className="buyer-plot-grid">
         <BuyerBudget active={active} today={today} />
-        <article className="buyer-card">
-          <p className="eyebrow">Zasięg portali</p>
+        <details className="buyer-card portal-reach">
+          <summary>Zasięg portali</summary>
           <h3>Gdzie występują te mieszkania?</h3>
           <div className="buyer-portal-bars">
             {[...portals]
@@ -446,7 +464,7 @@ export default function BuyerMarketPanel({
             Aktywne mieszkania i zapisane źródła ich połączonych ogłoszeń. Jedno mieszkanie może
             wystąpić w kilku portalach.
           </small>
-        </article>
+        </details>
       </div>
     </section>
   );

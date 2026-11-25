@@ -11,7 +11,7 @@ const { app, automation } = createApp();
 async function capturePressure() {
   const day = Math.floor(Date.now() / 86400000);
   const { searchContract } = await getFamilySettings();
-  for (const days of [30, 90, 180]) {
+  for (const days of [30, 60, 90, 180]) {
     const saved = await pool.query(
       "select 1 from market_pressure_daily where day=$1 and scope=$2",
       [day, pressureScope(searchContract, {}, days)],

@@ -4,10 +4,10 @@ import { hasExposureFilter } from "@mieszkania/shared";
 import { ExposureFilterCompass } from "./ExposureFilterCompass";
 
 export function StatsControls(input: {
-  period: 30 | 90 | 180;
+  period: 30 | 60 | 90 | 180;
   draft: MarketStatsFilters;
   pending: boolean;
-  onPeriodChange: (period: 30 | 90 | 180) => void;
+  onPeriodChange: (period: 30 | 60 | 90 | 180) => void;
   onDraftChange: (filters: MarketStatsFilters) => void;
   onApply: () => void;
   onClear: () => void;
@@ -34,7 +34,7 @@ export function StatsControls(input: {
           <small>Okres wyznacza zakres historii ogłoszeń i indeksu presji.</small>
         </div>
         <div className="stats-period-bar" aria-label="Zakres analizy">
-          {([30, 90, 180] as const).map((days) => (
+          {([30, 60, 90, 180] as const).map((days) => (
             <button
               type="button"
               key={days}

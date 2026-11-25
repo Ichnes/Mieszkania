@@ -34,7 +34,7 @@ export function readStatisticsPreferences(raw: string | null) {
     return {
       filters: clean(saved?.filters),
       draft: clean(saved?.draft ?? saved?.filters),
-      period: ([30, 90, 180].includes(saved?.period) ? saved.period : 30) as 30 | 90 | 180,
+      period: ([30, 60, 90, 180].includes(saved?.period) ? saved.period : 30) as 30 | 60 | 90 | 180,
     };
   } catch {
     return { filters: { ...emptyFilters }, draft: { ...emptyFilters }, period: 30 as const };

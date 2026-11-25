@@ -33,10 +33,20 @@ export {
 } from "./buyer-analysis";
 export type { OfferComparison, Observation as BuyerObservation } from "./buyer-analysis";
 export * from "./market-pressure";
+export type AvailablePressureReading = {
+  days: number;
+  score: number;
+  preliminary: boolean;
+  coverage: number;
+  active: number;
+  points: (number | null)[];
+};
 export type MarketStatsResponse = {
   buyerMarket?: {
     today: number;
     observations: import("./buyer-market").BuyerObservation[];
+    shorterPressure?: Record<string, AvailablePressureReading>;
+    monthlyPressure?: Record<string, { day: number; score: number; preliminary: boolean }[]>;
     pressureFrames?: import("./market-pressure").PressureFrame[];
   };
   minimumSampleSize?: number;
@@ -73,7 +83,7 @@ export type MarketStatsResponse = {
     newLast7Days: number;
     archivedLast30Days: number;
   };
-  periodDays: 30 | 90 | 180;
+  periodDays: 30 | 60 | 90 | 180;
   comparison: {
     newListings: number;
     previousNewListings: number;

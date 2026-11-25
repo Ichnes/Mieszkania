@@ -18,6 +18,7 @@ import {
   pressureKey,
   type BuyerObservation,
   type PressureFrame,
+  type AvailablePressureReading,
 } from "@mieszkania/shared";
 const number = (v: number) => v.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
 const percent = (v: number | null) => (v === null ? "Brak danych" : number(v) + "%");
@@ -99,6 +100,8 @@ function observations(rows: BuyerObservation[], today: number, days: number) {
   };
 }
 type Props = {
+  shorter?: AvailablePressureReading;
+  monthly: { day: number; score: number; preliminary: boolean }[];
   locations: ReactNode;
   frames: PressureFrame[];
   rows: BuyerObservation[];
@@ -111,6 +114,8 @@ type Props = {
   onDistrict: (d: string) => void;
 };
 export function PressureOverview({
+  shorter,
+  monthly,
   locations,
   frames,
   rows,
@@ -124,8 +129,10 @@ export function PressureOverview({
 }: Props) {
   const key = pressureKey(district, rooms, size);
   const model = calibratedPressure(frames, key, day);
+  const fallback = model.score === null ? shorter : undefined;
+  const shownScore = model.score ?? fallback?.score ?? null;
   const level =
-    model.score === null
+    shownScore === null
       ? null
       : [
           "Bardzo niska presja",
@@ -133,7 +140,7 @@ export function PressureOverview({
           "Typowa presja",
           "Wysoka presja",
           "Bardzo wysoka presja",
-        ][Math.min(4, Math.max(0, Math.ceil(model.score / 20) - 1))];
+        ][Math.min(4, Math.max(0, Math.ceil(shownScore / 20) - 1))];
   const data = useMemo(() => observations(rows, day, days), [rows, day, days]);
   const comparableFrames = frames.filter((f) => Boolean(f.replayed) === model.preliminary);
   const current = comparableFrames.find((f) => f.day === day)?.groups[key],
@@ -218,23 +225,42 @@ export function PressureOverview({
     <>
       <section className="pressure-lead" aria-label="Indeks presji na sprzedających">
         <div>
-          <p className="eyebrow">Indeks presji na sprzedających · {days} dni</p>
-          <h3>{level ?? "W kalibracji"}</h3>
-          <p>
-            {model.score === null
-              ? `Wcześniejsze porównywalne odczyty dla ${days} dni: ${model.months}. Wynik wstępny wymaga co najmniej dwóch, próby 5 ofert i pokrycia 70% wag.`
-              : "Względem wcześniejszych obserwacji tego samego segmentu."}
-          </p>
-          <SampleSizeIndicator
-            count={current?.active}
-            unit={model.preliminary ? "publikacji" : "mieszkań"}
-          />
-          <small>
-            {model.preliminary && model.score !== null ? "Wynik wstępny · " : ""}pokrycie wag{" "}
-            {model.coverage}%
-          </small>
+          <p className="eyebrow">Indeks presji na sprzedających · {fallback?.days ?? days} dni</p>
+          <h3>
+            {level ??
+              (data.down + data.up === 0
+                ? "Brak zapisanych korekt"
+                : data.down > data.up
+                  ? "Przeważały obniżki"
+                  : data.down < data.up
+                    ? "Przeważały podwyżki"
+                    : "Tyle samo obniżek i podwyżek")}
+          </h3>
+          {shownScore !== null ? (
+            <>
+              <p>
+                {fallback
+                  ? `Indeks za ${fallback.days} dni · najdłuższy dostępny zakres przy wyborze ${days} dni.`
+                  : "Względem wcześniejszych obserwacji tego samego segmentu."}
+              </p>
+              <SampleSizeIndicator
+                count={fallback?.active ?? current?.active}
+                unit={(fallback?.preliminary ?? model.preliminary) ? "publikacji" : "mieszkań"}
+              />
+              <small>
+                {(fallback?.preliminary ?? model.preliminary) && "Wynik wstępny · "}pokrycie wag{" "}
+                {fallback?.coverage ?? model.coverage}%
+              </small>
+            </>
+          ) : (
+            <p>
+              Ocena całego okresu wymaga wcześniejszych okien po {days} dni. Dostępne porównania:{" "}
+              {model.months}.
+            </p>
+          )}
         </div>
         <div>
+          {fallback && <SegmentedLinearGauge score={fallback.score} />}
           {model.score === null ? (
             <div className="pressure-changes">
               <small>Zarejestrowane zmiany cen · {days} dni</small>
@@ -268,6 +294,29 @@ export function PressureOverview({
             </>
           )}
         </div>
+        {monthly.length > 0 && (
+          <div className="monthly-pressure">
+            <h4>Indeks 30-dniowy w wybranym okresie</h4>
+            <div className="monthly-readings">
+              {monthly.map((r) => (
+                <div key={r.day}>
+                  <small>
+                    {new Date(r.day * 86400000).toLocaleDateString("pl-PL", {
+                      day: "numeric",
+                      month: "short",
+                      timeZone: "UTC",
+                    })}
+                  </small>
+                  <strong>
+                    {number(r.score)} <small>/ 100</small>
+                  </strong>
+                  <meter min={0} max={100} value={r.score} aria-label="Indeks 30-dniowy" />
+                  <small>{r.preliminary ? "Odczyt wstępny" : "Odczyt historyczny"}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
       <div className="buyer-summary">{metrics.slice(0, 3).map(renderMetric)}</div>
       <details className="buyer-method">
@@ -295,31 +344,35 @@ export function PressureOverview({
             presji widocznej w ogłoszeniach. Indeks nie mierzy popytu transakcyjnego.
           </p>
           <p>
-            Porównujemy ostatnie {days} dni z maksymalnie 12 wcześniejszymi zapisami tego samego
-            zakresu co 30 dni. Dłuższe okna mogą się nakładać. W serii docelowej każda składowa
-            wymaga sześciu historycznych porównań i co najmniej 5 aktywnych ofert w segmencie. Przy
-            pokryciu co najmniej 70% skalujemy dostępne wagi do 100%. Poniżej progu wynik pozostaje
-            niepełny. Wagi są robocze, a część sygnałów może być skorelowana.
+            Porównujemy ostatnie {fallback?.days ?? days} dni z maksymalnie 12 wcześniejszymi
+            zapisami tego samego zakresu co 30 dni. Dłuższe okna mogą się nakładać. W serii
+            docelowej każda składowa wymaga sześciu historycznych porównań i co najmniej 5 aktywnych
+            ofert w segmencie. Przy pokryciu co najmniej 70% skalujemy dostępne wagi do 100%.
+            Poniżej progu wynik pozostaje niepełny. Wagi są robocze, a część sygnałów może być
+            skorelowana.
           </p>
           <dl>
-            {model.components.map((p) => (
-              <div key={p.key}>
-                <dt>
-                  {p.label} · {p.weight}%
-                </dt>
-                <dd>
-                  {p.points === null
-                    ? "Brak oceny"
-                    : p.points.toLocaleString("pl-PL", {
-                        maximumFractionDigits: 1,
-                        signDisplay: "exceptZero",
-                      }) + " pkt"}
-                </dd>
-              </div>
-            ))}
+            {model.components.map((part, i) => {
+              const p = fallback ? { ...part, points: fallback.points[i] } : part;
+              return (
+                <div key={p.key}>
+                  <dt>
+                    {p.label} · {p.weight}%
+                  </dt>
+                  <dd>
+                    {p.points === null
+                      ? "Brak oceny"
+                      : p.points.toLocaleString("pl-PL", {
+                          maximumFractionDigits: 1,
+                          signDisplay: "exceptZero",
+                        }) + " pkt"}
+                  </dd>
+                </div>
+              );
+            })}
           </dl>
           <p>
-            Zmiana przez 30 dni · {delta(30)}　|　90 dni · {delta(90)}
+            Okno {days} dni · zmiana przez 30 dni · {delta(30)}　|　90 dni · {delta(90)}
           </p>
           {series.some((p) => p.value !== null) && (
             <ResponsiveContainer width="100%" height={170}>

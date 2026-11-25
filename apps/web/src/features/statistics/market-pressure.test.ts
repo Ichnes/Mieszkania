@@ -102,13 +102,13 @@ test("the selected observation window includes only price cuts and exits inside 
       [130, 90],
     ].filter(([d]) => i >= 5 || d <= 100) as [number, number][],
   }));
-  const readings = [30, 90, 180].map((days) => measurePressure(rows, 180, undefined, days));
+  const readings = [30, 60, 90, 180].map((days) => measurePressure(rows, 180, undefined, days));
   assert.deepEqual(
     readings.map((r) => r.values.cutFrequency),
-    [0, 0.5, 1],
+    [0, 1, 0.5, 1],
   );
   assert.deepEqual(
     readings.map((r) => r.values.persistence),
-    [1, 0.5, 0.5],
+    [1, 1, 0.5, 0.5],
   );
 });

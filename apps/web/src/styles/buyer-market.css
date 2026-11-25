@@ -678,3 +678,96 @@
   height: 100%;
   background: #47866d;
 }
+
+.monthly-pressure {
+  grid-column: 1/-1;
+  border-top: 1px solid var(--line);
+  padding-top: 0.8rem;
+}
+.monthly-pressure h4 {
+  margin: 0 0 0.6rem;
+}
+.monthly-readings {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem 1.25rem;
+}
+.monthly-readings > div {
+  display: grid;
+  gap: 0.18rem;
+  min-width: 6rem;
+}
+.monthly-readings strong small {
+  display: inline;
+}
+.monthly-readings meter {
+  width: 100%;
+  accent-color: var(--brand);
+}
+.pressure-lead .pressure-gauge + .pressure-changes {
+  border-top: 1px solid var(--line);
+  margin-top: 0.9rem;
+  padding-top: 0.7rem;
+}
+.pressure-lead .pressure-gauge + .pressure-changes strong {
+  font-size: 1.15rem;
+}
+.market-trends {
+  min-width: 0;
+  margin-block: 1.5rem;
+}
+.market-trends > .stats-card-heading {
+  align-items: end;
+}
+.analysis-selector {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 23rem;
+}
+.stats-segment-card > .analysis-selector {
+  margin-block: 0.5rem 1rem;
+}
+.stats-segment-card .quartile-track {
+  position: relative;
+  height: 5px;
+  margin: 0.8rem 0.35rem;
+  background: var(--line);
+}
+.stats-segment-card .quartile-track i {
+  position: absolute;
+  height: 100%;
+  background: var(--brand);
+}
+.stats-segment-card .quartile-track b {
+  position: absolute;
+  width: 3px;
+  height: 13px;
+  top: -4px;
+  background: var(--ink);
+  transform: translateX(-50%);
+}
+.budget-available b {
+  display: block;
+  font-size: 1.45rem;
+}
+.portal-reach {
+  align-self: start;
+}
+.portal-reach summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+.market-trends .stats-activity,
+.market-trends .buyer-card {
+  min-width: 0;
+}
+@media (max-width: 680px) {
+  .market-trends > .stats-card-heading {
+    display: grid;
+    align-items: start;
+    gap: 0.6rem;
+  }
+  .analysis-selector {
+    max-width: 100%;
+  }
+}

@@ -584,10 +584,12 @@ ogłoszeniowymi tych ofert, nie historyczną wyceną z dnia pierwszego wykrycia.
 
 Filtry statystyk i wybrany okres zapisują się automatycznie w tej przeglądarce.
 Komunikat **Niezastosowane zmiany** oznacza, że wyniki nadal odpowiadają ostatnio
-zatwierdzonym filtrom. W **Monitorze kupującego** przełącznik 30/90/180 dni zmienia
+zatwierdzonym filtrom. W **Monitorze kupującego** przełącznik 30/60/90/180 dni zmienia
 okno obliczeń indeksu presji. Każdy okres ma własną historię porównawczą. Gdy jest za
-krótka, panel pokazuje liczbę wcześniejszych odczytów oraz rzeczywiście zarejestrowane
-obniżki i podwyżki w wybranym okresie. Zmiany punktowe za 30 i 90 dni porównują
+krótka, panel wybiera najdłuższe z krótszych dostępnych okien dla tego samego segmentu.
+Nagłówek wskazuje rzeczywisty okres indeksu. Liczby obniżek i podwyżek obejmują zakres
+wybrany na stronie. Przy dłuższych okresach poniżej widać również dostępne odczyty
+indeksu 30-dniowego. Zmiany punktowe za 30 i 90 dni porównują
 odczyty indeksu obliczonego dla tego samego okna.
 **Więcej wskaźników** rozwija miary ekspozycji, zmian cen i podaży.
 Pod skrótem monitora wybór miary w rankingu dzielnic zmienia również skalę kolorów mapy.
@@ -596,6 +598,12 @@ cenę aktywnych ofert przypisanych do tej nazwy. **Cała Warszawa** przywraca wi
 Na telefonie ranking początkowo obejmuje pięć pozycji oraz wybraną dzielnicę.
 Kliknięcie mieszkania na liście pod heatmapą otwiera statystyki tego ogłoszenia.
 Zamknięcie szczegółów przywraca listę z tym samym segmentem i sortowaniem.
+W sekcji **Rynek w czasie** wybierz jeden z sześciu wykresów. Podpis wskazuje, czy
+analiza dotyczy całego zakresu filtrów strony, czy segmentu wybranego w monitorze.
+W **Strukturze ofert** wybierz wymiar, np. czynsz. Grupy mają wspólną skalę cen za m².
+Odcinek pokazuje kwartyle, a pionowa kreska medianę ceny ofertowej.
+W **Ile mieszkań mieści się w budżecie?** wpisz kwotę całkowitą i rezerwę na dodatki.
+Licznik pokazuje dopasowania wśród aktywnych ofert ze znaną ceną po odjęciu rezerwy.
 W podsumowaniu rynku odsetek obniżek dotyczy wszystkich aktywnych ofert.
 Monitor porównuje kolejne udokumentowane ceny ofert ze znaną ceną odniesienia.
 W **Ustaw analizowany rynek** można zaznaczyć **Komórka / piwnica** oraz wybrać

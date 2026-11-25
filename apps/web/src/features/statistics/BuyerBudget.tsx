@@ -4,7 +4,11 @@ import { PriceInput } from "../../shared/components/PriceInput";
 export function BuyerBudget({ active, today }: { active: BuyerObservation[]; today: number }) {
   const [budget, setBudget] = useState<number>(),
     [extras, setExtras] = useState<number>();
-  const matches = budget ? active.filter((r) => r.price <= budget - (extras ?? 0)) : [];
+  const available = Math.max(0, (budget ?? 0) - (extras ?? 0));
+  const priced = active.filter((r) => Number.isFinite(r.price) && r.price > 0);
+  const matches = priced.filter((r) => r.price <= available);
+  const medianArea = buyerMedian(matches.map((r) => r.area).filter((a) => a > 0));
+
   return (
     <article className="buyer-card">
       <p className="eyebrow">Twój rynek</p>
@@ -25,22 +29,37 @@ export function BuyerBudget({ active, today }: { active: BuyerObservation[]; tod
           </span>
         </label>
       </div>
-      {budget ? (
+      {budget !== undefined ? (
         <>
+          <p className="budget-available">
+            Na cenę mieszkania po odjęciu rezerwy <b>{available.toLocaleString("pl-PL")} zł</b>
+          </p>
           <div className="buyer-headline">
             <strong>
-              {matches.length} / {active.length}
+              {matches.length} / {priced.length}
             </strong>
-            <span>aktywnych ofert w budżecie</span>
+            <span>aktywnych ofert ze znaną ceną w budżecie</span>
           </div>
           <p>
-            {matches.filter((r) => r.start > today - 7).length} wykryto w ostatnich 7 dniach.{" "}
-            {matches.length > 0 &&
-              `Mediana dostępnego metrażu: ${buyerMedian(matches.map((r) => r.area))!.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} m².`}
+            {!active.length ? (
+              "Brak aktywnych ofert w wybranym segmencie."
+            ) : !priced.length ? (
+              "Aktywne oferty w tym segmencie nie mają zapisanej ceny."
+            ) : !matches.length ? (
+              "Żadna znana cena ofertowa w tym segmencie nie mieści się w dostępnej kwocie."
+            ) : (
+              <>
+                {matches.filter((r) => r.start > today - 7).length} wykryto w ostatnich 7 dniach.
+                {medianArea !== null &&
+                  ` Mediana dostępnego metrażu: ${medianArea.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} m².`}
+              </>
+            )}
           </p>
         </>
       ) : (
-        <p>Podaj budżet zakupu, aby sprawdzić wybrany segment.</p>
+        <p>
+          Wpisz budżet całkowity. Możesz odłożyć część kwoty na parking, komórkę lub inne dodatki.
+        </p>
       )}
     </article>
   );
