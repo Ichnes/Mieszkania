@@ -57,9 +57,10 @@ export function formatPriceEvent(event: ListingDetail["priceHistory"][number]) {
     minute: "2-digit",
   });
 
-  if (event.eventType === "created") {
-    return `${dateLabel}: dodanie oferty${event.newPriceAmount ? `, cena startowa ${formatPln(event.newPriceAmount)}` : ""}`;
-  }
+  if (event.eventType === "published")
+    return `${dateLabel} · Publikacja tego ogłoszenia${event.sourceLabel ? ` · ${event.sourceLabel}` : ""}`;
+  if (event.eventType === "created")
+    return `${dateLabel} · Pierwszy zapis w aplikacji${event.newPriceAmount ? ` · ${formatPln(event.newPriceAmount)}` : ""}`;
 
   if (event.eventType === "price_drop") {
     return `${dateLabel}: obniżka ceny z ${formatOptionalPln(event.previousPriceAmount)} do ${formatOptionalPln(event.newPriceAmount)}${event.sourceLabel ? ` · portal: ${event.sourceLabel}` : ""}`;
@@ -70,11 +71,11 @@ export function formatPriceEvent(event: ListingDetail["priceHistory"][number]) {
   }
 
   if (event.eventType === "relisted") {
-    return `${dateLabel}: oferta pojawila sie ponownie${event.newPriceAmount ? `, cena ${formatPln(event.newPriceAmount)}` : ""}`;
+    return `${dateLabel} · Ponownie odnotowano ofertę${event.newPriceAmount ? ` · ${formatPln(event.newPriceAmount)}` : ""}`;
   }
 
   if (event.eventType === "removed") {
-    return `${dateLabel}: oferta zniknela z portalu`;
+    return `${dateLabel} · Odnotowano zniknięcie oferty z portalu`;
   }
 
   return `${dateLabel}: ${event.eventType}${event.newPriceAmount ? `, cena ${formatPln(event.newPriceAmount)}` : ""}`;

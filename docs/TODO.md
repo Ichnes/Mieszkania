@@ -1,5 +1,10 @@
 # Bieżące zadania
 
+## Historia wcześniejszych wystawień (2026-11-25)
+
+- [x] Rozdzielono w szczegółach publikację na portalu i datę pierwszego zapisu w aplikacji. Historia wskazuje najwcześniejszą powiązaną archiwalną ofertę oraz pozwala otworzyć pozostałe. Uwzględniono starszych członków grup duplikatów i zapisane łańcuchy ponownych wystawień.
+- [x] Chromium przy szerokościach 390, 1280 i 1680 px potwierdził publikację archiwalną z 6 maja, daty listopadowej publikacji i zapisu oraz otwarcie historii archiwalnej. Przeszły 382 testy API i 161 web, a osobno również test PostgreSQL dla łańcuchów, cykli i źródeł dat. Historia obejmuje powiązania już zapisane w bazie.
+
 ## Filtry, RCN, okolica i audyt do 3900 ogłoszeń (2026-11-25)
 
 - [x] Cztery kolejne rozłączne próby obejmowały 500, 500, 300 i 600 ogłoszeń. Razem z wcześniejszymi zapisami potwierdzono 3900 unikalnych identyfikatorów. W ostatniej próbie wszystkie rekordy były archiwalne, osiem bez opisu. Sprawdzono pola, adresy, pinezki, koszty, 272 grupy duplikatów (1202 pary) i 85 powiązań lub propozycji ponownego wystawienia. Prywatne wyniki znajdują się w katalogach partii w `.local/runs/2026-11-25-audyt/`.

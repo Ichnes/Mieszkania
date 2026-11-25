@@ -81,6 +81,7 @@ import {
   inferWarsawDistrictFromAddressDescription,
 } from "./listing-title-location";
 import { getListingViewing } from "./listing-viewings";
+import { getEarlierPublications } from "./earlier-publications";
 
 const representativeRelistingJoin = `
   left join lateral (
@@ -615,23 +616,31 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
       return null;
     }
 
-    const [images, priceHistoryResult, viewing, contactHistory, relatedListings, aiAssessments] =
-      await Promise.all([
-        getListingImages(row.id),
-        db.query<PriceEventRow>(
-          `
+    const [
+      images,
+      priceHistoryResult,
+      viewing,
+      contactHistory,
+      relatedListings,
+      aiAssessments,
+      earlierPublications,
+    ] = await Promise.all([
+      getListingImages(row.id),
+      db.query<PriceEventRow>(
+        `
           select listing_id, event_type, previous_price_amount::text, new_price_amount::text, changed_at::text, source_label, source_url
           from price_events
           where listing_id = $1
           order by changed_at asc
         `,
-          [listingId],
-        ),
-        getListingViewing(listingId),
-        listListingContactEvents(db, listingId),
-        getRelatedListings(listingId),
-        getAiAssessments([listingId]),
-      ]);
+        [listingId],
+      ),
+      getListingViewing(listingId),
+      listListingContactEvents(db, listingId),
+      getRelatedListings(listingId),
+      getAiAssessments([listingId]),
+      getEarlierPublications(db, listingId),
+    ]);
 
     const resolvedImages = images
       .map((image) => ({
@@ -676,6 +685,9 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     }
     return {
       ...detail,
+      earlierPublications,
+      publishedAt: row.published_at ? new Date(row.published_at).toISOString() : undefined,
+      firstSeenAt: row.first_seen_at ? new Date(row.first_seen_at).toISOString() : undefined,
       descriptionDiscrepancies: discrepancies,
       aiAssessment: aiAssessments.get(listingId),
       canonicalUrl: row.canonical_url,
@@ -699,7 +711,7 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
         eventType: event.event_type,
         sourceLabel: event.source_label ?? undefined,
         sourceUrl: event.source_url ?? undefined,
-        changedAt: event.changed_at,
+        changedAt: new Date(event.changed_at).toISOString(),
         previousPriceAmount: event.previous_price_amount
           ? Number(event.previous_price_amount)
           : undefined,

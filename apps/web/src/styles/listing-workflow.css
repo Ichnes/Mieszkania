@@ -444,6 +444,22 @@
   border-radius: 16px;
   background: var(--surface);
 }
+.publication-history-archive {
+  margin-block: 0.6rem;
+  padding-inline-start: 0.8rem;
+  border-inline-start: 3px solid var(--brand-strong);
+}
+.publication-history-entry {
+  display: grid;
+  justify-items: start;
+  gap: 0.25rem;
+  margin-block: 0.4rem;
+  overflow-wrap: anywhere;
+}
+.publication-history-entry button {
+  color: var(--brand-strong);
+  text-decoration: underline;
+}
 .duplicate-candidate-card {
   padding: 14px;
   border: 1px solid var(--line);

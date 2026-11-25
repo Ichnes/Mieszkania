@@ -661,6 +661,8 @@ dostatecznie podobne. Archiwalna oferta musi poprzedzać obecną. Samo podobień
 dzielnicy nie wystarcza. Sprzeczne piętra lub numery budynków wykluczają automatyczne
 połączenie; przy mocnej zgodności opisu para może trafić do ręcznej weryfikacji.
 
+W szczegółach **Historia ogłoszenia i ceny** pokazuje osobno datę publikacji podaną przez portal i pierwszy zapis ceny w aplikacji. Jeśli to samo mieszkanie ma starszą archiwalną ofertę w połączonej grupie lub w historii ponownych wystawień, zobaczysz jej najwcześniejszą znaną datę, portal i przycisk **Otwórz archiwalne ogłoszenie**. Przy braku daty publikacji aplikacja podaje datę pierwszej obserwacji. Wstępne propozycje dopasowania są dostępne osobno do sprawdzenia.
+
 Karty pokazują zdjęcia, obie ceny, adresy, parametry, daty i powody podobieństwa. Kliknięcie
 zdjęcia lub tytułu otwiera szczegóły nad bieżącą listą. W szczegółach można przeglądać
 i powiększać zdjęcia. Zamknięcie szczegółów zachowuje zakładkę, filtry, stronę i pozycję

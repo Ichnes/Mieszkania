@@ -47,7 +47,8 @@ import { isValidMapPoint } from "../../map/lib/geometry";
 import { buildOsmSearchHref } from "../../map/lib/links";
 import { ListingTransitMap } from "../../map/ListingTransitMap";
 import { MortgageQuickPreview } from "../../mortgage/MortgageQuickPreview";
-import { createEmptyContactEventDraft, formatContactEvent, formatPriceEvent } from "../lib/contact";
+import { createEmptyContactEventDraft, formatContactEvent } from "../lib/contact";
+import { ListingPriceHistory } from "./ListingPriceHistory";
 import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
@@ -1399,23 +1400,7 @@ export function ListingDetailPanel(input: {
               </div>
             </details>
 
-            <div className="result-box detail-sidebar-box">
-              <strong>Historia cen w ogłoszeniu</strong>
-              {input.listing.priceHistory.length > 0 ? (
-                <ul className="result-list">
-                  {[...input.listing.priceHistory]
-                    .sort(
-                      (left, right) =>
-                        new Date(right.changedAt).getTime() - new Date(left.changedAt).getTime(),
-                    )
-                    .map((event, index) => (
-                      <li key={`${event.changedAt}-${index}`}>{formatPriceEvent(event)}</li>
-                    ))}
-                </ul>
-              ) : (
-                <p className="muted">Brak zapisanej historii zmian ceny.</p>
-              )}
-            </div>
+            <ListingPriceHistory listing={input.listing} onOpen={input.onOpenRelatedListing} />
 
             {activeDetailTab === "overview" && (
               <div className="result-box detail-sidebar-box detail-potential-duplicates">

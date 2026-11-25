@@ -461,6 +461,12 @@ export {
 } from "./description-context.js";
 
 export type ListingDetail = ListingSummary & {
+  earlierPublications?: Array<{
+    id: string;
+    source: string;
+    knownSince: string;
+    dateOrigin: "portal" | "first_seen";
+  }>;
   descriptionDiscrepancies?: string[];
   aiAssessment?: AiAssessment;
   floorPlanImageUrls?: string[];
