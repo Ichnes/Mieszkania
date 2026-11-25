@@ -1,5 +1,12 @@
 # Bieżące zadania
 
+## Codzienne przeglądanie ofert (2026-11-25)
+
+- [x] Przejrzano siedem głównych widoków w lokalnym Chromium przy szerokościach 1680, 1280 i 390 px. W sprawdzonych widokach nie było poziomego przewijania całej strony. Na telefonie sprawdzono przejście do listy, otwarcie szczegółów i powrót na poprzednią pozycję.
+- [ ] Propozycja: umożliwić przejście z liczników nowych ofert i zmian cen do wyników dla wybranego okresu, z zachowaniem zasad liczenia podsumowania.
+- [ ] Propozycja: pokazać zakres wyświetlanych wyników i łączną liczbę dopasowań w nagłówku listy. Obecny licznik pokazuje liczbę kart na stronie.
+- [ ] Propozycja: na telefonie umieścić tytuł, lokalizację i cenę nad zdjęciem. Na ekranie 390 × 844 px pierwszy tytuł pojawił się około 1137 px od początku strony.
+
 ## Dopłata do garażu i nazwy dzielnic w opisie (2026-11-23)
 
 - [x] Potwierdzono, że API dolicza 25 000 zł za komórkę i pomija zapis `50,000 PLN` za miejsce postojowe. Wyróżnianie kierunków obejmuje nazwy Praga-Północ i Praga-Południe w opisach ze wzmianką o ekspozycji.
