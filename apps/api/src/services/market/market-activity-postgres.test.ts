@@ -17,7 +17,8 @@ test(
         (2,'Warszawa',date_trunc('week',now())-interval '12 days',null,'active',500000,50),
         (3,'Warszawa',now()-interval '60 days',date_trunc('week',now())-interval '10 days','removed',1500000,50),
         (4,'Warszawa',now()-interval '60 days',null,'active',0,0);
-      insert into price_events values (1,1,date_trunc('week',now())-interval '2 days',1000000,500000);`);
+      insert into price_events values (1,1,date_trunc('week',now())-interval '2 days',1000000,500000),
+        (2,2,date_trunc('week',now())-interval '12 days',500000,null);`);
       const rows = (await db.query(marketActivitySql("true", 90))).rows;
       const current = rows.at(-1);
       const previous = rows.at(-2);

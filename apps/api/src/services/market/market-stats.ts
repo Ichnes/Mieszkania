@@ -1,4 +1,5 @@
 import { marketActivitySql } from "./market-activity";
+import { getBuyerMarket } from "./buyer-market";
 import { normalizeMarketLocation, marketLocationJoinSql } from "./market-locations";
 import {
   mapPriceSample,
@@ -24,6 +25,7 @@ import { hasExposureFilter, normalizeExposureDirections } from "@mieszkania/shar
 const cachedStats = createStatsCache<MarketStatsResponse>();
 
 export type MarketStatsQuery = {
+  buyer?: string;
   minYear?: string;
   minArea?: string;
   maxArea?: string;
@@ -37,6 +39,7 @@ export type MarketStatsQuery = {
 export async function getMarketStats(query: MarketStatsQuery): Promise<MarketStatsResponse> {
   const { searchContract } = await getFamilySettings();
   const key = JSON.stringify([
+    query.buyer === "1",
     searchContract,
     query.period ?? "90",
     query.minYear ?? "",
@@ -102,6 +105,7 @@ async function computeMarketStats(
       boundaries,
       signals,
       propertySegments,
+      buyerMarket,
     ] = await Promise.all([
       db.query<{
         active: string;
@@ -147,6 +151,7 @@ async function computeMarketStats(
         archived_listings: string;
         median_price: string | null;
         average_price: string | null;
+        active_median: string | null;
       }>(marketActivitySql(aliasedStatsFilters, periodDays)),
       db.query<{ label: string; count: string } & PriceSampleRow>(
         `select bucket.label, count(*)::text count from (select case when l.price_amount/nullif(l.area_sqm,0) < 15000 then 'poniżej 15 tys.' when l.price_amount/nullif(l.area_sqm,0) < 18000 then '15–18 tys.' when l.price_amount/nullif(l.area_sqm,0) < 21000 then '18–21 tys.' when l.price_amount/nullif(l.area_sqm,0) < 24000 then '21–24 tys.' when l.price_amount/nullif(l.area_sqm,0) < 28000 then '24–28 tys.' else '28 tys. i więcej' end label, case when l.price_amount/nullif(l.area_sqm,0) < 15000 then 1 when l.price_amount/nullif(l.area_sqm,0) < 18000 then 2 when l.price_amount/nullif(l.area_sqm,0) < 21000 then 3 when l.price_amount/nullif(l.area_sqm,0) < 24000 then 4 when l.price_amount/nullif(l.area_sqm,0) < 28000 then 5 else 6 end position from listings l where lower(l.city)='warszawa' and l.first_seen_at >= now()-make_interval(days => ${periodDays}) and l.price_amount>0 and l.area_sqm > 0 and ${aliasedStatsFilters}) bucket group by bucket.label order by min(bucket.position)`,
@@ -183,6 +188,9 @@ async function computeMarketStats(
       ),
       getMarketSignals(db, aliasedStatsFilters, periodDays, locationMapping),
       getMarketPropertySegments(db, aliasedStatsFilters, periodDays),
+      query.buyer === "1"
+        ? getBuyerMarket(db, aliasedStatsFilters, locationMapping, periodDays)
+        : undefined,
     ]);
     const t = totals.rows[0] ?? ({} as any);
     const c = comparison.rows[0] ?? ({} as any);
@@ -210,6 +218,7 @@ async function computeMarketStats(
       minimumSampleSize: MIN_MARKET_SAMPLE,
       scope: { ...searchContract, minArea, maxArea: maxArea > 0 ? maxArea : undefined },
       signals,
+      buyerMarket,
       totals: {
         active: Number(t.active ?? 0),
         archived: Number(t.archived ?? 0),
@@ -277,6 +286,7 @@ async function computeMarketStats(
         archivedListings: Number(row.archived_listings ?? 0),
         medianPricePerSqm: row.median_price === null ? null : Number(row.median_price),
         averagePricePerSqm: row.average_price === null ? null : Number(row.average_price),
+        activeMedianPricePerSqm: row.active_median === null ? null : Number(row.active_median),
       })),
       priceDistribution: distribution.rows.map((row) => ({
         label: row.label,

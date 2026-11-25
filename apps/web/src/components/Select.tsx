@@ -37,6 +37,7 @@ export function Select({
     });
   const id = useId();
   const trigger = useRef<HTMLButtonElement>(null);
+  const openedAt = useRef<DOMRect | null>(null);
   const menu = useRef<HTMLDivElement>(null);
   const typeahead = useRef({ text: "", at: 0 });
   const selected = Math.max(
@@ -57,6 +58,7 @@ export function Select({
   useLayoutEffect(() => {
     if (!open || !trigger.current) return;
     const rect = trigger.current.getBoundingClientRect();
+    openedAt.current = rect;
     const below = window.innerHeight - rect.bottom - 12;
     const above = rect.top - 12;
     const upward = below < 180 && above > below;
@@ -86,7 +88,15 @@ export function Select({
         close();
     };
     const scroll = (event: Event) => {
-      if (!menu.current?.contains(event.target as Node)) close();
+      if (menu.current?.contains(event.target as Node)) return;
+      const rect = trigger.current?.getBoundingClientRect(),
+        anchor = openedAt.current;
+      if (
+        rect &&
+        anchor &&
+        (Math.abs(rect.top - anchor.top) > 1 || Math.abs(rect.left - anchor.left) > 1)
+      )
+        close();
     };
     document.addEventListener("pointerdown", outside);
     window.addEventListener("resize", close);

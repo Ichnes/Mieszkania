@@ -1,5 +1,13 @@
 # Bieżące zadania
 
+## Monitor kupującego i porównania na karcie mieszkania (2026-11-25)
+
+- [x] Dodano porównania aktywnych mieszkań, przesłanki negocjacyjne i przejście z rankingu do oferty. W szczegółach mieszkania otwartego z dashboardu zakładka Statystyki obok Przeglądu pokazuje rozkład cen, wielkość próby i zakres dopasowania.
+- [x] Statystyki obejmują indeks powtarzanych cen, krzywe ekspozycji i pierwszej obniżki, wyniki aktywnych i archiwalnych, kwartyle ekspozycji, mapę segmentów, budżet kupującego i obecność mieszkania na portalach. Wykres historyczny korzysta z udokumentowanych cen.
+- [x] Porównanie zbiorów w bazie używanej przez API dało 2857 wspólnych ofert oraz wyłącznie na dashboardzie 119 poniżej dolnej granicy ceny i 4 bez liczby pokoi.
+- [x] Zakładka oferty pokazuje półkolisty wskaźnik pozycji ceny za m², wyrównane kwoty zakupu, historię ceny i rozwijaną listę podobnych mieszkań. Menu wyboru w Statystykach obsługują dotyk i klawiaturę.
+- [x] Przeszło 385 testów API i 164 web. Osobno przeszedł test PostgreSQL dotyczący cen historycznych. Chromium sprawdził przejścia Przegląd → Statystyki → Przegląd, listę porównań cenowych, wskaźnik i menu Statystyk przy 390, 1280 i 1680 px. Sprawdzono małą próbę 6 mieszkań i ofertę z rankingu o wystarczającej liczebności.
+
 ## Kliknięcie bezpośrednio w mapę MSI (2026-11-25)
 
 - [x] Wyłączono skalowanie naciskanych wielokątów, ustabilizowano wymiary mapy i usunięto prostokątny obrys. Obszar zmienia wypełnienie, a fokus klawiatury podąża za granicą obszaru. Etykieta na mapie pojawia się tylko w pełnym ekranie.

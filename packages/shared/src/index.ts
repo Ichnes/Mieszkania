@@ -24,7 +24,16 @@ export type MarketSegment = {
   upperQuartilePricePerSqm: number | null;
 };
 
+export {
+  compareListings,
+  cuts as buyerPriceCuts,
+  exposure as buyerExposure,
+  trend as buyerTrend,
+  median as buyerMedian,
+} from "./buyer-analysis";
+export type { OfferComparison, Observation as BuyerObservation } from "./buyer-analysis";
 export type MarketStatsResponse = {
+  buyerMarket?: { today: number; observations: import("./buyer-market").BuyerObservation[] };
   minimumSampleSize?: number;
   scope?: {
     city: string;
@@ -98,6 +107,7 @@ export type MarketStatsResponse = {
     archivedListings: number;
     medianPricePerSqm: number | null;
     averagePricePerSqm: number | null;
+    activeMedianPricePerSqm?: number | null;
   }>;
   priceDistribution: Array<{ label: string; count: number; sharePercent: number }>;
   segments: {

@@ -16,6 +16,7 @@ import type {
 import {
   Archive,
   Calculator,
+  ChartColumn,
   ChevronLeft,
   ChevronRight,
   ClipboardCheck,
@@ -49,6 +50,7 @@ import { ListingTransitMap } from "../../map/ListingTransitMap";
 import { MortgageQuickPreview } from "../../mortgage/MortgageQuickPreview";
 import { createEmptyContactEventDraft, formatContactEvent } from "../lib/contact";
 import { ListingPriceHistory } from "./ListingPriceHistory";
+import { ListingMarketComparison } from "./ListingMarketComparison";
 import { ListingBadgeRow } from "./ListingBadgeRow";
 import { ListingDescription } from "./ListingDescription";
 import { ListingParcelCard } from "./ListingParcelCard";
@@ -182,7 +184,7 @@ export function ListingDetailPanel(input: {
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
   const [activeDetailTab, setActiveDetailTab] = useState<
-    "overview" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates"
+    "overview" | "statistics" | "manual" | "contact" | "features" | "score" | "ai" | "duplicates"
   >("overview");
   const [linkCopyStatus, setLinkCopyStatus] = useState("");
   const [unmergeSuccess, setUnmergeSuccess] = useState("");
@@ -695,6 +697,14 @@ export function ListingDetailPanel(input: {
                 <LayoutDashboard size={16} aria-hidden="true" /> <span>Przegląd</span>
               </button>
               <button
+                type="button"
+                className={tabClass(activeDetailTab === "statistics")}
+                aria-pressed={activeDetailTab === "statistics"}
+                onClick={() => setActiveDetailTab("statistics")}
+              >
+                <ChartColumn size={16} aria-hidden="true" /> <span>Statystyki</span>
+              </button>
+              <button
                 className={tabClass(activeDetailTab === "manual")}
                 type="button"
                 onClick={() => setActiveDetailTab("manual")}
@@ -737,6 +747,13 @@ export function ListingDetailPanel(input: {
               <ListingAiAssessment
                 assessment={input.listing.aiAssessment}
                 currentPrice={input.listing.totalAcquisitionPrice}
+              />
+            )}
+            {activeDetailTab === "statistics" && (
+              <ListingMarketComparison
+                key={input.listing.id}
+                id={input.listing.id}
+                acquisitionPrice={input.listing.totalAcquisitionPrice}
               />
             )}
             {activeDetailTab === "duplicates" && (

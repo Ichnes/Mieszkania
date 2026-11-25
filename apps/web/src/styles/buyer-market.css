@@ -1,0 +1,417 @@
+.buyer-monitor {
+  margin: 1.4rem 0;
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.buyer-monitor-head,
+.buyer-control,
+.buyer-chart-key,
+.buyer-axis,
+.buyer-headline {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.buyer-monitor-head,
+.buyer-axis {
+  justify-content: space-between;
+}
+.buyer-portal-bars {
+  display: grid;
+  gap: 0.65rem;
+  margin: 1rem 0;
+}
+.buyer-portal-bars div {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: baseline;
+  gap: 0.25rem 0.65rem;
+}
+.buyer-portal-bars span {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+}
+.buyer-portal-bars progress {
+  grid-column: 1/-1;
+  width: 100%;
+  height: 5px;
+  accent-color: var(--brand);
+}
+.buyer-control input {
+  max-width: 100%;
+  width: 11rem;
+}
+.buyer-card .buyer-chart-key .buyer-cut-key {
+  color: #ab601c;
+}
+:root[data-theme="dark"] .buyer-card .buyer-chart-key .buyer-cut-key {
+  color: #e9a75d;
+}
+.buyer-monitor-head h2,
+.buyer-card h3 {
+  margin: 0.2rem 0 0.5rem;
+  letter-spacing: -0.025em;
+}
+.buyer-control label {
+  display: grid;
+  gap: 0.25rem;
+}
+.buyer-control label,
+.buyer-card label,
+.buyer-card small,
+.buyer-monitor details,
+.buyer-axis {
+  font-size: 0.8rem;
+}
+.buyer-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: var(--surface-muted);
+  border-block: 1px solid var(--line);
+}
+.buyer-summary div {
+  padding: 1rem;
+  display: grid;
+  align-content: space-between;
+  gap: 0.45rem;
+}
+.buyer-summary b,
+.buyer-headline strong {
+  font-size: clamp(1.35rem, 2.1vw, 2.15rem);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.04em;
+}
+.buyer-summary em {
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  font-style: normal;
+}
+.buyer-plot-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.buyer-card {
+  min-width: 0;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: clamp(0.9rem, 2vw, 1.5rem);
+}
+.buyer-card h4 {
+  margin: 0.8rem 0 0.25rem;
+}
+.buyer-card .recharts-cartesian-grid line {
+  stroke: var(--line);
+}
+.buyer-card .recharts-cartesian-axis-tick text {
+  fill: var(--ink-soft);
+  font-size: 11px;
+}
+.buyer-card small,
+.buyer-axis {
+  color: var(--ink-soft);
+}
+.buyer-chart-key {
+  gap: 0.8rem;
+  font-weight: 650;
+  font-size: 0.8rem;
+  min-height: 1.8rem;
+}
+.buyer-chart-key span:first-child {
+  color: var(--brand);
+}
+.buyer-chart-key span + span {
+  color: var(--ink);
+}
+.buyer-heat-scroll {
+  overflow: auto;
+  max-height: 390px;
+  scrollbar-width: thin;
+  margin: 0.8rem 0;
+}
+.buyer-heat {
+  width: 100%;
+  border-spacing: 3px;
+  font-size: 0.76rem;
+}
+.buyer-heat th {
+  text-align: left;
+}
+.buyer-heat thead th {
+  position: sticky;
+  top: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.buyer-heat button {
+  border: 0;
+  border-radius: 4px;
+  width: 100%;
+  padding: 0.35rem 0.2rem;
+  font: inherit;
+  color: var(--ink);
+  font-weight: 700;
+  cursor: pointer;
+}
+.buyer-heat button[aria-pressed="true"] {
+  outline: 2px solid var(--brand);
+  outline-offset: -2px;
+}
+.buyer-heat small,
+.buyer-list small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: normal;
+}
+.buyer-list {
+  margin: 0.6rem 0;
+}
+.buyer-list a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
+  text-decoration: none;
+}
+.buyer-list a:hover b {
+  text-decoration: underline;
+}
+.buyer-list a > strong {
+  white-space: nowrap;
+  color: var(--brand);
+}
+.offer-comparison {
+  margin-block: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 235px), 1fr));
+  gap: 1rem;
+  align-items: center;
+}
+.offer-analysis-heading,
+.offer-peers {
+  grid-column: 1/-1;
+}
+.offer-analysis-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.offer-analysis-heading h3,
+.offer-analysis-heading p {
+  margin: 0;
+}
+.offer-analysis-heading p {
+  margin-bottom: 0.25rem;
+}
+.offer-delta {
+  font-size: 0.85rem;
+  font-weight: 650;
+  color: var(--ink-soft);
+}
+.offer-price-gauge {
+  margin: 0;
+  padding: clamp(0.75rem, 2vw, 1.25rem);
+  min-width: 0;
+  text-align: center;
+  border-radius: 14px;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, #68a98e 13%, var(--surface)),
+    var(--surface-muted)
+  );
+}
+.offer-price-gauge figcaption {
+  display: grid;
+  gap: 0.2rem;
+}
+.offer-price-gauge figcaption span {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+}
+.offer-price-gauge figcaption strong {
+  font-size: clamp(1.5rem, 2.7vw, 2.4rem);
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+.offer-price-gauge figcaption small {
+  font-size: 0.8rem;
+  letter-spacing: 0;
+}
+.offer-price-gauge svg {
+  display: block;
+  width: 100%;
+  max-width: 350px;
+  margin: 0.5rem auto 0.25rem;
+  overflow: visible;
+}
+.offer-price-gauge svg text {
+  fill: var(--ink-soft);
+  font-size: 14px;
+  font-weight: 600;
+}
+.offer-price-gauge g[role="button"] {
+  cursor: pointer;
+  scale: none;
+  transition: none;
+  outline: none;
+}
+.offer-price-gauge g:focus-visible path:first-child {
+  stroke-width: 26;
+}
+.offer-price-gauge p {
+  font-size: 0.77rem;
+  margin: 0.35rem 0 0;
+  color: var(--ink-soft);
+}
+.gauge-readout {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  font-size: 0.86rem;
+  min-height: 2em;
+}
+.gauge-readout i {
+  width: 1px;
+  height: 0.9em;
+  background: var(--line);
+  margin-inline: 0.2rem;
+}
+.offer-ledger h4 {
+  font-size: 0.9rem;
+  margin: 1rem 0 0.25rem;
+}
+.offer-ledger h4:first-child {
+  margin-top: 0;
+}
+.offer-ledger dl {
+  margin: 0;
+}
+.offer-ledger dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.7rem;
+  padding: 0.36rem 0;
+  align-items: baseline;
+}
+.offer-ledger dt {
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+}
+.offer-ledger dd {
+  margin: 0;
+  text-align: right;
+  font-size: 0.89rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+.offer-ledger dd small,
+.offer-peers a small {
+  display: block;
+  font-weight: 400;
+}
+.offer-ledger dl > div.ledger-total {
+  border-top: 1px solid var(--line);
+  margin-top: 0.15rem;
+  padding-top: 0.5rem;
+}
+.offer-ledger .ledger-total dd {
+  font-size: 1.15rem;
+}
+.offer-ledger ul {
+  padding-inline-start: 1.15rem;
+  font-size: 0.83rem;
+}
+.offer-peers {
+  border-top: 1px solid var(--line);
+  padding-top: 0.7rem;
+  font-size: 0.85rem;
+}
+.offer-peers summary {
+  cursor: pointer;
+  font-weight: 650;
+}
+.offer-peers summary span {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+  margin-left: 0.3rem;
+}
+.offer-peers a span {
+  text-align: right;
+}
+.buyer-card .listing-select-trigger,
+.buyer-control .listing-select-trigger,
+.stats-week-selection .listing-select-trigger {
+  min-height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  padding: 0.55rem 0.8rem;
+  box-shadow: none;
+}
+.buyer-card label:has(.listing-select-trigger),
+.stats-week-selection label:has(.listing-select-trigger) {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 100%;
+  font-weight: 600;
+}
+.buyer-control label:has(.listing-select-trigger) {
+  min-width: 9rem;
+}
+@media (max-width: 700px) {
+  .offer-comparison {
+    grid-template-columns: 1fr;
+  }
+  .buyer-control {
+    width: 100%;
+  }
+  .buyer-control label:has(.listing-select-trigger) {
+    min-width: 0;
+    flex: 1;
+  }
+}
+.buyer-axis {
+  padding-block: 0.3rem;
+}
+.buyer-headline {
+  gap: 0.55rem;
+  align-items: baseline;
+}
+@media (max-width: 950px) {
+  .buyer-plot-grid {
+    grid-template-columns: 1fr;
+  }
+  .buyer-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 540px) {
+  .buyer-control {
+    gap: 0.5rem;
+  }
+  .buyer-summary div {
+    padding: 0.7rem;
+  }
+  .buyer-heat {
+    font-size: 0.7rem;
+  }
+  .buyer-card {
+    border-radius: 12px;
+  }
+  .buyer-control select {
+    max-width: 52vw;
+  }
+}

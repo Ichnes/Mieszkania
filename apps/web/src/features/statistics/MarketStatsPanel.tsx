@@ -2,14 +2,16 @@ import type { MarketStatsResponse } from "@mieszkania/shared";
 import { ChevronRight, LoaderCircle } from "lucide-react";
 import { Fragment, lazy, Suspense, useState } from "react";
 import { StatsDistrictMap } from "./StatsDistrictMap";
-import { MarketStatsFilters } from "./types";
+import { hasActiveMarketFilters, type MarketStatsFilters } from "./types";
 
 export const MarketActivityChart = lazy(() => import("./MarketActivityChart"));
+const BuyerMarketPanel = lazy(() => import("./BuyerMarketPanel"));
 
 export function MarketStatsPanel({
   stats,
   loading,
   baseline,
+  filters,
 }: {
   stats: MarketStatsResponse | null;
   loading: boolean;
@@ -133,7 +135,9 @@ export function MarketStatsPanel({
     <section className="stats-panel">
       <div className="section-topline">
         <div>
-          <p className="eyebrow">Rynek warszawski · ostatnie {stats.periodDays} dni</p>
+          <p className="eyebrow">
+            Monitorowany segment rynku warszawskiego · ostatnie {stats.periodDays} dni
+          </p>
           <h2>Co dzieje się teraz na rynku</h2>
           <p className="muted">
             Bieżący okres porównujemy z bezpośrednio poprzednimi {stats.periodDays} dniami. Ceny
@@ -147,7 +151,11 @@ export function MarketStatsPanel({
         <div className="stats-kpi">
           <span>Aktywne teraz</span>
           <strong>{stats.totals.active.toLocaleString("pl-PL")}</strong>
-          <small>w zakresie pobierania i filtrów statystyk, bez duplikatów</small>
+          <small>
+            {stats.scope
+              ? `od ${stats.scope.roomsMin} pokoi, od ${stats.scope.minArea} m², ${stats.scope.minPrice.toLocaleString("pl-PL")}–${stats.scope.maxPrice.toLocaleString("pl-PL")} zł · z uwzględnieniem filtrów`
+              : "W zakresie filtrów statystyk"}
+          </small>
         </div>
         <div className="stats-kpi">
           <span>Mediana aktywnych</span>
@@ -207,9 +215,14 @@ export function MarketStatsPanel({
               "pl-PL",
             )}
           </strong>
-          <span>bilans nowych i archiwizowanych</span>
+          <span>bilans wykryć i archiwizacji, łącznie z pierwszym zapełnieniem bazy</span>
         </div>
       </div>
+      {stats.buyerMarket && (
+        <Suspense fallback={<p>Wczytywanie analizy kupującego…</p>}>
+          <BuyerMarketPanel data={stats.buyerMarket} days={stats.periodDays} />
+        </Suspense>
+      )}
       <div className="stats-layout">
         <div className="panel stats-map">
           <StatsDistrictMap
@@ -304,12 +317,13 @@ export function MarketStatsPanel({
                               ? formatPrice(district.medianPricePerSqm)
                               : "Mała próba"}
                           </strong>
-                          {baseline &&
+                          {hasActiveMarketFilters(filters) &&
+                          baseline &&
                           district.pricedListings >= (stats.minimumSampleSize ?? 10) &&
                           (baselineDistrict?.pricedListings ?? 0) >=
                             (stats.minimumSampleSize ?? 10) ? (
                             <small className={`stats-row-delta ${deltaClass(districtDelta)}`}>
-                              {formatDelta(districtDelta)}
+                              {formatDelta(districtDelta)} względem zakresu bez filtrów
                             </small>
                           ) : null}
                           <small>{district.pricedListings} ofert z ceną</small>
@@ -384,9 +398,11 @@ export function MarketStatsPanel({
                                         </div>
                                         <div className="neighborhood-card-price">
                                           <b>{formatPrice(neighborhood.averagePricePerSqm)}</b>
-                                          {baseline && hasBaseline ? (
+                                          {hasActiveMarketFilters(filters) &&
+                                          baseline &&
+                                          hasBaseline ? (
                                             <span className={deltaClass(delta)}>
-                                              ({formatDelta(delta)})
+                                              ({formatDelta(delta)} względem zakresu bez filtrów)
                                             </span>
                                           ) : (
                                             <span className="is-neutral">

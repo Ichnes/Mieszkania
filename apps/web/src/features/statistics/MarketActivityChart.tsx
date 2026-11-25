@@ -1,5 +1,6 @@
 import type { MarketStatsResponse } from "@mieszkania/shared";
 import { useState } from "react";
+import { Select } from "../../components/Select";
 import {
   Bar,
   BarChart,
@@ -45,6 +46,7 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
           <span className="is-archived">Zarchiwizowane</span>
           <span className="is-price">Mediana cen wykrytych</span>
           <span className="is-average">Średnia cen wszystkich aktywnych</span>
+          <span>Mediana aktywnych</span>
         </div>
         <ResponsiveContainer width="100%" height={325}>
           <LineChart
@@ -80,6 +82,7 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
                   ["Zarchiwizowane", row.archivedListings.toLocaleString("pl-PL"), "#b75d4a"],
                   ["Mediana wykrytych", money(row.medianPricePerSqm), "#df9a3f"],
                   ["Średnia aktywnych", money(row.averagePricePerSqm), "#6e72cd"],
+                  ["Mediana aktywnych", money(row.activeMedianPricePerSqm), "#197c96"],
                 ];
                 return (
                   <div className="market-chart-tooltip">
@@ -116,6 +119,14 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
               />
             )}
             <Line
+              yAxisId="price"
+              dataKey="activeMedianPricePerSqm"
+              stroke="#197c96"
+              strokeDasharray="6 3"
+              strokeWidth={2}
+              dot={false}
+            />
+            <Line
               yAxisId="offers"
               type="monotone"
               dataKey="archivedListings"
@@ -145,31 +156,29 @@ export default function MarketActivityChart({ stats }: { stats: MarketStatsRespo
           <div className="stats-week-selection">
             <label>
               Wybrany tydzień{" "}
-              <select
-                value={selected?.week ?? ""}
-                onChange={(event) => setWeek(event.target.value)}
-              >
+              <Select label="Wybrany tydzień" value={selected?.week ?? ""} onChange={setWeek}>
                 <option value="">Wybierz na wykresie lub z listy</option>
                 {stats.activity.map((row) => (
                   <option key={row.week} value={row.week}>
                     {row.week}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             {selected && (
               <p role="status">
                 Wykryte: {selected.newListings} · Zarchiwizowane: {selected.archivedListings} ·
                 Mediana wykrytych: {money(selected.medianPricePerSqm)} · Średnia aktywnych:{" "}
-                {money(selected.averagePricePerSqm)}
+                {money(selected.averagePricePerSqm)} · Mediana aktywnych:{" "}
+                {money(selected.activeMedianPricePerSqm)}
               </p>
             )}
           </div>
         )}
         <p className="muted">
           Ceny za m². Średnia obejmuje oferty aktywne na koniec tygodnia (w bieżącym — do teraz), w
-          wybranym zakresie filtrów. Korzysta z zapisanej historii cen; bez historii używa dostępnej
-          ceny. Mediana dotyczy ofert wykrytych w danym tygodniu.
+          wybranym zakresie filtrów. Obie miary wymagają potwierdzonej ceny z danego okresu. Mediana
+          dotyczy ofert wykrytych w danym tygodniu.
         </p>
       </div>
       <section className="panel stats-activity stats-weekly-balance">

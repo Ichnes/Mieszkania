@@ -372,6 +372,7 @@ export function useWorkspaceController() {
     setMarketStatsLoading(true);
     const params = new URLSearchParams();
     params.set("period", String(marketStatsPeriod));
+    params.set("buyer", "1");
     if (marketStatsFilters.minYear) params.set("minYear", marketStatsFilters.minYear);
     if (marketStatsFilters.minArea) params.set("minArea", marketStatsFilters.minArea);
     if (marketStatsFilters.maxArea) params.set("maxArea", marketStatsFilters.maxArea);

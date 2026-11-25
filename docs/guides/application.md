@@ -636,14 +636,23 @@ paski systemowe przeglądarki mogą pozostać widoczne.
 ## Historyczna średnia cen
 
 W statystykach wykres **Ceny i liczba ofert — tygodniowo** pokazuje wykryte oferty,
-archiwizacje, medianę cen wykrytych oraz średnią cen wszystkich ofert aktywnych
-na koniec danego tygodnia (dla bieżącego tygodnia: do teraz). Obie ceny są za m².
-Najedź na tydzień, aby odczytać cztery wartości. Kliknięcie, dotknięcie lub wybór tygodnia
+archiwizacje, medianę cen wykrytych oraz średnią i medianę cen ofert aktywnych
+na koniec danego tygodnia (w bieżącym tygodniu do teraz). Ceny są podane za m².
+Najedź na tydzień, aby odczytać wartości. Kliknięcie, dotknięcie lub wybór tygodnia
 z listy zostawia wartości pod wykresem. Na wykresie zmian cen w dzielnicach liczby obok
 słupków pozostają widoczne. Najechanie na dzielnicę pokazuje oba wyniki razem.
 Średnia uwzględnia zapisane zmiany cen, daty wykrycia i archiwizacji oraz zakres filtrów.
-Jeśli oferta nie ma historii cen, używana jest jej dostępna cena; nie odtwarzamy
-niezapisanych okresów wcześniejszej aktywności. Brak danych pozostaje przerwą na wykresie.
+Brak udokumentowanej ceny w okresie wyklucza ofertę z obliczeń tej ceny.
+
+W **Monitorze kupującego** wybierz dzielnicę i liczbę pokoi. Kliknięcie komórki mapy
+cieplnej zawęża także metraż. Wykres indeksu porównuje ceny tych samych ogłoszeń,
+a wykres ekspozycji pokazuje aktywność i pierwsze obniżki od dnia wykrycia.
+Przy sortowaniu według przesłanek negocjacyjnych lista pokazuje konkretne powody.
+W szczegółach mieszkania otwartego z dashboardu wybierz **Statystyki**, obok **Przeglądu**.
+W sekcji **Cena na tle podobnych mieszkań** półkolista skala porządkuje ceny za m² od najtańszych po lewej do najdroższych po prawej. Wskazówka pokazuje pozycję mieszkania. Oferty o identycznej cenie dzielą środkową pozycję swojej grupy. Najedź na fragment łuku, dotknij go lub wybierz klawiaturą, aby odczytać przedział cen. Pod wykresem można rozwinąć grupę porównawczą i otworzyć podobne ogłoszenia.
+Mediana i różnica procentowa wymagają co najmniej 10 innych aktywnych ogłoszeń.
+Dashboard uwzględnia także tańsze oferty oraz część ogłoszeń z brakującymi danymi.
+Statystyki stosują pełne warunki ceny, metrażu i liczby pokoi wskazane pod licznikiem.
 
 ## Potencjalne wcześniejsze oferty
 

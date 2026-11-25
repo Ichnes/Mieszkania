@@ -9,6 +9,8 @@ import {
 test("monthly fees accept explicit amounts but not ranges, missing, annual or per-area fees", () => {
   assert.equal(readMonthlyFee("1 200,50 zł", ""), 1200.5);
   assert.equal(readMonthlyFee("0 zł", ""), 0);
+  assert.equal(readMonthlyFee("0", ""), null);
+  assert.equal(readMonthlyFee("0", "Czynsz 790 zł."), 790);
   assert.equal(readMonthlyFee("bezczynszowe", ""), 0);
   assert.equal(readMonthlyFee(undefined, "Czynsz adm. 800 zł, z zaliczkami na wodę."), 800);
   assert.equal(readMonthlyFee(undefined, "Czynsz na poziomie 1980 zł"), 1980);

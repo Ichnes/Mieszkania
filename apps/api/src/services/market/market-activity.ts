@@ -10,13 +10,16 @@ export function marketActivitySql(filters: string, periodDays: number) {
     select to_char(w.w::date, 'YYYY-MM-DD') week,
       count(l.id) filter (where l.first_seen_at >= w.w and l.first_seen_at < w.cutoff)::text new_listings,
       count(l.id) filter (where l.removed_at >= w.w and l.removed_at < w.cutoff)::text archived_listings,
-      percentile_cont(0.5) within group (order by l.price_amount/nullif(l.area_sqm,0))
-        filter (where l.first_seen_at >= w.w and l.first_seen_at < w.cutoff and l.price_amount>0 and l.area_sqm>0)::text median_price,
+      percentile_cont(0.5) within group (order by h.price/nullif(l.area_sqm,0))
+        filter (where l.first_seen_at >= w.w and l.first_seen_at < w.cutoff and h.price>0 and l.area_sqm>0)::text median_price,
       round(avg(h.price/nullif(l.area_sqm,0)) filter (
         where (l.removed_at is null or l.removed_at >= w.cutoff)
           and (l.status='active' or l.removed_at is not null)
           and h.price>0 and l.area_sqm>0
-      ))::text average_price
+      ))::text average_price,
+      percentile_cont(0.5) within group (order by h.price/nullif(l.area_sqm,0))
+        filter (where (l.removed_at is null or l.removed_at >= w.cutoff)
+          and (l.status='active' or l.removed_at is not null) and h.price>0 and l.area_sqm>0)::text active_median
     from weeks w
     left join scoped l on l.first_seen_at < w.cutoff
     left join lateral (
@@ -26,8 +29,7 @@ export function marketActivitySql(filters: string, periodDays: number) {
           order by pe.changed_at desc, pe.id desc limit 1),
         (select pe.previous_price_amount from price_events pe where pe.listing_id=l.id
           and pe.changed_at >= w.cutoff and pe.previous_price_amount>0
-          order by pe.changed_at, pe.id limit 1),
-        l.price_amount
+          order by pe.changed_at, pe.id limit 1)
       ) price
     ) h on true
     group by w.w order by w.w`;
