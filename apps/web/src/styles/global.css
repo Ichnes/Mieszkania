@@ -28,3 +28,15 @@
 @import "./listing-duplicates.css";
 @import "./offer-navigation.css";
 @import "./ai-assessment.css";
+
+/* iOS zooms the viewport when an editable field has text smaller than 16px.
+   Keep this minimum above compact component styles, including landscape phones. */
+@media (any-pointer: coarse), (max-width: 600px) {
+  input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="hidden"]),
+  textarea,
+  select,
+  button[role="combobox"],
+  [contenteditable="true"] {
+    font-size: max(16px, 1rem) !important;
+  }
+}
