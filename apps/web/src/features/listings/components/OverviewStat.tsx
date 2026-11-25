@@ -19,11 +19,24 @@ export function OverviewStat({
       onClick={onOpen}
       type={onOpen ? "button" : undefined}
     >
-      <span>
-        {displayed.label}
+      <span className="overview-stat-label">
+        {onOpen && stat.listingWindow ? (
+          <>
+            <span className="overview-full-label">{displayed.label}</span>
+            <span className="overview-short-label">
+              {stat.listingWindow === "newWithinDays" ? "Nowe oferty" : "Zmiany cen"}
+            </span>
+          </>
+        ) : (
+          displayed.label
+        )}
         {onOpen && <ArrowRight className="stat-link-arrow" size={14} aria-hidden="true" />}
       </span>
-      <span aria-live={stat.periodValues ? "polite" : undefined} aria-atomic="true">
+      <span
+        className="overview-stat-value"
+        aria-live={stat.periodValues ? "polite" : undefined}
+        aria-atomic="true"
+      >
         <strong>{displayed.value}</strong>
         {displayed.trend ? <small>{displayed.trend}</small> : null}
       </span>

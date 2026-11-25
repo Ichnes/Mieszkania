@@ -27,7 +27,7 @@ w wybranym okresie, a **Zmiany cen** — aktywne oferty ze zmianą ceny; kilka z
 ceny jednej oferty liczy się raz. Oba wskaźniki pomijają duplikaty i uwzględniają
 miasto, cenę i metraż ustawione dla poszukiwań.
 
-Kliknij **Nowe** lub **Zmiany cen**, aby przejść do pierwszej strony ofert z wybranego okresu.
+Kliknij **Nowe** (na telefonie **Nowe oferty**) lub **Zmiany cen**, aby przejść do pierwszej strony ofert z wybranego okresu. Na telefonie wspólne pole **Okres podsumowania** znajduje się pod licznikami.
 Kliknięcie zastępuje wcześniejsze filtry listy. Nagłówek wyników pokazuje rodzaj i okres wyboru.
 Przycisk **Wyczyść filtry** przywraca pełną listę.
 
@@ -80,6 +80,7 @@ zapisanych ustawień (baza i lokalna kopia family-settings).
 ## Zapisane wyszukiwania i interpretacja opisów
 
 Na stronie **Oferty** rozwiń **Zapisane wyszukiwania** u góry panelu filtrów.
+Na telefonie ta sekcja przewija się razem z polami, a wybór dzielnic zajmuje cały wiersz.
 Ustaw kryteria i sortowanie, kliknij **Filtruj**, nadaj nazwę i wybierz
 **Zapisz aktualne wyniki**. Kliknięcie nazwy przywraca kryteria i pierwszą stronę
 wyników. Możesz przechowywać 12 zestawów w danej przeglądarce. Usunięcie można

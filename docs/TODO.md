@@ -1,5 +1,11 @@
 # Bieżące zadania
 
+## Mobilne filtry i podsumowanie ofert (2026-11-25)
+
+- [x] Rozciągnięto wybór dzielnic na cały wiersz mobilnego panelu filtrów. Zapisane wyszukiwania przewijają się razem z polami.
+- [x] Na telefonie obok siebie są aktywne oferty i średnia cena za metr, niżej dwa przyciski otwierają nowe oferty i oferty ze zmianą ceny. Wspólny wybór okresu zajmuje oddzielny wiersz.
+- [x] Poprawiono warstwę tła przechwytującą dotyk panelu na szerokości 701–900 px. Chromium sprawdził zakres od 360 do 1680 px, w tym poziomy telefon, otwieranie obu list dla 30 dni, zapis wyszukiwania, przewijanie i zastosowanie dzielnicy. Przeszło 161 testów frontendu i lokalny build.
+
 ## Historia wcześniejszych wystawień (2026-11-25)
 
 - [x] Ułożono historię bieżącej oferty i archiwum na wspólnej osi według dni. Oś uwzględnia pierwszy zapis ceny i odnotowane zdjęcie archiwalnego ogłoszenia. W filtrach umieszczono obie granice ceny za m² w jednym wierszu.

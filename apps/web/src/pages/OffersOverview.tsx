@@ -125,7 +125,9 @@ export function OffersOverview({
               );
             })}
             <div className="overview-period-control">
-              <span>Okres</span>
+              <span>
+                Okres<span className="overview-period-suffix"> podsumowania</span>
+              </span>
               <Select
                 label="Okres podsumowania"
                 value={String(period)}

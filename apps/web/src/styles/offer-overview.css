@@ -28,6 +28,13 @@
 .top-dashboard-frame .hero-stat > span {
   white-space: normal;
 }
+.hero-stat .overview-full-label {
+  display: inline;
+}
+.hero-stat .overview-short-label,
+.overview-period-suffix {
+  display: none;
+}
 .top-dashboard-frame .hero-stats {
   grid-template-columns: repeat(4, minmax(0, 1fr)) 100px;
   gap: 1px;
@@ -82,14 +89,81 @@
     padding: 12px;
     border-radius: 18px;
   }
+  .top-dashboard-frame .hero-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    background: var(--surface);
+  }
   .top-dashboard-frame .hero-stat {
-    padding: 10px 12px;
+    align-items: stretch;
+    gap: 4px;
+    padding: 0 2px 3px;
+    text-align: left;
+  }
+  .top-dashboard-frame .hero-stat span {
+    font-size: 0.81rem;
+    font-weight: 600;
+    line-height: 1.3;
+    text-transform: none;
+    letter-spacing: normal;
+    white-space: normal;
+  }
+  .top-dashboard-frame .hero-stat strong {
+    margin: 0;
+    font-size: clamp(1.2rem, 5vw, 1.5rem);
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
   }
   .top-dashboard-frame .hero-stat small {
     min-height: 0;
+    color: var(--ink-soft);
+    font-size: 0.75rem;
+    font-weight: 450;
   }
-  .top-dashboard-frame .hero-stats {
-    margin-top: 12px;
+  .top-dashboard-frame .hero-stats button.hero-stat {
+    grid-row: 2;
+    padding: 10px 12px;
+    text-align: left;
+    border-radius: 10px;
+    background: var(--surface-muted);
+  }
+  .top-dashboard-frame .hero-stats button.hero-stat:is(:hover, :focus-visible) {
+    background: var(--brand-soft);
+  }
+  .hero-stat .overview-stat-label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+  }
+  .hero-stat .overview-full-label {
+    display: none;
+  }
+  .hero-stat .overview-short-label,
+  .overview-period-suffix {
+    display: inline;
+  }
+  .top-dashboard-frame .overview-period-control {
+    grid-column: 1 / -1;
+    grid-row: 3;
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 6px 0 0;
+    border-top: 1px solid var(--line);
+  }
+  .overview-period-control > span {
+    font-size: 0.8rem;
+    font-weight: 550;
+    color: var(--ink-soft);
+    text-transform: none;
+  }
+  .overview-period-control .listing-select-trigger {
+    width: auto;
+    min-width: 6.25rem;
+    padding-inline: 10px;
+    font-size: 0.85rem;
   }
 }
 .metric-split {

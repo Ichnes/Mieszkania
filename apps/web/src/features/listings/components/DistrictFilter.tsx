@@ -24,7 +24,7 @@ export function DistrictFilter({
     })),
   ];
   return (
-    <div className="filter-field">
+    <div className="filter-field district-filter-field">
       <span>Dzielnice</span>
       <details
         ref={root}
