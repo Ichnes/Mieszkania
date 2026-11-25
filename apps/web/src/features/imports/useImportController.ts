@@ -525,7 +525,7 @@ export function useImportController({
     setQueueErrorAction(null);
     setQueueNotice({
       tone: "info",
-      message: "Pobieranie rozpoczęte. Status kolejek odświeża się automatycznie co 3 sekundy.",
+      message: "Uruchamianie kolektorów. Postęp pojawi się przy nazwach portali.",
     });
     try {
       const resumeResponse = await apiFetch(`${apiBaseUrl}/api/listings/automation/resume`, {
@@ -815,7 +815,11 @@ export function useImportController({
         message:
           inactiveFor >= 60_000
             ? `Dłuższe oczekiwanie: ${counts.processing} w toku, ${counts.pending} oczekuje. Pobieranie lub ponowne próby mogą potrwać kilka minut. Możesz zatrzymać automat; rozpoczęte zadania mogą się jeszcze dokończyć.`
-            : `Pobieranie trwa: ${counts.processing} w toku, ${counts.pending} oczekuje, ${counts.failed} błędów.`,
+            : counts.processing > 0
+              ? `Trwa przetwarzanie ofert. W toku: ${counts.processing}. W kolejce: ${counts.pending}.`
+              : counts.pending > 0
+                ? `Kolektory czekają na następną partię. W kolejce: ${counts.pending}.`
+                : "Oczekiwanie na zakończenie pracy kolektorów.",
       });
     } catch {
       queuePollDelayRef.current = 5_000;

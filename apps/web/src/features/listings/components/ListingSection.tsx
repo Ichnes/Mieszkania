@@ -153,6 +153,9 @@ export function ListingSection(input: {
                   </span>
                 </div>
                 <h3>
+                  {listing.isActive === false && (
+                    <span className="archived-listing-label">Archiwalna</span>
+                  )}
                   <a
                     className="listing-detail-link"
                     href={listingHref(listing.id)}

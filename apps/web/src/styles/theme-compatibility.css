@@ -264,7 +264,13 @@
   .stale-refresh-summary {
     align-items: stretch;
     flex-direction: column;
+    flex-wrap: nowrap;
     gap: 14px;
+  }
+  .queue-activity {
+    flex: none;
+    width: 100%;
+    min-width: 0;
   }
   .stale-refresh-metrics {
     width: 100%;

@@ -1,3 +1,12 @@
+export function cleanPortalDescription(description: string) {
+  return description
+    .split(
+      /\s+(?:(?:Rozwiń\s+)?Statystyki ogłoszenia\s*:\s*#toolbar\s*\{|Zgłoś błąd lub naruszenie\s+Drukuj\s+Udostępnij)/iu,
+      1,
+    )[0]
+    .trimEnd();
+}
+
 const entities: Record<string, string> = {
   amp: "&",
   lt: "<",

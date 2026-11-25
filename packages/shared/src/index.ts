@@ -2,6 +2,7 @@ import type { ExposureDirection } from "./sun-exposure.js";
 import type { AiAssessment, AiAssessmentSummary } from "./ai-assessment.js";
 export * from "./ai-assessment.js";
 export type DashboardStat = {
+  listingWindow?: "newWithinDays" | "priceChangedWithinDays";
   label: string;
   value: string;
   description: string;
@@ -460,6 +461,7 @@ export {
 } from "./description-context.js";
 
 export type ListingDetail = ListingSummary & {
+  descriptionDiscrepancies?: string[];
   aiAssessment?: AiAssessment;
   floorPlanImageUrls?: string[];
   canonicalUrl?: string;
@@ -592,6 +594,8 @@ export type DuplicateGroupsResponse = {
 export type RelistingSort = "newest" | "oldest" | "confidence" | "price_change" | "price_drop";
 
 export type RelistedListingPreview = {
+  firstSeenAt?: string;
+  isActive?: boolean;
   id: string;
   title: string;
   sourceLabel: string;
@@ -607,6 +611,7 @@ export type RelistedListingPreview = {
 };
 
 export type RelistedListingMatch = {
+  reviewable?: boolean;
   manuallyConfirmed?: boolean;
   previous: RelistedListingPreview;
   current: RelistedListingPreview;
@@ -617,6 +622,8 @@ export type RelistedListingMatch = {
 };
 
 export type RelistedListingsResponse = {
+  groups?: RelistedListingMatch[][];
+  groupCount?: number;
   matched: number;
   items: RelistedListingMatch[];
   potentialCount: number;
@@ -727,6 +734,12 @@ export type OtodomQueueStatusResponse = {
   counts: Record<"pending" | "processing" | "completed" | "failed", number>;
   pendingNew: number;
   pendingPriceUpdates: number;
+  processingActivity?: {
+    refreshes: number;
+    imports: number;
+    exampleTitle?: string;
+    exampleExternalId?: string;
+  };
   readyPending?: number;
   delayedPending?: number;
   nextAttemptAt?: string;
@@ -808,7 +821,10 @@ export type ListingFilters = {
   roomsMax?: number;
   search?: string;
   shortlistedOnly?: boolean;
+  includeArchivedFavorites?: boolean;
   priceChangedOnly?: boolean;
+  newWithinDays?: 7 | 30 | 60;
+  priceChangedWithinDays?: 7 | 30 | 60;
   archivedOnly?: boolean;
   includeMergedActive?: boolean;
   hiddenOnly?: boolean;

@@ -350,7 +350,7 @@ export function ListingDetailPanel(input: {
   const knownAmenities = availableAmenities(input.listing.amenities, input.listing.amenityAnalysis);
   const hasKnownSurroundings =
     knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
-  const maintenanceFee = input.listing.features.find((feature) => feature.key === "fees")?.value;
+  const maintenanceFee = input.listing.maintenanceFeeLabel;
   const changeDetailImage = (direction: -1 | 1) => {
     setActiveImageIndex(
       (current) =>
@@ -1075,6 +1075,11 @@ export function ListingDetailPanel(input: {
                 </p>
               ) : null}
               <ListingDescription value={input.listing.description} />
+              {input.listing.descriptionDiscrepancies?.map((message) => (
+                <p key={message} className="listing-facts-hint">
+                  {message}
+                </p>
+              ))}
               {isMobileDetail && detailMap}
             </div>
 

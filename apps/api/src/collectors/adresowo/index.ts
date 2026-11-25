@@ -1,4 +1,5 @@
 import { publicFetch as fetch } from "../../services/http/public-fetch";
+import { inferBuildingDetails } from "../../services/listings/listing-description-facts";
 import { descriptionText } from "../description-text";
 import { reportDiscoveryProgress } from "../discovery-progress";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
@@ -502,7 +503,8 @@ export function parseListing(
       text.match(/powierzchni\s+([\d,.]+)\s*m(?:²|2)/i)?.[1],
   );
   const rooms = amount(title.match(/(\d+)\s*-?pokoj/i)?.[1] ?? text.match(/(\d+)\s+pokoje/i)?.[1]);
-  const floor = amount(text.match(/(\d+)\.?\s*piętro/i)?.[1]);
+  const floor =
+    inferBuildingDetails(description).floor ?? amount(text.match(/(\d+)\.?\s*piętro\b/iu)?.[1]);
   const yearBuilt = extractAdresowoConstructionYear(html, visibleText);
   const publishedAt = extractRelativePublishedAt(visibleText);
   const district = text.match(

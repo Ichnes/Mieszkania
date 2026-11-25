@@ -4,6 +4,61 @@ import { extractAdditionalPurchaseCosts as parse } from "./purchase-costs";
 
 const cases: Array<[string, ReturnType<typeof parse>]> = [
   [
+    "Dwa miejsca parkingowe przy domu – po 35 000 zł każde.",
+    { garage: 70000, parkingCount: 2, parkingUnitPrice: 35000 },
+  ],
+  [
+    "Zakup miejsc postojowych jest obligatoryjny. Cena jednego miejsca: 40 000 zł Łączny koszt dwóch miejsc: 80 000 zł",
+    { garage: 80000 },
+  ],
+  [
+    "Winda z poziomu garażu, CENA - 1 670 000 PLN + Miejsce parkingowe 60 000PLN. + Komórka lokatorska 40 000 PLN.",
+    { garage: 60000, storage: 40000 },
+  ],
+  [
+    "Do mieszkania przynależą dwa miejsca postojowe w garażu podziemnym. Cena za oba miejsca wynosi łącznie 50 000 zł. Ich zakup jest obligatoryjny.",
+    { garage: 50000 },
+  ],
+  [
+    "Komórka lokatorska na piętrze ~ 2m2 = 10 000 zł Miejsce postojowe = 50 000 zł",
+    { storage: 10000, garage: 50000 },
+  ],
+  ["Miejsce garażowe: 50 000zł komórka lokatroska: 30 000zł", { garage: 50000, storage: 30000 }],
+  [
+    "Miejsce parkingowe i komórka płatne dodatkowo (odpowiednio 60 tys. i 30 tys. zł).",
+    { garage: 60000, storage: 30000 },
+  ],
+  [
+    "Cena mieszkania wraz z piwnicą: 1 670 000 zł • Obligatoryjny zakup 2 miejsc w garażu podziemnym: 60 000 zł / miejsce (łącznie 120 000 zł) • Obligatoryjny zakup 2 boksów rowerowych: 20 000 zł / boks (łącznie 40 000 zł) • Cena całkowita: 1 830 000 zł",
+    { garage: 120000, storage: 40000, parkingCount: 2, parkingUnitPrice: 60000 },
+  ],
+  [
+    "MIEJSCA POSTOJOWE I KOMÓRKA Do mieszkania przynależą dwa miejsca postojowe w garażu, każde w cenie 55 000 zł, oraz komórka lokatorska o powierzchni 4,26 m² w cenie 30 000 zł.",
+    { garage: 110000, parkingCount: 2, parkingUnitPrice: 55000, storage: 30000 },
+  ],
+  [
+    "Cena mieszkania: 1 619 000 zł. Dwa miejsca postojowe w garażu podziemnym, na platformie: 90 000 zł łącznie. Komórka lokatorska o powierzchni 3,57 m²: 20 000 zł.",
+    { garage: 90000, storage: 20000 },
+  ],
+  [
+    "Miejsce postojowe i komórka lokatorska – zakup obligatoryjny: 85 000 PLN.",
+    { garageAndStorage: 85000 },
+  ],
+  ["Komórka lokatorska - 7500 zł/m2 (nieobowiązkowa).", {}],
+  ["Miejsce parkingowe dodatkowo płatne 15 000 zlotych.", { garage: 15000 }],
+  [
+    "Miejsce postojowe w garażu podziemnym oraz miejsce parkingowe naziemne. Oba są dodatkowo płatne i obowiązkowe przy zakupie, 150 000 zł za całość.",
+    { garage: 150000 },
+  ],
+  [
+    "Miejsce w garażu podziemnym (dodatkowo płatne 45000 zł) oraz komórka lokatorska o pow. 2,8 m2 (dodatkowo płatna 15000 zł).",
+    { garage: 45000, storage: 15000 },
+  ],
+  [
+    "Miejsce w garażu podziemnym w cenie 45.000 zł. Możliwość zakupu drugiego miejsca w garażu w cenie 30.000 zł.",
+    { garage: 45000 },
+  ],
+  [
     "Do mieszkania przynależą dwa miejsca postojowe na parkingu podziemnym płatne dodatkowo po 35.000,00 zł",
     { garage: 70000, parkingCount: 2, parkingUnitPrice: 35000 },
   ],

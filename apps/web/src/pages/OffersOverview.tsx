@@ -12,6 +12,9 @@ export function OffersOverview({
   model: Pick<
     WorkspaceState,
     | "activeTab"
+    | "applyFilters"
+    | "setFilters"
+    | "setListingSort"
     | "region"
     | "upcomingViewings"
     | "listingsTotal"
@@ -98,9 +101,29 @@ export function OffersOverview({
             aria-label="Snapshot stanu bazy"
             aria-busy={dashboardSection.status === "loading"}
           >
-            {listingInsights.map((stat) => (
-              <OverviewStat key={stat.label} stat={stat} period={period} />
-            ))}
+            {listingInsights.map((stat) => {
+              const key = stat.listingWindow;
+              return (
+                <OverviewStat
+                  key={stat.label}
+                  stat={stat}
+                  period={period}
+                  onOpen={
+                    key
+                      ? () => {
+                          const filters = { [key]: period };
+                          model.setFilters(filters);
+                          model.setListingSort("newest");
+                          void model.applyFilters(filters, 1, "newest");
+                          document
+                            .getElementById("oferty-lista")
+                            ?.scrollIntoView({ block: "start" });
+                        }
+                      : undefined
+                  }
+                />
+              );
+            })}
             <div className="overview-period-control">
               <span>Okres</span>
               <Select

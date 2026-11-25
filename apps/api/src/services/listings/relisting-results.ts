@@ -16,12 +16,12 @@ const establishedRelistingSql = `
     'manuallyConfirmed', exists(select 1 from listing_relisting_reviews review
       where review.current_listing_id=l.id and review.previous_listing_id=archived.id and review.decision='confirmed'),
     'previous', jsonb_strip_nulls(jsonb_build_object(
-      'id',archived.id,'title',archived.title,'sourceLabel',previous_source.name,
+      'id',archived.id,'title',archived.title,'sourceLabel',previous_source.name,'firstSeenAt',archived.first_seen_at,'isActive',archived.status='active',
       'canonicalUrl',archived.canonical_url,'priceAmount',relation.previous_price_amount,
       'eventAt',coalesce(archived.removed_at,archived.last_seen_at),
       'addressText',archived.address_text,'areaSqm',archived.area_sqm,'rooms',archived.rooms,'floor',archived.floor)),
     'current', jsonb_strip_nulls(jsonb_build_object(
-      'id',l.id,'title',l.title,'sourceLabel',current_source.name,
+      'id',l.id,'title',l.title,'sourceLabel',current_source.name,'firstSeenAt',l.first_seen_at,'isActive',l.status='active',
       'canonicalUrl',l.canonical_url,'priceAmount',relation.relisted_price_amount,
       'eventAt',l.first_seen_at,'addressText',l.address_text,'areaSqm',l.area_sqm,'rooms',l.rooms,'floor',l.floor)),
     'priceDifferenceAmount',relation.relisted_price_amount-relation.previous_price_amount,
@@ -98,6 +98,7 @@ export async function getRelistingResults(
   offset = 0,
   db: Pick<Pool, "query"> = pool,
   sort?: string,
+  grouped = false,
 ): Promise<RelistedListingsResponse> {
   const values = [
     Number.isFinite(limit) ? Math.max(1, Math.min(Math.floor(limit), 100)) : 20,
@@ -113,6 +114,35 @@ export async function getRelistingResults(
     price_drop: "(payload->>'priceDifferencePercent')::numeric asc nulls last",
   };
   const order = sort && Object.hasOwn(orderBy, sort) ? orderBy[sort as RelistingSort] : undefined;
+  if (grouped) {
+    const result = await db.query<{ payload: RelistedListingMatch; reviewable: boolean }>(
+      `
+      select jsonb_strip_nulls(payload) payload, current_status='active' as reviewable
+      from (${establishedRelistingSql}
+        where l.city=any($1::text[]) and l.status in ('active','removed')
+          and l.hidden_duplicate_of_id is null and archived.status='removed'
+          and archived.hidden_duplicate_of_id is distinct from l.id
+          and coalesce(archived.exclusion_reason,'') <> 'manual_rejected'
+          and coalesce(l.exclusion_reason,'') <> 'manual_rejected'
+      ) matches order by ${order ?? orderBy.newest}, payload->'current'->>'id', payload->'previous'->>'id'
+    `,
+      [activeRegion.supportedCities],
+    );
+    const all = groupRelistings(
+      result.rows.map((row) => ({ ...row.payload, reviewable: row.reviewable })),
+    );
+    const start = Number(values[1]);
+    const page = all.slice(start, start + Number(values[0]));
+    await addRelistingPreviews(page.flat(), db);
+    return {
+      matched: result.rows.length,
+      items: [],
+      potentialCount: 0,
+      potentialItems: [],
+      groups: page,
+      groupCount: all.length,
+    };
+  }
   const readPage = (matches: string, defaultOrder: RelistingSort) =>
     db.query<Page>(
       `with matches as materialized (${matches}), page as (
@@ -145,6 +175,38 @@ export async function getRelistingResults(
     potentialCount: potential.total,
     potentialItems: potential.items,
   };
+}
+
+export function groupRelistings(matches: RelistedListingMatch[]) {
+  const neighbors = new Map<string, Set<string>>();
+  for (const { previous, current } of matches) {
+    for (const [a, b] of [
+      [previous.id, current.id],
+      [current.id, previous.id],
+    ]) {
+      const links = neighbors.get(a) ?? new Set<string>();
+      links.add(b);
+      neighbors.set(a, links);
+    }
+  }
+  const membership = new Map<string, RelistedListingMatch[]>();
+  const groups: RelistedListingMatch[][] = [];
+  for (const match of matches) {
+    let group = membership.get(match.current.id);
+    if (!group) {
+      group = [];
+      groups.push(group);
+      const pending = [match.current.id];
+      while (pending.length) {
+        const id = pending.pop()!;
+        if (membership.has(id)) continue;
+        membership.set(id, group);
+        for (const next of neighbors.get(id) ?? []) pending.push(next);
+      }
+    }
+    group.push(match);
+  }
+  return groups;
 }
 
 export async function addRelistingPreviews(

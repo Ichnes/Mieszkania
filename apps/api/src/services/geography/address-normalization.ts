@@ -49,7 +49,7 @@ export function sanitizeStreetCandidate(value?: string | null) {
     ?.replace(/\s+/g, " ")
     .replace(/^(?:ul\.?|ulica|al\.?|aleja|aleje|pl\.?|plac)\s+/i, "")
     .trim();
-  if (!candidate) return null;
+  if (!candidate || /^(?:ul(?:ica)?\.?|\d+\s*m\.?)$/iu.test(candidate)) return null;
 
   const clause = (candidate.split(/[,;|\n>→]|&gt;|\s+[–—]\s+/, 1)[0]?.trim() ?? "").replace(
     /(\d+[a-z]?(?:[/-]\d+[a-z]?)?)\s+(?:na|w|we)\s+.*$/iu,
@@ -59,7 +59,7 @@ export function sanitizeStreetCandidate(value?: string | null) {
     /\s+(?:na\s+(?:warszawsk\p{L}*|osiedlu\b|(?:Bemowie|Białołęce|Bielanach|Mokotowie|Ochocie|Pradze(?:[- ](?:Północ|Południe))?|Targówku|Ursynowie|Woli|Żoliborzu)(?!\p{L}))|w\s+(?:dzielnicy\b|Warszawie\b|(?:Rembertowie|Śródmieściu|Ursusie|Wawrze|Wesołej|Wilanowie|Włochach)(?!\p{L}))|we\s+Wrocławiu\b)/iu;
   const narrativeIndex = clause.search(
     new RegExp(
-      `${streetNarrativeBoundary.source}|${locationBoundary.source}|\\s+(?:stacja\\s+metra|metro|przystanek|\\d+\\s*min(?:ut)?\\b)`,
+      `${streetNarrativeBoundary.source}|${locationBoundary.source}|\\s+(?:i\\s+\\p{L}+\\s+centrum biznesowego|stacja\\s+metra|metro|przystanek|\\d+\\s*min(?:ut)?\\b)`,
       "iu",
     ),
   );

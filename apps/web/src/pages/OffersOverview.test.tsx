@@ -7,6 +7,9 @@ import { warsawMetropolitanRegion } from "@mieszkania/shared";
 function model(): Parameters<typeof OffersOverview>[0]["model"] {
   return {
     activeTab: "dashboard",
+    applyFilters: async () => {},
+    setFilters: () => {},
+    setListingSort: () => {},
     region: warsawMetropolitanRegion,
     upcomingViewings: { total: 0, items: [] },
     listingsTotal: 0,

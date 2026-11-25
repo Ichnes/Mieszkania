@@ -86,6 +86,10 @@ export function sanitizeListingFilters(value: unknown): ListingFilters {
   if (!value || typeof value !== "object" || Array.isArray(value)) return defaultFilters;
   const input = value as Record<string, unknown>;
   const output: ListingFilters = {};
+  for (const key of ["newWithinDays", "priceChangedWithinDays"] as const) {
+    const days = input[key];
+    if (days === 7 || days === 30 || days === 60) output[key] = days;
+  }
   const stringKeys = ["district", "search"] as const;
   const numberKeys = [
     "minPrice",
@@ -101,6 +105,7 @@ export function sanitizeListingFilters(value: unknown): ListingFilters {
   ] as const;
   const booleanKeys = [
     "shortlistedOnly",
+    "includeArchivedFavorites",
     "priceChangedOnly",
     "archivedOnly",
     "includeMergedActive",

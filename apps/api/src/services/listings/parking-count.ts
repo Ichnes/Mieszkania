@@ -21,7 +21,7 @@ export function extractParkingSpaceCount(value: string): number | undefined {
   };
   const matches = [
     ...text.matchAll(
-      /\b(\d{1,2}|jedno|jednego|dwa|dwie|dwoch|dwoma|trzy|trzech|cztery|czterech|piec|pieciu)\s*,?\s*(?:(?:odrebn|niezalezn|prywatn|wlasn|naziemn|zewnetrzn|podziemn)\w*\s+){0,3}(?:miejsc\w*|stanowisk\w*)\s+(?:postojow|parkingow|garazow)\w*/g,
+      /\b(\d{1,2}|jedno|jednego|dwa|dwie|dwoch|dwoma|trzy|trzech|cztery|czterech|piec|pieciu)\s*,?\s*(?:(?:odrebn|niezalezn|prywatn|wlasn|naziemn|zewnetrzn|podziemn)\w*\s+){0,3}(?:miejsc\w*|stanowisk\w*)\s+(?:postojow|parkingow|garazow|w\s+garaz)\w*/g,
     ),
   ];
   const token = matches.at(-1)?.[1];

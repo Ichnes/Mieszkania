@@ -1250,3 +1250,48 @@
   margin-block: 0;
   padding: clamp(12px, 1.5vw, 20px);
 }
+.stats-week-selection {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+.stats-week-selection select {
+  max-width: 100%;
+  min-height: 40px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px;
+}
+.market-chart-tooltip {
+  display: grid;
+  gap: 6px;
+  min-width: 138px;
+  padding: 12px 14px;
+  border: 1px solid #667785;
+  border-radius: 9px;
+  background: #182835;
+  color: #fff;
+  box-shadow: 0 4px 16px #101c2830;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.market-chart-tooltip > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.market-chart-tooltip i {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.market-chart-tooltip strong,
+.market-chart-tooltip span,
+.market-chart-tooltip b {
+  color: #fff;
+}

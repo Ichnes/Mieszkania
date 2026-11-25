@@ -86,6 +86,9 @@ type AutoMergeCandidateRow = AutoMergeListingRow & {
 };
 
 const automaticDescriptionSimilarityThreshold = 0.8;
+// Compare only unambiguous apartment identifiers. A developer brochure may list several units.
+const describedUnitSql = `(select case when count(distinct upper(m[1])) = 1 then min(upper(m[1])) end
+  from regexp_matches(coalesce(l.description,''), '(?:apartament|mieszkanie|lokal)[[:space:]]+(?:nr[.]?|numer)[[:space:]]*[:.]?[[:space:]]*([[:alpha:]]{0,3}[0-9]+[[:alpha:]]?(?:[./-][0-9]+)?)\\y', 'gi') m)`;
 const exactDescriptionPrefixWordCount = 25;
 const sourcePriority = [
   "otodom",
@@ -809,6 +812,7 @@ export async function getDuplicateGroupOverviews(
       with review_groups as materialized (
         select gm.group_id, count(*)::int as members,
           array_remove(array[
+            case when count(distinct ${describedUnitSql}) > 1 then 'Różne numery lokali w opisach' end,
             case when count(distinct l.floor) > 1 then 'Różne piętra' end,
             case when count(distinct l.rooms) > 1 then 'Różna liczba pokoi' end,
             case when max(l.area_sqm) - min(l.area_sqm) > min(l.area_sqm) * 0.02 then 'Rozbieżny metraż' end
@@ -1120,7 +1124,7 @@ async function checkDuplicateGroups(
   }>(
     `
     with members as (
-      select l.id, l.area_sqm, l.rooms, l.floor, l.status,
+      select l.id, l.area_sqm, l.rooms, l.floor, l.status, ${describedUnitSql} as unit_number,
         coalesce(l.hidden_duplicate_of_id, l.id) as primary_id from listings l
       where l.id in ($1::uuid, $2::uuid) or l.id in (
         select m.listing_id from listing_duplicate_group_members m
@@ -1129,7 +1133,7 @@ async function checkDuplicateGroups(
     )
     select coalesce(max(area_sqm) - min(area_sqm) <= min(area_sqm) * 0.02, not $3::boolean)
       and (not $3::boolean or count(*) filter (where area_sqm > 0) = count(*))
-      and (not $3::boolean or (count(distinct rooms) <= 1 and count(distinct floor) <= 1))
+      and (not $3::boolean or (count(distinct rooms) <= 1 and count(distinct floor) <= 1 and count(distinct unit_number) <= 1))
       and (not $3::boolean or not exists (
         select 1 from listing_duplicate_reviews r
         where r.status = 'different_listing'

@@ -27,12 +27,29 @@ w wybranym okresie, a **Zmiany cen** — aktywne oferty ze zmianą ceny; kilka z
 ceny jednej oferty liczy się raz. Oba wskaźniki pomijają duplikaty i uwzględniają
 miasto, cenę i metraż ustawione dla poszukiwań.
 
+Kliknij **Nowe** lub **Zmiany cen**, aby przejść do pierwszej strony ofert z wybranego okresu.
+Kliknięcie zastępuje wcześniejsze filtry listy. Nagłówek wyników pokazuje rodzaj i okres wyboru.
+Przycisk **Wyczyść filtry** przywraca pełną listę.
+
 W **Aktywnych ofertach** i **Średniej cenie / m²** główna liczba nadal opisuje
 obecny stan, a wybrany okres określa porównanie do stanu sprzed 7, 30 lub 60 dni.
 Średnia dotyczy Warszawy. Przy zbyt krótkiej historii pojawia się informacja
 o braku porównania. Okres podsumowania jest niezależny od okresu strony Statystyki.
 
-Aby zobaczyć dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
+Kliknij **Wszystkie ulubione**, aby wyświetlić razem zapisane oferty aktywne i archiwalne.
+Ten skrót czyści wcześniejsze ograniczenia wyników. Przy tytule nieaktywnej oferty widnieje **Archiwalna**.
+Na telefonie skrót znajduje się pod przyciskiem **Filtry**.
+
+W **Aktualizacji** przy pracującym portalu zobaczysz osobne liczby nowych i odświeżanych ofert.
+Przy odświeżaniu aplikacja pokazuje przykładowy tytuł z bieżącej partii. Przy imporcie nowego ogłoszenia może pokazać jego identyfikator.
+
+W **Duplikatach** kolumny tabeli odpowiadają kolejności kart pod tabelą. Strzałki pod zdjęciem i przesunięcie palcem zmieniają zdjęcie tylko w danej ofercie. Dotknięcie samego zdjęcia otwiera ofertę. Gdy zdjęcia pochodzą z powiązanego ogłoszenia, aplikacja pokazuje podpis.
+
+W **Ponownych wystawieniach → Połączone** kolejne publikacje tego samego mieszkania tworzą wspólną historię. Dla większej grupy lista pokazuje publikacje w kolejności pierwszego wykrycia. Rozwiń **Powiązania między publikacjami**, aby sprawdzić poszczególne pary. **Propozycje** wymagają osobnej decyzji dla każdej pary.
+
+W **Statystykach** kliknij tydzień na wykresie **Ceny i liczba ofert — tygodniowo** albo wybierz go z listy, aby zachować dokładne wartości pod wykresem. Obok znajdziesz tygodniowy bilans ofert oraz porównanie obniżek i podwyżek w dzielnicach.
+
+Aby zobaczyć wyłącznie dawne ulubione, kliknij **Ulubione**, zaznacz **Tylko archiwalne**
 i naciśnij **Filtruj**. Możesz też najpierw wybrać archiwum, a potem kliknąć
 **Ulubione**. Nagłówek **Archiwalne ulubione** potwierdza połączenie filtrów.
 Ponowne kliknięcie **Ulubione** wyłącza tylko ten warunek, zachowując archiwum.
@@ -611,6 +628,9 @@ paski systemowe przeglądarki mogą pozostać widoczne.
 W statystykach wykres **Ceny i liczba ofert — tygodniowo** pokazuje wykryte oferty,
 archiwizacje, medianę cen wykrytych oraz średnią cen wszystkich ofert aktywnych
 na koniec danego tygodnia (dla bieżącego tygodnia: do teraz). Obie ceny są za m².
+Najedź na tydzień, aby odczytać cztery wartości. Kliknięcie, dotknięcie lub wybór tygodnia
+z listy zostawia wartości pod wykresem. Na wykresie zmian cen w dzielnicach liczby obok
+słupków pozostają widoczne. Najechanie na dzielnicę pokazuje oba wyniki razem.
 Średnia uwzględnia zapisane zmiany cen, daty wykrycia i archiwizacji oraz zakres filtrów.
 Jeśli oferta nie ma historii cen, używana jest jej dostępna cena; nie odtwarzamy
 niezapisanych okresów wcześniejszej aktywności. Brak danych pozostaje przerwą na wykresie.

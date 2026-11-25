@@ -7,6 +7,23 @@ import { getDashboardContext, getListingsPage, getMapListings } from "./listing-
 import { dashboardPriceChangesSql } from "./dashboard-price-changes";
 import { dashboardNewListingsSql, dashboardBaselineSql } from "./dashboard-periods";
 
+test("all favorites span active and removed listings outside default search limits", async (t) => {
+  const queries: string[] = [];
+  t.mock.method(fs, "existsSync", () => true);
+  t.mock.method(pool, "query", async (sql: string) => {
+    if (sql.includes("select value from app_settings"))
+      return { rows: [{ value: createDefaultFamilySettings() }] };
+    queries.push(sql);
+    return { rows: [] };
+  });
+  await getListingsPage({ shortlistedOnly: true, includeArchivedFavorites: true });
+  const count = queries.find((sql) => sql.includes("count(*)::text as total"));
+  assert.ok(count);
+  assert.match(count, /l\.is_shortlisted = true/);
+  assert.doesNotMatch(count, /l\.status =/);
+  assert.doesNotMatch(count, /l\.city = any|l\.area_sqm >=|coalesce\(l\.rooms/);
+});
+
 test("unit price sorting uses current price divided by area before pagination with nulls last", async (t) => {
   const queries: string[] = [];
   t.mock.method(fs, "existsSync", () => true);

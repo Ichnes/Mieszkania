@@ -122,13 +122,23 @@ export function OffersPage({
                     aria-label="Widoczność ofert"
                   >
                     <button
-                      className={filters.shortlistedOnly ? "tab-button active" : "tab-button"}
-                      aria-pressed={Boolean(filters.shortlistedOnly)}
+                      className={
+                        filters.shortlistedOnly && !filters.includeArchivedFavorites
+                          ? "tab-button active"
+                          : "tab-button"
+                      }
+                      aria-pressed={Boolean(
+                        filters.shortlistedOnly && !filters.includeArchivedFavorites,
+                      )}
                       type="button"
                       onClick={() => {
                         const nextFilters = {
                           ...filters,
-                          shortlistedOnly: filters.shortlistedOnly ? undefined : (true as const),
+                          shortlistedOnly:
+                            filters.shortlistedOnly && !filters.includeArchivedFavorites
+                              ? undefined
+                              : (true as const),
+                          includeArchivedFavorites: undefined,
                           hiddenOnly: undefined,
                         };
                         setFilters(nextFilters);
@@ -136,6 +146,21 @@ export function OffersPage({
                       }}
                     >
                       <Star size={16} aria-hidden="true" /> Ulubione
+                    </button>
+                    <button
+                      type="button"
+                      className={
+                        filters.includeArchivedFavorites ? "tab-button active" : "tab-button"
+                      }
+                      aria-pressed={Boolean(filters.includeArchivedFavorites)}
+                      onClick={() => {
+                        const next = { shortlistedOnly: true, includeArchivedFavorites: true };
+                        setFilters(next);
+                        setMobileFiltersOpen(false);
+                        void applyFilters(next, 1, listingSort);
+                      }}
+                    >
+                      <Star size={16} aria-hidden="true" /> Wszystkie ulubione
                     </button>
                     <button
                       className={
@@ -151,6 +176,7 @@ export function OffersPage({
                         const nextFilters = {
                           ...filters,
                           shortlistedOnly: undefined,
+                          includeArchivedFavorites: undefined,
                           archivedOnly: undefined,
                           hiddenOnly: undefined,
                         };
@@ -168,6 +194,7 @@ export function OffersPage({
                         const nextFilters = {
                           ...filters,
                           shortlistedOnly: undefined,
+                          includeArchivedFavorites: undefined,
                           archivedOnly: undefined,
                           hiddenOnly: true as const,
                         };
@@ -400,6 +427,9 @@ export function OffersPage({
                         setFilters((current) => ({
                           ...current,
                           archivedOnly: event.target.checked || undefined,
+                          includeArchivedFavorites: event.target.checked
+                            ? undefined
+                            : current.includeArchivedFavorites,
                           hiddenOnly: event.target.checked ? undefined : current.hiddenOnly,
                         }))
                       }
@@ -493,7 +523,13 @@ export function OffersPage({
                 <ListingSection
                   compareIds={model.compareListingIds}
                   onToggleCompare={model.toggleCompareListing}
-                  title={listingSectionTitle}
+                  title={
+                    model.appliedFilters.newWithinDays
+                      ? `Nowe oferty · ${model.appliedFilters.newWithinDays} dni`
+                      : model.appliedFilters.priceChangedWithinDays
+                        ? `Zmiany cen · ${model.appliedFilters.priceChangedWithinDays} dni`
+                        : listingSectionTitle
+                  }
                   listings={visibleListings}
                   onOpen={openListing}
                   downPayment={model.settings.financing?.downPayment ?? defaultDownPayment}

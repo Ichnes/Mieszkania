@@ -8,6 +8,7 @@ import { Select } from "../../components/Select";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 import { RelistingMatches } from "./RelistingMatches";
+import { RelistingTimeline } from "./RelistingTimeline";
 import type { RelistingReviewEvent } from "./review";
 
 export function RelistingsPanel({
@@ -42,6 +43,7 @@ export function RelistingsPanel({
   const [notice, setNotice] = useState("");
   useEffect(() => {
     const reviewed = (event: Event) => {
+      setRevision((value) => value + 1);
       const { match, decision } = (event as CustomEvent<RelistingReviewEvent>).detail;
       setResult((current) => {
         if (!current) return current;
@@ -78,14 +80,21 @@ export function RelistingsPanel({
     const controller = new AbortController();
     setLoading(true);
     setError("");
-    void apiFetch(`${apiBaseUrl}/api/listings/relistings?limit=20&offset=${offset}&sort=${sort}`, {
-      signal: controller.signal,
-    })
+    void apiFetch(
+      `${apiBaseUrl}/api/listings/relistings?limit=20&offset=${offset}&sort=${sort}&grouped=${!potential}`,
+      {
+        signal: controller.signal,
+      },
+    )
       .then(async (response) => {
         if (!response.ok)
           throw Error("Nie udało się odczytać zapisanych powiązań. Spróbuj ponownie.");
         const next: RelistedListingsResponse = await response.json();
         if (controller.signal.aborted) return;
+        if (page > 1 && offset >= (potential ? next.potentialCount : (next.groupCount ?? 0))) {
+          setPages((current) => ({ ...current, [view]: page - 1 }));
+          return;
+        }
         setResult(next);
       })
       .catch((failure) => {
@@ -96,8 +105,10 @@ export function RelistingsPanel({
       });
     return () => controller.abort();
   }, [page, offset, view, sort, revision, scanResult]);
-  const total = (potential ? result?.potentialCount : result?.matched) ?? 0;
+  const total = (potential ? result?.potentialCount : result?.groupCount) ?? 0;
   const items = (potential ? result?.potentialItems : result?.items) ?? [];
+  const groups = result?.groups ?? [];
+  const pageSize = potential ? items.length : groups.length;
   return (
     <section className="panel duplicate-queue-controls">
       <div className="section-topline">
@@ -105,7 +116,7 @@ export function RelistingsPanel({
           <h2>{potential ? "Potencjalne ponowne wystawienia" : "Połączone ponowne wystawienia"}</h2>
           <p className="muted">
             {result &&
-              `${total.toLocaleString("pl-PL")} ${potential ? "propozycji" : "połączonych par"}`}
+              `${potential ? "Propozycje" : "Grupy ogłoszeń"} · ${total.toLocaleString("pl-PL")}`}
           </p>
         </div>
         <button
@@ -175,7 +186,15 @@ export function RelistingsPanel({
       ) : (
         !error && (
           <div className="relisting-results">
-            {items.length ? (
+            {!potential && groups.length ? (
+              groups.map((group) => (
+                <RelistingTimeline
+                  key={group[0].current.id}
+                  group={group}
+                  onOpenListing={onOpenListing}
+                />
+              ))
+            ) : items.length ? (
               <RelistingMatches
                 key={`${view}:${page}:${revision}`}
                 items={items}
@@ -200,7 +219,7 @@ export function RelistingsPanel({
                   : "Brak zapisanych ponownych wystawień."}
               </p>
             )}
-            {(page > 1 || offset + items.length < total) && (
+            {(page > 1 || offset + pageSize < total) && (
               <div className="pagination-row">
                 <button
                   className="action-button secondary-button"
@@ -216,11 +235,11 @@ export function RelistingsPanel({
                 <button
                   className="action-button secondary-button"
                   type="button"
-                  disabled={offset + items.length >= total}
+                  disabled={offset + pageSize >= total}
                   onClick={() => {
                     setOffsets((current) => ({
                       ...current,
-                      [view]: [...current[view].slice(0, page), offset + items.length],
+                      [view]: [...current[view].slice(0, page), offset + pageSize],
                     }));
                     setPages((current) => ({ ...current, [view]: page + 1 }));
                   }}

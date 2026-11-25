@@ -1,4 +1,5 @@
 // Count offers, not events: several price updates still represent one changed offer.
+export const dashboardPriceEventPredicate = "pe.event_type in ('price_drop', 'price_increase')";
 export const dashboardPriceChangesSql = `
   select
     count(distinct pe.listing_id) filter (
@@ -10,7 +11,7 @@ export const dashboardPriceChangesSql = `
     count(distinct pe.listing_id)::text as days60
   from price_events pe
   join listings l on l.id = pe.listing_id
-  where pe.event_type in ('price_drop', 'price_increase')
+  where ${dashboardPriceEventPredicate}
     and l.status = 'active'
     and l.city = $1
     and l.hidden_duplicate_of_id is null

@@ -25,14 +25,14 @@ export async function getOwnListingPreviewUrls(
     const urls = result.get(row.listing_id) ?? [];
     if (row.storage_key && (await findMediaFilePathAsync(row.storage_key)))
       urls.push(getMediaResponsePath(row.storage_key));
-    if (/^https?:\/\//i.test(row.source_url)) urls.push(row.source_url);
+    else if (/^https?:\/\//i.test(row.source_url)) urls.push(row.source_url);
     result.set(row.listing_id, [...new Set(urls)]);
   }
   // Exhaust available local photos before using portal URLs which may reject hotlinking.
   for (const [id, urls] of result)
     result.set(id, [
-      ...urls.filter((url) => !/^https?:/.test(url)).slice(0, 4),
-      ...urls.filter((url) => /^https?:/.test(url)).slice(0, 4),
+      ...urls.filter((url) => !/^https?:/.test(url)),
+      ...urls.filter((url) => /^https?:/.test(url)),
     ]);
   return result;
 }

@@ -48,6 +48,12 @@ test(
         assert.equal(await autoMergeDuplicateByDescription(db, ids[0]), null, `area=${area}`);
       }
       await db.query("update listings set area_sqm=51 where id=$1", [ids[1]]);
+      await db.query(
+        "update listings set description=description || case when id=$1 then ' Apartament nr M37' else ' Apartament nr M38' end",
+        [ids[0]],
+      );
+      assert.equal(await duplicateGroupsCompatible(db, ids[0], ids[1], true), false);
+      await db.query("update listings set description=replace(description,'M38','M37')");
       const merged = await autoMergeDuplicateByDescription(db, ids[0]);
       assert.ok(merged);
       assert.deepEqual(new Set([merged.primaryListingId, merged.duplicateListingId]), new Set(ids));

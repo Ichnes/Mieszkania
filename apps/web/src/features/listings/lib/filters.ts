@@ -2,6 +2,9 @@ import type { ListingFilters } from "@mieszkania/shared";
 
 export function getActiveFilterBadges(filters: ListingFilters) {
   const badges: string[] = [];
+  if (filters.newWithinDays) badges.push(`Nowe oferty · ${filters.newWithinDays} dni`);
+  if (filters.priceChangedWithinDays)
+    badges.push(`Zmiany cen · ${filters.priceChangedWithinDays} dni`);
 
   if (filters.city) badges.push(`Miasto: ${filters.city}`);
   const districts = filters.districts ?? (filters.district ? [filters.district] : []);
@@ -18,7 +21,10 @@ export function getActiveFilterBadges(filters: ListingFilters) {
   if (filters.roomsMin !== undefined || filters.roomsMax !== undefined)
     badges.push(`Pokoje: ${filters.roomsMin ?? 0}-${filters.roomsMax ?? "max"}`);
   if (filters.search) badges.push(`Fraza: ${filters.search}`);
-  if (filters.shortlistedOnly) badges.push("Tylko ulubione");
+  if (filters.shortlistedOnly)
+    badges.push(
+      filters.includeArchivedFavorites ? "Wszystkie ulubione · z archiwalnymi" : "Tylko ulubione",
+    );
   if (filters.priceChangedOnly) badges.push("Tylko zmiana ceny");
   if (filters.archivedOnly)
     badges.push(

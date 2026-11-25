@@ -1,3 +1,4 @@
+import { cleanPortalDescription } from "../../services/listings/listing-text";
 import { publicFetch as fetch } from "../../services/http/public-fetch";
 import { createDefaultSearchContract, type SearchContract } from "@mieszkania/shared";
 import { discoverLocationGroups } from "../grouped-discovery";
@@ -527,10 +528,11 @@ export function parseListing(
       ? (offerValue as Record<string, unknown>)
       : {};
   const title = text(product.name) ?? meta(html, "og:title") ?? "Oferta Nieruchomosci-online";
-  const description =
+  const description = cleanPortalDescription(
     descriptionOverride?.trim() ||
-    extractDescription(visibleText) ||
-    strip(text(product.description) ?? meta(html, "og:description") ?? "");
+      extractDescription(visibleText) ||
+      strip(text(product.description) ?? meta(html, "og:description") ?? ""),
+  );
   const address = extractNieruchomosciAddress(html);
   // Domiporta exposes the offer amount in a dedicated HTML field rather than
   // JSON-LD. Add it to the parser's text fallbacks in a normalized form.

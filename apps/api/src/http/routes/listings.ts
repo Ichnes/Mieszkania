@@ -267,7 +267,7 @@ export function registerListingsRoutes(app: FastifyInstance) {
     return scanRelistedListings(request.body?.limit);
   });
 
-  app.get<{ Querystring: { limit?: string; offset?: string; sort?: string } }>(
+  app.get<{ Querystring: { limit?: string; offset?: string; sort?: string; grouped?: string } }>(
     "/api/listings/relistings",
     async (request) =>
       getRelistingResults(
@@ -275,6 +275,7 @@ export function registerListingsRoutes(app: FastifyInstance) {
         Number(request.query.offset ?? 0),
         undefined,
         request.query.sort,
+        request.query.grouped === "true",
       ),
   );
 
@@ -375,7 +376,10 @@ function parseListingFilters(query: Record<string, string | undefined>): Listing
     roomsMax: toNumber(query.roomsMax),
     search: query.search || undefined,
     shortlistedOnly: query.shortlistedOnly === "true",
+    includeArchivedFavorites: query.includeArchivedFavorites === "true",
     priceChangedOnly: query.priceChangedOnly === "true",
+    newWithinDays: dashboardDays(query.newWithinDays),
+    priceChangedWithinDays: dashboardDays(query.priceChangedWithinDays),
     archivedOnly: query.archivedOnly === "true",
     includeMergedActive: query.includeMergedActive === "true",
     hiddenOnly: query.hiddenOnly === "true",
@@ -384,6 +388,11 @@ function parseListingFilters(query: Record<string, string | undefined>): Listing
     pageSize: toPositiveInteger(query.pageSize),
     sort: toListingSort(query.sort),
   };
+}
+
+function dashboardDays(value?: string) {
+  const days = Number(value);
+  return days === 7 || days === 30 || days === 60 ? days : undefined;
 }
 
 function toNumber(value?: string) {

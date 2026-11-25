@@ -25,29 +25,82 @@ function amenities(text: string) {
     garage: /garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*|w\s+garaz\w*|z\s+komork\w*)/.test(
       text,
     ),
-    storage: /komork\w*|piwnic\w*|box\w*\s+lokatorsk\w*/.test(text),
+    storage: /komork\w*|piwnic\w*|boks\w*\s+rowerow\w*|box\w*\s+lokatorsk\w*/.test(text),
     garden: /ogrod(?:ek|ka|kiem|ku)\b/.test(text),
   };
 }
 
 export function extractAdditionalPurchaseCosts(description: string): PurchaseCosts {
-  const text = normalize(description.replace(/<[^>]*>/g, " "))
+  let text = normalize(description.replace(/<[^>]*>/g, " "))
     .replace(/\s+/g, " ")
+    .replace(/\blokatrosk/g, "lokatorsk")
+    .replace(
+      /\blaczny koszt (dwoch|trzech|czterech) miejsc\s*:/g,
+      "laczny koszt $1 miejsc postojowych:",
+    )
+    .replace(
+      /\b(miejsce (?:parkingowe|postojowe)) i (komorka(?: lokatorska)?) platne dodatkowo\s*\(odpowiednio\s+(\d+(?:[ .,]\d+)*\s*(?:tys\.?|zl|pln))\s+i\s+/g,
+      "$1 dodatkowo $3; $2 dodatkowo ",
+    )
+    .replace(/\bpow\.\s*(?=\d)/g, "pow ")
     .replace(/\bok\./g, "ok")
+    .replace(/!\)/g, ")")
     .replace(/(\d)\s*m\.(?=\s)/g, "$1 m");
   const result: PurchaseCosts = {};
+  if (/opcjonalnie miejsce[^.!?]{0,120}opcjonalnie komork/.test(text)) {
+    result.warnings = ["Parking i komórka są opcjonalne. Koszt zależy od wybranych dodatków."];
+    text = text.replace(
+      /opcjonalnie (?:miejsce|komork\w*)[^.!?+]{0,100}?\(\s*[\d .,]+\s*(?:pln|zl)\s*\)/g,
+      "",
+    );
+  }
+  const catalog = text.search(/miejsce postojowe pojedyncze\s*:/);
+  if (catalog >= 0 && /platforma niezalezna gorna/.test(text.slice(catalog))) {
+    result.warnings = [
+      "Opis zawiera cennik różnych miejsc. Potwierdź wariant parkingu dla tego lokalu.",
+    ];
+    text = text.slice(0, catalog);
+  }
+  if (
+    /mozliwosc zakupu calosci lub wybranych elementow/.test(text) &&
+    /\b(?:kazde|kazda)\b/.test(text)
+  ) {
+    return {
+      warnings: [
+        "Sprzedający dopuszcza zakup wybranych dodatków. Łączny koszt zależy od liczby wybranych miejsc i komórek.",
+      ],
+    };
+  }
+  if (/koszt miejsca postojowego rodzinnego/.test(text) && /tylko dla lokali/.test(text)) {
+    return {
+      warnings: [
+        "Opis podaje cennik kilku wariantów miejsc postojowych. Potwierdź wariant i cenę dodatków dla tego mieszkania.",
+      ],
+    };
+  }
   let previousEnd = 0;
   let indoorParking: number | undefined;
   let otherParking: number | undefined;
   const includedInBundle = { garage: false, storage: false };
   for (const match of text.matchAll(
-    /(\d{1,3}(?:,\d{3})+|\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:[,.](\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
+    /(\d{1,3}(?:,\d{3})+|\d{1,3}(?:[ .]\d{3})+|\d{1,7})(?:[,.](\d{1,2}))?\s*(tys(?:iecy|\.)?\b|pln\b|zl(?:otych|ote|oty)?\b|,\s*-|(?=za\s+(?:jedno\s+)?miejsce\b))/g,
   )) {
     const index = match.index!;
-    let before = text
-      .slice(Math.max(previousEnd, index - 400), index)
-      .split(/[.!?](?!\d)/)
-      .at(-1)!;
+    const clauses = text.slice(Math.max(previousEnd, index - 400), index).split(/[.!?](?!\d)|[•;]/);
+    let before = clauses.at(-1)!;
+    before = before.replace(/^.*?\bdo mieszkania przynalez\w*\s+/, "");
+    if (
+      /^\s*(?:(?:oba\s+sa\s+)?dodatkowo\s+platn|cena za oba miejsca\b)/.test(before) &&
+      clauses.length > 1
+    ) {
+      const previous = clauses.at(-2)!;
+      if (amenities(previous).garage) before = previous + " " + before;
+    }
+    if (
+      /mozliwosc\s+(?:za|do)?kup\w*\s+drugiego\s+miejsca/.test(before) &&
+      result.garage !== undefined
+    )
+      continue;
     const after = text.slice(index + match[0].length, index + match[0].length + 70);
     previousEnd = index + match[0].length;
     const includedPrefix = before.match(/^(.*\bw\s+cenie)\s*[,;]\s*(.*)$/);
@@ -58,6 +111,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       before = includedPrefix[2];
     }
     const mentioned = amenities(before);
+    if (/\bbrak\s+(?:komork\w*|piwnic\w*)/.test(before)) mentioned.storage = false;
     // A summary's unqualified "Cena:" is the apartment price. Earlier fields
     // (including "garaż: w cenie") must not make it an amenity surcharge.
     if (/\bcena\s*[:=]\s*$/.test(before) && /\bw\s+cenie\b/.test(before)) continue;
@@ -65,12 +119,13 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     if (/\bprzy\s+miejscu\s+postojowym\s*\(?\s*(?:dodatkowo\s+platne)?\s*$/.test(before))
       mentioned.storage = false;
     if (!mentioned.garage && !mentioned.storage && !mentioned.garden) continue;
+    if (/\bcena\s*[-–—]\s*$/.test(before) && /^\s*\+/.test(after)) continue;
     // Nearby amenity mentions do not turn the apartment price or unit price into a surcharge.
     if (/\bcena\s+(?:mieszkania|apartamentu|lokalu|za\s+m[²2])\s*[:=—–-]?\s*$/.test(before))
       continue;
     // A price for the apartment together with an amenity is the total, not a surcharge.
     const bundle = before.match(
-      /(?:mieszkanie|apartament|lokal)\s+(?:(?:(?:wraz|razem|lacznie)\s+)?z|\+|i|oraz)\s+([^;.!?]+)\s*[:=—–-]?\s*$/,
+      /(?:mieszkanie|mieszkania|apartament|apartamentu|lokal|lokalu)\s+(?:(?:(?:wraz|razem|lacznie)\s+)?z|\+|i|oraz)\s+([^;.!?]+)\s*[:=—–-]?\s*$/,
     );
     const totalPrice =
       /\b(?:mieszkanie|mieszkania|apartament|apartamentu|lokal|lokalu)\b/.test(before) &&
@@ -84,7 +139,12 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
       continue;
     }
     if (
-      !/dodatkow|platn|cen[ayie]|kosztuje|dokup|\bza\s*$|\+\s*$/.test(before) &&
+      !/dodatkow|platn|cen[ayie]|kosztuje|dokup|zakup obligator|obligatoryjn\w* zakup|w kwocie|\b(?:za|po)\s*$|\+\s*$|\b\d{1,2}\s*[x×]\s*$|\(\s*$/.test(
+        before,
+      ) &&
+      !/(?:gara[zż]\w*|miejsc\w* (?:postojow\w*|parkingow\w*|w gara\w*)|komork\w* lokatorsk\w*|piwnic\w*)[^;:!?•]{0,85}[:=–—-]\s*$/.test(
+        before,
+      ) &&
       !/(?:garaz\w*|miejsc\w*\s+(?:postojow\w*|parkingow\w*)(?:\s+przed\s+budynkiem)?|piwnic\w*|komork\w*(?:\s+lokatorsk\w*)?|ogrod\w*)\s*[:—–-]?\s*$/.test(
         before,
       ) &&
@@ -92,7 +152,7 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     )
       continue;
     if (
-      /^\s*(?:\/\s*(?:mies|msc|rok|kwartal)|miesieczn|rocznie|kwartalnie|za\s+(?:miesiac|rok|kwartal))/.test(
+      /^\s*(?:\/\s*(?:mies|msc|rok|kwartal|m[2²])|miesieczn|rocznie|kwartalnie|za\s+(?:miesiac|rok|kwartal))/.test(
         after,
       ) ||
       /wynaj\w*|czynsz|dzierzaw\w*/.test(before)
@@ -110,9 +170,11 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
     if (!Number.isFinite(amount) || amount < 1000) continue;
     if (mentioned.garage && mentioned.storage) result.garageAndStorage = amount;
     else if (mentioned.garage) {
-      const count = extractParkingSpaceCount(before);
+      const multiplier = before.match(/\b(\d{1,2})\s*[x×]\s*$/);
+      const count = multiplier ? Number(multiplier[1]) : extractParkingSpaceCount(before);
       const perSpace =
-        /\bpo\s*$/.test(before) ||
+        Boolean(multiplier) ||
+        /\b(?:po|kazde w cenie)\s*$/.test(before) ||
         /^\s*(?:za\s+(?:jedno\s+)?miejsce|(?:za\s+)?kazde|\/\s*(?:miejsce|szt))/i.test(after);
       const parkingAmount = amount * (perSpace ? (count ?? 1) : 1);
       if (count && perSpace) {
@@ -120,10 +182,15 @@ export function extractAdditionalPurchaseCosts(description: string): PurchaseCos
         result.parkingUnitPrice = amount;
       }
       if (/garaz\w*|podziemn\w*/.test(before)) indoorParking = parkingAmount;
-      else otherParking = parkingAmount;
+      else if (parkingAmount !== indoorParking || /naziemn|zewnetrz|przed budynkiem/.test(before))
+        otherParking = parkingAmount;
       result.garage = (indoorParking ?? 0) + (otherParking ?? 0);
-    } else if (mentioned.storage) result.storage = amount;
-    else result.garden = amount;
+    } else if (mentioned.storage) {
+      const boxes = /^\s*\/\s*boks/.test(after)
+        ? Number(before.match(/\b(\d{1,2}) boksow rowerowych/)?.[1])
+        : 0;
+      result.storage = amount * (boxes || 1);
+    } else result.garden = amount;
   }
   for (const clause of text.split(/[.!?](?!\d)/)) {
     for (const match of clause.matchAll(/w\s+cenie\b/g)) {

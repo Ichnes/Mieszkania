@@ -197,6 +197,39 @@ export function UpdatesPage({
                 </small>
               </div>
             </div>
+            {!queueStatusError &&
+              portalQueueRows.some(
+                ({ status }) =>
+                  status?.processingActivity &&
+                  (status.processingActivity.refreshes || status.processingActivity.imports),
+              ) && (
+                <ul className="queue-activity" aria-label="Oferty w trakcie przetwarzania">
+                  {portalQueueRows.map(({ name, status }) => {
+                    const activity = status?.processingActivity;
+                    if (!activity || !(activity.refreshes || activity.imports)) return null;
+                    return (
+                      <li key={name}>
+                        <strong>{name}</strong>
+                        <div>
+                          {activity.refreshes > 0 && (
+                            <p>Odświeżanie zapisanych ofert · {activity.refreshes}</p>
+                          )}
+                          {activity.imports > 0 && (
+                            <p>Pobieranie nowych ofert · {activity.imports}</p>
+                          )}
+                          {activity.exampleTitle ? (
+                            <small>W tej partii m.in. {activity.exampleTitle}</small>
+                          ) : (
+                            activity.exampleExternalId && (
+                              <small>Ogłoszenie {activity.exampleExternalId}</small>
+                            )
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
             <div className="stale-refresh-metrics">
               <div>
                 <strong>{staleListingRefresh?.due ?? 0}</strong>

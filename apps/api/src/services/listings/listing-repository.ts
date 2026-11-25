@@ -7,7 +7,7 @@ import {
   getPriceChangePercent,
 } from "./price-change";
 import { commuteRouteCache } from "../insights/commute-route-cache";
-import { dashboardPriceChangesSql } from "./dashboard-price-changes";
+import { dashboardPriceChangesSql, dashboardPriceEventPredicate } from "./dashboard-price-changes";
 import {
   dashboardPeriods,
   dashboardNewListingsSql,
@@ -25,7 +25,8 @@ import { createListingSnapshotCache, listingSnapshotPayloadSql } from "./listing
 import { extractAdditionalPurchaseCosts } from "./purchase-costs";
 import { invalidateMarketStatsCache } from "../market/stats-cache";
 import { effectiveDistrictSql } from "./listing-title-location";
-import { decodeListingText } from "./listing-text";
+import { cleanPortalDescription, decodeListingText } from "./listing-text";
+import { descriptionDiscrepancies } from "./description-discrepancies";
 import { buildListingSearch } from "./listing-search";
 import { archiveStatusSql, mergedArchiveMemberSql } from "./archive-filter";
 import type {
@@ -70,7 +71,7 @@ import { getFamilySettings } from "../settings/family-settings";
 import { getAiAssessments } from "./ai-assessment-repository";
 import { inferBuildingDetails } from "./listing-description-facts";
 import { extractParkingSpaceCount } from "./parking-count";
-import { getSavedPortalBuildingFacts } from "./portal-building-facts";
+import { getSavedPortalBuildingFacts, parsePortalFloor } from "./portal-building-facts";
 export { inferBuildingDetails } from "./listing-description-facts";
 import { buildEffectiveListingDateSql } from "./listing-recency";
 import {
@@ -658,8 +659,23 @@ export async function getListingDetail(listingId: string): Promise<ListingDetail
     );
     commuteRouteCache.prepare([detail], settings.workplaces);
     detail.scoringCommutes = commuteRouteCache.read(detail, settings.workplaces);
+    const discrepancies = descriptionDiscrepancies(detail, row.description ?? "");
+    if (
+      detail.city === "Warszawa" &&
+      detail.coordinateAccuracy === "exact" &&
+      detail.latitude &&
+      detail.longitude
+    ) {
+      const districtAtPin = await findWarsawDistrictAtPoint(detail.latitude, detail.longitude, db);
+      if (districtAtPin && detail.district && districtAtPin !== detail.district) {
+        discrepancies.push(
+          `Dzielnica w danych oferty: ${detail.district}. Pinezka na mapie: ${districtAtPin}. Potwierdź położenie mieszkania.`,
+        );
+      }
+    }
     return {
       ...detail,
+      descriptionDiscrepancies: discrepancies,
       aiAssessment: aiAssessments.get(listingId),
       canonicalUrl: row.canonical_url,
       sourceContactPhone,
@@ -889,26 +905,36 @@ async function getListingsPageByScope(
   const minimumVisibleArea = settings.searchContract.minArea;
   const maximumVisiblePrice = settings.searchContract.maxPrice;
   return withDb(async (db) => {
-    const clauses = [
-      "1=1",
-      filters.archivedOnly ? archiveStatusSql(filters.includeMergedActive) : "l.status = 'active'",
-      "l.hidden_duplicate_of_id is null",
-      filters.archivedOnly
-        ? "1=1"
-        : filters.hiddenOnly
-          ? "coalesce(l.rooms, 0) = 2"
-          : "coalesce(l.rooms, 0) <> 2",
-      filters.archivedOnly
-        ? `coalesce(${EFFECTIVE_PRICE_SQL}, 0) > 0`
-        : `(${EFFECTIVE_PRICE_SQL} is null or ${EFFECTIVE_PRICE_SQL} <= ${maximumVisiblePrice})`,
-      filters.archivedOnly
-        ? "coalesce(l.area_sqm, 0) > 0"
-        : `(l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})`,
-    ];
+    const scopePrice =
+      filters.newWithinDays || filters.priceChangedWithinDays
+        ? "l.price_amount"
+        : EFFECTIVE_PRICE_SQL;
+    const allFavorites =
+      filters.shortlistedOnly && filters.includeArchivedFavorites && !filters.archivedOnly;
+    const clauses = allFavorites
+      ? []
+      : [
+          "1=1",
+          filters.archivedOnly
+            ? archiveStatusSql(filters.includeMergedActive)
+            : "l.status = 'active'",
+          "l.hidden_duplicate_of_id is null",
+          filters.archivedOnly
+            ? "1=1"
+            : filters.hiddenOnly
+              ? "coalesce(l.rooms, 0) = 2"
+              : "coalesce(l.rooms, 0) <> 2",
+          filters.archivedOnly
+            ? `coalesce(${EFFECTIVE_PRICE_SQL}, 0) > 0`
+            : `(${scopePrice} is null or ${scopePrice} <= ${maximumVisiblePrice})`,
+          filters.archivedOnly
+            ? "coalesce(l.area_sqm, 0) > 0"
+            : `(l.area_sqm is null or l.area_sqm >= ${minimumVisibleArea})`,
+        ];
     const values: Array<string | number | string[]> = [];
     let paramIndex = 1;
 
-    if (scope === "region" && !filters.includeAllCities) {
+    if (scope === "region" && !filters.includeAllCities && !allFavorites) {
       clauses.push(`l.city = any($${paramIndex}::text[])`);
       values.push([filters.city || settings.searchContract.city]);
       paramIndex += 1;
@@ -1028,6 +1054,16 @@ async function getListingsPageByScope(
           where lr.current_listing_id = l.id and ${realRelistingPriceChangeSql}
         ))
       `);
+    }
+
+    if (filters.newWithinDays) {
+      clauses.push(`l.first_seen_at >= now() - make_interval(days => $${paramIndex++}::int)`);
+      values.push(filters.newWithinDays);
+    }
+    if (filters.priceChangedWithinDays) {
+      clauses.push(`exists (select 1 from price_events pe where pe.listing_id = l.id
+        and ${dashboardPriceEventPredicate} and pe.changed_at >= now() - make_interval(days => $${paramIndex++}::int))`);
+      values.push(filters.priceChangedWithinDays);
     }
 
     const totalResult = await db.query<{ total: string }>(
@@ -1321,11 +1357,13 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
         },
         {
           label: `Nowe / ${days} dni`,
+          listingWindow: "newWithinDays",
           value: formatInteger(newListingsResult.rows[0]?.[key] ?? "0"),
           description: `aktywne, niezdublowane oferty pierwszy raz znalezione w ostatnich ${days} dniach`,
         },
         {
           label: `Zmiany cen / ${days} dni`,
+          listingWindow: "priceChangedWithinDays",
           value: formatInteger(priceChangedListingsResult.rows[0]?.[key] ?? "0"),
           description: `aktywne, niezdublowane oferty, których cena zmieniła się w ostatnich ${days} dniach`,
         },
@@ -1488,7 +1526,9 @@ function decodeListingRow(row: ListingRow): ListingRow {
   return {
     ...row,
     title: decodeListingText(row.title),
-    description: row.description ? decodeListingText(row.description) : row.description,
+    description: row.description
+      ? cleanPortalDescription(decodeListingText(row.description))
+      : row.description,
     city: decodeListingText(row.city),
     district: row.district ? decodeListingText(row.district) : row.district,
     neighborhood: row.neighborhood ? decodeListingText(row.neighborhood) : row.neighborhood,
@@ -1658,7 +1698,12 @@ function mapListingSummary(
       ? `${formatInteger(String(Math.round(pricePerSqm)))} PLN/m2`
       : undefined,
     roomsCount: row.rooms ? Number(row.rooms) : undefined,
-    floor: portalBuildingDetails.floor ?? row.floor ?? inferredBuildingDetails.floor ?? undefined,
+    floor:
+      portalBuildingDetails.floor ??
+      (row.source_name === "Adresowo" ? inferredBuildingDetails.floor : undefined) ??
+      parsePortalFloor(row.floor) ??
+      inferredBuildingDetails.floor ??
+      undefined,
     totalFloors:
       portalBuildingDetails.totalFloors ??
       row.total_floors ??
@@ -1699,7 +1744,11 @@ function mapListingSummary(
     )
       ? "to_finish"
       : inferFinishQuality(row.description),
-    maintenanceFeeLabel: extractedFeatures.find((feature) => feature.key === "fees")?.value,
+    maintenanceFeeLabel: (
+      extractedFeatures.find(
+        (feature) => feature.key === "fees" && feature.source === "description",
+      ) ?? extractedFeatures.find((feature) => feature.key === "fees")
+    )?.value,
     additionalPurchaseCosts,
     totalAcquisitionPrice:
       priceAmount && additionalPurchaseCosts
@@ -1743,6 +1792,10 @@ function mapListingSummary(
 
 export function inferFinishQuality(description?: string | null): "ready" | "to_finish" | "unknown" {
   const normalized = normalizePolish(description ?? "");
+  if (
+    /\b(?:sprzedawan\w* w stanie deweloperskim|stan mieszkania:\s*deweloperski)\b/.test(normalized)
+  )
+    return "to_finish";
   if (
     /((?:opcj\w*|mozliwosc)\s+wykonczenia\s+pod\s+klucz|do remontu|do wykonczenia|stan deweloperski|niemal gotow\w* do odbioru|gotow\w* do odbioru)/.test(
       normalized,
@@ -2041,6 +2094,27 @@ function resolveStreet(row: ListingRow, location?: { district: string; neighborh
   const neighborhood = location ? location.neighborhood : resolveNeighborhood(row, district);
   if (row.city.toLowerCase() === "warszawa") {
     const canonicalAddress = normalizeWarsawStreetAddress(row.address_text);
+    const namedStreet = canonicalAddress?.replace(/\s+\d.*$/, "");
+    if (canonicalAddress && namedStreet && explicitlyNamesStreet(row.description, namedStreet))
+      return canonicalAddress;
+    if (namedStreet) {
+      for (const match of (row.description ?? "").matchAll(
+        /\bul\.\s*([A-ZŁŚŻŹĆÓĘĄŃ][\p{L}-]+)\s+\d/gu,
+      )) {
+        const candidate = normalizeWarsawStreetCandidate(match[1]);
+        if (
+          candidate &&
+          candidate.length >= 5 &&
+          namedStreet.length === candidate.length + 1 &&
+          [...namedStreet].some(
+            (_, i) => namedStreet.slice(0, i) + namedStreet.slice(i + 1) === candidate,
+          )
+        )
+          return candidate;
+      }
+    }
+    if (!canonicalAddress && neighborhood && explicitlyNamesStreet(row.description, neighborhood))
+      return neighborhood;
     if (
       canonicalAddress &&
       !isWarsawNeighborhoodLabel(canonicalAddress, district) &&
@@ -2065,10 +2139,32 @@ function resolveStreet(row: ListingRow, location?: { district: string; neighborh
   const fallback =
     extractStreetFromLocationTitle(row.title, district, row.city) ??
     extractStreetFromUrl(row.canonical_url, district);
+  if (
+    row.city === "Warszawa" &&
+    (!fallback ||
+      isWarsawNeighborhoodLabel(fallback, district) ||
+      sameStreetOrLocation(fallback, neighborhood))
+  ) {
+    const match = row.description?.match(
+      /\b(?:budynku|mieszkanie|nieruchomość|położon[eyąa]|zlokalizowan[eyąa]|znajduje się)[^.!?;\n]{0,55}?\bprzy\s+(?:ulicy|ul\.|al\.)\s+([A-ZŁŚŻŹĆÓĘĄŃ][\p{L}-]+(?:\s+[A-ZŁŚŻŹĆÓĘĄŃ][\p{L}-]+){0,2})/u,
+    );
+    if (match) {
+      const street = normalizeWarsawStreetCandidate(match[1]);
+      if (street) return street;
+    }
+  }
   return isWarsawNeighborhoodLabel(fallback, district) ||
     sameStreetOrLocation(fallback, neighborhood)
     ? undefined
     : fallback;
+}
+
+function explicitlyNamesStreet(description: string | null | undefined, street: string) {
+  const text = normalizePolish(description ?? "");
+  const name = normalizePolish(street);
+  return [...text.matchAll(/\b(?:ul\.|ulicy|ulica)\s+([\p{L}\d -]+)/gu)].some(
+    (match) => match[1] === name || match[1].startsWith(name + " "),
+  );
 }
 
 function resolveAddressText(
@@ -2079,6 +2175,13 @@ function resolveAddressText(
 ) {
   if (row.city.toLowerCase() === "warszawa") {
     const canonicalAddress = normalizeWarsawStreetAddress(row.address_text);
+    if (
+      street &&
+      canonicalAddress &&
+      street !== canonicalAddress &&
+      explicitlyNamesStreet(row.description, street)
+    )
+      return compactAddressText(street, row.city);
     if (canonicalAddress && !sameStreetOrLocation(canonicalAddress, neighborhood))
       return compactAddressText(canonicalAddress, row.city);
   }
@@ -2635,11 +2738,14 @@ export function extractFeatures(input: {
 }
 
 function inferAmenities(description: string) {
-  const text = normalizePolish(description);
+  const text = normalizePolish(description).replace(
+    /\bzlot\w*\s+taras\w*|\bogrodk\w*\s+dzialkow\w*|\btaras\s+dostepny\s+dla\s+mieszkancow\b/g,
+    " ",
+  );
   const garagePattern =
     /\b(?:gara(?:z|ż)\w*|miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*)|miejsc(?:e|a|u|em|ach|ami)?\s+w\s+parking\w*\s+podziemn\w*|stanowisk(?:o|a|u|iem|ach|ami)\s+(?:postojow\w*|parkingow\w*|gara(?:z|ż)ow\w*))\b/g;
   const storagePattern =
-    /\b(?:piwnic(?:a|y|e|ę|ą|ach|ami)?|komork(?:a|i|ę|ą|ach|ami)?(?:\s+lokatorsk(?:a|iej|ą|e|ich)?)?|schowek|box\s+lokatorski)\b/g;
+    /\b(?:piwnic(?:a|y|e|ach|ami)?|komork(?:a|i|e|ach|ami)?(?:\s+lokatorsk(?:a|iej|e|ich)?)?|schowek|box\s+lokatorski)\b/g;
   const estateParkingPattern =
     /\b(?:\d+\s+)?miejsc(?:e|a|u|em|ach|ami)?\s+(?:postojow\w*|parkingow\w*)\s+(?:dla\s+mieszkanc\w*\s+)?(?:na|w)\s+terenie\s+(?:osiedl\w*|posesj\w*)/g;
   const outdoorParkingPattern =

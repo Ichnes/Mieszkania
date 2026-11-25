@@ -488,7 +488,9 @@ export function useWorkspaceController() {
     : appliedFilters.hiddenOnly
       ? "Ukryte oferty"
       : appliedFilters.shortlistedOnly
-        ? "Ulubione oferty"
+        ? appliedFilters.includeArchivedFavorites
+          ? "Wszystkie ulubione · aktywne i archiwalne"
+          : "Ulubione oferty"
         : "Wszystkie oferty";
   const portalQueueRows = [
     { name: "Otodom", status: queueStatus },

@@ -1,11 +1,27 @@
 # Bieżące zadania
 
+## Audyt opisów, adresów i grup oraz codzienna obsługa (2026-11-25)
+
+- [x] Końcowa weryfikacja: 358 testów API i 159 testów web przeszło, 16 testów API pominięto w głównym przebiegu. Osobno przeszły 4 testy z PostgreSQL.
+
+- [x] Dodatkowe 300 losowych ofert spoza poprzednich prób daje 1100 unikalnych ogłoszeń. Porównano pola z opisami, adresy i pinezki, koszty oraz 160 grup duplikatów (533 członków, 747 par), 45 zapisanych ponownych wystawień i 43 propozycje. W 39 grupach i 6 powiązaniach wykryto różnice wymagające interpretacji. Wszystkie cztery konflikty dzielnicy z dokładną pinezką miały ostrzeżenie w API.
+- [x] Poprawiono m.in. oddzielanie ceny mieszkania od dopłat, dwie kwoty podane „odpowiednio”, cenę za oba miejsca, koszty zapisane po znaku równości oraz pomijanie samych skrótów w polu ulicy. Sprawdzono nowe reguły na rzeczywistych opisach i przykładach regresyjnych.
+- [x] Sprawdzono w Chromium podpowiedzi tygodni i dzielnic w obu motywach przy 390, 1280 i 1680 px, wybór tygodnia, galerie oraz komunikat dwóch równocześnie pracujących portali (symulowany stan kolejki).
+
+- [x] Wylosowano bez powtórzeń 200 ofert diagnostycznych. Po wdrożeniu pierwszych poprawek sprawdzono 300 innych ofert, następnie 100 kolejnych. Szczegóły poszczególnych ofert i lokalne raporty pozostają w `.local/runs/2026-11-25-audyt/`.
+- [x] Ograniczono analizę do właściwego opisu, poprawiono rozpoznawanie dopłat, wyposażenia, pięter, czynszu i ulic. Szczegóły pokazują wykryte sprzeczności metrażu, piętra i dzielnicy pinezki. Liczby z portalu i opis nie zawsze wystarczają do ustalenia prawdziwej wartości.
+- [x] Wśród ostatnich 400 ofert sprawdzono 229 grup, 826 rekordów i 1345 porównań między członkami. W 49 grupach znaleziono rozbieżności. Wspólne szablony dewelopera mogą opisywać różne mieszkania. Automatyczne łączenie uwzględnia teraz również jednoznacznie podany numer lokalu. Panel przeglądu sygnalizuje różne numery.
+- [x] Dodano wspólny widok wszystkich ulubionych i etykietę archiwum przy tytule. Stan kolejek pokazuje aktywne portale, rodzaj pracy i przykład oferty z partii.
+- [ ] Przejrzeć historyczne grupy z rozbieżnościami przed rozłączeniem lub potwierdzeniem. Weryfikacji właściciela wymagają zwłaszcza sprzeczne dane portali i niejednoznaczne pinezki.
+- [x] Ostatnia dodatkowa próba 200 ogłoszeń zwiększyła łączną liczbę do 800 różnych rekordów. W tej próbie porównano 115 grup duplikatów i 661 par w grupach, a także 36 powiązań ponownych wystawień i 22 propozycje. Surowe rozbieżności adresów obejmują również skróty i odmiany nazw.
+- [x] Dodano niezależne galerie w duplikatach i ponownych wystawieniach. Połączone wystawienia są grupowane przed paginacją. W podsumowaniu usunięto systemowe ramki kafelków, a w statystykach zwiększono wykres do 325 px, dodano wybór tygodnia, tygodniowy bilans i wykres zmian cen w dzielnicach.
+
 ## Codzienne przeglądanie ofert (2026-11-25)
 
 - [x] Przejrzano siedem głównych widoków w lokalnym Chromium przy szerokościach 1680, 1280 i 390 px. W sprawdzonych widokach nie było poziomego przewijania całej strony. Na telefonie sprawdzono przejście do listy, otwarcie szczegółów i powrót na poprzednią pozycję.
-- [ ] Propozycja: umożliwić przejście z liczników nowych ofert i zmian cen do wyników dla wybranego okresu, z zachowaniem zasad liczenia podsumowania.
+- [x] Liczniki nowych ofert i zmian cen otwierają wyniki za 7, 30 lub 60 dni. Sprawdzono wszystkie kombinacje na trzech szerokościach.
 - [ ] Propozycja: pokazać zakres wyświetlanych wyników i łączną liczbę dopasowań w nagłówku listy. Obecny licznik pokazuje liczbę kart na stronie.
-- [ ] Propozycja: na telefonie umieścić tytuł, lokalizację i cenę nad zdjęciem. Na ekranie 390 × 844 px pierwszy tytuł pojawił się około 1137 px od początku strony.
+- [x] Po obejrzeniu propozycji użytkownik wybrał obecny układ karty na telefonie.
 
 ## Dopłata do garażu i nazwy dzielnic w opisie (2026-11-23)
 

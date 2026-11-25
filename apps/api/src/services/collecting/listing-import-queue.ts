@@ -569,11 +569,22 @@ export async function getListingImportQueueStatus(
       `,
       [sourceKey],
     );
-    const pendingKinds = await db.query<{ pending_new: string; pending_price_updates: string }>(
+    const pendingKinds = await db.query<{
+      pending_new: string;
+      pending_price_updates: string;
+      refreshes: string;
+      imports: string;
+      example_title: string | null;
+      example_external_id: string | null;
+    }>(
       `
         select
           count(*) filter (where q.status = 'pending' and l.id is null)::text as pending_new,
-          count(*) filter (where q.status = 'pending' and l.id is not null)::text as pending_price_updates
+          count(*) filter (where q.status = 'pending' and l.id is not null)::text as pending_price_updates,
+          count(*) filter (where q.status = 'processing' and l.id is not null)::text as refreshes,
+          count(*) filter (where q.status = 'processing' and l.id is null)::text as imports,
+          min(nullif(l.title,'')) filter (where q.status = 'processing') as example_title,
+          min(q.external_id) filter (where q.status = 'processing' and l.id is null) as example_external_id
         from listing_import_queue q
         left join sources s on s.key = q.source_key
         left join listings l on l.source_id = s.id and l.external_id = q.external_id
@@ -627,6 +638,12 @@ export async function getListingImportQueueStatus(
       },
       pendingNew: Number(pendingKinds.rows[0]?.pending_new ?? "0"),
       pendingPriceUpdates: Number(pendingKinds.rows[0]?.pending_price_updates ?? "0"),
+      processingActivity: {
+        refreshes: Number(pendingKinds.rows[0]?.refreshes ?? 0),
+        imports: Number(pendingKinds.rows[0]?.imports ?? 0),
+        exampleTitle: pendingKinds.rows[0]?.example_title ?? undefined,
+        exampleExternalId: pendingKinds.rows[0]?.example_external_id ?? undefined,
+      },
       readyPending: Number(pendingAvailability.rows[0]?.ready_pending ?? "0"),
       delayedPending: Number(pendingAvailability.rows[0]?.delayed_pending ?? "0"),
       nextAttemptAt: pendingAvailability.rows[0]?.next_attempt_at ?? undefined,

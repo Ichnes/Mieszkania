@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch } from "../../shared/lib/http";
 import { apiBaseUrl } from "../../shared/lib/api";
 
@@ -21,6 +22,10 @@ export function DuplicatePreview({
   const [index, setIndex] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const touch = useRef<{ x: number; y: number } | undefined>(undefined);
+  const swiped = useRef(false);
+  const photoCount = sharedStart || images.length;
+  const move = (step: number) => setIndex((current) => (current + step + photoCount) % photoCount);
   useEffect(() => {
     setImages(signature ? signature.split("|") : []);
     setIndex(0);
@@ -69,24 +74,68 @@ export function DuplicatePreview({
   }
   if (images[index])
     return (
-      <button
-        type="button"
-        className="duplicate-photo-button"
-        onClick={() => onOpen(id)}
-        aria-label={`Otwórz ofertę: ${title}`}
-      >
-        <img
-          key={images[index]}
-          src={images[index]}
-          alt={title}
-          loading="lazy"
-          decoding="async"
-          onError={() => setIndex((value) => value + 1)}
-        />
-        {sharedStart !== undefined && index >= sharedStart && (
-          <span className="duplicate-photo-shared">Zdjęcie z połączonej oferty</span>
+      <div className="duplicate-gallery">
+        <button
+          type="button"
+          className="duplicate-photo-button"
+          onPointerDown={(event) => {
+            swiped.current = false;
+            if (event.pointerType !== "mouse")
+              touch.current = { x: event.clientX, y: event.clientY };
+          }}
+          onPointerCancel={() => {
+            touch.current = undefined;
+          }}
+          onPointerUp={(event) => {
+            const start = touch.current;
+            touch.current = undefined;
+            if (!start || photoCount < 2) return;
+            const dx = event.clientX - start.x;
+            if (Math.abs(dx) > 36 && Math.abs(dx) > 1.25 * Math.abs(event.clientY - start.y)) {
+              swiped.current = true;
+              move(dx < 0 ? 1 : -1);
+            }
+          }}
+          onClick={() => {
+            if (!swiped.current) onOpen(id);
+            swiped.current = false;
+          }}
+          aria-label={`Otwórz ofertę: ${title}`}
+        >
+          <img
+            key={images[index]}
+            src={images[index]}
+            alt={title}
+            loading="lazy"
+            decoding="async"
+            onError={() => {
+              setImages((current) => current.filter((url) => url !== images[index]));
+              if (sharedStart !== undefined && index < sharedStart) setSharedStart(sharedStart - 1);
+              setIndex(Math.max(0, Math.min(index, photoCount - 2)));
+            }}
+          />
+          {sharedStart !== undefined && index >= sharedStart && (
+            <span className="duplicate-photo-shared">Zdjęcie z połączonej oferty</span>
+          )}
+        </button>
+        {photoCount > 1 && (
+          <div className="duplicate-gallery-tools">
+            <button
+              type="button"
+              aria-label={`Poprzednie zdjęcie: ${title}`}
+              onClick={() => move(-1)}
+            >
+              <ChevronLeft size={18} />
+            </button>
+            <span aria-live="polite">
+              {index + 1} / {photoCount}
+            </span>
+            <button type="button" aria-label={`Następne zdjęcie: ${title}`} onClick={() => move(1)}>
+              <ChevronRight size={18} />
+            </button>
+          </div>
         )}
-      </button>
+      </div>
     );
   return (
     <div className="duplicate-preview-empty duplicate-preview-retry">
