@@ -1,3 +1,5 @@
+import { clearPhotoDrag, previewPhotoDrag } from "../lib/gallery-drag";
+import { getSelectedPhoto, selectListingPhoto } from "../lib/gallery-position";
 import { HeatingEvidence } from "./HeatingEvidence";
 import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
@@ -33,7 +35,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { FullscreenFrame } from "../../../shared/components/FullscreenFrame";
 import {
   formatDistance,
@@ -179,7 +187,50 @@ export function ListingDetailPanel(input: {
     createEmptyContactEventDraft(input.listing.manual.contactName),
   );
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const lightboxImageIndex = lightboxOpen ? activeImageIndex : null;
+  const galleryTrack = useRef<HTMLDivElement>(null);
+  const requestedImage = useRef(0);
+  const imageRequest = useRef(0);
+  const galleryScroll = useRef<number | null>(null);
+  const [imageError, setImageError] = useState("");
+  const [animateImage, setAnimateImage] = useState(true);
+  function openLightbox() {
+    galleryScroll.current = detailPanelRef.current?.scrollTop ?? null;
+    setLightboxOpen(true);
+  }
+  function closeLightbox() {
+    setLightboxOpen(false);
+    const y = galleryScroll.current;
+    if (y !== null)
+      requestAnimationFrame(() =>
+        detailPanelRef.current?.scrollTo({ top: y, behavior: "instant" }),
+      );
+  }
+  async function selectPhoto(index: number, expand = false) {
+    const token = ++imageRequest.current;
+    requestedImage.current = index;
+    const image = galleryTrack.current?.querySelectorAll("img")[index];
+    if (!image) return;
+    setImageError("");
+    image.loading = "eager";
+    try {
+      await image.decode();
+    } catch {
+      if (token === imageRequest.current) {
+        requestedImage.current = activeImageIndex;
+        settleDrag();
+        setImageError("Nie udało się wczytać zdjęcia. Spróbuj ponownie.");
+      }
+      return;
+    }
+    if (token !== imageRequest.current) return;
+    if (index === activeImageIndex) settleDrag();
+    setAnimateImage(Math.abs(index - activeImageIndex) === 1);
+    selectListingPhoto(input.listing.id, input.listing.imageUrls[index]);
+    setActiveImageIndex(index);
+    if (expand) openLightbox();
+  }
   const [photoRotation, setPhotoRotation] = useState(0);
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
@@ -208,17 +259,30 @@ export function ListingDetailPanel(input: {
   useDialogFocus(dialogRef, input.onClose);
   const dismissDialogRef = useRef<HTMLElement | null>(null);
   useDialogFocus(dismissDialogRef, () => setIsDismissConfirmOpen(false), isDismissConfirmOpen);
-  const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const imageSwipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+    axis?: "x" | "y";
+  } | null>(null);
   const didSwipeImageRef = useRef(false);
   useEffect(() => {
     setScheduledAt(toDatetimeInputValue(input.listing.viewing?.scheduledAt));
     setViewingNotes(input.listing.viewing?.notes ?? "");
     setManual(input.listing.manual);
   }, [input.listing.viewing, input.listing.manual]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     setContactEvent(createEmptyContactEventDraft(input.listing.manual.contactName));
-    setActiveImageIndex(0);
-    setLightboxImageIndex(null);
+    const index = Math.max(
+      0,
+      input.listing.imageUrls.indexOf(getSelectedPhoto(input.listing.id) ?? ""),
+    );
+    setActiveImageIndex(index);
+    requestedImage.current = index;
+    imageRequest.current++;
+    setImageError("");
+    setLightboxOpen(false);
+    galleryScroll.current = null;
     setIsDismissConfirmOpen(false);
     setActiveDetailTab(window.location.pathname === "/statystyki" ? "statistics" : "overview");
     setUnmergeSuccess("");
@@ -235,7 +299,7 @@ export function ListingDetailPanel(input: {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setLightboxImageIndex(null);
+        closeLightbox();
       }
 
       if (event.key === "ArrowLeft") {
@@ -355,9 +419,9 @@ export function ListingDetailPanel(input: {
     knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
   const maintenanceFee = input.listing.maintenanceFeeLabel;
   const changeDetailImage = (direction: -1 | 1) => {
-    setActiveImageIndex(
-      (current) =>
-        (current + direction + input.listing.imageUrls.length) % input.listing.imageUrls.length,
+    void selectPhoto(
+      (requestedImage.current + direction + input.listing.imageUrls.length) %
+        input.listing.imageUrls.length,
     );
   };
 
@@ -368,7 +432,29 @@ export function ListingDetailPanel(input: {
 
     didSwipeImageRef.current = false;
     imageSwipeStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
-    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function settleDrag() {
+    clearPhotoDrag(galleryTrack.current);
+  }
+  useLayoutEffect(settleDrag, [activeImageIndex, input.listing.id]);
+
+  function handleImagePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const start = imageSwipeStartRef.current;
+    const track = galleryTrack.current;
+    if (!start || start.pointerId !== event.pointerId || !track) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (!start.axis) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+      start.axis = Math.abs(dx) > Math.abs(dy) * 1.25 ? "x" : "y";
+      didSwipeImageRef.current = true;
+      if (start.axis === "x") {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setAnimateImage(true);
+      }
+    }
+    if (start.axis !== "x") return;
+    previewPhotoDrag(track, activeImageIndex, dx);
   }
 
   function handleImagePointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -381,9 +467,15 @@ export function ListingDetailPanel(input: {
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
     // A deliberate horizontal swipe, without stealing normal vertical page scrolling.
-    if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+    if (
+      start.axis !== "y" &&
+      Math.abs(deltaX) >= 44 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.25
+    ) {
       didSwipeImageRef.current = true;
       changeDetailImage(deltaX < 0 ? 1 : -1);
+    } else {
+      settleDrag();
     }
   }
 
@@ -496,20 +588,7 @@ export function ListingDetailPanel(input: {
             </div>
             <ListingBadgeRow badges={input.listing.badges} />
           </div>
-          <div className="detail-actions">
-            <button
-              className="action-button secondary-button detail-refresh-button"
-              type="button"
-              onClick={() => void input.onRefreshFromSource(input.listing)}
-              disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
-            >
-              <RefreshCw
-                size={16}
-                aria-hidden="true"
-                className={input.isRefreshingFromSource ? "icon-spin" : ""}
-              />{" "}
-              {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Dociągnij ofertę"}
-            </button>
+          <div className="detail-actions offer-action-menu">
             <button
               className={
                 input.listing.isShortlisted
@@ -528,56 +607,77 @@ export function ListingDetailPanel(input: {
               />{" "}
               {input.listing.isShortlisted ? "W ulubionych" : "Dodaj do ulubionych"}
             </button>
-            <button
-              className={
-                input.isCompared
-                  ? "action-button shortlist-active"
-                  : "action-button secondary-button"
-              }
-              type="button"
-              onClick={() => input.onToggleCompare(input.listing.id)}
-            >
-              <GitCompareArrows size={16} aria-hidden="true" />{" "}
-              {input.isCompared ? "W porównaniu" : "Porównaj"}
-            </button>
-            <button
-              className="action-button secondary-button"
-              type="button"
-              onClick={() => void input.onArchive(input.listing.id)}
-              disabled={input.isArchiving}
-            >
-              <Archive size={16} aria-hidden="true" />{" "}
-              {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
-            </button>
-            <button
-              className="action-button danger-button"
-              type="button"
-              onClick={() => setIsDismissConfirmOpen(true)}
-              disabled={input.isDismissing}
-            >
-              <Trash2 size={16} aria-hidden="true" />{" "}
-              {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
-            </button>
-            <button
-              className="action-button secondary-button"
-              type="button"
-              onClick={() => input.onAddToMortgage(input.listing)}
-            >
-              <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
-            </button>
+            <details key={input.listing.id}>
+              <summary className="action-button secondary-button">Więcej</summary>
+              <div className="offer-extra-actions">
+                <button
+                  className="action-button secondary-button detail-refresh-button"
+                  type="button"
+                  onClick={() => void input.onRefreshFromSource(input.listing)}
+                  disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
+                >
+                  <RefreshCw
+                    size={16}
+                    aria-hidden="true"
+                    className={input.isRefreshingFromSource ? "icon-spin" : ""}
+                  />{" "}
+                  {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Dociągnij ofertę"}
+                </button>
+                <button
+                  className={
+                    input.isCompared
+                      ? "action-button shortlist-active"
+                      : "action-button secondary-button"
+                  }
+                  type="button"
+                  onClick={() => input.onToggleCompare(input.listing.id)}
+                >
+                  <GitCompareArrows size={16} aria-hidden="true" />{" "}
+                  {input.isCompared ? "W porównaniu" : "Porównaj"}
+                </button>
+                <button
+                  className="action-button secondary-button"
+                  type="button"
+                  onClick={() => void input.onArchive(input.listing.id)}
+                  disabled={input.isArchiving}
+                >
+                  <Archive size={16} aria-hidden="true" />{" "}
+                  {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
+                </button>
+                <button
+                  className="action-button danger-button"
+                  type="button"
+                  onClick={() => setIsDismissConfirmOpen(true)}
+                  disabled={input.isDismissing}
+                >
+                  <Trash2 size={16} aria-hidden="true" />{" "}
+                  {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
+                </button>
+                <button
+                  className="action-button secondary-button"
+                  type="button"
+                  onClick={() => input.onAddToMortgage(input.listing)}
+                >
+                  <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
+                </button>
+              </div>
+            </details>
           </div>
         </div>
 
         <div className="detail-grid">
           <div>
             <div className="detail-gallery">
+              {imageError && <span role="status">{imageError}</span>}
               {activeImageUrl ? (
                 <button
                   className="detail-image-button"
                   type="button"
                   onPointerDown={handleImagePointerDown}
+                  onPointerMove={handleImagePointerMove}
                   onPointerUp={handleImagePointerUp}
                   onPointerCancel={() => {
+                    settleDrag();
                     imageSwipeStartRef.current = null;
                   }}
                   onClick={(event) => {
@@ -586,13 +686,17 @@ export function ListingDetailPanel(input: {
                       didSwipeImageRef.current = false;
                       return;
                     }
-                    setLightboxImageIndex(activeImageIndex);
+                    openLightbox();
                   }}
                   aria-label="Otwórz zdjęcie na pełnym ekranie. Przesuń palcem w lewo lub prawo, aby zmienić zdjęcie."
                 >
                   <div
+                    ref={galleryTrack}
                     className="detail-image-track"
-                    style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+                    style={{
+                      transition: animateImage ? undefined : "none",
+                      transform: `translate3d(calc(-${activeImageIndex * 100}% + var(--photo-drag, 0px)), 0, 0)`,
+                    }}
                   >
                     {input.listing.imageUrls.map((imageUrl, index) => (
                       <img
@@ -600,7 +704,7 @@ export function ListingDetailPanel(input: {
                         className="detail-image"
                         src={imageUrl}
                         alt={`${input.listing.title}, zdjęcie ${index + 1}`}
-                        loading={index === 0 ? "eager" : "lazy"}
+                        loading={Math.abs(index - activeImageIndex) <= 1 ? "eager" : "lazy"}
                       />
                     ))}
                   </div>
@@ -618,7 +722,7 @@ export function ListingDetailPanel(input: {
                         index === activeImageIndex ? "detail-thumb active" : "detail-thumb"
                       }
                       onClick={() => {
-                        setActiveImageIndex(index);
+                        void selectPhoto(index);
                       }}
                     >
                       <img
@@ -644,8 +748,7 @@ export function ListingDetailPanel(input: {
                     key={url}
                     style={{ top: `${12 + index * 48}px` }}
                     onClick={() => {
-                      setActiveImageIndex(imageIndex);
-                      setLightboxImageIndex(imageIndex);
+                      void selectPhoto(imageIndex, true);
                     }}
                   >
                     Rzut{index > 0 ? ` ${index + 1}` : ""}
@@ -677,7 +780,7 @@ export function ListingDetailPanel(input: {
                         type="button"
                         className={index === activeImageIndex ? "active" : ""}
                         aria-label={`Zdjęcie ${index + 1}`}
-                        onClick={() => setActiveImageIndex(index)}
+                        onClick={() => void selectPhoto(index)}
                       />
                     ))}
                   </div>
@@ -687,6 +790,7 @@ export function ListingDetailPanel(input: {
                 </>
               ) : null}
             </div>
+
             <MortgageQuickPreview listing={input.listing} downPayment={input.downPayment} />
             <div className="detail-section-tabs">
               <button
@@ -1652,7 +1756,7 @@ export function ListingDetailPanel(input: {
             role="dialog"
             aria-modal="true"
             aria-label="Podgląd zdjęcia"
-            onClick={() => setLightboxImageIndex(null)}
+            onClick={() => closeLightbox()}
           >
             <FullscreenFrame label="Zdjęcia oferty" className="photo-fullscreen" modal>
               <button
@@ -1669,7 +1773,7 @@ export function ListingDetailPanel(input: {
               <button
                 className="image-lightbox-close"
                 type="button"
-                onClick={() => setLightboxImageIndex(null)}
+                onClick={() => closeLightbox()}
                 aria-label="Zamknij podgląd"
               >
                 X
@@ -1694,7 +1798,7 @@ export function ListingDetailPanel(input: {
                 rotation={photoRotation}
                 onPrevious={showPreviousLightboxImage}
                 onNext={showNextLightboxImage}
-                onClose={() => setLightboxImageIndex(null)}
+                onClose={() => closeLightbox()}
               />
               {input.listing.imageUrls.length > 1 ? (
                 <button
@@ -1720,24 +1824,10 @@ export function ListingDetailPanel(input: {
   );
 
   function showPreviousLightboxImage() {
-    setLightboxImageIndex((current) => {
-      if (current === null || input.listing.imageUrls.length === 0) {
-        return current;
-      }
-
-      const nextIndex = current - 1;
-      return nextIndex < 0 ? input.listing.imageUrls.length - 1 : nextIndex;
-    });
+    changeDetailImage(-1);
   }
-
   function showNextLightboxImage() {
-    setLightboxImageIndex((current) => {
-      if (current === null || input.listing.imageUrls.length === 0) {
-        return current;
-      }
-
-      return (current + 1) % input.listing.imageUrls.length;
-    });
+    changeDetailImage(1);
   }
 
   async function saveContactEvent() {

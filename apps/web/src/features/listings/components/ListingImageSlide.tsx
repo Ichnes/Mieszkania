@@ -1,6 +1,19 @@
+import { clearPhotoDrag, previewPhotoDrag } from "../lib/gallery-drag";
+import {
+  getSelectedPhoto,
+  selectListingPhoto,
+  subscribeToPhotoChanges,
+} from "../lib/gallery-position";
 import type { ListingSummary } from "@mieszkania/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatPln, parseNumericLabel } from "../../../shared/lib/format";
 import { calculateMortgage } from "../../mortgage/lib/mortgage-simulation";
 
@@ -17,16 +30,27 @@ export function ListingImageSlide({
       : listing.thumbnailUrl
         ? [listing.thumbnailUrl]
         : [];
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const selectedPhoto = useSyncExternalStore(
+    subscribeToPhotoChanges,
+    () => getSelectedPhoto(listing.id),
+    () => undefined,
+  );
+  const activeImageIndex = Math.max(0, imageUrls.indexOf(selectedPhoto ?? ""));
   const [imagesReady, setImagesReady] = useState(false);
   const [prefetchAdjacent, setPrefetchAdjacent] = useState(false);
   const [visitedImages, setVisitedImages] = useState<Set<string>>(() => new Set());
-  const swipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const trackRef = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => clearPhotoDrag(trackRef.current), [listing.id, activeImageIndex]);
+  const swipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+    axis?: "x" | "y";
+  } | null>(null);
   const didSwipeRef = useRef(false);
   const activeImageUrl = imageUrls[activeImageIndex] ?? imageUrls[0];
 
   useEffect(() => {
-    setActiveImageIndex(0);
     setImagesReady(false);
     setPrefetchAdjacent(false);
     setVisitedImages(new Set());
@@ -36,9 +60,12 @@ export function ListingImageSlide({
     return null;
   }
 
+  function selectImage(index: number) {
+    selectListingPhoto(listing.id, imageUrls[index]);
+  }
   const changeImage = (direction: -1 | 1) => {
     setPrefetchAdjacent(true);
-    setActiveImageIndex((current) => (current + direction + imageUrls.length) % imageUrls.length);
+    selectImage((activeImageIndex + direction + imageUrls.length) % imageUrls.length);
   };
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -49,7 +76,19 @@ export function ListingImageSlide({
 
     didSwipeRef.current = false;
     swipeStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
-    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    const start = swipeStartRef.current;
+    if (!start || event.pointerId !== start.pointerId) return;
+    const dx = event.clientX - start.x,
+      dy = event.clientY - start.y;
+    if (!start.axis) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+      start.axis = Math.abs(dx) > Math.abs(dy) * 1.25 ? "x" : "y";
+      didSwipeRef.current = true;
+      if (start.axis === "x") event.currentTarget.setPointerCapture(event.pointerId);
+    }
+    if (start.axis === "x") previewPhotoDrag(event.currentTarget, activeImageIndex, dx);
   }
 
   function handlePointerUp(event: ReactPointerEvent<HTMLDivElement>) {
@@ -61,24 +100,33 @@ export function ListingImageSlide({
 
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
-    if (Math.abs(deltaX) >= 36 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+    if (
+      start.axis !== "y" &&
+      Math.abs(deltaX) >= 36 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.25
+    ) {
       didSwipeRef.current = true;
       event.stopPropagation();
       changeImage(deltaX < 0 ? 1 : -1);
-    }
+    } else clearPhotoDrag(trackRef.current);
   }
 
   return (
     <>
       <div
+        ref={trackRef}
         className="listing-image-track"
-        style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+        style={{
+          transform: `translate3d(calc(-${activeImageIndex * 100}% + var(--photo-drag,0px)),0,0)`,
+        }}
         onPointerEnter={(event) => {
           if (event.pointerType === "mouse") setPrefetchAdjacent(true);
         }}
         onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={() => {
+          clearPhotoDrag(trackRef.current);
           swipeStartRef.current = null;
         }}
         onClick={(event) => {
@@ -147,7 +195,7 @@ export function ListingImageSlide({
                 aria-label={`Zdjecie ${index + 1}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  setActiveImageIndex(index);
+                  selectImage(index);
                 }}
               />
             ))}

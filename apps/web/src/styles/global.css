@@ -40,3 +40,38 @@
     font-size: max(16px, 1rem) !important;
   }
 }
+
+.detail-header .offer-action-menu {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  overflow: visible;
+}
+.offer-action-menu details {
+  min-width: 0;
+  max-width: 100%;
+}
+.offer-action-menu summary {
+  cursor: pointer;
+  min-height: 44px;
+  justify-content: center;
+}
+.offer-action-menu summary::after {
+  content: "▾";
+  margin-left: 5px;
+}
+.offer-action-menu details[open] summary::after {
+  content: "▴";
+}
+.offer-extra-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+@media (max-width: 700px) {
+  .offer-action-menu details[open] {
+    flex-basis: 100%;
+  }
+}

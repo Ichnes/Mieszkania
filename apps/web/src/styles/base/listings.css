@@ -46,6 +46,10 @@
   user-select: none;
 }
 
+.listing-image-track[data-dragging] {
+  transition: none;
+}
+
 .listing-image-track .listing-thumb {
   flex: 0 0 100%;
 }

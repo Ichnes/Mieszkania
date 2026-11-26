@@ -12,10 +12,12 @@ input[type="radio"] {
     color 180ms ease,
     box-shadow 180ms ease;
 }
-button:not(:disabled):not([aria-disabled="true"]):active,
+button:not(.detail-image-button):not(:disabled):not([aria-disabled="true"]):active,
 a.action-button:active,
 a.tab-button:active,
-[role="button"]:not(.leaflet-marker-icon, .msi-map path, .offer-price-gauge g):not([aria-disabled="true"]):active {
+[role="button"]:not(.leaflet-marker-icon, .msi-map path, .offer-price-gauge g):not(
+    [aria-disabled="true"]
+  ):active {
   scale: 0.96;
 }
 input:is([type="checkbox"], [type="radio"]):not(:disabled):active {

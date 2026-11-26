@@ -497,6 +497,8 @@ nie jest uwzględniana w kalkulatorze.
 
 ## Czytanie i otwieranie ofert
 
+W szczegółach przycisk ulubionych jest zawsze widoczny. Rozwiń **Więcej**, aby odświeżyć, porównać, zarchiwizować lub odrzucić ofertę albo dodać ją do kalkulacji kredytowej. Lista i galeria pamiętają ostatnio oglądane zdjęcie danej oferty, także po odświeżeniu karty przeglądarki.
+
 Jeżeli po aktualizacji serwera otwarta karta odwołuje się do starego modułu widoku,
 aplikacja próbuje raz automatycznie się odświeżyć. Przy utrzymującym się błędzie
 wyświetla przycisk **Odśwież aplikację** zamiast pustego ekranu.

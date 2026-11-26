@@ -1,5 +1,7 @@
 # Bieżące zadania
 
+- [x] Szczegóły: ulubione przy tytule, pozostałe akcje pod „Więcej”. Gest poziomy w galerii podąża za palcem. Karta, szczegóły i powiększenie współdzielą zdjęcie zapamiętane osobno dla oferty w bieżącej karcie przeglądarki. Sprawdzono na LAN przy 393 px: pięć akcji w menu, powrót i odświeżenie na 5/13, przesunięcie o 75 px bez skalowania. Przeszły typecheck i 173 testy WWW.
+
 - [x] Przywrócono aplikację do stanu 5581a1a, obowiązującego 26 listopada około 22:21. Wycofano cztery późniejsze zmiany ofert i galerii.
 
 - [x] Ręczne powiązanie ponownego wystawienia po dwóch ID i proponowanie par przy skróconej nazwie ulicy patrona, takim samym piętrze i metrażu. Test regresji oraz 12 pozostałych testów dopasowań przeszły.
