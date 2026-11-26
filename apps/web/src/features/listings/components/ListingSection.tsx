@@ -1,5 +1,5 @@
 import { requestFloorPlan } from "../lib/gallery-position";
-import { cashPurchaseEvidence, mandatoryAddons } from "../lib/purchase-evidence";
+import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import { useState } from "react";
 import {
   computeDreamEvaluation,
@@ -7,11 +7,7 @@ import {
   type ListingSummary,
 } from "@mieszkania/shared";
 import { LoaderCircle, RefreshCw } from "lucide-react";
-import {
-  parseNumericLabel,
-  formatOptionalPln,
-  formatViewingDate,
-} from "../../../shared/lib/format";
+import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
 import { cardImageBadges, filterNonCommercialBadges } from "../lib/badges";
 import { listingHref } from "../lib/links";
 import { buildListingPrimaryLocation } from "../lib/location";
@@ -22,6 +18,7 @@ import { SunExposureCompass } from "./SunExposureCompass";
 export function ListingSection(input: {
   sortControl: React.ReactNode;
   resultRange: string;
+  mobileCount: string;
   settings: FamilySettings;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
@@ -33,8 +30,11 @@ export function ListingSection(input: {
 }) {
   const [scoreId, setScoreId] = useState<string>();
   return (
-    <section className="panel">
-      <div className="panel-header">
+    <section className="panel offer-list-panel">
+      <div className="panel-header listing-results-header">
+        <strong className="mobile-results-count">
+          {input.isLoading ? "Wczytuję oferty…" : input.mobileCount}
+        </strong>
         <div>
           <p className="eyebrow">Oferty</p>
           <h2>{input.title}</h2>
@@ -119,7 +119,7 @@ export function ListingSection(input: {
                     {imageBadges.length > 0 ? (
                       <div className="listing-image-badges">
                         {imageBadges.map((badge) =>
-                          badge === "Tylko gotówka wg ogłoszenia" ? (
+                          badge === "Tylko gotówka" ? (
                             <a
                               key={badge}
                               className="listing-image-badge"
@@ -235,23 +235,28 @@ export function ListingSection(input: {
                       {listing.title}
                     </a>
                   </h3>
-                  <p className="listing-location-line">{buildListingPrimaryLocation(listing)}</p>
+                  <p className="listing-location-line">
+                    <span className="desktop-location">{buildListingPrimaryLocation(listing)}</span>
+                    <span className="mobile-location">
+                      {[listing.district, listing.neighborhood, listing.street]
+                        .filter(Boolean)
+                        .join(" · ") || listing.city}
+                    </span>
+                  </p>
                   {listing.viewingScheduledAt ? (
                     <p className="viewing-line">
                       Oglądanie: {formatViewingDate(listing.viewingScheduledAt)}
                     </p>
                   ) : null}
-                  {(!listing.thumbnailUrl ||
-                    (listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0) <=
-                      input.downPayment) &&
-                    cashPurchaseEvidence(listing.description) && (
-                      <a
-                        href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
-                        onClick={(event) => event.stopPropagation()}
-                      >
-                        Według ogłoszenia: zakup za gotówkę
-                      </a>
-                    )}
+                  {!listing.thumbnailUrl && cashPurchaseEvidence(listing.description) && (
+                    <a
+                      className="listing-image-badge"
+                      href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
+                      onClick={(event) => event.stopPropagation()}
+                    >
+                      Tylko gotówka
+                    </a>
+                  )}
                 </div>
                 <dl>
                   <div className="listing-metric metric-price">
@@ -259,42 +264,11 @@ export function ListingSection(input: {
                       {listing.priceSource === "negotiated" ? "Cena po negocjacjach" : "Cena"}
                     </dt>
                     <dd>{listing.priceLabel}</dd>
-                    {Boolean(listing.additionalPurchaseCosts?.total) && (
-                      <dd>
-                        <small>
-                          + {formatOptionalPln(listing.additionalPurchaseCosts!.total)}{" "}
-                          {listing.additionalPurchaseCosts!.garage ===
-                          listing.additionalPurchaseCosts!.total
-                            ? "za parking"
-                            : "za dodatki"}{" "}
-                          ·{" "}
-                          {mandatoryAddons(
-                            listing.description,
-                            listing.additionalPurchaseCosts!,
-                          ) ? (
-                            <strong>
-                              Łącznie {formatOptionalPln(listing.totalAcquisitionPrice)}
-                            </strong>
-                          ) : listing.garageTenure === "purchase_option" &&
-                            listing.additionalPurchaseCosts!.garage ===
-                              listing.additionalPurchaseCosts!.total ? (
-                            "zakup opcjonalny"
-                          ) : (
-                            "obowiązkowość do potwierdzenia"
-                          )}
-                        </small>
-                      </dd>
-                    )}
                   </div>
                   <div className="listing-metric metric-area metric-split metric-area-year">
                     <div>
                       <dt>Metraż</dt>
                       <dd>{listing.areaLabel.replace(/m2$/, "m²")}</dd>
-                      <small>
-                        {listing.areaSource === "description"
-                          ? "Opis sprzedającego"
-                          : "Parametry ogłoszenia"}
-                      </small>
                     </div>
                     <div>
                       <dt>Rok budowy</dt>
@@ -322,6 +296,16 @@ export function ListingSection(input: {
                   </div>
                 </dl>
                 <div className="listing-card-footer">
+                  <div className="mobile-card-meta">
+                    {!listing.badges.includes("Brak windy") && (
+                      <span>
+                        {listing.amenityEvidence?.lift === true || listing.hasLift
+                          ? "Winda"
+                          : "Winda do potwierdzenia"}
+                      </span>
+                    )}
+                    {listing.sourceLabel && <span>{listing.sourceLabel}</span>}
+                  </div>
                   {listing.floorPlanImageUrls?.length ? (
                     <a
                       href={listingHref(listing.id).split("#")[0] + "#rzut"}

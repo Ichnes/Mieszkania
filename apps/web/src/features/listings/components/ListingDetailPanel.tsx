@@ -1,9 +1,10 @@
+import { pricedAmenityBadges } from "../lib/badges";
 import {
   getSelectedPhoto,
   selectListingPhoto,
   takeFloorPlanRequest,
 } from "../lib/gallery-position";
-import { cashPurchaseEvidence } from "../lib/purchase-evidence";
+import { cashPurchaseEvidence, mandatoryAddons } from "../lib/purchase-evidence";
 import { HeatingEvidence } from "./HeatingEvidence";
 import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
@@ -352,44 +353,18 @@ export function ListingDetailPanel(input: {
     (candidate) =>
       candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
   );
+  const titleArea = input.listing.title.match(/(\d+(?:[,.]\d+)?)\s*m(?:²|2)/iu)?.[1];
+  const areaDifference =
+    titleArea &&
+    Number(titleArea.replace(",", ".")) !== parseFloat(input.listing.areaLabel.replace(",", ".")) &&
+    /^\d/.test(input.listing.areaLabel)
+      ? `W tytule ${titleArea.replace(".", ",")} m², ${input.listing.areaSource === "description" ? "w opisie sprzedającego" : "w parametrach"} ${input.listing.areaLabel}.`
+      : undefined;
   const parkingLabel = input.listing.hasOutdoorParking
     ? "miejsce naziemne"
     : input.listing.hasGarage
       ? "garaż"
       : "parking";
-  const compareAction = (
-    <button
-      className={
-        input.isCompared ? "action-button shortlist-active" : "action-button secondary-button"
-      }
-      type="button"
-      onClick={() => input.onToggleCompare(input.listing.id)}
-    >
-      <GitCompareArrows size={16} aria-hidden="true" />{" "}
-      {input.isCompared ? "W porównaniu" : "Porównaj"}
-    </button>
-  );
-  const shareAction = (
-    <div className="share-action">
-      <button
-        type="button"
-        className="action-button secondary-button"
-        onClick={async () => {
-          try {
-            await copyText(
-              `${window.location.origin}/oferty?listing=${encodeURIComponent(input.listing.id)}`,
-            );
-            setLinkCopyStatus("Link skopiowany");
-          } catch {
-            setLinkCopyStatus("Skopiuj adres z paska przeglądarki");
-          }
-        }}
-      >
-        Udostępnij
-      </button>
-      {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
-    </div>
-  );
   const publicationRows = [
     ...[input.listing, ...input.listing.relatedListings].map((item) => ({
       id: item.id,
@@ -651,30 +626,67 @@ export function ListingDetailPanel(input: {
           <div>
             <p className="eyebrow">Szczegóły oferty</p>
             <h2>{input.listing.title}</h2>
-            <div className="detail-heading-price">
-              <strong>{input.listing.priceLabel}</strong>
-              {Boolean(input.listing.additionalPurchaseCosts?.total) && (
-                <small>
-                  {input.listing.additionalPurchaseCosts!.total ===
-                  input.listing.additionalPurchaseCosts!.garage
-                    ? input.listing.hasOutdoorParking
-                      ? "Miejsce naziemne"
-                      : input.listing.hasGarage
-                        ? "Garaż"
-                        : "Parking"
-                    : "Dodatki"}{" "}
-                  {input.listing.garageTenure === "purchase_option" &&
-                  input.listing.additionalPurchaseCosts!.total ===
-                    input.listing.additionalPurchaseCosts!.garage
-                    ? "opcjonalnie"
-                    : ""}{" "}
-                  +{formatPln(input.listing.additionalPurchaseCosts!.total)}
-                </small>
-              )}
+            <div className="listing-id-row">
+              <code className="listing-record-id">ID: {input.listing.id}</code>
+              <button
+                className={copiedId ? "icon-button copied" : "icon-button"}
+                type="button"
+                title="Kopiuj ID"
+                aria-label="Kopiuj ID"
+                onClick={async () => {
+                  try {
+                    if (navigator.clipboard) await navigator.clipboard.writeText(input.listing.id);
+                    else {
+                      const area = document.createElement("textarea");
+                      area.value = input.listing.id;
+                      document.body.appendChild(area);
+                      area.select();
+                      document.execCommand("copy");
+                      area.remove();
+                    }
+                    setCopiedId(true);
+                    window.setTimeout(() => setCopiedId(false), 1600);
+                  } catch {
+                    setCopiedId(false);
+                  }
+                }}
+              >
+                {copiedId ? "✓" : <ClipboardCheck size={14} aria-hidden="true" />}
+              </button>
+              <button
+                type="button"
+                className="action-button secondary-button"
+                onClick={async () => {
+                  try {
+                    await copyText(
+                      `${window.location.origin}/oferty?listing=${encodeURIComponent(input.listing.id)}`,
+                    );
+                    setLinkCopyStatus("Link skopiowany");
+                  } catch {
+                    setLinkCopyStatus("Skopiuj adres z paska przeglądarki");
+                  }
+                }}
+              >
+                Kopiuj link
+              </button>
+              {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
             </div>
-            <ListingBadgeRow badges={input.listing.badges} />
+            <ListingBadgeRow badges={pricedAmenityBadges(input.listing, input.listing.badges)} />
           </div>
           <div className="detail-actions">
+            <button
+              className="action-button secondary-button detail-refresh-button"
+              type="button"
+              onClick={() => void input.onRefreshFromSource(input.listing)}
+              disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
+            >
+              <RefreshCw
+                size={16}
+                aria-hidden="true"
+                className={input.isRefreshingFromSource ? "icon-spin" : ""}
+              />{" "}
+              {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Dociągnij ofertę"}
+            </button>
             <button
               className={
                 input.listing.isShortlisted
@@ -691,75 +703,45 @@ export function ListingDetailPanel(input: {
                 aria-hidden="true"
                 fill={input.listing.isShortlisted ? "currentColor" : "none"}
               />{" "}
-              {input.listing.isShortlisted ? "W ulubionych" : "Ulubione"}
+              {input.listing.isShortlisted ? "W ulubionych" : "Dodaj do ulubionych"}
             </button>
-            <div className="header-compare">{compareAction}</div>
-            <div className="header-share">{shareAction}</div>
-            <details className="detail-more">
-              <summary>Więcej</summary>
-              <div className="more-content">
-                <div className="menu-compare">{compareAction}</div>
-                <div className="menu-share">{shareAction}</div>
-                <code className="listing-record-id">ID: {input.listing.id}</code>
-                <button
-                  className={copiedId ? "icon-button copied" : "icon-button"}
-                  type="button"
-                  title="Kopiuj ID"
-                  aria-label="Kopiuj ID"
-                  onClick={async () => {
-                    try {
-                      if (navigator.clipboard)
-                        await navigator.clipboard.writeText(input.listing.id);
-                      else {
-                        const area = document.createElement("textarea");
-                        area.value = input.listing.id;
-                        document.body.appendChild(area);
-                        area.select();
-                        document.execCommand("copy");
-                        area.remove();
-                      }
-                      setCopiedId(true);
-                      window.setTimeout(() => setCopiedId(false), 1600);
-                    } catch {
-                      setCopiedId(false);
-                    }
-                  }}
-                >
-                  {copiedId ? "✓" : <ClipboardCheck size={14} aria-hidden="true" />}
-                </button>{" "}
-                <button
-                  className="action-button secondary-button detail-refresh-button"
-                  type="button"
-                  onClick={() => void input.onRefreshFromSource(input.listing)}
-                  disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
-                >
-                  <RefreshCw
-                    size={16}
-                    aria-hidden="true"
-                    className={input.isRefreshingFromSource ? "icon-spin" : ""}
-                  />{" "}
-                  {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Odśwież dane z portalu"}
-                </button>
-                <button
-                  className="action-button secondary-button"
-                  type="button"
-                  onClick={() => void input.onArchive(input.listing.id)}
-                  disabled={input.isArchiving}
-                >
-                  <Archive size={16} aria-hidden="true" />{" "}
-                  {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
-                </button>
-                <button
-                  className="action-button danger-button"
-                  type="button"
-                  onClick={() => setIsDismissConfirmOpen(true)}
-                  disabled={input.isDismissing}
-                >
-                  <Trash2 size={16} aria-hidden="true" />{" "}
-                  {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
-                </button>
-              </div>
-            </details>
+            <button
+              className={
+                input.isCompared
+                  ? "action-button shortlist-active"
+                  : "action-button secondary-button"
+              }
+              type="button"
+              onClick={() => input.onToggleCompare(input.listing.id)}
+            >
+              <GitCompareArrows size={16} aria-hidden="true" />{" "}
+              {input.isCompared ? "W porównaniu" : "Porównaj"}
+            </button>
+            <button
+              className="action-button secondary-button"
+              type="button"
+              onClick={() => void input.onArchive(input.listing.id)}
+              disabled={input.isArchiving}
+            >
+              <Archive size={16} aria-hidden="true" />{" "}
+              {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
+            </button>
+            <button
+              className="action-button danger-button"
+              type="button"
+              onClick={() => setIsDismissConfirmOpen(true)}
+              disabled={input.isDismissing}
+            >
+              <Trash2 size={16} aria-hidden="true" />{" "}
+              {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
+            </button>
+            <button
+              className="action-button secondary-button"
+              type="button"
+              onClick={() => input.onAddToMortgage(input.listing)}
+            >
+              <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
+            </button>
           </div>
         </div>
 
@@ -889,13 +871,6 @@ export function ListingDetailPanel(input: {
               ) : null}
             </div>
 
-            <button
-              className="action-button secondary-button"
-              type="button"
-              onClick={() => input.onAddToMortgage(input.listing)}
-            >
-              <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
-            </button>
             {cashPurchaseEvidence(input.listing.description) && (
               <p>
                 <button
@@ -1224,12 +1199,9 @@ export function ListingDetailPanel(input: {
                     <th>Metraż</th>
                     <td>
                       {input.listing.areaLabel ?? "-"}{" "}
-                      <small>
-                        {input.listing.areaSource === "description"
-                          ? "Opis sprzedającego"
-                          : "Parametry ogłoszenia"}{" "}
-                        · {input.listing.sourceLabel}
-                      </small>
+                      {areaDifference && (
+                        <small className="area-difference">{areaDifference}</small>
+                      )}
                     </td>
                   </tr>
                   {Boolean(input.listing.additionalPurchaseCosts?.warnings?.length) && (
@@ -1266,6 +1238,17 @@ export function ListingDetailPanel(input: {
                         {input.listing.additionalPurchaseCosts.storage
                           ? ` (komórka / piwnica: ${formatPln(input.listing.additionalPurchaseCosts.storage)})`
                           : ""}
+                        {Boolean(input.listing.additionalPurchaseCosts.garage) && (
+                          <p>
+                            {input.listing.garageTenure === "purchase_option"
+                              ? "Zakup miejsca jest opcjonalny."
+                              : mandatoryAddons(input.listing.description, {
+                                    garage: input.listing.additionalPurchaseCosts.garage,
+                                  })
+                                ? "Zakup miejsca jest obowiązkowy."
+                                : "Ogłoszenie nie podaje, czy zakup miejsca jest obowiązkowy."}
+                          </p>
+                        )}
                       </td>
                       <th>Łączna cena zakupu</th>
                       <td className="fact-price">

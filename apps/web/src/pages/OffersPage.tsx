@@ -22,6 +22,8 @@ import { stringValue, toOptionalNumber } from "../shared/lib/input";
 import { LoadError } from "../shared/components/LoadError";
 import { SavedSearches } from "../features/listings/components/SavedSearches";
 
+const offerPlural = new Intl.PluralRules("pl");
+const offerNoun: Record<string, string> = { one: "oferta", few: "oferty" };
 const sortOptions = [
   { value: "newest", label: "Najnowsze" },
   { value: "oldest", label: "Najstarsze" },
@@ -120,6 +122,9 @@ export function OffersPage({
     setFilters(next);
     void submitFilters(next, 1, model.appliedListingSort);
   }
+  const resultRange = visibleListings.length
+    ? `${(currentListingsPage - 1) * listingsPerPage + 1}–${(currentListingsPage - 1) * listingsPerPage + visibleListings.length} z ${listingsTotal} ofert`
+    : "0 ofert";
   const ranges = [
     ["minPrice", "maxPrice", "Cena od jest wyższa niż cena do"],
     ["minPricePerSqm", "maxPricePerSqm", "Cena za m² od jest wyższa niż cena za m² do"],
@@ -611,11 +616,12 @@ export function OffersPage({
                     />
                   }
                   settings={model.settings}
-                  resultRange={
-                    visibleListings.length
-                      ? `${(currentListingsPage - 1) * listingsPerPage + 1}–${(currentListingsPage - 1) * listingsPerPage + visibleListings.length} z ${listingsTotal} ofert`
-                      : "0 ofert"
+                  mobileCount={
+                    favorites
+                      ? `Ulubione · ${listingsTotal}`
+                      : `${listingsTotal} ${offerNoun[offerPlural.select(listingsTotal)] ?? "ofert"}`
                   }
+                  resultRange={resultRange}
                   compareIds={model.compareListingIds}
                   onToggleCompare={model.toggleCompareListing}
                   title={
@@ -637,7 +643,7 @@ export function OffersPage({
                 <section className="panel">
                   <div className="pagination-row">
                     <span className="muted">
-                      Strona {currentListingsPage} z {totalListingsPages} · {listingsTotal} ofert
+                      Strona {currentListingsPage} z {totalListingsPages} · {resultRange}
                     </span>
                     <div className="pagination-pages">
                       <button

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Select } from "../components/Select";
-import { GitCompareArrows, Search } from "lucide-react";
+import { ChevronDown, GitCompareArrows, Search } from "lucide-react";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { formatViewingDate } from "../shared/lib/format";
 import { LoadError } from "../shared/components/LoadError";
@@ -28,7 +28,16 @@ export function OffersOverview({
     | "listingsError"
   >;
 }) {
+  const marketPanel = useRef<HTMLDivElement>(null);
   const [marketOpen, setMarketOpen] = useState(false);
+  useEffect(() => {
+    if (!marketOpen) return;
+    const closeOnResize = () => {
+      if (window.innerWidth > 700) marketPanel.current?.hidePopover();
+    };
+    window.addEventListener("resize", closeOnResize);
+    return () => window.removeEventListener("resize", closeOnResize);
+  }, [marketOpen]);
   const [period, setPeriod] = useState<7 | 30 | 60>(7);
   const {
     activeTab,
@@ -44,12 +53,90 @@ export function OffersOverview({
   return (
     <>
       {activeTab === "dashboard" ? (
-        <div className={`top-dashboard-frame ${marketOpen ? "market-open" : ""}`}>
+        <div className="top-dashboard-frame">
           <div className="mobile-market-header">
-            <strong>Oferty · Warszawa i okolica</strong>
-            <button aria-expanded={marketOpen} onClick={() => setMarketOpen(!marketOpen)}>
-              Podsumowanie rynku
+            <strong>{region.name}</strong>
+            <button
+              type="button"
+              popoverTarget="mobile-market"
+              aria-controls="mobile-market"
+              aria-expanded={marketOpen}
+            >
+              Rynek <ChevronDown size={16} aria-hidden="true" />
             </button>
+          </div>
+          <div
+            ref={marketPanel}
+            popover="auto"
+            id="mobile-market"
+            className="market-sheet"
+            role="region"
+            aria-labelledby="market-title"
+            onToggle={(event) => setMarketOpen(event.newState === "open")}
+          >
+            <div className="market-sheet-body">
+              <header>
+                <h2 id="market-title">Podsumowanie rynku</h2>
+
+                <button
+                  aria-label="Zamknij podsumowanie"
+                  onClick={() => marketPanel.current?.hidePopover()}
+                >
+                  ×
+                </button>
+              </header>
+              <div className="market-periods" role="group" aria-label="Okres podsumowania rynku">
+                {([7, 30, 60] as const).map((days) => (
+                  <button
+                    type="button"
+                    key={days}
+                    aria-pressed={period === days}
+                    onClick={() => setPeriod(days)}
+                  >
+                    {days} dni
+                  </button>
+                ))}
+              </div>
+              <h3>W zakresie poszukiwań</h3>
+              {listingInsights.map((stat) => {
+                const value = stat.periodValues?.[period] ?? stat;
+                const key = stat.listingWindow;
+                const label =
+                  key === "newWithinDays"
+                    ? "Nowe oferty"
+                    : key === "priceChangedWithinDays"
+                      ? "Zmiany cen"
+                      : stat.label;
+                const city = /średnia/i.test(label);
+                const content = (
+                  <>
+                    <span>{city ? "Warszawa · średnia za m²" : label}</span>
+                    <strong>{value.value}</strong>
+                    {value.trend && <small>{value.trend}</small>}
+                  </>
+                );
+                return key ? (
+                  <button
+                    className="market-stat"
+                    key={label}
+                    onClick={() => {
+                      marketPanel.current?.hidePopover();
+                      const next = { [key]: period };
+                      model.setFilters(next);
+                      model.setListingSort("newest");
+                      void model.applyFilters(next, 1, "newest");
+                      document.getElementById("oferty-lista")?.scrollIntoView();
+                    }}
+                  >
+                    {content}
+                  </button>
+                ) : (
+                  <div key={label} className={city ? "market-stat market-city" : "market-stat"}>
+                    {content}
+                  </div>
+                );
+              })}
+            </div>
           </div>
           <section className="hero">
             <div>

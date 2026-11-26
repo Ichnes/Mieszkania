@@ -1,3 +1,4 @@
+import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import {
   getSelectedPhoto,
   selectListingPhoto,
@@ -183,8 +184,8 @@ export function ListingImageSlide({
           360,
           0,
         ).basePayment;
-        return total > downPayment ? (
-          <span className="listing-mortgage-chip">Symulacja raty: {formatPln(payment)}</span>
+        return total > downPayment && !cashPurchaseEvidence(listing.description) ? (
+          <span className="listing-mortgage-chip">Rata: {formatPln(payment)}</span>
         ) : null;
       })()}
     </>

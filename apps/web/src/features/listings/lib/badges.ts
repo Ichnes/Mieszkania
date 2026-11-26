@@ -63,11 +63,18 @@ export function cardImageBadges(listing: ListingSummary) {
   const badges = listing.badges
     .filter((badge) => conditions.includes(badge) || filterImageBadges([badge]).length > 0)
     .sort((left, right) => rank(left) - rank(right));
+  const labels = pricedAmenityBadges(listing, badges);
+  if (cashPurchaseEvidence(listing.description)) labels.unshift("Tylko gotówka");
+  return labels;
+}
+
+export function pricedAmenityBadges(listing: ListingSummary, badges: string[]) {
+  const parking = (badge: string) => /garaż|postojow|parking|platformie/iu.test(badge);
   const amount = listing.additionalPurchaseCosts?.garage;
   const paidBadge = badges.find(
     (badge) => parking(badge) && !/brak|bez |najem|wynajem|miejski|pobliżu/iu.test(badge),
   );
-  const labels = badges.map((badge) => {
+  return badges.map((badge) => {
     const label =
       badge === "Naziemne miejsce postojowe"
         ? "Miejsce naziemne"
@@ -84,6 +91,4 @@ export function cardImageBadges(listing: ListingSummary) {
       " zł"
     );
   });
-  if (cashPurchaseEvidence(listing.description)) labels.unshift("Tylko gotówka wg ogłoszenia");
-  return labels;
 }

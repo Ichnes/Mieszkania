@@ -497,11 +497,11 @@ nie jest uwzględniana w kalkulatorze.
 
 ## Czytanie i otwieranie ofert
 
-Nad listą widać zakres aktualnej strony i liczbę dopasowań. Przy odwróconych granicach filtra wybierz **Zamień wartości**, a następnie **Filtruj**. Na telefonie statystyki rozwija przycisk **Podsumowanie rynku**.
+Na telefonie liczba dopasowań i sortowanie są w jednym wierszu, a zakres aktualnej strony jest przy paginacji. Przy odwróconych granicach filtra wybierz **Zamień wartości**, a następnie **Filtruj**. Na telefonie **Rynek** otwiera dolny panel ze statystykami i wyborem okresu.
 
-Na zdjęciu warunki zakupu poprzedzają prowizję i parking. Etykieta miejsca pokazuje wykrytą dopłatę. Najedź na kółko lub przejdź do niego klawiszem Tab, aby zobaczyć podpis wyniku. Na telefonie **Ulubione** obok **Filtry** przełączają widok zapisanych mieszkań, zachowując aktualny zakres i sortowanie. Kolejność możesz zmienić przy liczbie wyników. Link **Zobacz rzut** otwiera rozpoznany plan w galerii. Kliknij procent dopasowania, aby zobaczyć najważniejsze potwierdzone plusy i minusy oraz liczbę niewiadomych. Przy cenie sprawdzisz wykryte dopłaty. Informacja o zakupie za gotówkę prowadzi do słów sprzedającego w opisie.
+Na zdjęciu warunki zakupu poprzedzają prowizję i parking. Etykieta miejsca pokazuje wykrytą dopłatę. Najedź na kółko lub przejdź do niego klawiszem Tab, aby zobaczyć podpis wyniku. Na telefonie **Ulubione** obok **Filtry** przełączają widok zapisanych mieszkań, zachowując aktualny zakres i sortowanie. Kolejność możesz zmienić przy liczbie wyników. Link **Zobacz rzut** otwiera rozpoznany plan w galerii. Kliknij procent dopasowania, aby zobaczyć najważniejsze potwierdzone plusy i minusy oraz liczbę niewiadomych. Na mobilnej karcie pod zdjęciem znajdziesz tytuł, lokalizację od dzielnicy do ulicy, cenę i podstawowe parametry. Obowiązek zakupu parkingu sprawdzisz w kosztach w szczegółach. Informacja o zakupie za gotówkę prowadzi do słów sprzedającego w opisie.
 
-W szczegółach **Udostępnij** kopiuje link. Przy tytule znajdziesz **Więcej** z ID, odświeżaniem danych, archiwizacją i odrzuceniem. Przy kalkulacji tabela publikacji pozwala porównać parametry ogłoszeń i osobno sprawdzić kandydatów do powiązania.
+W szczegółach pod tytułem są ID i **Kopiuj link**. Przed galerią znajdziesz akcje odświeżania danych, ulubionych, porównania, archiwizacji, odrzucenia i kalkulacji. Przy kalkulacji tabela publikacji pozwala porównać parametry ogłoszeń i osobno sprawdzić kandydatów do powiązania.
 
 Jeżeli po aktualizacji serwera otwarta karta odwołuje się do starego modułu widoku,
 aplikacja próbuje raz automatycznie się odświeżyć. Przy utrzymującym się błędzie
