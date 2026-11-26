@@ -75,3 +75,9 @@
     flex-basis: 100%;
   }
 }
+
+.listing-image-badge.sale-warning {
+  background: #fff0ee;
+  color: #941e24;
+  border: 1px solid #d69a9a;
+}

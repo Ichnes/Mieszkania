@@ -1,3 +1,4 @@
+import { saleConditions } from "../lib/sale-conditions";
 import type { ListingSummary } from "@mieszkania/shared";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
@@ -45,7 +46,11 @@ export function ListingSection(input: {
           </div>
         ) : null}
         {input.listings.map((listing) => {
-          const imageBadges = filterImageBadges(listing.badges);
+          const conditions = new Set(
+            saleConditions(`${listing.title}
+${listing.description ?? ""}`).map((condition) => condition.badge),
+          );
+          const imageBadges = [...new Set([...conditions, ...filterImageBadges(listing.badges)])];
           const nonCommercialBadges = filterNonCommercialBadges(listing.badges);
 
           return (
@@ -62,7 +67,11 @@ export function ListingSection(input: {
                         {imageBadges.map((badge) => (
                           <span
                             key={`${listing.id}-${badge}`}
-                            className="listing-image-badge"
+                            className={
+                              badge === "Brak KW" || badge === "Tylko gotówka"
+                                ? "listing-image-badge sale-warning"
+                                : "listing-image-badge"
+                            }
                             title={
                               badge === "Brak miejsca postojowego"
                                 ? "Oferta nie potwierdza miejsca postojowego dostępnego dla mieszkania."

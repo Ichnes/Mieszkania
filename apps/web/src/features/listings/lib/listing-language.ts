@@ -1,3 +1,4 @@
+import { saleConditions } from "./sale-conditions";
 import type { ExposureDirection } from "@mieszkania/shared";
 import { getDescriptionMentionStatus, pragaDistrictNamePattern } from "@mieszkania/shared";
 export { getSunExposure, type ExposureDirection } from "@mieszkania/shared";
@@ -16,6 +17,22 @@ export function normalizeListingText(value: string) {
 }
 
 export function getDescriptionHighlightParts(value: string): DescriptionHighlightPart[] {
+  const conditions = saleConditions(value);
+  if (!conditions.length) return highlightDescription(value);
+  const parts: DescriptionHighlightPart[] = [];
+  let start = 0;
+  for (const condition of conditions) {
+    parts.push(...highlightDescription(value.slice(start, condition.index)), {
+      text: condition.text,
+      tone: "negative",
+    });
+    start = condition.index + condition.text.length;
+  }
+  return parts.concat(highlightDescription(value.slice(start)));
+}
+
+function highlightDescription(value: string): DescriptionHighlightPart[] {
+  if (!value) return [];
   const suffix = "[a-ząćęłńóśźżą-]*";
   const count = "(?:\\d+|jeden|jedno|jedna|dwa|dwie|trzy|cztery|pięć)";
   const contextualPositive = [
