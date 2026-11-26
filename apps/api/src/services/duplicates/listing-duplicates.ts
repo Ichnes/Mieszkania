@@ -385,7 +385,7 @@ export class DuplicateAreaConflict extends Error {
     memberCount: number,
   ) {
     super(
-      `Metraże w porównywanych ogłoszeniach (${memberCount}) wynoszą od ${minArea.toLocaleString("pl-PL")} do ${maxArea.toLocaleString("pl-PL")} m². Różnica przekracza 2%.`,
+      `Po połączeniu grupa liczyłaby ${memberCount} ogłoszeń, w tym wcześniej przypisane kopie. Zapisane metraże mieszkań wynoszą od ${minArea.toLocaleString("pl-PL")} do ${maxArea.toLocaleString("pl-PL")} m². Różnica przekracza 2%.`,
     );
   }
 }

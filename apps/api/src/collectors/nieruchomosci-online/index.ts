@@ -545,12 +545,32 @@ export function parseListing(
     text(offer.price) ?? priceNearLabel(visibleText) ?? description.match(/([0-9\s]+)\s*zł/i)?.[1],
   );
   const isDomiporta = new URL(url).hostname.toLowerCase().includes("domiporta.pl");
+  const offered = nodes.find(
+    (node) => (node.itemOffered as Record<string, unknown>)?.["@type"] === "Apartment",
+  )?.itemOffered as Record<string, unknown> | undefined;
+  const floorSize = product.floorSize ?? offered?.floorSize;
+  const structuredArea = number(
+    text(
+      typeof floorSize === "object" && floorSize !== null
+        ? (floorSize as Record<string, unknown>).value
+        : floorSize,
+    ),
+  );
+  const statedArea = statedApartmentArea(description);
+  // An integer in portal metadata can be less precise than the explicit apartment size.
+  const preciseArea =
+    statedArea &&
+    structuredArea !== undefined &&
+    Number.isInteger(structuredArea) &&
+    Math.abs(statedArea - structuredArea) < 1
+      ? statedArea
+      : structuredArea;
   const area =
     (isDomiporta
       ? number(readDomiportaFeature(html, "Powierzchnia")?.match(/\d+(?:[.,]\d+)?/)?.[0])
       : undefined) ??
-    number(text(product.floorSize)) ??
-    statedApartmentArea(description) ??
+    preciseArea ??
+    statedArea ??
     inferVisibleArea(visibleText);
   // Domiporta keeps the authoritative room count in its feature grid. Its
   // descriptive text often contains unrelated numbers, so never infer rooms
@@ -845,7 +865,7 @@ function inferVisibleArea(visibleText: string) {
   for (const match of visibleText.matchAll(/(\d+(?:[,.]\d+)?)\s*m(?:²|2)/gi)) {
     const prefix = visibleText.slice(Math.max(0, match.index! - 40), match.index);
     if (
-      !/(?:balkon|taras|ogród|piwnic|komórk)\p{L}*\s*(?:o pow(?:ierzchni|\.)?\s*)?[:–-]?\s*$/iu.test(
+      !/(?:balkon|taras|ogród|piwnic|komórk)\p{L}*\s*(?:o pow(?:ierzchni|\.)?\s*)?[:–-]?\s*(?:ok\.?\s*|około\s*)?$/iu.test(
         prefix,
       )
     )

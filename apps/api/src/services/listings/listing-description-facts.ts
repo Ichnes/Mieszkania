@@ -169,7 +169,7 @@ export function statedApartmentArea(description: string) {
   const areas = new Set(
     [
       ...description.matchAll(
-        /(?:\b(?:metraż|powierzchnia (?:mieszkania|lokalu))\s*[:–-]|\b(?:mieszkanie|lokal|apartament)\s+o\s+powierzchni(?:\s+użytkowej)?)\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*m(?:²|2|kw)/giu,
+        /(?:\bmetraż\s*[:–-]|\bpowierzchni[aę]\s+(?:mieszkania|lokalu)\s*[:–-]?|\b(?:mieszkanie|lokal|apartament)\s+o\s+powierzchni(?:\s+użytkowej)?)\s*\(?\s*(\d{1,3}(?:[.,]\d{1,2})?)\s*m(?:²|2|kw)/giu,
       ),
     ].map((match) => Number(match[1].replace(",", "."))),
   );

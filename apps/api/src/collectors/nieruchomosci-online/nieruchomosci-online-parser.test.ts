@@ -38,3 +38,18 @@ test("keeps support for the legacy strong/span markup", () => {
     2007,
   );
 });
+
+test("Domiporta distinguishes a terrace from the apartment in archived offer metadata", () => {
+  const url = "https://www.domiporta.pl/nieruchomosci/123";
+  const html =
+    '<script type="application/ld+json">{"@type":"Offer","itemOffered":{"@type":"Apartment","floorSize":{"value":77}}}</script>';
+  const title = "Mieszkanie z tarasem 30 m²";
+  const description =
+    "Taras o powierzchni ok. 30 m². Powierzchnię mieszkania (77,50 m²) stanowią trzy pokoje.";
+  assert.equal(parseListing(url, html, "123", title, description).areaSqm, 77.5);
+  assert.equal(parseListing(url, html, "123", title, "Taras o powierzchni ok. 30 m².").areaSqm, 77);
+  assert.equal(
+    parseListing(url, "", "123", "Taras o powierzchni ok. 30 m²", "Taras.").areaSqm,
+    undefined,
+  );
+});
