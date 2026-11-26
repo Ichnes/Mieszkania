@@ -1,4 +1,8 @@
-import { cardPhotoByListing, takeFloorPlanRequest } from "../lib/gallery-position";
+import {
+  getSelectedPhoto,
+  selectListingPhoto,
+  takeFloorPlanRequest,
+} from "../lib/gallery-position";
 import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import { HeatingEvidence } from "./HeatingEvidence";
 import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
@@ -35,7 +39,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { FullscreenFrame } from "../../../shared/components/FullscreenFrame";
 import {
   formatDistance,
@@ -236,12 +246,15 @@ export function ListingDetailPanel(input: {
     } catch {
       if (token === imageRequest.current) {
         requestedImage.current = activeImageIndex;
+        settleDrag();
         setImageError("Nie udało się wczytać zdjęcia. Spróbuj ponownie.");
       }
       return;
     }
     if (token !== imageRequest.current) return;
+    if (index === activeImageIndex) settleDrag();
     setAnimateImage(Math.abs(index - activeImageIndex) === 1);
+    selectListingPhoto(input.listing.id, input.listing.imageUrls[index]);
     setActiveImageIndex(index);
     if (expand) openLightbox();
   }
@@ -285,15 +298,15 @@ export function ListingDetailPanel(input: {
     setViewingNotes(input.listing.viewing?.notes ?? "");
     setManual(input.listing.manual);
   }, [input.listing.viewing, input.listing.manual]);
-  useEffect(() => {
+  useLayoutEffect(() => {
     setContactEvent(createEmptyContactEventDraft(input.listing.manual.contactName));
     if (takeFloorPlanRequest(input.listing.id)) openedPlanId.current = input.listing.id;
     const plan = openedPlanId.current === input.listing.id || window.location.hash === "#rzut";
-    const url = plan
-      ? input.listing.floorPlanImageUrls?.[0]
-      : cardPhotoByListing.get(input.listing.id);
+    const url = plan ? input.listing.floorPlanImageUrls?.[0] : getSelectedPhoto(input.listing.id);
     const imageIndex = url ? input.listing.imageUrls.indexOf(url) : -1;
     setActiveImageIndex(Math.max(0, imageIndex));
+    if (plan && imageIndex >= 0)
+      selectListingPhoto(input.listing.id, input.listing.imageUrls[imageIndex]);
     requestedImage.current = Math.max(0, imageIndex);
     imageRequest.current++;
     setImageError("");
@@ -520,15 +533,38 @@ export function ListingDetailPanel(input: {
     didSwipeImageRef.current = false;
     imageSwipeStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
   }
+  function settleDrag() {
+    const track = galleryTrack.current;
+    if (!track) return;
+    delete track.dataset.dragging;
+    track.style.removeProperty("--photo-drag");
+  }
+  useLayoutEffect(settleDrag, [activeImageIndex, input.listing.id]);
+
   function handleImagePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
     const start = imageSwipeStartRef.current;
-    if (!start || start.pointerId !== event.pointerId || start.axis) return;
-    const dx = Math.abs(event.clientX - start.x),
-      dy = Math.abs(event.clientY - start.y);
-    if (Math.max(dx, dy) < 8) return;
-    start.axis = dx > dy * 1.25 ? "x" : "y";
-    didSwipeImageRef.current = true;
-    if (start.axis === "x") event.currentTarget.setPointerCapture(event.pointerId);
+    const track = galleryTrack.current;
+    if (!start || start.pointerId !== event.pointerId || !track) return;
+    const dx = event.clientX - start.x;
+    const dy = event.clientY - start.y;
+    if (!start.axis) {
+      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
+      start.axis = Math.abs(dx) > Math.abs(dy) * 1.25 ? "x" : "y";
+      didSwipeImageRef.current = true;
+      if (start.axis === "x") {
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setAnimateImage(true);
+      }
+    }
+    if (start.axis !== "x") return;
+    const neighbor = track.children[activeImageIndex + (dx < 0 ? 1 : -1)] as
+      | HTMLImageElement
+      | undefined;
+    const width = track.clientWidth;
+    const offset =
+      neighbor?.complete && neighbor.naturalWidth ? Math.max(-width, Math.min(width, dx)) : 0;
+    track.dataset.dragging = "true";
+    track.style.setProperty("--photo-drag", offset + "px");
   }
 
   function handleImagePointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -548,6 +584,8 @@ export function ListingDetailPanel(input: {
     ) {
       didSwipeImageRef.current = true;
       changeDetailImage(deltaX < 0 ? 1 : -1);
+    } else {
+      settleDrag();
     }
   }
 
@@ -737,6 +775,7 @@ export function ListingDetailPanel(input: {
                   onPointerMove={handleImagePointerMove}
                   onPointerUp={handleImagePointerUp}
                   onPointerCancel={() => {
+                    settleDrag();
                     imageSwipeStartRef.current = null;
                   }}
                   onClick={(event) => {
@@ -754,7 +793,7 @@ export function ListingDetailPanel(input: {
                     className="detail-image-track"
                     style={{
                       transition: animateImage ? undefined : "none",
-                      transform: `translateX(-${activeImageIndex * 100}%)`,
+                      transform: `translate3d(calc(-${activeImageIndex * 100}% + var(--photo-drag, 0px)), 0, 0)`,
                     }}
                   >
                     {input.listing.imageUrls.map((imageUrl, index) => (

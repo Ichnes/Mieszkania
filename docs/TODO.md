@@ -1,5 +1,9 @@
 # Bieżące zadania
 
+- [x] Kadr wspólny dla karty, szczegółów i powiększenia (1.35) oraz kontrastowy przycisk zamknięcia po powrocie z galerii (1.36). Wdrożono lokalny Docker WWW/API. Playwright na adresie LAN, 390 × 844 px, bez atrap API: karta 4/13 → szczegóły 4/13 → powiększenie 5/13 → szczegóły i karta 5/13, zachowany scroll, bezpośredni link 1/13. Pasek zakładek 52 px, odwrócony zakres ceny zachował trzy wyniki.
+
+- [x] Przesuwanie zdjęcia w szczegółach: usunięto efekt zmniejszania przy dotyku i dodano przesuwanie za palcem z krótkim domknięciem kadru. Zachowano przewijanie pionowe i oczekiwanie na wczytanie sąsiedniego zdjęcia. Typecheck i test dotykowy Chromium przeszły: przy ruchu o 65,6 px kadr przesunął się o 65,6 px bez skalowania.
+
 - [x] Galeria i zakładki (1.31–1.34): wspólne zdjęcie w powiększeniu i w ofercie, przywracanie przewinięcia, przypięty pasek sekcji, blokada osi gestu i oczekiwanie na dekodowanie kadru. Nagrano pierwsze przejście i powrót osobno przy opóźnionych obrazach. Przy 360/390/430 px przypięty pasek ma 52 px. Dla 5/13 i 13/13 powrót zachował kadr, miniaturę i pozycję przewinięcia. Na Gocławiu przy 390 px początek zdjęcia jest na 315 px. Sprawdzono powrót systemowy do 5/12 i otwarcie rzutu 12/12.
 - [ ] Powtórzyć test gestu ukośnego na fizycznym telefonie użytkowniczki; dostępna jest emulacja dotyku Chromium.
 

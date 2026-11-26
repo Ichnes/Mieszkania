@@ -1,7 +1,17 @@
-import { cardPhotoByListing } from "../lib/gallery-position";
+import {
+  getSelectedPhoto,
+  selectListingPhoto,
+  subscribeToPhotoChanges,
+} from "../lib/gallery-position";
 import type { ListingSummary } from "@mieszkania/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { formatPln, parseNumericLabel } from "../../../shared/lib/format";
 import { calculateMortgage } from "../../mortgage/lib/mortgage-simulation";
 
@@ -18,7 +28,12 @@ export function ListingImageSlide({
       : listing.thumbnailUrl
         ? [listing.thumbnailUrl]
         : [];
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const selectedPhoto = useSyncExternalStore(
+    subscribeToPhotoChanges,
+    () => getSelectedPhoto(listing.id),
+    () => undefined,
+  );
+  const activeImageIndex = Math.max(0, imageUrls.indexOf(selectedPhoto ?? ""));
   const [imagesReady, setImagesReady] = useState(false);
   const [prefetchAdjacent, setPrefetchAdjacent] = useState(false);
   const [visitedImages, setVisitedImages] = useState<Set<string>>(() => new Set());
@@ -27,7 +42,6 @@ export function ListingImageSlide({
   const activeImageUrl = imageUrls[activeImageIndex] ?? imageUrls[0];
 
   useEffect(() => {
-    setActiveImageIndex(Math.max(0, imageUrls.indexOf(cardPhotoByListing.get(listing.id) ?? "")));
     setImagesReady(false);
     setPrefetchAdjacent(false);
     setVisitedImages(new Set());
@@ -38,8 +52,7 @@ export function ListingImageSlide({
   }
 
   function selectImage(index: number) {
-    cardPhotoByListing.set(listing.id, imageUrls[index]);
-    setActiveImageIndex(index);
+    selectListingPhoto(listing.id, imageUrls[index]);
   }
   const changeImage = (direction: -1 | 1) => {
     setPrefetchAdjacent(true);

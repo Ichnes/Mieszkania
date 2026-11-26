@@ -349,3 +349,18 @@
     overflow-anchor: none;
   }
 }
+
+@media (max-width: 900px) {
+  .detail-panel .detail-topbar .detail-close-icon,
+  .detail-panel .pinned-tab-bar button:last-child {
+    display: inline-grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 1px solid #fff;
+    border-radius: 12px;
+    background: #184d42;
+    color: #fff;
+  }
+}

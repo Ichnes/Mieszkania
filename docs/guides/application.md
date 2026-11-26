@@ -523,7 +523,7 @@ Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżnion
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
 
-W powiększeniu możesz zmienić zdjęcie i wrócić do tego samego kadru w ofercie. Na telefonie przypięty pasek pokazuje nazwę aktualnej sekcji. Dotknij jej, aby rozwinąć listę zakładek, lub zamknij ofertę przyciskiem po prawej.
+Kliknięcie tytułu otwiera ofertę na zdjęciu oglądanym na karcie. Zdjęcie wybrane w powiększeniu pozostaje widoczne po powrocie do szczegółów i na listę. Na telefonie przypięty pasek pokazuje nazwę aktualnej sekcji. Dotknij jej, aby rozwinąć listę zakładek, lub zamknij ofertę przyciskiem po prawej.
 
 W **Szczegółach oferty** telefon kontaktowy i cel negocjacji są w zakładce **Notatki**.
 Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano własnego.
