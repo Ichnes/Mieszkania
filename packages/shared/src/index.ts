@@ -382,6 +382,7 @@ export type ListingSummary = {
   /** Effective personal price; public price history and market statistics remain advertised. */
   priceSource?: "advertised" | "negotiated";
   advertisedPriceLabel?: string;
+  areaSource?: "description" | "portal";
   areaLabel: string;
   pricePerSqmLabel?: string;
   roomsCount?: number;
@@ -434,6 +435,7 @@ export type ListingSummary = {
   summary: string;
   thumbnailUrl?: string;
   imageCount: number;
+  floorPlanImageUrls?: string[];
   imageUrls: string[];
   badges: string[];
   latitude?: number;
@@ -453,6 +455,7 @@ export type ListingSummary = {
 };
 
 export type RelatedListingSummary = {
+  publishedAt?: string;
   sourceContactPhone?: string;
   isActive?: boolean;
   primaryListingId?: string;
@@ -500,7 +503,6 @@ export type ListingDetail = ListingSummary & {
   }>;
   descriptionDiscrepancies?: string[];
   aiAssessment?: AiAssessment;
-  floorPlanImageUrls?: string[];
   canonicalUrl?: string;
   sourceContactPhone?: string;
   description?: string;
@@ -548,6 +550,7 @@ export type ListingDetail = ListingSummary & {
 export type DuplicateReviewStatus = "pending" | "same_listing" | "different_listing";
 
 export type DuplicateListingPreview = {
+  publishedAt?: string;
   thumbnailUrl?: string;
   thumbnailUrls?: string[];
   thumbnailSharedFromIndex?: number;

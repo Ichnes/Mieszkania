@@ -303,7 +303,7 @@ export async function getMapListings() {
         ? formatCurrency(Number(row.advertised_price))
         : undefined,
       areaLabel: row.area_sqm
-        ? `${Number(row.area_sqm).toLocaleString("pl-PL", { maximumFractionDigits: 1 })} m2`
+        ? `${Number(row.area_sqm).toLocaleString("pl-PL", { maximumFractionDigits: 2 })} m²`
         : "Brak metrażu",
       district: row.district ?? "Brak dzielnicy",
       neighborhood: row.neighborhood ?? undefined,
@@ -1328,6 +1328,9 @@ async function getListingsPageByScope(
         0,
       );
       const assessment = aiAssessments.get(row.id);
+      item.floorPlanImageUrls = resolvedImages
+        .filter((image) => image.caption === "Rzut")
+        .map((image) => image.resolvedUrl);
       item.scoringCommutes = commuteRouteCache.read(item, settings.workplaces);
       if (assessment) {
         const { score, coverage, confidence, evaluatedAt } = assessment;
@@ -1434,7 +1437,7 @@ async function getDashboardStats(): Promise<DashboardStat[]> {
           description: `aktywne, niezdublowane oferty, których cena zmieniła się w ostatnich ${days} dniach`,
         },
         {
-          label: "Średnia cena / m²",
+          label: "Średnia cena za m² · Warszawa",
           value: `${formatInteger(String(currentAveragePricePerSqm))} zł`,
           description: `aktywne, niezdublowane oferty z Warszawy, z porównaniem do stanu sprzed ${days} dni`,
           trend: averageTrend,
@@ -1620,7 +1623,24 @@ function mapListingSummary(
   const personalPrice = Number(row.manual_asking_price_override);
   const priceSource = personalPrice > 0 ? ("negotiated" as const) : ("advertised" as const);
   const priceAmount = priceSource === "negotiated" ? personalPrice : advertisedPriceAmount;
-  const areaSqm = row.area_sqm ? Number(row.area_sqm) : 0;
+  const portalArea = Number(row.area_sqm) || 0;
+  // Accept a more precise apartment area only when it agrees with the rounded portal field.
+  const preciseAreas = [
+    ...new Set(
+      Array.from(
+        (row.description ?? "").matchAll(
+          /(?:mieszkan(?:ie|ia)|lokal(?:u)?|apartament(?:u)?)\s+(?:o\s+)?powierzchni\s+(\d{2,3}[,.]\d{1,2})\s*m[²2]/giu,
+        ),
+        (match) => Number(match[1].replace(",", ".")),
+      ),
+    ),
+  ];
+  const useDescriptionArea =
+    Number.isInteger(portalArea) &&
+    preciseAreas.length === 1 &&
+    Math.round(preciseAreas[0]) === portalArea &&
+    preciseAreas[0] !== portalArea;
+  const areaSqm = useDescriptionArea ? preciseAreas[0] : portalArea;
   const pricePerSqm =
     priceAmount && areaSqm > 0
       ? priceAmount / areaSqm
@@ -1752,9 +1772,12 @@ function mapListingSummary(
     priceLabel: priceAmount ? formatCurrency(priceAmount) : "Brak ceny",
     priceSource,
     advertisedPriceLabel: advertisedPriceAmount ? formatCurrency(advertisedPriceAmount) : undefined,
-    areaLabel: `${areaSqm.toFixed(1)} m2`,
+    areaSource: useDescriptionArea ? "description" : "portal",
+    areaLabel: areaSqm
+      ? `${areaSqm.toLocaleString("pl-PL", { maximumFractionDigits: 2 })} m²`
+      : "—",
     pricePerSqmLabel: pricePerSqm
-      ? `${formatInteger(String(Math.round(pricePerSqm)))} PLN/m2`
+      ? `${formatInteger(String(Math.round(pricePerSqm)))} zł/m²`
       : undefined,
     roomsCount: row.rooms ? Number(row.rooms) : undefined,
     floor:
@@ -3294,9 +3317,9 @@ function formatInteger(value: string) {
 }
 
 function formatPeriodDelta(delta: number, unit: string, days: number) {
-  if (!Number.isFinite(delta) || delta === 0) return "bez zmian vs 7 dni temu";
+  if (!Number.isFinite(delta) || delta === 0) return `bez zmian w ${days} dni`;
   const arrow = delta > 0 ? "↑" : "↓";
-  return `${arrow} ${formatInteger(String(Math.abs(Math.round(delta))))} ${unit} vs ${days} dni temu`;
+  return `${arrow} ${formatInteger(String(Math.abs(Math.round(delta))))}${unit === "ofert" ? "" : " " + unit} w ${days} dni`;
 }
 
 function normalizeListingContactStatus(value?: string | null): ListingContactStatus | null {

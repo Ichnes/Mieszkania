@@ -1,5 +1,14 @@
 # Bieżące zadania
 
+- [x] Galeria i zakładki (1.31–1.34): wspólne zdjęcie w powiększeniu i w ofercie, przywracanie przewinięcia, przypięty pasek sekcji, blokada osi gestu i oczekiwanie na dekodowanie kadru. Nagrano pierwsze przejście i powrót osobno przy opóźnionych obrazach. Przy 360/390/430 px przypięty pasek ma 52 px. Dla 5/13 i 13/13 powrót zachował kadr, miniaturę i pozycję przewinięcia. Na Gocławiu przy 390 px początek zdjęcia jest na 315 px. Sprawdzono powrót systemowy do 5/12 i otwarcie rzutu 12/12.
+- [ ] Powtórzyć test gestu ukośnego na fizycznym telefonie użytkowniczki; dostępna jest emulacja dotyku Chromium.
+
+- [x] Mobilne przeglądanie (1.24–1.30): skrót do ulubionych, dzielnica i sortowanie przy wynikach, cena i dopłata pod tytułem, menu zależne od szerokości okna, otwieranie rzutu, zachowanie zdjęcia oraz dolna nawigacja reagująca na pionowe przewijanie.
+
+- [x] Dashboard i karty (1.16–1.23): krótszy baner i zmiany statystyk, kolejność etykiet, dopłata przy parkingu, miejsce kompasu, podpis wyniku i wspólne wiersze parametrów. Playwright sprawdził układ przy 390, 1024 i 1440 px, wyrównanie cen i pięter oraz odstępy kompasu na ofercie przy Zwycięzców.
+
+- [x] Lista i szczegóły ofert (1.1–1.11, 1.14): warunki zakupu, koszt dodatków, źródło metrażu, pięć zakresów filtrów, paginacja, mobilne podsumowanie, uzasadnienie dopasowania, akcje i tabela publikacji. Reguły wspólne dla wszystkich ofert. Sprawdzono dane dwóch przykładowych ofert, typy, testy API i WWW oraz widoczność zdjęcia i ceny przy 390 × 844 px.
+
 - [x] Ręczne powiązanie ponownego wystawienia po dwóch ID i proponowanie par przy skróconej nazwie ulicy patrona, takim samym piętrze i metrażu. Test regresji oraz 12 pozostałych testów dopasowań przeszły.
 
 - [x] Skrócono formularz zakresu skanu i wyrównano podpis do pierwszej strony. Statystyki mają pasek skrótów z ikonami, wartości na końcach wspólnej osi kwartylowej i większą liczebność próby. Produkcyjny build i Playwright dla 390/1440 px przeszły.

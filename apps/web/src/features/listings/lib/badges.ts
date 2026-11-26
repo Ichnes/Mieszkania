@@ -1,3 +1,5 @@
+import type { ListingSummary } from "@mieszkania/shared";
+import { cashPurchaseEvidence } from "./purchase-evidence";
 export function filterCommercialBadges(badges: string[]) {
   return badges.filter(
     (badge) =>
@@ -20,6 +22,7 @@ export function filterNonCommercialBadges(badges: string[]) {
 
 export function filterImageAmenityBadge(badge: string) {
   return (
+    badge === "Brak garażu" ||
     badge === "Brak miejsca postojowego" ||
     badge === "Prywatne miejsce postojowe" ||
     badge === "Garaż" ||
@@ -50,4 +53,37 @@ export function filterImageBadges(badges: string[]) {
 export function getRcnIndicator(label: string) {
   if (!label || label === "brak danych RCN") return null;
   return label.startsWith("-") ? "is-below" : label.startsWith("+") ? "is-above" : null;
+}
+
+export function cardImageBadges(listing: ListingSummary) {
+  const conditions = ["Nieuregulowany grunt", "Cesja mieszkania"];
+  const parking = (badge: string) => /garaż|postojow|parking|platformie/iu.test(badge);
+  const rank = (badge: string) =>
+    conditions.includes(badge) ? 0 : /prowizj/iu.test(badge) ? 1 : parking(badge) ? 2 : 3;
+  const badges = listing.badges
+    .filter((badge) => conditions.includes(badge) || filterImageBadges([badge]).length > 0)
+    .sort((left, right) => rank(left) - rank(right));
+  const amount = listing.additionalPurchaseCosts?.garage;
+  const paidBadge = badges.find(
+    (badge) => parking(badge) && !/brak|bez |najem|wynajem|miejski|pobliżu/iu.test(badge),
+  );
+  const labels = badges.map((badge) => {
+    const label =
+      badge === "Naziemne miejsce postojowe"
+        ? "Miejsce naziemne"
+        : badge === "Brak garażu"
+          ? "Bez garażu"
+          : badge;
+    if (badge !== paidBadge || !amount) return label;
+    return (
+      label +
+      " +" +
+      (amount % 1000 === 0
+        ? (amount / 1000).toLocaleString("pl-PL") + " tys."
+        : amount.toLocaleString("pl-PL")) +
+      " zł"
+    );
+  });
+  if (cashPurchaseEvidence(listing.description)) labels.unshift("Tylko gotówka wg ogłoszenia");
+  return labels;
 }

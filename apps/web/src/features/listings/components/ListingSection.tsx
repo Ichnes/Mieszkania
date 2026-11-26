@@ -1,7 +1,18 @@
-import type { ListingSummary } from "@mieszkania/shared";
+import { requestFloorPlan } from "../lib/gallery-position";
+import { cashPurchaseEvidence, mandatoryAddons } from "../lib/purchase-evidence";
+import { useState } from "react";
+import {
+  computeDreamEvaluation,
+  type FamilySettings,
+  type ListingSummary,
+} from "@mieszkania/shared";
 import { LoaderCircle, RefreshCw } from "lucide-react";
-import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
-import { filterImageBadges, filterNonCommercialBadges } from "../lib/badges";
+import {
+  parseNumericLabel,
+  formatOptionalPln,
+  formatViewingDate,
+} from "../../../shared/lib/format";
+import { cardImageBadges, filterNonCommercialBadges } from "../lib/badges";
 import { listingHref } from "../lib/links";
 import { buildListingPrimaryLocation } from "../lib/location";
 import { ListingBadgeRow } from "./ListingBadgeRow";
@@ -9,6 +20,9 @@ import { ListingImageSlide } from "./ListingImageSlide";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingSection(input: {
+  sortControl: React.ReactNode;
+  resultRange: string;
+  settings: FamilySettings;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
   downPayment: number;
@@ -17,6 +31,7 @@ export function ListingSection(input: {
   onOpen: (listingId: string) => void | Promise<void>;
   isLoading: boolean;
 }) {
+  const [scoreId, setScoreId] = useState<string>();
   return (
     <section className="panel">
       <div className="panel-header">
@@ -24,13 +39,14 @@ export function ListingSection(input: {
           <p className="eyebrow">Oferty</p>
           <h2>{input.title}</h2>
         </div>
+        <div className="mobile-result-sort">{input.sortControl}</div>
         <div className="pill">
           {input.isLoading ? (
             <>
               <LoaderCircle size={14} className="icon-spin" aria-hidden="true" /> Odświeżam oferty
             </>
           ) : (
-            `${input.listings.length} ofert`
+            input.resultRange
           )}
         </div>
       </div>
@@ -45,46 +61,94 @@ export function ListingSection(input: {
           </div>
         ) : null}
         {input.listings.map((listing) => {
-          const imageBadges = filterImageBadges(listing.badges);
-          const nonCommercialBadges = filterNonCommercialBadges(listing.badges);
+          const imageBadges = cardImageBadges(listing);
+          const nonCommercialBadges = filterNonCommercialBadges(listing.badges).filter(
+            (badge) => !imageBadges.includes(badge),
+          );
 
+          const scoreButton =
+            typeof listing.dreamScore === "number" ? (
+              <button
+                type="button"
+                aria-expanded={scoreId === listing.id}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setScoreId(scoreId === listing.id ? undefined : listing.id);
+                }}
+                className="listing-dream-chip"
+                aria-label={`Dopasowanie: ${listing.dreamScore}%`}
+              >
+                <strong>{listing.dreamScore}%</strong>
+                <span className="score-caption">Dopasowanie do Waszych preferencji</span>
+              </button>
+            ) : null;
           return (
             <article
               key={listing.id}
               className={`listing-card clickable-card${listing.isShortlisted ? " is-shortlisted" : ""}`}
               onClick={() => void input.onOpen(listing.id)}
             >
+              {scoreId === listing.id &&
+                (() => {
+                  const { rows, coverage } = computeDreamEvaluation(
+                    listing,
+                    input.settings.dreamProfile,
+                    input.settings.workplaces,
+                    undefined,
+                    input.settings.financing,
+                  );
+                  const known = rows
+                    .filter((row) => row.dataStatus === "known")
+                    .sort((a, b) => b.points - a.points);
+                  const labels = (items: typeof rows) =>
+                    items
+                      .slice(0, 2)
+                      .map((row) => row.label)
+                      .join(", ") || "Brak potwierdzonych";
+                  return (
+                    <div role="status">
+                      <div>Plusy: {labels(known.filter((row) => row.points > 0))}</div>
+                      <div>Minusy: {labels(known.filter((row) => row.points < 0).reverse())}</div>
+                      Niewiadome: {coverage.total - coverage.known} z {coverage.total}
+                    </div>
+                  );
+                })()}
               {listing.thumbnailUrl ? (
                 <div className="listing-thumb-wrap">
                   <div className="listing-chip-stack">
                     {imageBadges.length > 0 ? (
                       <div className="listing-image-badges">
-                        {imageBadges.map((badge) => (
-                          <span
-                            key={`${listing.id}-${badge}`}
-                            className="listing-image-badge"
-                            title={
-                              badge === "Brak miejsca postojowego"
-                                ? "Oferta nie potwierdza miejsca postojowego dostępnego dla mieszkania."
-                                : undefined
-                            }
-                          >
-                            {badge}
-                          </span>
-                        ))}
+                        {imageBadges.map((badge) =>
+                          badge === "Tylko gotówka wg ogłoszenia" ? (
+                            <a
+                              key={badge}
+                              className="listing-image-badge"
+                              href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
+                              onClick={(event) => event.stopPropagation()}
+                              aria-label="Według ogłoszenia: zakup za gotówkę. Przejdź do opisu"
+                            >
+                              {badge}
+                            </a>
+                          ) : (
+                            <span
+                              key={`${listing.id}-${badge}`}
+                              className="listing-image-badge"
+                              title={
+                                badge === "Brak miejsca postojowego"
+                                  ? "Oferta nie potwierdza miejsca postojowego dostępnego dla mieszkania."
+                                  : undefined
+                              }
+                            >
+                              {badge}
+                            </span>
+                          ),
+                        )}
                       </div>
                     ) : null}
                   </div>
                   {typeof listing.dreamScore === "number" || listing.aiAssessment ? (
                     <div className="listing-bottom-left-stack">
-                      {typeof listing.dreamScore === "number" ? (
-                        <span
-                          className="listing-dream-chip"
-                          aria-label={`Dopasowanie: ${listing.dreamScore}%`}
-                        >
-                          <strong>{listing.dreamScore}%</strong>
-                        </span>
-                      ) : null}
+                      {scoreButton}
                       {listing.aiAssessment && (
                         <span
                           className="listing-ai-chip"
@@ -129,62 +193,108 @@ export function ListingSection(input: {
                   />
                 </div>
               ) : (
-                <div className="listing-thumb-wrap listing-photo-empty">Brak zdjęć</div>
+                <div className="listing-thumb-wrap listing-photo-empty">
+                  Brak zdjęć {scoreButton}
+                </div>
               )}
               <div className="listing-card-content">
-                {!listing.thumbnailUrl && listing.aiAssessment && (
-                  <span className="listing-ai-inline">
-                    Ocena AI: {listing.aiAssessment.score ?? "brak danych"}/100
-                  </span>
-                )}
-                <div className="listing-topline">
-                  <span>{listing.city}</span>
-                  <span
-                    className={
-                      listing.priceChangePercent > 0
-                        ? "badge-rise"
-                        : listing.priceChangePercent < 0
-                          ? "badge-drop"
-                          : "badge-flat"
-                    }
-                  >
-                    {listing.priceChangePercent > 0 ? "+" : ""}
-                    {listing.priceChangePercent}%
-                  </span>
-                </div>
-                <h3>
-                  {listing.isActive === false && (
-                    <span className="archived-listing-label">Archiwalna</span>
+                <div className="listing-card-heading">
+                  {!listing.thumbnailUrl && listing.aiAssessment && (
+                    <span className="listing-ai-inline">
+                      Ocena AI: {listing.aiAssessment.score ?? "brak danych"}/100
+                    </span>
                   )}
-                  <a
-                    className="listing-detail-link"
-                    href={listingHref(listing.id)}
-                    onClick={(event) => {
-                      event.preventDefault();
-                      event.stopPropagation();
-                      void input.onOpen(listing.id);
-                    }}
-                  >
-                    {listing.title}
-                  </a>
-                </h3>
-                <p className="listing-location-line">{buildListingPrimaryLocation(listing)}</p>
-                {listing.viewingScheduledAt ? (
-                  <p className="viewing-line">
-                    Oglądanie: {formatViewingDate(listing.viewingScheduledAt)}
-                  </p>
-                ) : null}
+                  <div className="listing-topline">
+                    <span>{listing.city}</span>
+                    <span
+                      className={
+                        listing.priceChangePercent > 0
+                          ? "badge-rise"
+                          : listing.priceChangePercent < 0
+                            ? "badge-drop"
+                            : "badge-flat"
+                      }
+                    >
+                      {listing.priceChangePercent > 0 ? "+" : ""}
+                      {listing.priceChangePercent}%
+                    </span>
+                  </div>
+                  <h3>
+                    {listing.isActive === false && (
+                      <span className="archived-listing-label">Archiwalna</span>
+                    )}
+                    <a
+                      className="listing-detail-link"
+                      href={listingHref(listing.id)}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        void input.onOpen(listing.id);
+                      }}
+                    >
+                      {listing.title}
+                    </a>
+                  </h3>
+                  <p className="listing-location-line">{buildListingPrimaryLocation(listing)}</p>
+                  {listing.viewingScheduledAt ? (
+                    <p className="viewing-line">
+                      Oglądanie: {formatViewingDate(listing.viewingScheduledAt)}
+                    </p>
+                  ) : null}
+                  {(!listing.thumbnailUrl ||
+                    (listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0) <=
+                      input.downPayment) &&
+                    cashPurchaseEvidence(listing.description) && (
+                      <a
+                        href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        Według ogłoszenia: zakup za gotówkę
+                      </a>
+                    )}
+                </div>
                 <dl>
                   <div className="listing-metric metric-price">
                     <dt>
                       {listing.priceSource === "negotiated" ? "Cena po negocjacjach" : "Cena"}
                     </dt>
                     <dd>{listing.priceLabel}</dd>
+                    {Boolean(listing.additionalPurchaseCosts?.total) && (
+                      <dd>
+                        <small>
+                          + {formatOptionalPln(listing.additionalPurchaseCosts!.total)}{" "}
+                          {listing.additionalPurchaseCosts!.garage ===
+                          listing.additionalPurchaseCosts!.total
+                            ? "za parking"
+                            : "za dodatki"}{" "}
+                          ·{" "}
+                          {mandatoryAddons(
+                            listing.description,
+                            listing.additionalPurchaseCosts!,
+                          ) ? (
+                            <strong>
+                              Łącznie {formatOptionalPln(listing.totalAcquisitionPrice)}
+                            </strong>
+                          ) : listing.garageTenure === "purchase_option" &&
+                            listing.additionalPurchaseCosts!.garage ===
+                              listing.additionalPurchaseCosts!.total ? (
+                            "zakup opcjonalny"
+                          ) : (
+                            "obowiązkowość do potwierdzenia"
+                          )}
+                        </small>
+                      </dd>
+                    )}
                   </div>
                   <div className="listing-metric metric-area metric-split metric-area-year">
                     <div>
                       <dt>Metraż</dt>
                       <dd>{listing.areaLabel.replace(/m2$/, "m²")}</dd>
+                      <small>
+                        {listing.areaSource === "description"
+                          ? "Opis sprzedającego"
+                          : "Parametry ogłoszenia"}
+                      </small>
                     </div>
                     <div>
                       <dt>Rok budowy</dt>
@@ -192,7 +302,7 @@ export function ListingSection(input: {
                     </div>
                   </div>
                   <div className="listing-metric metric-pps">
-                    <dt>PLN/m²</dt>
+                    <dt>Cena za m²</dt>
                     <dd>{listing.pricePerSqmLabel ?? "-"}</dd>
                   </div>
                   <div className="listing-metric metric-rooms metric-split metric-rooms-floor">
@@ -211,12 +321,27 @@ export function ListingSection(input: {
                     </div>
                   </div>
                 </dl>
-                {listing.priceSource === "negotiated" ? (
-                  <p className="price-origin-note">
-                    W ogłoszeniu: {listing.advertisedPriceLabel ?? "brak ceny"}
-                  </p>
-                ) : null}
-                <ListingBadgeRow badges={nonCommercialBadges} />
+                <div className="listing-card-footer">
+                  {listing.floorPlanImageUrls?.length ? (
+                    <a
+                      href={listingHref(listing.id).split("#")[0] + "#rzut"}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        event.preventDefault();
+                        requestFloorPlan(listing.id);
+                        void input.onOpen(listing.id);
+                      }}
+                    >
+                      Zobacz rzut
+                    </a>
+                  ) : null}
+                  {listing.priceSource === "negotiated" ? (
+                    <p className="price-origin-note">
+                      W ogłoszeniu: {listing.advertisedPriceLabel ?? "brak ceny"}
+                    </p>
+                  ) : null}
+                  <ListingBadgeRow badges={nonCommercialBadges} />
+                </div>
               </div>
             </article>
           );

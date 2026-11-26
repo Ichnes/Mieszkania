@@ -1,3 +1,4 @@
+import { cardPhotoByListing } from "../lib/gallery-position";
 import type { ListingSummary } from "@mieszkania/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
@@ -26,7 +27,7 @@ export function ListingImageSlide({
   const activeImageUrl = imageUrls[activeImageIndex] ?? imageUrls[0];
 
   useEffect(() => {
-    setActiveImageIndex(0);
+    setActiveImageIndex(Math.max(0, imageUrls.indexOf(cardPhotoByListing.get(listing.id) ?? "")));
     setImagesReady(false);
     setPrefetchAdjacent(false);
     setVisitedImages(new Set());
@@ -36,9 +37,13 @@ export function ListingImageSlide({
     return null;
   }
 
+  function selectImage(index: number) {
+    cardPhotoByListing.set(listing.id, imageUrls[index]);
+    setActiveImageIndex(index);
+  }
   const changeImage = (direction: -1 | 1) => {
     setPrefetchAdjacent(true);
-    setActiveImageIndex((current) => (current + direction + imageUrls.length) % imageUrls.length);
+    selectImage((activeImageIndex + direction + imageUrls.length) % imageUrls.length);
   };
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -147,7 +152,7 @@ export function ListingImageSlide({
                 aria-label={`Zdjecie ${index + 1}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  setActiveImageIndex(index);
+                  selectImage(index);
                 }}
               />
             ))}
@@ -155,21 +160,20 @@ export function ListingImageSlide({
           <span className="listing-image-counter">
             {activeImageIndex + 1} / {imageUrls.length}
           </span>
-          {(() => {
-            const total =
-              listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
-            const payment = calculateMortgage(
-              Math.max(0, total - downPayment),
-              5.8,
-              360,
-              0,
-            ).basePayment;
-            return total > downPayment ? (
-              <span className="listing-mortgage-chip">Rata: {formatPln(payment)}</span>
-            ) : null;
-          })()}
         </>
       ) : null}
+      {(() => {
+        const total = listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
+        const payment = calculateMortgage(
+          Math.max(0, total - downPayment),
+          5.8,
+          360,
+          0,
+        ).basePayment;
+        return total > downPayment ? (
+          <span className="listing-mortgage-chip">Symulacja raty: {formatPln(payment)}</span>
+        ) : null;
+      })()}
     </>
   );
 }

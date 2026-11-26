@@ -497,6 +497,12 @@ nie jest uwzględniana w kalkulatorze.
 
 ## Czytanie i otwieranie ofert
 
+Nad listą widać zakres aktualnej strony i liczbę dopasowań. Przy odwróconych granicach filtra wybierz **Zamień wartości**, a następnie **Filtruj**. Na telefonie statystyki rozwija przycisk **Podsumowanie rynku**.
+
+Na zdjęciu warunki zakupu poprzedzają prowizję i parking. Etykieta miejsca pokazuje wykrytą dopłatę. Najedź na kółko lub przejdź do niego klawiszem Tab, aby zobaczyć podpis wyniku. Na telefonie **Ulubione** obok **Filtry** przełączają widok zapisanych mieszkań, zachowując aktualny zakres i sortowanie. Kolejność możesz zmienić przy liczbie wyników. Link **Zobacz rzut** otwiera rozpoznany plan w galerii. Kliknij procent dopasowania, aby zobaczyć najważniejsze potwierdzone plusy i minusy oraz liczbę niewiadomych. Przy cenie sprawdzisz wykryte dopłaty. Informacja o zakupie za gotówkę prowadzi do słów sprzedającego w opisie.
+
+W szczegółach **Udostępnij** kopiuje link. Przy tytule znajdziesz **Więcej** z ID, odświeżaniem danych, archiwizacją i odrzuceniem. Przy kalkulacji tabela publikacji pozwala porównać parametry ogłoszeń i osobno sprawdzić kandydatów do powiązania.
+
 Jeżeli po aktualizacji serwera otwarta karta odwołuje się do starego modułu widoku,
 aplikacja próbuje raz automatycznie się odświeżyć. Przy utrzymującym się błędzie
 wyświetla przycisk **Odśwież aplikację** zamiast pustego ekranu.
@@ -516,6 +522,8 @@ Zapis „na drugim piętrze w 2-kondygnacyjnym budynku” jest pokazywany jako *
 Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżniony aktywny wybór.
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
+
+W powiększeniu możesz zmienić zdjęcie i wrócić do tego samego kadru w ofercie. Na telefonie przypięty pasek pokazuje nazwę aktualnej sekcji. Dotknij jej, aby rozwinąć listę zakładek, lub zamknij ofertę przyciskiem po prawej.
 
 W **Szczegółach oferty** telefon kontaktowy i cel negocjacji są w zakładce **Notatki**.
 Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano własnego.

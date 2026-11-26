@@ -5,6 +5,8 @@ type ScoreRow = ReturnType<typeof computeDreamEvaluation>["rows"][number];
 /** Explains the awarded branch; never recalculates points or guesses from a rounded percentage. */
 export function getScoreBand(row: ScoreRow): string {
   if (row.dataStatus === "inactive") return "Kryterium wyłączone";
+  if (row.label === "Sprzedający / prowizja" && row.dataStatus === "unknown")
+    return "Brak potwierdzonej informacji o prowizji kupującego";
   const points = `${row.points > 0 ? "+" : ""}${row.points} pkt`;
   if (
     [

@@ -28,6 +28,7 @@ export function OffersOverview({
     | "listingsError"
   >;
 }) {
+  const [marketOpen, setMarketOpen] = useState(false);
   const [period, setPeriod] = useState<7 | 30 | 60>(7);
   const {
     activeTab,
@@ -43,12 +44,17 @@ export function OffersOverview({
   return (
     <>
       {activeTab === "dashboard" ? (
-        <div className="top-dashboard-frame">
+        <div className={`top-dashboard-frame ${marketOpen ? "market-open" : ""}`}>
+          <div className="mobile-market-header">
+            <strong>Oferty · Warszawa i okolica</strong>
+            <button aria-expanded={marketOpen} onClick={() => setMarketOpen(!marketOpen)}>
+              Podsumowanie rynku
+            </button>
+          </div>
           <section className="hero">
             <div>
               <p className="eyebrow">Wasze poszukiwania · {region.name}</p>
               <h1>Nasze oferty mieszkaniowe</h1>
-              <p className="lead">Ceny, dojazdy i zapisane oferty w jednym miejscu.</p>
             </div>
 
             <div className="hero-card">

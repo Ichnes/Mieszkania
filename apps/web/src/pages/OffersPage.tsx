@@ -1,3 +1,4 @@
+import { useRef } from "react";
 import { PriceInput as FilterPriceInput } from "../shared/components/PriceInput";
 import { DistrictFilter } from "../features/listings/components/DistrictFilter";
 import { Select } from "../components/Select";
@@ -12,7 +13,7 @@ import {
   LayoutGrid,
   EyeOff,
 } from "lucide-react";
-import { defaultFilters } from "../app/session";
+import { defaultFilters, listingsPerPage } from "../app/session";
 import { ListingSortKey } from "../app/types";
 import type { WorkspaceState } from "../app/useWorkspaceController";
 import { ListingSection } from "../features/listings/components/ListingSection";
@@ -20,6 +21,18 @@ import { buildPageNumbers, getActiveFilterBadges } from "../features/listings/li
 import { stringValue, toOptionalNumber } from "../shared/lib/input";
 import { LoadError } from "../shared/components/LoadError";
 import { SavedSearches } from "../features/listings/components/SavedSearches";
+
+const sortOptions = [
+  { value: "newest", label: "Najnowsze" },
+  { value: "oldest", label: "Najstarsze" },
+  { value: "price_desc", label: "Cena: malejąco" },
+  { value: "price_asc", label: "Cena: rosnąco" },
+  { value: "price_per_sqm_desc", label: "Cena za m²: malejąco" },
+  { value: "price_per_sqm_asc", label: "Cena za m²: rosnąco" },
+  { value: "area_desc", label: "Metraż: malejąco" },
+  { value: "area_asc", label: "Metraż: rosnąco" },
+  { value: "dream_desc", label: "Wymarzone mieszkanie" },
+];
 
 export function OffersPage({
   model,
@@ -64,7 +77,7 @@ export function OffersPage({
     listingSectionTitle,
     filters,
     setFilters,
-    applyFilters,
+    applyFilters: submitFilters,
     listingSort,
     setListingSort,
     isLoadingListings,
@@ -76,6 +89,66 @@ export function OffersPage({
     currentListingsPage,
     totalListingsPages,
   } = model;
+  const previousVisibility = useRef<
+    Pick<typeof filters, "hiddenOnly" | "shortlistedOnly" | "includeArchivedFavorites"> | undefined
+  >(undefined);
+  const active = model.appliedFilters;
+  const favorites = Boolean(active.shortlistedOnly && !active.includeArchivedFavorites);
+  const districts = active.districts ?? (active.district ? [active.district] : []);
+  const districtLabel =
+    (districts[0] === "__none__" ? "Bez dzielnicy" : districts[0]) +
+    (districts.length > 1 ? ` +${districts.length - 1}` : "");
+  const filterCount = getActiveFilterBadges({
+    ...active,
+    shortlistedOnly: active.includeArchivedFavorites ? active.shortlistedOnly : undefined,
+  }).length;
+  function toggleFavorites() {
+    if (!favorites)
+      previousVisibility.current = {
+        hiddenOnly: active.hiddenOnly,
+        shortlistedOnly: active.shortlistedOnly,
+        includeArchivedFavorites: active.includeArchivedFavorites,
+      };
+    const visibility = favorites
+      ? (previousVisibility.current ?? { shortlistedOnly: undefined })
+      : {
+          shortlistedOnly: true as const,
+          hiddenOnly: undefined,
+          includeArchivedFavorites: undefined,
+        };
+    const next = { ...active, ...visibility };
+    setFilters(next);
+    void submitFilters(next, 1, model.appliedListingSort);
+  }
+  const ranges = [
+    ["minPrice", "maxPrice", "Cena od jest wyższa niż cena do"],
+    ["minPricePerSqm", "maxPricePerSqm", "Cena za m² od jest wyższa niż cena za m² do"],
+    ["minArea", "maxArea", "Metraż od jest większy niż metraż do"],
+    ["minYearBuilt", "maxYearBuilt", "Rok od jest późniejszy niż rok do"],
+    ["roomsMin", "roomsMax", "Liczba pokoi od jest większa niż liczba pokoi do"],
+  ] as const;
+  function invalidRanges(values: typeof filters) {
+    return ranges.filter(([min, max]) => (values[min] ?? -Infinity) > (values[max] ?? Infinity));
+  }
+  function applyFilters(...args: Parameters<typeof submitFilters>) {
+    if (!invalidRanges(args[0] ?? filters).length) return submitFilters(...args);
+  }
+  const rangeError = (key: string) =>
+    invalidRanges(filters)
+      .filter(([min]) => min === key)
+      .map(([min, max, message]) => (
+        <div key={min} role="alert">
+          {message}{" "}
+          <button
+            type="button"
+            onClick={() =>
+              setFilters((current) => ({ ...current, [min]: current[max], [max]: current[min] }))
+            }
+          >
+            Zamień wartości
+          </button>
+        </div>
+      ));
   return (
     <>
       {activeTab === "dashboard" ? (
@@ -222,6 +295,7 @@ export function OffersPage({
                   className="filters-grid"
                   onSubmit={(event) => {
                     event.preventDefault();
+                    if (invalidRanges(filters).length) return;
                     setMobileFiltersOpen(false);
                     void applyFilters(filters, 1, listingSort);
                   }}
@@ -252,6 +326,7 @@ export function OffersPage({
                       />
                     </label>
                   </div>
+                  {rangeError("minPrice")}
                   <div
                     className="offer-filter-range"
                     role="group"
@@ -276,6 +351,7 @@ export function OffersPage({
                       />
                     </label>
                   </div>
+                  {rangeError("minPricePerSqm")}
                   <div className="offer-filter-range">
                     <label className="filter-field">
                       <span>Metraż od</span>
@@ -306,6 +382,7 @@ export function OffersPage({
                       />
                     </label>
                   </div>
+                  {rangeError("minArea")}
                   <div className="offer-filter-range">
                     <label className="filter-field">
                       <span>Rok budowy od</span>
@@ -338,6 +415,7 @@ export function OffersPage({
                       />
                     </label>
                   </div>
+                  {rangeError("minYearBuilt")}
                   <div className="offer-filter-range">
                     <label className="filter-field">
                       <span>Pokoje od</span>
@@ -368,6 +446,7 @@ export function OffersPage({
                       />
                     </label>
                   </div>
+                  {rangeError("roomsMin")}
                   <label className="filter-field">
                     <span>Szukaj w ofercie</span>
                     <input
@@ -388,17 +467,7 @@ export function OffersPage({
                       label="Sortowanie"
                       value={listingSort}
                       onChange={(value) => setListingSort(value as ListingSortKey)}
-                      options={[
-                        { value: "newest", label: "Najnowsze" },
-                        { value: "oldest", label: "Najstarsze" },
-                        { value: "price_desc", label: "Cena: malejąco" },
-                        { value: "price_asc", label: "Cena: rosnąco" },
-                        { value: "price_per_sqm_desc", label: "Cena za m²: malejąco" },
-                        { value: "price_per_sqm_asc", label: "Cena za m²: rosnąco" },
-                        { value: "area_desc", label: "Metraż: malejąco" },
-                        { value: "area_asc", label: "Metraż: rosnąco" },
-                        { value: "dream_desc", label: "Wymarzone mieszkanie" },
-                      ]}
+                      options={sortOptions}
                     />
                   </label>
                   <label className={filters.priceChangedOnly ? "check-row is-active" : "check-row"}>
@@ -486,16 +555,29 @@ export function OffersPage({
             </aside>
 
             <div id="oferty-lista" ref={listingsMainRef} className="listings-main">
-              <button
-                className="mobile-filter-trigger"
-                type="button"
-                onClick={() => setMobileFiltersOpen(true)}
-              >
-                <SlidersHorizontal size={18} aria-hidden="true" /> Filtry
-                {getActiveFilterBadges(model.appliedFilters).length > 0 ? (
-                  <span>{getActiveFilterBadges(model.appliedFilters).length}</span>
-                ) : null}
-              </button>
+              <div className="mobile-list-tools">
+                <button
+                  className="mobile-filter-trigger"
+                  type="button"
+                  onClick={() => setMobileFiltersOpen(true)}
+                >
+                  Filtry
+                  {districts.length > 0 && <b className="filter-district"> · {districtLabel}</b>}
+                  {filterCount > 0 && (
+                    <span className={districts.length ? "count-with-district" : ""}>
+                      {filterCount}
+                    </span>
+                  )}
+                </button>
+                <button
+                  className="mobile-filter-trigger mobile-favorites"
+                  type="button"
+                  aria-pressed={favorites}
+                  onClick={toggleFavorites}
+                >
+                  Ulubione
+                </button>
+              </div>
               {model.hasUnappliedFilters && !isLoadingListings ? (
                 <p className="load-feedback" role="status">
                   Zmieniono ustawienia filtrów. Kliknij „Filtruj”, aby zastosować je do wyników.
@@ -516,6 +598,24 @@ export function OffersPage({
               )}
               {model.hasLoadedListings || !model.listingsError || isLoadingListings ? (
                 <ListingSection
+                  sortControl={
+                    <Select
+                      label="Sortowanie wyników"
+                      value={model.appliedListingSort}
+                      options={sortOptions}
+                      onChange={(value) => {
+                        const next = value as ListingSortKey;
+                        setListingSort(next);
+                        void submitFilters(active, 1, next);
+                      }}
+                    />
+                  }
+                  settings={model.settings}
+                  resultRange={
+                    visibleListings.length
+                      ? `${(currentListingsPage - 1) * listingsPerPage + 1}–${(currentListingsPage - 1) * listingsPerPage + visibleListings.length} z ${listingsTotal} ofert`
+                      : "0 ofert"
+                  }
                   compareIds={model.compareListingIds}
                   onToggleCompare={model.toggleCompareListing}
                   title={

@@ -40,3 +40,312 @@
     font-size: max(16px, 1rem) !important;
   }
 }
+
+.mobile-market-header {
+  display: none;
+}
+@media (max-width: 700px) {
+  .top-dashboard-frame .hero,
+  .top-dashboard-frame:not(.market-open) .hero-stats {
+    display: none;
+  }
+  .mobile-market-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+}
+
+.listing-metric.metric-price small {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.top-dashboard-frame .hero > div:first-child {
+  min-height: 0;
+  padding-block: 16px;
+}
+.top-dashboard-frame .hero-card {
+  padding-block: 10px;
+}
+.top-dashboard-frame .hero .eyebrow {
+  margin-bottom: 5px;
+}
+.top-dashboard-frame .overview-stat-value small {
+  text-transform: none;
+}
+.listing-thumb-wrap .sun-compass-compact {
+  left: auto;
+  right: 9px;
+  top: 8px;
+  bottom: auto;
+  transform: none;
+  width: 44px;
+  height: 44px;
+  border: 1px solid #51685c;
+}
+.listing-thumb-wrap .listing-image-counter {
+  right: 62px;
+  top: 9px;
+}
+.listing-thumb-wrap .listing-mortgage-chip {
+  top: 60px;
+  right: 9px;
+}
+.listing-dream-chip {
+  position: relative;
+}
+.score-caption {
+  display: none;
+  position: absolute;
+  left: 100%;
+  top: 0;
+  margin-left: 5px;
+  width: max-content;
+  max-width: 18ch;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+.listing-dream-chip:hover .score-caption,
+.listing-dream-chip:focus-visible .score-caption {
+  display: block;
+}
+.listing-card-heading,
+.listing-card-footer {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+  min-width: 0;
+}
+.listing-card .metric-price dd:first-of-type {
+  font-size: 1.14rem;
+}
+@media (min-width: 701px) {
+  .listing-grid > .listing-card {
+    display: grid;
+    grid-row: span 5;
+    grid-template-rows: subgrid;
+    row-gap: 0;
+  }
+  .listing-card > .listing-card-content {
+    grid-row: span 4;
+    display: grid;
+    grid-template-rows: subgrid;
+  }
+  .listing-card-content > dl {
+    grid-row: span 2;
+    display: grid;
+    grid-template-rows: subgrid;
+  }
+  .listing-card > [role="status"] {
+    position: absolute;
+    z-index: 5;
+    background: var(--surface);
+    padding: 8px;
+    bottom: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .mobile-market-header {
+    border-radius: 14px;
+    background: linear-gradient(145deg, #1f6f5f, #174a41);
+    color: #fff;
+    padding: 8px 12px;
+  }
+  .mobile-market-header strong {
+    font-family: Georgia, serif;
+  }
+}
+@media (max-width: 700px) {
+  .listing-card-content > dl {
+    order: -1;
+  }
+}
+.mobile-list-tools,
+.mobile-result-sort,
+.menu-share,
+.menu-compare {
+  display: none;
+}
+.detail-panel {
+  container: listing-dialog / inline-size;
+}
+.detail-heading-price {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem 0.8rem;
+  flex-wrap: wrap;
+  margin: 0.25rem 0 0.5rem;
+}
+.detail-heading-price strong {
+  font-size: 1.35rem;
+}
+.detail-heading-price small {
+  font-size: 0.92rem;
+}
+.detail-header .detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  gap: 6px;
+  overflow: visible;
+}
+.detail-more summary {
+  cursor: pointer;
+  min-height: 44px;
+  align-content: center;
+  padding: 0 0.65rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+}
+.detail-more[open] {
+  flex-basis: 100%;
+}
+.more-content {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.more-content code {
+  overflow-wrap: anywhere;
+}
+@container listing-dialog (max-width:62rem) {
+  .detail-panel .detail-header {
+    display: block;
+    padding: 8px 10px;
+    margin: 0;
+  }
+  .detail-header .detail-actions {
+    margin: 0.3rem 0 0;
+    gap: 4px;
+  }
+  .detail-header .detail-actions .action-button {
+    width: auto;
+    min-width: 0;
+    min-height: 44px;
+    padding: 4px 8px;
+  }
+  .detail-header .header-share {
+    display: none;
+  }
+  .detail-header .menu-share {
+    display: block;
+  }
+  .detail-header h2 {
+    margin: 0;
+    font-size: clamp(1.05rem, 4cqi, 1.55rem);
+    line-height: 1.12;
+  }
+  .detail-header .eyebrow {
+    display: none;
+  }
+}
+@container listing-dialog (max-width:36rem) {
+  .detail-heading-price {
+    display: grid;
+  }
+}
+@container listing-dialog (max-width:23rem) {
+  .header-compare {
+    display: none;
+  }
+  .menu-compare {
+    display: block;
+  }
+}
+@media (max-width: 900px) {
+  .mobile-list-tools {
+    display: flex;
+    position: sticky;
+    top: 66px;
+    z-index: 20;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .mobile-list-tools .mobile-filter-trigger {
+    position: static;
+    width: auto;
+    flex: 1;
+    min-height: 44px;
+    margin: 0;
+  }
+  .mobile-favorites[aria-pressed="true"] {
+    background: #145646;
+    color: white;
+  }
+  .mobile-filter-trigger .count-with-district {
+    display: none;
+  }
+  .mobile-result-sort {
+    display: block;
+    max-width: 100%;
+  }
+  .listings-main .panel-header {
+    flex-wrap: wrap;
+  }
+  .listings-main {
+    padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  }
+  .workspace-navigation.hide-on-scroll:not(:focus-within) {
+    transform: translateY(calc(100% + 18px + env(safe-area-inset-bottom)));
+  }
+}
+@media (max-width: 374px) {
+  .mobile-filter-trigger .filter-district {
+    display: none;
+  }
+  .mobile-filter-trigger .count-with-district {
+    display: grid;
+  }
+}
+
+.detail-tab-marker {
+  height: 1px;
+}
+.pinned-tab-bar {
+  display: none;
+}
+@media (max-width: 700px) {
+  .detail-panel.tabs-pinned .detail-topbar {
+    visibility: hidden;
+  }
+  .detail-panel .detail-section-tabs.is-pinned {
+    margin-top: 0;
+    padding: 0 4px;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    z-index: 9;
+  }
+  .detail-section-tabs.is-pinned:not(.menu-open) > .tab-button {
+    display: none;
+  }
+  .detail-section-tabs.is-pinned .pinned-tab-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 50px;
+    grid-column: 1/-1;
+  }
+  .pinned-tab-bar button {
+    min-height: 44px;
+    min-width: 44px;
+    border: 0;
+    background: transparent;
+    color: var(--ink);
+    font-weight: 700;
+  }
+}
+@media (max-width: 700px) {
+  .detail-panel {
+    overflow-anchor: none;
+  }
+}

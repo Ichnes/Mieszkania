@@ -1,3 +1,5 @@
+import { cardPhotoByListing, takeFloorPlanRequest } from "../lib/gallery-position";
+import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import { HeatingEvidence } from "./HeatingEvidence";
 import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
@@ -178,8 +180,71 @@ export function ListingDetailPanel(input: {
   const [contactEvent, setContactEvent] = useState(
     createEmptyContactEventDraft(input.listing.manual.contactName),
   );
+  const openedPlanId = useRef<string | undefined>(undefined);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const lightboxImageIndex = lightboxOpen ? activeImageIndex : null;
+  const galleryTrack = useRef<HTMLDivElement>(null);
+  const requestedImage = useRef(0);
+  const imageRequest = useRef(0);
+  const galleryScroll = useRef<number | null>(null);
+  const [imageError, setImageError] = useState("");
+  const [animateImage, setAnimateImage] = useState(true);
+  const tabMarker = useRef<HTMLDivElement>(null);
+  const [tabsPinned, setTabsPinned] = useState(false);
+  const [tabMenu, setTabMenu] = useState(false);
+  useEffect(() => {
+    const root = detailPanelRef.current,
+      marker = tabMarker.current;
+    if (!root || !marker) return;
+    const update = () => {
+      const pinned =
+        marker.getBoundingClientRect().bottom <= root.getBoundingClientRect().top + root.clientTop;
+      setTabsPinned(pinned);
+      if (!pinned) setTabMenu(false);
+    };
+    update();
+    root.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(root);
+    return () => {
+      root.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, [input.listing.id]);
+  function openLightbox() {
+    galleryScroll.current = detailPanelRef.current?.scrollTop ?? null;
+    setLightboxOpen(true);
+  }
+  function closeLightbox() {
+    setLightboxOpen(false);
+    const y = galleryScroll.current;
+    if (y !== null)
+      requestAnimationFrame(() =>
+        detailPanelRef.current?.scrollTo({ top: y, behavior: "instant" }),
+      );
+  }
+  async function selectPhoto(index: number, expand = false) {
+    const token = ++imageRequest.current;
+    requestedImage.current = index;
+    const image = galleryTrack.current?.querySelectorAll("img")[index];
+    if (!image) return;
+    setImageError("");
+    image.loading = "eager";
+    try {
+      await image.decode();
+    } catch {
+      if (token === imageRequest.current) {
+        requestedImage.current = activeImageIndex;
+        setImageError("Nie udało się wczytać zdjęcia. Spróbuj ponownie.");
+      }
+      return;
+    }
+    if (token !== imageRequest.current) return;
+    setAnimateImage(Math.abs(index - activeImageIndex) === 1);
+    setActiveImageIndex(index);
+    if (expand) openLightbox();
+  }
   const [photoRotation, setPhotoRotation] = useState(0);
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
@@ -208,7 +273,12 @@ export function ListingDetailPanel(input: {
   useDialogFocus(dialogRef, input.onClose);
   const dismissDialogRef = useRef<HTMLElement | null>(null);
   useDialogFocus(dismissDialogRef, () => setIsDismissConfirmOpen(false), isDismissConfirmOpen);
-  const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
+  const imageSwipeStartRef = useRef<{
+    x: number;
+    y: number;
+    pointerId: number;
+    axis?: "x" | "y";
+  } | null>(null);
   const didSwipeImageRef = useRef(false);
   useEffect(() => {
     setScheduledAt(toDatetimeInputValue(input.listing.viewing?.scheduledAt));
@@ -217,8 +287,19 @@ export function ListingDetailPanel(input: {
   }, [input.listing.viewing, input.listing.manual]);
   useEffect(() => {
     setContactEvent(createEmptyContactEventDraft(input.listing.manual.contactName));
-    setActiveImageIndex(0);
-    setLightboxImageIndex(null);
+    if (takeFloorPlanRequest(input.listing.id)) openedPlanId.current = input.listing.id;
+    const plan = openedPlanId.current === input.listing.id || window.location.hash === "#rzut";
+    const url = plan
+      ? input.listing.floorPlanImageUrls?.[0]
+      : cardPhotoByListing.get(input.listing.id);
+    const imageIndex = url ? input.listing.imageUrls.indexOf(url) : -1;
+    setActiveImageIndex(Math.max(0, imageIndex));
+    requestedImage.current = Math.max(0, imageIndex);
+    imageRequest.current++;
+    setImageError("");
+    setLightboxOpen(plan && imageIndex >= 0);
+    galleryScroll.current = null;
+    setTabMenu(false);
     setIsDismissConfirmOpen(false);
     setActiveDetailTab(window.location.pathname === "/statystyki" ? "statistics" : "overview");
     setUnmergeSuccess("");
@@ -226,6 +307,10 @@ export function ListingDetailPanel(input: {
     setManualFeedback(null);
   }, [input.listing.id]);
   useEffect(() => {
+    if (window.location.hash === "#zakup-za-gotowke") {
+      document.getElementById("zakup-za-gotowke")?.scrollIntoView();
+      return;
+    }
     detailPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [input.listing.id]);
   useEffect(() => {
@@ -235,7 +320,7 @@ export function ListingDetailPanel(input: {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        setLightboxImageIndex(null);
+        closeLightbox();
       }
 
       if (event.key === "ArrowLeft") {
@@ -254,6 +339,72 @@ export function ListingDetailPanel(input: {
     (candidate) =>
       candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
   );
+  const parkingLabel = input.listing.hasOutdoorParking
+    ? "miejsce naziemne"
+    : input.listing.hasGarage
+      ? "garaż"
+      : "parking";
+  const compareAction = (
+    <button
+      className={
+        input.isCompared ? "action-button shortlist-active" : "action-button secondary-button"
+      }
+      type="button"
+      onClick={() => input.onToggleCompare(input.listing.id)}
+    >
+      <GitCompareArrows size={16} aria-hidden="true" />{" "}
+      {input.isCompared ? "W porównaniu" : "Porównaj"}
+    </button>
+  );
+  const shareAction = (
+    <div className="share-action">
+      <button
+        type="button"
+        className="action-button secondary-button"
+        onClick={async () => {
+          try {
+            await copyText(
+              `${window.location.origin}/oferty?listing=${encodeURIComponent(input.listing.id)}`,
+            );
+            setLinkCopyStatus("Link skopiowany");
+          } catch {
+            setLinkCopyStatus("Skopiuj adres z paska przeglądarki");
+          }
+        }}
+      >
+        Udostępnij
+      </button>
+      {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
+    </div>
+  );
+  const publicationRows = [
+    ...[input.listing, ...input.listing.relatedListings].map((item) => ({
+      id: item.id,
+      group: "Publikacje mieszkania",
+      cells: [
+        item.sourceLabel,
+        item.publishedAt?.slice(0, 10),
+        item.id === input.listing.id
+          ? (input.listing.advertisedPriceLabel ?? item.priceLabel)
+          : item.priceLabel,
+        item.areaLabel,
+        item.isActive ? "Aktywna" : "Archiwalna",
+      ],
+    })),
+    ...duplicateCandidates
+      .map((pair) => (pair.left.id === input.listing.id ? pair.right : pair.left))
+      .map((item) => ({
+        id: item.id,
+        group: "Kandydaci do potwierdzenia",
+        cells: [
+          item.sourceLabel,
+          item.publishedAt?.slice(0, 10),
+          item.sourcePriceLabel ?? item.priceLabel,
+          item.areaLabel,
+          item.listingStatus === "active" ? "Aktywna" : "Archiwalna",
+        ],
+      })),
+  ];
   const activePortalListings = [
     ...new Map(
       [input.listing, ...input.listing.relatedListings]
@@ -355,9 +506,9 @@ export function ListingDetailPanel(input: {
     knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
   const maintenanceFee = input.listing.maintenanceFeeLabel;
   const changeDetailImage = (direction: -1 | 1) => {
-    setActiveImageIndex(
-      (current) =>
-        (current + direction + input.listing.imageUrls.length) % input.listing.imageUrls.length,
+    void selectPhoto(
+      (requestedImage.current + direction + input.listing.imageUrls.length) %
+        input.listing.imageUrls.length,
     );
   };
 
@@ -368,7 +519,16 @@ export function ListingDetailPanel(input: {
 
     didSwipeImageRef.current = false;
     imageSwipeStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
-    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function handleImagePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
+    const start = imageSwipeStartRef.current;
+    if (!start || start.pointerId !== event.pointerId || start.axis) return;
+    const dx = Math.abs(event.clientX - start.x),
+      dy = Math.abs(event.clientY - start.y);
+    if (Math.max(dx, dy) < 8) return;
+    start.axis = dx > dy * 1.25 ? "x" : "y";
+    didSwipeImageRef.current = true;
+    if (start.axis === "x") event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handleImagePointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -381,7 +541,11 @@ export function ListingDetailPanel(input: {
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
     // A deliberate horizontal swipe, without stealing normal vertical page scrolling.
-    if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
+    if (
+      start.axis !== "y" &&
+      Math.abs(deltaX) >= 44 &&
+      Math.abs(deltaX) > Math.abs(deltaY) * 1.25
+    ) {
       didSwipeImageRef.current = true;
       changeDetailImage(deltaX < 0 ? 1 : -1);
     }
@@ -431,7 +595,7 @@ export function ListingDetailPanel(input: {
       )}
       <section
         ref={detailPanelRef}
-        className="detail-panel"
+        className={tabsPinned ? "detail-panel tabs-pinned" : "detail-panel"}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="detail-topbar">
@@ -449,67 +613,30 @@ export function ListingDetailPanel(input: {
           <div>
             <p className="eyebrow">Szczegóły oferty</p>
             <h2>{input.listing.title}</h2>
-            <div className="listing-id-row">
-              <code className="listing-record-id">ID: {input.listing.id}</code>
-              <button
-                className={copiedId ? "icon-button copied" : "icon-button"}
-                type="button"
-                title="Kopiuj ID"
-                aria-label="Kopiuj ID"
-                onClick={async () => {
-                  try {
-                    if (navigator.clipboard) await navigator.clipboard.writeText(input.listing.id);
-                    else {
-                      const area = document.createElement("textarea");
-                      area.value = input.listing.id;
-                      document.body.appendChild(area);
-                      area.select();
-                      document.execCommand("copy");
-                      area.remove();
-                    }
-                    setCopiedId(true);
-                    window.setTimeout(() => setCopiedId(false), 1600);
-                  } catch {
-                    setCopiedId(false);
-                  }
-                }}
-              >
-                {copiedId ? "✓" : <ClipboardCheck size={14} aria-hidden="true" />}
-              </button>
-              <button
-                type="button"
-                className="action-button secondary-button"
-                onClick={async () => {
-                  try {
-                    await copyText(
-                      `${window.location.origin}/oferty?listing=${encodeURIComponent(input.listing.id)}`,
-                    );
-                    setLinkCopyStatus("Link skopiowany");
-                  } catch {
-                    setLinkCopyStatus("Skopiuj adres z paska przeglądarki");
-                  }
-                }}
-              >
-                Kopiuj link
-              </button>
-              {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
+            <div className="detail-heading-price">
+              <strong>{input.listing.priceLabel}</strong>
+              {Boolean(input.listing.additionalPurchaseCosts?.total) && (
+                <small>
+                  {input.listing.additionalPurchaseCosts!.total ===
+                  input.listing.additionalPurchaseCosts!.garage
+                    ? input.listing.hasOutdoorParking
+                      ? "Miejsce naziemne"
+                      : input.listing.hasGarage
+                        ? "Garaż"
+                        : "Parking"
+                    : "Dodatki"}{" "}
+                  {input.listing.garageTenure === "purchase_option" &&
+                  input.listing.additionalPurchaseCosts!.total ===
+                    input.listing.additionalPurchaseCosts!.garage
+                    ? "opcjonalnie"
+                    : ""}{" "}
+                  +{formatPln(input.listing.additionalPurchaseCosts!.total)}
+                </small>
+              )}
             </div>
             <ListingBadgeRow badges={input.listing.badges} />
           </div>
           <div className="detail-actions">
-            <button
-              className="action-button secondary-button detail-refresh-button"
-              type="button"
-              onClick={() => void input.onRefreshFromSource(input.listing)}
-              disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
-            >
-              <RefreshCw
-                size={16}
-                aria-hidden="true"
-                className={input.isRefreshingFromSource ? "icon-spin" : ""}
-              />{" "}
-              {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Dociągnij ofertę"}
-            </button>
             <button
               className={
                 input.listing.isShortlisted
@@ -526,56 +653,88 @@ export function ListingDetailPanel(input: {
                 aria-hidden="true"
                 fill={input.listing.isShortlisted ? "currentColor" : "none"}
               />{" "}
-              {input.listing.isShortlisted ? "W ulubionych" : "Dodaj do ulubionych"}
+              {input.listing.isShortlisted ? "W ulubionych" : "Ulubione"}
             </button>
-            <button
-              className={
-                input.isCompared
-                  ? "action-button shortlist-active"
-                  : "action-button secondary-button"
-              }
-              type="button"
-              onClick={() => input.onToggleCompare(input.listing.id)}
-            >
-              <GitCompareArrows size={16} aria-hidden="true" />{" "}
-              {input.isCompared ? "W porównaniu" : "Porównaj"}
-            </button>
-            <button
-              className="action-button secondary-button"
-              type="button"
-              onClick={() => void input.onArchive(input.listing.id)}
-              disabled={input.isArchiving}
-            >
-              <Archive size={16} aria-hidden="true" />{" "}
-              {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
-            </button>
-            <button
-              className="action-button danger-button"
-              type="button"
-              onClick={() => setIsDismissConfirmOpen(true)}
-              disabled={input.isDismissing}
-            >
-              <Trash2 size={16} aria-hidden="true" />{" "}
-              {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
-            </button>
-            <button
-              className="action-button secondary-button"
-              type="button"
-              onClick={() => input.onAddToMortgage(input.listing)}
-            >
-              <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
-            </button>
+            <div className="header-compare">{compareAction}</div>
+            <div className="header-share">{shareAction}</div>
+            <details className="detail-more">
+              <summary>Więcej</summary>
+              <div className="more-content">
+                <div className="menu-compare">{compareAction}</div>
+                <div className="menu-share">{shareAction}</div>
+                <code className="listing-record-id">ID: {input.listing.id}</code>
+                <button
+                  className={copiedId ? "icon-button copied" : "icon-button"}
+                  type="button"
+                  title="Kopiuj ID"
+                  aria-label="Kopiuj ID"
+                  onClick={async () => {
+                    try {
+                      if (navigator.clipboard)
+                        await navigator.clipboard.writeText(input.listing.id);
+                      else {
+                        const area = document.createElement("textarea");
+                        area.value = input.listing.id;
+                        document.body.appendChild(area);
+                        area.select();
+                        document.execCommand("copy");
+                        area.remove();
+                      }
+                      setCopiedId(true);
+                      window.setTimeout(() => setCopiedId(false), 1600);
+                    } catch {
+                      setCopiedId(false);
+                    }
+                  }}
+                >
+                  {copiedId ? "✓" : <ClipboardCheck size={14} aria-hidden="true" />}
+                </button>{" "}
+                <button
+                  className="action-button secondary-button detail-refresh-button"
+                  type="button"
+                  onClick={() => void input.onRefreshFromSource(input.listing)}
+                  disabled={input.isRefreshingFromSource || !input.listing.canonicalUrl}
+                >
+                  <RefreshCw
+                    size={16}
+                    aria-hidden="true"
+                    className={input.isRefreshingFromSource ? "icon-spin" : ""}
+                  />{" "}
+                  {input.isRefreshingFromSource ? "Dociągam ofertę…" : "Odśwież dane z portalu"}
+                </button>
+                <button
+                  className="action-button secondary-button"
+                  type="button"
+                  onClick={() => void input.onArchive(input.listing.id)}
+                  disabled={input.isArchiving}
+                >
+                  <Archive size={16} aria-hidden="true" />{" "}
+                  {input.isArchiving ? "Oznaczanie..." : "Oznacz jako archiwalną"}
+                </button>
+                <button
+                  className="action-button danger-button"
+                  type="button"
+                  onClick={() => setIsDismissConfirmOpen(true)}
+                  disabled={input.isDismissing}
+                >
+                  <Trash2 size={16} aria-hidden="true" />{" "}
+                  {input.isDismissing ? "Odrzucanie..." : "Odrzuć ofertę"}
+                </button>
+              </div>
+            </details>
           </div>
         </div>
 
         <div className="detail-grid">
           <div>
             <div className="detail-gallery">
+              {imageError && <span role="status">{imageError}</span>}
               {activeImageUrl ? (
                 <button
                   className="detail-image-button"
                   type="button"
                   onPointerDown={handleImagePointerDown}
+                  onPointerMove={handleImagePointerMove}
                   onPointerUp={handleImagePointerUp}
                   onPointerCancel={() => {
                     imageSwipeStartRef.current = null;
@@ -586,13 +745,17 @@ export function ListingDetailPanel(input: {
                       didSwipeImageRef.current = false;
                       return;
                     }
-                    setLightboxImageIndex(activeImageIndex);
+                    openLightbox();
                   }}
                   aria-label="Otwórz zdjęcie na pełnym ekranie. Przesuń palcem w lewo lub prawo, aby zmienić zdjęcie."
                 >
                   <div
+                    ref={galleryTrack}
                     className="detail-image-track"
-                    style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
+                    style={{
+                      transition: animateImage ? undefined : "none",
+                      transform: `translateX(-${activeImageIndex * 100}%)`,
+                    }}
                   >
                     {input.listing.imageUrls.map((imageUrl, index) => (
                       <img
@@ -600,7 +763,7 @@ export function ListingDetailPanel(input: {
                         className="detail-image"
                         src={imageUrl}
                         alt={`${input.listing.title}, zdjęcie ${index + 1}`}
-                        loading={index === 0 ? "eager" : "lazy"}
+                        loading={Math.abs(index - activeImageIndex) <= 1 ? "eager" : "lazy"}
                       />
                     ))}
                   </div>
@@ -618,7 +781,7 @@ export function ListingDetailPanel(input: {
                         index === activeImageIndex ? "detail-thumb active" : "detail-thumb"
                       }
                       onClick={() => {
-                        setActiveImageIndex(index);
+                        void selectPhoto(index);
                       }}
                     >
                       <img
@@ -644,8 +807,7 @@ export function ListingDetailPanel(input: {
                     key={url}
                     style={{ top: `${12 + index * 48}px` }}
                     onClick={() => {
-                      setActiveImageIndex(imageIndex);
-                      setLightboxImageIndex(imageIndex);
+                      void selectPhoto(imageIndex, true);
                     }}
                   >
                     Rzut{index > 0 ? ` ${index + 1}` : ""}
@@ -677,7 +839,7 @@ export function ListingDetailPanel(input: {
                         type="button"
                         className={index === activeImageIndex ? "active" : ""}
                         aria-label={`Zdjęcie ${index + 1}`}
-                        onClick={() => setActiveImageIndex(index)}
+                        onClick={() => void selectPhoto(index)}
                       />
                     ))}
                   </div>
@@ -687,8 +849,110 @@ export function ListingDetailPanel(input: {
                 </>
               ) : null}
             </div>
+
+            <button
+              className="action-button secondary-button"
+              type="button"
+              onClick={() => input.onAddToMortgage(input.listing)}
+            >
+              <Calculator size={16} aria-hidden="true" /> Dodaj do kalkulacji kredytowej
+            </button>
+            {cashPurchaseEvidence(input.listing.description) && (
+              <p>
+                <button
+                  onClick={() => {
+                    setActiveDetailTab("overview");
+                    requestAnimationFrame(() =>
+                      document.getElementById("zakup-za-gotowke")?.scrollIntoView(),
+                    );
+                  }}
+                >
+                  Według ogłoszenia: zakup za gotówkę
+                </button>{" "}
+                · Symulacja raty
+              </p>
+            )}
             <MortgageQuickPreview listing={input.listing} downPayment={input.downPayment} />
-            <div className="detail-section-tabs">
+            {publicationRows.length > 1 && (
+              <div style={{ overflowX: "auto", maxWidth: "100%" }}>
+                <table>
+                  <caption>Porównanie publikacji</caption>
+                  <thead>
+                    <tr>
+                      {["Portal", "Data publikacji", "Cena", "Metraż", "Status"].map((label) => (
+                        <th key={label}>{label}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  {["Publikacje mieszkania", "Kandydaci do potwierdzenia"].map((group) => {
+                    const rows = publicationRows.filter((row) => row.group === group);
+                    return rows.length ? (
+                      <tbody key={group}>
+                        <tr>
+                          <th colSpan={5}>{group}</th>
+                        </tr>
+                        {rows.map((row) => (
+                          <tr key={row.id}>
+                            {row.cells.map((cell, i) => (
+                              <td key={i}>
+                                {i > 0 &&
+                                publicationRows.some((other) => other.cells[i] !== cell) ? (
+                                  <mark>{cell ?? "—"}</mark>
+                                ) : (
+                                  (cell ?? "—")
+                                )}
+                              </td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    ) : null;
+                  })}
+                </table>
+              </div>
+            )}
+            <div ref={tabMarker} className="detail-tab-marker" aria-hidden="true" />
+            <div
+              className={`detail-section-tabs ${tabsPinned ? "is-pinned" : ""} ${tabMenu ? "menu-open" : ""}`}
+              onClick={(event) => {
+                if (
+                  (event.target as Element).closest(".tab-button") &&
+                  tabsPinned &&
+                  isMobileDetail
+                ) {
+                  setTabMenu(false);
+                  requestAnimationFrame(() => {
+                    const marker = tabMarker.current,
+                      root = detailPanelRef.current;
+                    if (marker && root)
+                      root.scrollTop +=
+                        marker.getBoundingClientRect().bottom -
+                        root.getBoundingClientRect().top +
+                        2;
+                  });
+                }
+              }}
+            >
+              <div className="pinned-tab-bar">
+                <button aria-expanded={tabMenu} onClick={() => setTabMenu(!tabMenu)}>
+                  {
+                    {
+                      overview: "Przegląd",
+                      statistics: "Statystyki",
+                      manual: "Notatki",
+                      features: "Cechy",
+                      score: "Ocena",
+                      ai: "Ocena AI",
+                      duplicates: "Duplikaty",
+                      contact: "Kontakt",
+                    }[activeDetailTab]
+                  }{" "}
+                  ▾
+                </button>
+                <button aria-label="Zamknij ofertę" onClick={input.onClose}>
+                  <X size={20} />
+                </button>
+              </div>
               <button
                 className={tabClass(activeDetailTab === "overview")}
                 type="button"
@@ -919,7 +1183,15 @@ export function ListingDetailPanel(input: {
                       ) : null}
                     </td>
                     <th>Metraż</th>
-                    <td>{input.listing.areaLabel ?? "-"}</td>
+                    <td>
+                      {input.listing.areaLabel ?? "-"}{" "}
+                      <small>
+                        {input.listing.areaSource === "description"
+                          ? "Opis sprzedającego"
+                          : "Parametry ogłoszenia"}{" "}
+                        · {input.listing.sourceLabel}
+                      </small>
+                    </td>
                   </tr>
                   {Boolean(input.listing.additionalPurchaseCosts?.warnings?.length) && (
                     <tr>
@@ -946,7 +1218,7 @@ export function ListingDetailPanel(input: {
                           ? " (garaż i komórka — razem)"
                           : ""}
                         {input.listing.additionalPurchaseCosts.garage
-                          ? ` (garaż: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
+                          ? ` (${parkingLabel}: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
                           : ""}
                         {input.listing.additionalPurchaseCosts.parkingCount &&
                         input.listing.additionalPurchaseCosts.parkingUnitPrice
@@ -970,7 +1242,7 @@ export function ListingDetailPanel(input: {
                       <th>Cena całkowita / m²</th>
                       <td className="fact-price">
                         {input.listing.totalAcquisitionPricePerSqm
-                          ? `${formatPln(input.listing.totalAcquisitionPricePerSqm)} / m²`
+                          ? `${formatPln(input.listing.totalAcquisitionPricePerSqm)}/m²`
                           : "—"}
                       </td>
                       <th>Cena mieszkania</th>
@@ -979,7 +1251,12 @@ export function ListingDetailPanel(input: {
                   ) : null}
                   <tr>
                     <th>zł/m²</th>
-                    <td>{input.listing.pricePerSqmLabel ?? "-"}</td>
+                    <td>
+                      {input.listing.pricePerSqmLabel ?? "-"}{" "}
+                      <small>
+                        {input.listing.priceLabel} / {input.listing.areaLabel}
+                      </small>
+                    </td>
                     <th>Pokoje</th>
                     <td>{input.listing.rooms ?? "-"}</td>
                   </tr>
@@ -998,7 +1275,7 @@ export function ListingDetailPanel(input: {
                     <th>
                       {input.listing.additionalPurchaseCosts?.garageAndStorage
                         ? "Garaż i komórka"
-                        : "Garaż / parking"}
+                        : parkingLabel}
                     </th>
                     <td>
                       {input.listing.garageTenure && (
@@ -1652,7 +1929,7 @@ export function ListingDetailPanel(input: {
             role="dialog"
             aria-modal="true"
             aria-label="Podgląd zdjęcia"
-            onClick={() => setLightboxImageIndex(null)}
+            onClick={() => closeLightbox()}
           >
             <FullscreenFrame label="Zdjęcia oferty" className="photo-fullscreen" modal>
               <button
@@ -1669,7 +1946,7 @@ export function ListingDetailPanel(input: {
               <button
                 className="image-lightbox-close"
                 type="button"
-                onClick={() => setLightboxImageIndex(null)}
+                onClick={() => closeLightbox()}
                 aria-label="Zamknij podgląd"
               >
                 X
@@ -1694,7 +1971,7 @@ export function ListingDetailPanel(input: {
                 rotation={photoRotation}
                 onPrevious={showPreviousLightboxImage}
                 onNext={showNextLightboxImage}
-                onClose={() => setLightboxImageIndex(null)}
+                onClose={() => closeLightbox()}
               />
               {input.listing.imageUrls.length > 1 ? (
                 <button
@@ -1720,24 +1997,10 @@ export function ListingDetailPanel(input: {
   );
 
   function showPreviousLightboxImage() {
-    setLightboxImageIndex((current) => {
-      if (current === null || input.listing.imageUrls.length === 0) {
-        return current;
-      }
-
-      const nextIndex = current - 1;
-      return nextIndex < 0 ? input.listing.imageUrls.length - 1 : nextIndex;
-    });
+    changeDetailImage(-1);
   }
-
   function showNextLightboxImage() {
-    setLightboxImageIndex((current) => {
-      if (current === null || input.listing.imageUrls.length === 0) {
-        return current;
-      }
-
-      return (current + 1) % input.listing.imageUrls.length;
-    });
+    changeDetailImage(1);
   }
 
   async function saveContactEvent() {
