@@ -132,12 +132,8 @@
 
 .detail-image-track {
   display: flex;
-  transition: transform 180ms ease-out;
+  transition: transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
   will-change: transform;
-}
-
-.detail-image-track[data-dragging] {
-  transition: none;
 }
 
 .detail-image-track .detail-image {
@@ -687,10 +683,4 @@
   border-radius: 12px;
   overflow: hidden;
   border: 1px solid rgba(23, 32, 42, 0.1);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .detail-image-track {
-    transition: none;
-  }
 }

@@ -1,9 +1,7 @@
-import { requestFloorPlan } from "../lib/gallery-position";
-import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import type { ListingSummary } from "@mieszkania/shared";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
-import { cardImageBadges, filterNonCommercialBadges } from "../lib/badges";
+import { filterImageBadges, filterNonCommercialBadges } from "../lib/badges";
 import { listingHref } from "../lib/links";
 import { buildListingPrimaryLocation } from "../lib/location";
 import { ListingBadgeRow } from "./ListingBadgeRow";
@@ -11,9 +9,6 @@ import { ListingImageSlide } from "./ListingImageSlide";
 import { SunExposureCompass } from "./SunExposureCompass";
 
 export function ListingSection(input: {
-  sortControl: React.ReactNode;
-  resultRange: string;
-  mobileCount: string;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
   downPayment: number;
@@ -23,23 +18,19 @@ export function ListingSection(input: {
   isLoading: boolean;
 }) {
   return (
-    <section className="panel offer-list-panel">
-      <div className="panel-header listing-results-header">
-        <strong className="mobile-results-count">
-          {input.isLoading ? "Wczytuję oferty…" : input.mobileCount}
-        </strong>
+    <section className="panel">
+      <div className="panel-header">
         <div>
           <p className="eyebrow">Oferty</p>
           <h2>{input.title}</h2>
         </div>
-        <div className="mobile-result-sort">{input.sortControl}</div>
         <div className="pill">
           {input.isLoading ? (
             <>
               <LoaderCircle size={14} className="icon-spin" aria-hidden="true" /> Odświeżam oferty
             </>
           ) : (
-            input.resultRange
+            `${input.listings.length} ofert`
           )}
         </div>
       </div>
@@ -54,21 +45,9 @@ export function ListingSection(input: {
           </div>
         ) : null}
         {input.listings.map((listing) => {
-          const imageBadges = cardImageBadges(listing);
-          const nonCommercialBadges = filterNonCommercialBadges(listing.badges).filter(
-            (badge) => !imageBadges.includes(badge),
-          );
+          const imageBadges = filterImageBadges(listing.badges);
+          const nonCommercialBadges = filterNonCommercialBadges(listing.badges);
 
-          const scoreBadge =
-            typeof listing.dreamScore === "number" ? (
-              <span
-                className="listing-dream-chip"
-                title="Dopasowanie do Waszych preferencji"
-                onClick={(event) => event.stopPropagation()}
-              >
-                <strong>{listing.dreamScore}%</strong>
-              </span>
-            ) : null;
           return (
             <article
               key={listing.id}
@@ -80,37 +59,32 @@ export function ListingSection(input: {
                   <div className="listing-chip-stack">
                     {imageBadges.length > 0 ? (
                       <div className="listing-image-badges">
-                        {imageBadges.map((badge) =>
-                          badge === "Tylko gotówka" ? (
-                            <a
-                              key={badge}
-                              className="listing-image-badge"
-                              href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
-                              onClick={(event) => event.stopPropagation()}
-                              aria-label="Według ogłoszenia: zakup za gotówkę. Przejdź do opisu"
-                            >
-                              {badge}
-                            </a>
-                          ) : (
-                            <span
-                              key={`${listing.id}-${badge}`}
-                              className="listing-image-badge"
-                              title={
-                                badge === "Brak miejsca postojowego"
-                                  ? "Oferta nie potwierdza miejsca postojowego dostępnego dla mieszkania."
-                                  : undefined
-                              }
-                            >
-                              {badge}
-                            </span>
-                          ),
-                        )}
+                        {imageBadges.map((badge) => (
+                          <span
+                            key={`${listing.id}-${badge}`}
+                            className="listing-image-badge"
+                            title={
+                              badge === "Brak miejsca postojowego"
+                                ? "Oferta nie potwierdza miejsca postojowego dostępnego dla mieszkania."
+                                : undefined
+                            }
+                          >
+                            {badge}
+                          </span>
+                        ))}
                       </div>
                     ) : null}
                   </div>
                   {typeof listing.dreamScore === "number" || listing.aiAssessment ? (
                     <div className="listing-bottom-left-stack">
-                      {scoreBadge}
+                      {typeof listing.dreamScore === "number" ? (
+                        <span
+                          className="listing-dream-chip"
+                          aria-label={`Dopasowanie: ${listing.dreamScore}%`}
+                        >
+                          <strong>{listing.dreamScore}%</strong>
+                        </span>
+                      ) : null}
                       {listing.aiAssessment && (
                         <span
                           className="listing-ai-chip"
@@ -155,71 +129,51 @@ export function ListingSection(input: {
                   />
                 </div>
               ) : (
-                <div className="listing-thumb-wrap listing-photo-empty">
-                  Brak zdjęć {scoreBadge}
-                </div>
+                <div className="listing-thumb-wrap listing-photo-empty">Brak zdjęć</div>
               )}
               <div className="listing-card-content">
-                <div className="listing-card-heading">
-                  {!listing.thumbnailUrl && listing.aiAssessment && (
-                    <span className="listing-ai-inline">
-                      Ocena AI: {listing.aiAssessment.score ?? "brak danych"}/100
-                    </span>
-                  )}
-                  <div className="listing-topline">
-                    <span>{listing.city}</span>
-                    <span
-                      className={
-                        listing.priceChangePercent > 0
-                          ? "badge-rise"
-                          : listing.priceChangePercent < 0
-                            ? "badge-drop"
-                            : "badge-flat"
-                      }
-                    >
-                      {listing.priceChangePercent > 0 ? "+" : ""}
-                      {listing.priceChangePercent}%
-                    </span>
-                  </div>
-                  <h3>
-                    {listing.isActive === false && (
-                      <span className="archived-listing-label">Archiwalna</span>
-                    )}
-                    <a
-                      className="listing-detail-link"
-                      href={listingHref(listing.id)}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        event.stopPropagation();
-                        void input.onOpen(listing.id);
-                      }}
-                    >
-                      {listing.title}
-                    </a>
-                  </h3>
-                  <p className="listing-location-line">
-                    <span className="desktop-location">{buildListingPrimaryLocation(listing)}</span>
-                    <span className="mobile-location">
-                      {[listing.district, listing.neighborhood, listing.street]
-                        .filter(Boolean)
-                        .join(" · ") || listing.city}
-                    </span>
-                  </p>
-                  {listing.viewingScheduledAt ? (
-                    <p className="viewing-line">
-                      Oglądanie: {formatViewingDate(listing.viewingScheduledAt)}
-                    </p>
-                  ) : null}
-                  {!listing.thumbnailUrl && cashPurchaseEvidence(listing.description) && (
-                    <a
-                      className="listing-image-badge"
-                      href={listingHref(listing.id).split("#")[0] + "#zakup-za-gotowke"}
-                      onClick={(event) => event.stopPropagation()}
-                    >
-                      Tylko gotówka
-                    </a>
-                  )}
+                {!listing.thumbnailUrl && listing.aiAssessment && (
+                  <span className="listing-ai-inline">
+                    Ocena AI: {listing.aiAssessment.score ?? "brak danych"}/100
+                  </span>
+                )}
+                <div className="listing-topline">
+                  <span>{listing.city}</span>
+                  <span
+                    className={
+                      listing.priceChangePercent > 0
+                        ? "badge-rise"
+                        : listing.priceChangePercent < 0
+                          ? "badge-drop"
+                          : "badge-flat"
+                    }
+                  >
+                    {listing.priceChangePercent > 0 ? "+" : ""}
+                    {listing.priceChangePercent}%
+                  </span>
                 </div>
+                <h3>
+                  {listing.isActive === false && (
+                    <span className="archived-listing-label">Archiwalna</span>
+                  )}
+                  <a
+                    className="listing-detail-link"
+                    href={listingHref(listing.id)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      void input.onOpen(listing.id);
+                    }}
+                  >
+                    {listing.title}
+                  </a>
+                </h3>
+                <p className="listing-location-line">{buildListingPrimaryLocation(listing)}</p>
+                {listing.viewingScheduledAt ? (
+                  <p className="viewing-line">
+                    Oglądanie: {formatViewingDate(listing.viewingScheduledAt)}
+                  </p>
+                ) : null}
                 <dl>
                   <div className="listing-metric metric-price">
                     <dt>
@@ -238,7 +192,7 @@ export function ListingSection(input: {
                     </div>
                   </div>
                   <div className="listing-metric metric-pps">
-                    <dt>Cena za m²</dt>
+                    <dt>PLN/m²</dt>
                     <dd>{listing.pricePerSqmLabel ?? "-"}</dd>
                   </div>
                   <div className="listing-metric metric-rooms metric-split metric-rooms-floor">
@@ -257,39 +211,12 @@ export function ListingSection(input: {
                     </div>
                   </div>
                 </dl>
-                <div className="listing-card-footer">
-                  <div className="mobile-card-meta">
-                    {!listing.badges.includes("Brak windy") && (
-                      <span>
-                        {listing.amenityEvidence?.lift === true || listing.hasLift
-                          ? "Winda"
-                          : "Winda do potwierdzenia"}
-                      </span>
-                    )}
-                    {!listing.thumbnailUrl && listing.sourceLabel && (
-                      <span>{listing.sourceLabel}</span>
-                    )}
-                  </div>
-                  {listing.floorPlanImageUrls?.length ? (
-                    <a
-                      href={listingHref(listing.id).split("#")[0] + "#rzut"}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        event.preventDefault();
-                        requestFloorPlan(listing.id);
-                        void input.onOpen(listing.id);
-                      }}
-                    >
-                      Zobacz rzut
-                    </a>
-                  ) : null}
-                  {listing.priceSource === "negotiated" ? (
-                    <p className="price-origin-note">
-                      W ogłoszeniu: {listing.advertisedPriceLabel ?? "brak ceny"}
-                    </p>
-                  ) : null}
-                  <ListingBadgeRow badges={nonCommercialBadges} />
-                </div>
+                {listing.priceSource === "negotiated" ? (
+                  <p className="price-origin-note">
+                    W ogłoszeniu: {listing.advertisedPriceLabel ?? "brak ceny"}
+                  </p>
+                ) : null}
+                <ListingBadgeRow badges={nonCommercialBadges} />
               </div>
             </article>
           );

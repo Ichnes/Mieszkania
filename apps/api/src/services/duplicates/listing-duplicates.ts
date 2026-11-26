@@ -43,8 +43,6 @@ type DuplicateCandidateRow = {
   right_area_sqm: string | null;
   right_rooms: string | null;
   right_group_size: string | null;
-  left_published_at?: string;
-  right_published_at?: string;
   left_status: string;
   right_status: string;
   left_floor: number | null;
@@ -58,7 +56,6 @@ type DuplicateCandidateRow = {
 };
 
 type RelatedListingRow = {
-  published_at: string | null;
   status: string;
   source_contact_phone: string | null;
   primary_listing_id: string;
@@ -181,7 +178,6 @@ export async function getDuplicateCandidates(
             l1.price_per_sqm::text as left_price_per_sqm,
             l1.area_sqm::text as left_area_sqm,
             l1.rooms::text as left_rooms,
-            l1.published_at::text as left_published_at,
             l1.status as left_status,
             l1.floor as left_floor,
             l1.source_price_amount::text as left_source_price_amount,
@@ -198,7 +194,6 @@ export async function getDuplicateCandidates(
             l2.price_per_sqm::text as right_price_per_sqm,
             l2.area_sqm::text as right_area_sqm,
             l2.rooms::text as right_rooms,
-            l2.published_at::text as right_published_at,
             l2.status as right_status,
             l2.floor as right_floor,
             l2.source_price_amount::text as right_source_price_amount,
@@ -1088,11 +1083,10 @@ function mapDuplicatePreview(
     addressText: addressText ?? undefined,
     priceLabel: formatCurrencyLabel(priceAmount),
     sourcePriceLabel: sourcePrice ? formatCurrencyLabel(sourcePrice) : undefined,
-    publishedAt: side === "left" ? row.left_published_at : row.right_published_at,
     listingStatus: side === "left" ? row.left_status : row.right_status,
     floor: floor ?? undefined,
     areaLabel: formatAreaLabel(areaSqm),
-    pricePerSqmLabel: pricePerSqm ? `${formatIntegerLabel(pricePerSqm)} zł/m²` : undefined,
+    pricePerSqmLabel: pricePerSqm ? `${formatIntegerLabel(pricePerSqm)} PLN/m2` : undefined,
     roomsLabel: rooms ? `${trimNumeric(rooms)} pokoje` : undefined,
     badges: [
       sourceLabel ?? "Portal",
@@ -1112,7 +1106,6 @@ async function getRelatedListingsWithDb(
       select
         other.id,
         other.title,
-        other.published_at::text,
         other.status,
         other.canonical_url,
         other.source_contact_phone,
@@ -1138,7 +1131,6 @@ async function getRelatedListingsWithDb(
   return result.rows.map((row) => ({
     id: row.id,
     title: row.title,
-    publishedAt: row.published_at ?? undefined,
     isActive: row.status === "active",
     canonicalUrl: row.canonical_url,
     sourceContactPhone: row.source_contact_phone ?? undefined,
@@ -1414,7 +1406,7 @@ function formatCurrencyLabel(value?: string | null) {
 
   return `${new Intl.NumberFormat("pl-PL", {
     maximumFractionDigits: 0,
-  }).format(Number(value))} zł`;
+  }).format(Number(value))} PLN`;
 }
 
 function formatAreaLabel(value?: string | null) {
@@ -1425,8 +1417,8 @@ function formatAreaLabel(value?: string | null) {
   const numeric = Number(value);
   return `${new Intl.NumberFormat("pl-PL", {
     minimumFractionDigits: numeric % 1 === 0 ? 0 : 1,
-    maximumFractionDigits: 2,
-  }).format(numeric)} m²`;
+    maximumFractionDigits: 1,
+  }).format(numeric)} m2`;
 }
 
 function formatIntegerLabel(value: string) {

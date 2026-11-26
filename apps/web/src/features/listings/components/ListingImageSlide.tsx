@@ -1,18 +1,6 @@
-import { cashPurchaseEvidence } from "../lib/purchase-evidence";
-import {
-  getSelectedPhoto,
-  selectListingPhoto,
-  subscribeToPhotoChanges,
-} from "../lib/gallery-position";
 import type { ListingSummary } from "@mieszkania/shared";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  useEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { formatPln, parseNumericLabel } from "../../../shared/lib/format";
 import { calculateMortgage } from "../../mortgage/lib/mortgage-simulation";
 
@@ -29,12 +17,7 @@ export function ListingImageSlide({
       : listing.thumbnailUrl
         ? [listing.thumbnailUrl]
         : [];
-  const selectedPhoto = useSyncExternalStore(
-    subscribeToPhotoChanges,
-    () => getSelectedPhoto(listing.id),
-    () => undefined,
-  );
-  const activeImageIndex = Math.max(0, imageUrls.indexOf(selectedPhoto ?? ""));
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [imagesReady, setImagesReady] = useState(false);
   const [prefetchAdjacent, setPrefetchAdjacent] = useState(false);
   const [visitedImages, setVisitedImages] = useState<Set<string>>(() => new Set());
@@ -43,6 +26,7 @@ export function ListingImageSlide({
   const activeImageUrl = imageUrls[activeImageIndex] ?? imageUrls[0];
 
   useEffect(() => {
+    setActiveImageIndex(0);
     setImagesReady(false);
     setPrefetchAdjacent(false);
     setVisitedImages(new Set());
@@ -52,12 +36,9 @@ export function ListingImageSlide({
     return null;
   }
 
-  function selectImage(index: number) {
-    selectListingPhoto(listing.id, imageUrls[index]);
-  }
   const changeImage = (direction: -1 | 1) => {
     setPrefetchAdjacent(true);
-    selectImage((activeImageIndex + direction + imageUrls.length) % imageUrls.length);
+    setActiveImageIndex((current) => (current + direction + imageUrls.length) % imageUrls.length);
   };
 
   function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
@@ -166,7 +147,7 @@ export function ListingImageSlide({
                 aria-label={`Zdjecie ${index + 1}`}
                 onClick={(event) => {
                   event.stopPropagation();
-                  selectImage(index);
+                  setActiveImageIndex(index);
                 }}
               />
             ))}
@@ -174,20 +155,21 @@ export function ListingImageSlide({
           <span className="listing-image-counter">
             {activeImageIndex + 1} / {imageUrls.length}
           </span>
+          {(() => {
+            const total =
+              listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
+            const payment = calculateMortgage(
+              Math.max(0, total - downPayment),
+              5.8,
+              360,
+              0,
+            ).basePayment;
+            return total > downPayment ? (
+              <span className="listing-mortgage-chip">Rata: {formatPln(payment)}</span>
+            ) : null;
+          })()}
         </>
       ) : null}
-      {(() => {
-        const total = listing.totalAcquisitionPrice ?? parseNumericLabel(listing.priceLabel) ?? 0;
-        const payment = calculateMortgage(
-          Math.max(0, total - downPayment),
-          5.8,
-          360,
-          0,
-        ).basePayment;
-        return total > downPayment && !cashPurchaseEvidence(listing.description) ? (
-          <span className="listing-mortgage-chip">Rata: {formatPln(payment)}</span>
-        ) : null;
-      })()}
     </>
   );
 }

@@ -497,12 +497,6 @@ nie jest uwzględniana w kalkulatorze.
 
 ## Czytanie i otwieranie ofert
 
-Na telefonie liczba dopasowań i sortowanie są w jednym wierszu, a zakres aktualnej strony jest przy paginacji. Przy odwróconych granicach filtra wybierz **Zamień wartości**, a następnie **Filtruj**. Na telefonie **Rynek** otwiera dolny panel ze statystykami i wyborem okresu.
-
-Na zdjęciu warunki zakupu poprzedzają prowizję i parking. Etykieta miejsca pokazuje wykrytą dopłatę. Kółko na zdjęciu pokazuje procent dopasowania. Na telefonie **Ulubione** obok **Filtry** przełączają widok zapisanych mieszkań, zachowując aktualny zakres i sortowanie. Kolejność możesz zmienić przy liczbie wyników. Link **Zobacz rzut** otwiera rozpoznany plan w galerii. Uzasadnienie dopasowania znajdziesz w zakładce **Ocena** w szczegółach. Na mobilnej karcie pod zdjęciem znajdziesz tytuł, lokalizację od dzielnicy do ulicy, cenę i podstawowe parametry. Obowiązek zakupu parkingu sprawdzisz w kosztach w szczegółach. Informacja o zakupie za gotówkę prowadzi do słów sprzedającego w opisie.
-
-W szczegółach pod tytułem są ID i **Kopiuj link**. Przed galerią znajdziesz akcje odświeżania danych, ulubionych, porównania, archiwizacji, odrzucenia i kalkulacji. Przy kalkulacji tabela publikacji pozwala porównać parametry ogłoszeń i osobno sprawdzić kandydatów do powiązania.
-
 Jeżeli po aktualizacji serwera otwarta karta odwołuje się do starego modułu widoku,
 aplikacja próbuje raz automatycznie się odświeżyć. Przy utrzymującym się błędzie
 wyświetla przycisk **Odśwież aplikację** zamiast pustego ekranu.
@@ -522,8 +516,6 @@ Zapis „na drugim piętrze w 2-kondygnacyjnym budynku” jest pokazywany jako *
 Przełączniki **Ulubione / Wszystkie / Tylko ukryte** mają ikony i wyróżniony aktywny wybór.
 Dodawanie do porównania jest dostępne po otwarciu szczegółów oferty;
 na kartach dashboardu nie ma przycisku **Porównaj**.
-
-Kliknięcie tytułu otwiera ofertę na zdjęciu oglądanym na karcie. Zdjęcie wybrane w powiększeniu pozostaje widoczne po powrocie do szczegółów i na listę. Na telefonie przypięty pasek pokazuje nazwę aktualnej sekcji. Dotknij jej, aby rozwinąć listę zakładek, lub zamknij ofertę przyciskiem po prawej.
 
 W **Szczegółach oferty** telefon kontaktowy i cel negocjacji są w zakładce **Notatki**.
 Telefon jest wstępnie uzupełniany numerem z ogłoszenia, jeśli nie zapisano własnego.

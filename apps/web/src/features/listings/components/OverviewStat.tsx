@@ -40,10 +40,6 @@ export function OverviewStat({
         <strong>{displayed.value}</strong>
         {displayed.trend ? <small>{displayed.trend}</small> : null}
       </span>
-      <small>
-        {/Warszawy/.test(displayed.description) ? "Warszawa" : "Zakres poszukiwań"} ·{" "}
-        {stat.listingWindow ? `ostatnie ${period} dni` : `stan obecny, zmiana w ${period} dni`}
-      </small>
     </Tile>
   );
 }

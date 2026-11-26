@@ -103,7 +103,7 @@ test("dream sorting enriches only the selected page and keeps stable global pagi
   assert.equal(personal?.priceSource, "negotiated");
   assert.equal(personal?.priceLabel.replace(/\D/g, ""), "900000");
   assert.equal(personal?.advertisedPriceLabel?.replace(/\D/g, ""), "1000000");
-  assert.equal(personal?.pricePerSqmLabel?.replace(/\s/g, ""), "15000zł/m²");
+  assert.equal(personal?.pricePerSqmLabel?.replace(/\s/g, ""), "15000PLN/m2");
   priceEvents.push({
     listing_id: target.id,
     event_type: "relisted",

@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import {
   Calculator,
   Columns3,
@@ -7,7 +6,7 @@ import {
   LayoutDashboard,
   Map,
 } from "lucide-react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { routePaths } from "../routes";
 
 const navigation = [
@@ -21,30 +20,8 @@ const navigation = [
 ];
 
 export function AppNavigation() {
-  const { pathname } = useLocation();
-  const [hidden, setHidden] = useState(false);
-  useEffect(() => {
-    setHidden(false);
-    if (pathname !== routePaths.dashboard) return;
-    let anchor = window.scrollY;
-    const onScroll = () => {
-      const y = Math.max(0, window.scrollY);
-      if (y < 60 || y < anchor - 8) {
-        setHidden(false);
-        anchor = y;
-      } else if (y > anchor + 60) {
-        setHidden(true);
-        anchor = y;
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [pathname]);
   return (
-    <nav
-      className={hidden ? "workspace-navigation hide-on-scroll" : "workspace-navigation"}
-      aria-label="Widoki aplikacji"
-    >
+    <nav className="workspace-navigation" aria-label="Widoki aplikacji">
       <div className="tabs-row">
         {navigation.map(({ to, label, Icon }) => (
           <NavLink

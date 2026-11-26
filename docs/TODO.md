@@ -1,21 +1,6 @@
 # Bieżące zadania
 
-- [x] Ustawiono 8 px odstępu między rynkiem a filtrami, przywrócono źródło pod kropkami, przeniesiono licznik zdjęć na prawą krawędź i usunięto akcję z procentowego wskaźnika dopasowania.
-
-- [x] Mobilne oferty 1.37–1.44: pojedynczy wiersz regionu, dolny panel rynku, licznik przy sortowaniu, lista bez zewnętrznej ramki. W szczegółach przywrócono wcześniejszy nagłówek z UUID i „Kopiuj link” oraz pełne akcje przed galerią. Zachowano synchronizację aktualnego zdjęcia. Pod zdjęciem tytuł i dzielnica, następnie wcześniejsze tabelki cen i parametrów. Rynek otwiera pojedynczy panel; okres zmienia się bezpośrednio przyciskami. Połączono etykiety parkingu, skrócono etykietę do „Tylko gotówka” bez podkreślenia, ukryto ratę dla zakupu gotówkowego, na pozostałych zdjęciach skrócono podpis do „Rata:” i opisano rozbieżności metrażu w szczegółach. Makolągwy 393 px: zdjęcie od 225 px zamiast 465 px, odstęp do tytułu 11 px zamiast 305 px.
-
-- [x] Kadr wspólny dla karty, szczegółów i powiększenia (1.35) oraz kontrastowy przycisk zamknięcia po powrocie z galerii (1.36). Wdrożono lokalny Docker WWW/API. Playwright na adresie LAN, 390 × 844 px, bez atrap API: karta 4/13 → szczegóły 4/13 → powiększenie 5/13 → szczegóły i karta 5/13, zachowany scroll, bezpośredni link 1/13. Pasek zakładek 52 px, odwrócony zakres ceny zachował trzy wyniki.
-
-- [x] Przesuwanie zdjęcia w szczegółach: usunięto efekt zmniejszania przy dotyku i dodano przesuwanie za palcem z krótkim domknięciem kadru. Zachowano przewijanie pionowe i oczekiwanie na wczytanie sąsiedniego zdjęcia. Typecheck i test dotykowy Chromium przeszły: przy ruchu o 65,6 px kadr przesunął się o 65,6 px bez skalowania.
-
-- [x] Galeria i zakładki (1.31–1.34): wspólne zdjęcie w powiększeniu i w ofercie, przywracanie przewinięcia, przypięty pasek sekcji, blokada osi gestu i oczekiwanie na dekodowanie kadru. Nagrano pierwsze przejście i powrót osobno przy opóźnionych obrazach. Przy 360/390/430 px przypięty pasek ma 52 px. Dla 5/13 i 13/13 powrót zachował kadr, miniaturę i pozycję przewinięcia. Na Gocławiu przy 390 px początek zdjęcia jest na 315 px. Sprawdzono powrót systemowy do 5/12 i otwarcie rzutu 12/12.
-- [ ] Powtórzyć test gestu ukośnego na fizycznym telefonie użytkowniczki; dostępna jest emulacja dotyku Chromium.
-
-- [x] Mobilne przeglądanie (1.24–1.30): skrót do ulubionych, dzielnica i sortowanie przy wynikach, cena i dopłata pod tytułem, menu zależne od szerokości okna, otwieranie rzutu, zachowanie zdjęcia oraz dolna nawigacja reagująca na pionowe przewijanie.
-
-- [x] Dashboard i karty (1.16–1.23): krótszy baner i zmiany statystyk, kolejność etykiet, dopłata przy parkingu, miejsce kompasu, podpis wyniku i wspólne wiersze parametrów. Playwright sprawdził układ przy 390, 1024 i 1440 px, wyrównanie cen i pięter oraz odstępy kompasu na ofercie przy Zwycięzców.
-
-- [x] Lista i szczegóły ofert (1.1–1.11, 1.14): warunki zakupu, koszt dodatków, źródło metrażu, pięć zakresów filtrów, paginacja, mobilne podsumowanie, uzasadnienie dopasowania, akcje i tabela publikacji. Reguły wspólne dla wszystkich ofert. Sprawdzono dane dwóch przykładowych ofert, typy, testy API i WWW oraz widoczność zdjęcia i ceny przy 390 × 844 px.
+- [x] Przywrócono aplikację do stanu 5581a1a, obowiązującego 26 listopada około 22:21. Wycofano cztery późniejsze zmiany ofert i galerii.
 
 - [x] Ręczne powiązanie ponownego wystawienia po dwóch ID i proponowanie par przy skróconej nazwie ulicy patrona, takim samym piętrze i metrażu. Test regresji oraz 12 pozostałych testów dopasowań przeszły.
 

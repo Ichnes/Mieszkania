@@ -1,4 +1,3 @@
-import { cashPurchaseEvidence } from "../lib/purchase-evidence";
 import { getDescriptionHighlightParts } from "../lib/listing-language";
 
 export function ListingDescription({ value }: { value?: string }) {
@@ -9,26 +8,13 @@ export function ListingDescription({ value }: { value?: string }) {
     .map((paragraph) => paragraph.trim())
     .filter(Boolean);
 
-  const cashParagraph = paragraphs.findIndex((text) => cashPurchaseEvidence(text));
   return (
     <div className="listing-description">
-      {paragraphs.map((paragraph, index) => {
-        const evidence = index === cashParagraph ? cashPurchaseEvidence(paragraph) : undefined;
-        const start = evidence ? paragraph.indexOf(evidence) : -1;
-        return (
-          <p key={index}>
-            {evidence ? (
-              <>
-                {highlightListingDescription(paragraph.slice(0, start), index)}
-                <mark id="zakup-za-gotowke">{evidence}</mark>
-                {highlightListingDescription(paragraph.slice(start + evidence.length), index)}
-              </>
-            ) : (
-              highlightListingDescription(paragraph, index)
-            )}
-          </p>
-        );
-      })}
+      {paragraphs.map((paragraph, index) => (
+        <p key={`${index}-${paragraph.slice(0, 24)}`}>
+          {highlightListingDescription(paragraph, index)}
+        </p>
+      ))}
     </div>
   );
 }

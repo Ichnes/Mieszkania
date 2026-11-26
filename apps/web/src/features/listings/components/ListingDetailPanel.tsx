@@ -1,10 +1,3 @@
-import { pricedAmenityBadges } from "../lib/badges";
-import {
-  getSelectedPhoto,
-  selectListingPhoto,
-  takeFloorPlanRequest,
-} from "../lib/gallery-position";
-import { cashPurchaseEvidence, mandatoryAddons } from "../lib/purchase-evidence";
 import { HeatingEvidence } from "./HeatingEvidence";
 import { useDialogFocus } from "../../../shared/lib/use-dialog-focus";
 import { PotentialRelistings } from "../../relistings/PotentialRelistings";
@@ -40,13 +33,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { FullscreenFrame } from "../../../shared/components/FullscreenFrame";
 import {
   formatDistance,
@@ -191,74 +178,8 @@ export function ListingDetailPanel(input: {
   const [contactEvent, setContactEvent] = useState(
     createEmptyContactEventDraft(input.listing.manual.contactName),
   );
-  const openedPlanId = useRef<string | undefined>(undefined);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [lightboxOpen, setLightboxOpen] = useState(false);
-  const lightboxImageIndex = lightboxOpen ? activeImageIndex : null;
-  const galleryTrack = useRef<HTMLDivElement>(null);
-  const requestedImage = useRef(0);
-  const imageRequest = useRef(0);
-  const galleryScroll = useRef<number | null>(null);
-  const [imageError, setImageError] = useState("");
-  const [animateImage, setAnimateImage] = useState(true);
-  const tabMarker = useRef<HTMLDivElement>(null);
-  const [tabsPinned, setTabsPinned] = useState(false);
-  const [tabMenu, setTabMenu] = useState(false);
-  useEffect(() => {
-    const root = detailPanelRef.current,
-      marker = tabMarker.current;
-    if (!root || !marker) return;
-    const update = () => {
-      const pinned =
-        marker.getBoundingClientRect().bottom <= root.getBoundingClientRect().top + root.clientTop;
-      setTabsPinned(pinned);
-      if (!pinned) setTabMenu(false);
-    };
-    update();
-    root.addEventListener("scroll", update, { passive: true });
-    const observer = new ResizeObserver(update);
-    observer.observe(root);
-    return () => {
-      root.removeEventListener("scroll", update);
-      observer.disconnect();
-    };
-  }, [input.listing.id]);
-  function openLightbox() {
-    galleryScroll.current = detailPanelRef.current?.scrollTop ?? null;
-    setLightboxOpen(true);
-  }
-  function closeLightbox() {
-    setLightboxOpen(false);
-    const y = galleryScroll.current;
-    if (y !== null)
-      requestAnimationFrame(() =>
-        detailPanelRef.current?.scrollTo({ top: y, behavior: "instant" }),
-      );
-  }
-  async function selectPhoto(index: number, expand = false) {
-    const token = ++imageRequest.current;
-    requestedImage.current = index;
-    const image = galleryTrack.current?.querySelectorAll("img")[index];
-    if (!image) return;
-    setImageError("");
-    image.loading = "eager";
-    try {
-      await image.decode();
-    } catch {
-      if (token === imageRequest.current) {
-        requestedImage.current = activeImageIndex;
-        settleDrag();
-        setImageError("Nie udało się wczytać zdjęcia. Spróbuj ponownie.");
-      }
-      return;
-    }
-    if (token !== imageRequest.current) return;
-    if (index === activeImageIndex) settleDrag();
-    setAnimateImage(Math.abs(index - activeImageIndex) === 1);
-    selectListingPhoto(input.listing.id, input.listing.imageUrls[index]);
-    setActiveImageIndex(index);
-    if (expand) openLightbox();
-  }
+  const [lightboxImageIndex, setLightboxImageIndex] = useState<number | null>(null);
   const [photoRotation, setPhotoRotation] = useState(0);
   useEffect(() => setPhotoRotation(0), [lightboxImageIndex]);
   const [isDismissConfirmOpen, setIsDismissConfirmOpen] = useState(false);
@@ -287,33 +208,17 @@ export function ListingDetailPanel(input: {
   useDialogFocus(dialogRef, input.onClose);
   const dismissDialogRef = useRef<HTMLElement | null>(null);
   useDialogFocus(dismissDialogRef, () => setIsDismissConfirmOpen(false), isDismissConfirmOpen);
-  const imageSwipeStartRef = useRef<{
-    x: number;
-    y: number;
-    pointerId: number;
-    axis?: "x" | "y";
-  } | null>(null);
+  const imageSwipeStartRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const didSwipeImageRef = useRef(false);
   useEffect(() => {
     setScheduledAt(toDatetimeInputValue(input.listing.viewing?.scheduledAt));
     setViewingNotes(input.listing.viewing?.notes ?? "");
     setManual(input.listing.manual);
   }, [input.listing.viewing, input.listing.manual]);
-  useLayoutEffect(() => {
+  useEffect(() => {
     setContactEvent(createEmptyContactEventDraft(input.listing.manual.contactName));
-    if (takeFloorPlanRequest(input.listing.id)) openedPlanId.current = input.listing.id;
-    const plan = openedPlanId.current === input.listing.id || window.location.hash === "#rzut";
-    const url = plan ? input.listing.floorPlanImageUrls?.[0] : getSelectedPhoto(input.listing.id);
-    const imageIndex = url ? input.listing.imageUrls.indexOf(url) : -1;
-    setActiveImageIndex(Math.max(0, imageIndex));
-    if (plan && imageIndex >= 0)
-      selectListingPhoto(input.listing.id, input.listing.imageUrls[imageIndex]);
-    requestedImage.current = Math.max(0, imageIndex);
-    imageRequest.current++;
-    setImageError("");
-    setLightboxOpen(plan && imageIndex >= 0);
-    galleryScroll.current = null;
-    setTabMenu(false);
+    setActiveImageIndex(0);
+    setLightboxImageIndex(null);
     setIsDismissConfirmOpen(false);
     setActiveDetailTab(window.location.pathname === "/statystyki" ? "statistics" : "overview");
     setUnmergeSuccess("");
@@ -321,10 +226,6 @@ export function ListingDetailPanel(input: {
     setManualFeedback(null);
   }, [input.listing.id]);
   useEffect(() => {
-    if (window.location.hash === "#zakup-za-gotowke") {
-      document.getElementById("zakup-za-gotowke")?.scrollIntoView();
-      return;
-    }
     detailPanelRef.current?.scrollTo({ top: 0, behavior: "auto" });
   }, [input.listing.id]);
   useEffect(() => {
@@ -334,7 +235,7 @@ export function ListingDetailPanel(input: {
 
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
-        closeLightbox();
+        setLightboxImageIndex(null);
       }
 
       if (event.key === "ArrowLeft") {
@@ -353,46 +254,6 @@ export function ListingDetailPanel(input: {
     (candidate) =>
       candidate.left.id === input.listing.id || candidate.right.id === input.listing.id,
   );
-  const titleArea = input.listing.title.match(/(\d+(?:[,.]\d+)?)\s*m(?:²|2)/iu)?.[1];
-  const areaDifference =
-    titleArea &&
-    Number(titleArea.replace(",", ".")) !== parseFloat(input.listing.areaLabel.replace(",", ".")) &&
-    /^\d/.test(input.listing.areaLabel)
-      ? `W tytule ${titleArea.replace(".", ",")} m², ${input.listing.areaSource === "description" ? "w opisie sprzedającego" : "w parametrach"} ${input.listing.areaLabel}.`
-      : undefined;
-  const parkingLabel = input.listing.hasOutdoorParking
-    ? "miejsce naziemne"
-    : input.listing.hasGarage
-      ? "garaż"
-      : "parking";
-  const publicationRows = [
-    ...[input.listing, ...input.listing.relatedListings].map((item) => ({
-      id: item.id,
-      group: "Publikacje mieszkania",
-      cells: [
-        item.sourceLabel,
-        item.publishedAt?.slice(0, 10),
-        item.id === input.listing.id
-          ? (input.listing.advertisedPriceLabel ?? item.priceLabel)
-          : item.priceLabel,
-        item.areaLabel,
-        item.isActive ? "Aktywna" : "Archiwalna",
-      ],
-    })),
-    ...duplicateCandidates
-      .map((pair) => (pair.left.id === input.listing.id ? pair.right : pair.left))
-      .map((item) => ({
-        id: item.id,
-        group: "Kandydaci do potwierdzenia",
-        cells: [
-          item.sourceLabel,
-          item.publishedAt?.slice(0, 10),
-          item.sourcePriceLabel ?? item.priceLabel,
-          item.areaLabel,
-          item.listingStatus === "active" ? "Aktywna" : "Archiwalna",
-        ],
-      })),
-  ];
   const activePortalListings = [
     ...new Map(
       [input.listing, ...input.listing.relatedListings]
@@ -494,9 +355,9 @@ export function ListingDetailPanel(input: {
     knownAmenities.length > 0 || Boolean(input.listing.amenityAnalysis?.plannedFacilities.length);
   const maintenanceFee = input.listing.maintenanceFeeLabel;
   const changeDetailImage = (direction: -1 | 1) => {
-    void selectPhoto(
-      (requestedImage.current + direction + input.listing.imageUrls.length) %
-        input.listing.imageUrls.length,
+    setActiveImageIndex(
+      (current) =>
+        (current + direction + input.listing.imageUrls.length) % input.listing.imageUrls.length,
     );
   };
 
@@ -507,39 +368,7 @@ export function ListingDetailPanel(input: {
 
     didSwipeImageRef.current = false;
     imageSwipeStartRef.current = { x: event.clientX, y: event.clientY, pointerId: event.pointerId };
-  }
-  function settleDrag() {
-    const track = galleryTrack.current;
-    if (!track) return;
-    delete track.dataset.dragging;
-    track.style.removeProperty("--photo-drag");
-  }
-  useLayoutEffect(settleDrag, [activeImageIndex, input.listing.id]);
-
-  function handleImagePointerMove(event: ReactPointerEvent<HTMLButtonElement>) {
-    const start = imageSwipeStartRef.current;
-    const track = galleryTrack.current;
-    if (!start || start.pointerId !== event.pointerId || !track) return;
-    const dx = event.clientX - start.x;
-    const dy = event.clientY - start.y;
-    if (!start.axis) {
-      if (Math.max(Math.abs(dx), Math.abs(dy)) < 8) return;
-      start.axis = Math.abs(dx) > Math.abs(dy) * 1.25 ? "x" : "y";
-      didSwipeImageRef.current = true;
-      if (start.axis === "x") {
-        event.currentTarget.setPointerCapture(event.pointerId);
-        setAnimateImage(true);
-      }
-    }
-    if (start.axis !== "x") return;
-    const neighbor = track.children[activeImageIndex + (dx < 0 ? 1 : -1)] as
-      | HTMLImageElement
-      | undefined;
-    const width = track.clientWidth;
-    const offset =
-      neighbor?.complete && neighbor.naturalWidth ? Math.max(-width, Math.min(width, dx)) : 0;
-    track.dataset.dragging = "true";
-    track.style.setProperty("--photo-drag", offset + "px");
+    event.currentTarget.setPointerCapture(event.pointerId);
   }
 
   function handleImagePointerUp(event: ReactPointerEvent<HTMLButtonElement>) {
@@ -552,15 +381,9 @@ export function ListingDetailPanel(input: {
     const deltaX = event.clientX - start.x;
     const deltaY = event.clientY - start.y;
     // A deliberate horizontal swipe, without stealing normal vertical page scrolling.
-    if (
-      start.axis !== "y" &&
-      Math.abs(deltaX) >= 44 &&
-      Math.abs(deltaX) > Math.abs(deltaY) * 1.25
-    ) {
+    if (Math.abs(deltaX) >= 44 && Math.abs(deltaX) > Math.abs(deltaY) * 1.25) {
       didSwipeImageRef.current = true;
       changeDetailImage(deltaX < 0 ? 1 : -1);
-    } else {
-      settleDrag();
     }
   }
 
@@ -608,7 +431,7 @@ export function ListingDetailPanel(input: {
       )}
       <section
         ref={detailPanelRef}
-        className={tabsPinned ? "detail-panel tabs-pinned" : "detail-panel"}
+        className="detail-panel"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="detail-topbar">
@@ -671,7 +494,7 @@ export function ListingDetailPanel(input: {
               </button>
               {linkCopyStatus && <span role="status">{linkCopyStatus}</span>}
             </div>
-            <ListingBadgeRow badges={pricedAmenityBadges(input.listing, input.listing.badges)} />
+            <ListingBadgeRow badges={input.listing.badges} />
           </div>
           <div className="detail-actions">
             <button
@@ -748,16 +571,13 @@ export function ListingDetailPanel(input: {
         <div className="detail-grid">
           <div>
             <div className="detail-gallery">
-              {imageError && <span role="status">{imageError}</span>}
               {activeImageUrl ? (
                 <button
                   className="detail-image-button"
                   type="button"
                   onPointerDown={handleImagePointerDown}
-                  onPointerMove={handleImagePointerMove}
                   onPointerUp={handleImagePointerUp}
                   onPointerCancel={() => {
-                    settleDrag();
                     imageSwipeStartRef.current = null;
                   }}
                   onClick={(event) => {
@@ -766,17 +586,13 @@ export function ListingDetailPanel(input: {
                       didSwipeImageRef.current = false;
                       return;
                     }
-                    openLightbox();
+                    setLightboxImageIndex(activeImageIndex);
                   }}
                   aria-label="Otwórz zdjęcie na pełnym ekranie. Przesuń palcem w lewo lub prawo, aby zmienić zdjęcie."
                 >
                   <div
-                    ref={galleryTrack}
                     className="detail-image-track"
-                    style={{
-                      transition: animateImage ? undefined : "none",
-                      transform: `translate3d(calc(-${activeImageIndex * 100}% + var(--photo-drag, 0px)), 0, 0)`,
-                    }}
+                    style={{ transform: `translateX(-${activeImageIndex * 100}%)` }}
                   >
                     {input.listing.imageUrls.map((imageUrl, index) => (
                       <img
@@ -784,7 +600,7 @@ export function ListingDetailPanel(input: {
                         className="detail-image"
                         src={imageUrl}
                         alt={`${input.listing.title}, zdjęcie ${index + 1}`}
-                        loading={Math.abs(index - activeImageIndex) <= 1 ? "eager" : "lazy"}
+                        loading={index === 0 ? "eager" : "lazy"}
                       />
                     ))}
                   </div>
@@ -802,7 +618,7 @@ export function ListingDetailPanel(input: {
                         index === activeImageIndex ? "detail-thumb active" : "detail-thumb"
                       }
                       onClick={() => {
-                        void selectPhoto(index);
+                        setActiveImageIndex(index);
                       }}
                     >
                       <img
@@ -828,7 +644,8 @@ export function ListingDetailPanel(input: {
                     key={url}
                     style={{ top: `${12 + index * 48}px` }}
                     onClick={() => {
-                      void selectPhoto(imageIndex, true);
+                      setActiveImageIndex(imageIndex);
+                      setLightboxImageIndex(imageIndex);
                     }}
                   >
                     Rzut{index > 0 ? ` ${index + 1}` : ""}
@@ -860,7 +677,7 @@ export function ListingDetailPanel(input: {
                         type="button"
                         className={index === activeImageIndex ? "active" : ""}
                         aria-label={`Zdjęcie ${index + 1}`}
-                        onClick={() => void selectPhoto(index)}
+                        onClick={() => setActiveImageIndex(index)}
                       />
                     ))}
                   </div>
@@ -870,103 +687,8 @@ export function ListingDetailPanel(input: {
                 </>
               ) : null}
             </div>
-
-            {cashPurchaseEvidence(input.listing.description) && (
-              <p>
-                <button
-                  onClick={() => {
-                    setActiveDetailTab("overview");
-                    requestAnimationFrame(() =>
-                      document.getElementById("zakup-za-gotowke")?.scrollIntoView(),
-                    );
-                  }}
-                >
-                  Według ogłoszenia: zakup za gotówkę
-                </button>{" "}
-                · Symulacja raty
-              </p>
-            )}
             <MortgageQuickPreview listing={input.listing} downPayment={input.downPayment} />
-            {publicationRows.length > 1 && (
-              <div style={{ overflowX: "auto", maxWidth: "100%" }}>
-                <table>
-                  <caption>Porównanie publikacji</caption>
-                  <thead>
-                    <tr>
-                      {["Portal", "Data publikacji", "Cena", "Metraż", "Status"].map((label) => (
-                        <th key={label}>{label}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  {["Publikacje mieszkania", "Kandydaci do potwierdzenia"].map((group) => {
-                    const rows = publicationRows.filter((row) => row.group === group);
-                    return rows.length ? (
-                      <tbody key={group}>
-                        <tr>
-                          <th colSpan={5}>{group}</th>
-                        </tr>
-                        {rows.map((row) => (
-                          <tr key={row.id}>
-                            {row.cells.map((cell, i) => (
-                              <td key={i}>
-                                {i > 0 &&
-                                publicationRows.some((other) => other.cells[i] !== cell) ? (
-                                  <mark>{cell ?? "—"}</mark>
-                                ) : (
-                                  (cell ?? "—")
-                                )}
-                              </td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    ) : null;
-                  })}
-                </table>
-              </div>
-            )}
-            <div ref={tabMarker} className="detail-tab-marker" aria-hidden="true" />
-            <div
-              className={`detail-section-tabs ${tabsPinned ? "is-pinned" : ""} ${tabMenu ? "menu-open" : ""}`}
-              onClick={(event) => {
-                if (
-                  (event.target as Element).closest(".tab-button") &&
-                  tabsPinned &&
-                  isMobileDetail
-                ) {
-                  setTabMenu(false);
-                  requestAnimationFrame(() => {
-                    const marker = tabMarker.current,
-                      root = detailPanelRef.current;
-                    if (marker && root)
-                      root.scrollTop +=
-                        marker.getBoundingClientRect().bottom -
-                        root.getBoundingClientRect().top +
-                        2;
-                  });
-                }
-              }}
-            >
-              <div className="pinned-tab-bar">
-                <button aria-expanded={tabMenu} onClick={() => setTabMenu(!tabMenu)}>
-                  {
-                    {
-                      overview: "Przegląd",
-                      statistics: "Statystyki",
-                      manual: "Notatki",
-                      features: "Cechy",
-                      score: "Ocena",
-                      ai: "Ocena AI",
-                      duplicates: "Duplikaty",
-                      contact: "Kontakt",
-                    }[activeDetailTab]
-                  }{" "}
-                  ▾
-                </button>
-                <button aria-label="Zamknij ofertę" onClick={input.onClose}>
-                  <X size={20} />
-                </button>
-              </div>
+            <div className="detail-section-tabs">
               <button
                 className={tabClass(activeDetailTab === "overview")}
                 type="button"
@@ -1197,12 +919,7 @@ export function ListingDetailPanel(input: {
                       ) : null}
                     </td>
                     <th>Metraż</th>
-                    <td>
-                      {input.listing.areaLabel ?? "-"}{" "}
-                      {areaDifference && (
-                        <small className="area-difference">{areaDifference}</small>
-                      )}
-                    </td>
+                    <td>{input.listing.areaLabel ?? "-"}</td>
                   </tr>
                   {Boolean(input.listing.additionalPurchaseCosts?.warnings?.length) && (
                     <tr>
@@ -1229,7 +946,7 @@ export function ListingDetailPanel(input: {
                           ? " (garaż i komórka — razem)"
                           : ""}
                         {input.listing.additionalPurchaseCosts.garage
-                          ? ` (${parkingLabel}: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
+                          ? ` (garaż: ${formatPln(input.listing.additionalPurchaseCosts.garage)})`
                           : ""}
                         {input.listing.additionalPurchaseCosts.parkingCount &&
                         input.listing.additionalPurchaseCosts.parkingUnitPrice
@@ -1238,17 +955,6 @@ export function ListingDetailPanel(input: {
                         {input.listing.additionalPurchaseCosts.storage
                           ? ` (komórka / piwnica: ${formatPln(input.listing.additionalPurchaseCosts.storage)})`
                           : ""}
-                        {Boolean(input.listing.additionalPurchaseCosts.garage) && (
-                          <p>
-                            {input.listing.garageTenure === "purchase_option"
-                              ? "Zakup miejsca jest opcjonalny."
-                              : mandatoryAddons(input.listing.description, {
-                                    garage: input.listing.additionalPurchaseCosts.garage,
-                                  })
-                                ? "Zakup miejsca jest obowiązkowy."
-                                : "Ogłoszenie nie podaje, czy zakup miejsca jest obowiązkowy."}
-                          </p>
-                        )}
                       </td>
                       <th>Łączna cena zakupu</th>
                       <td className="fact-price">
@@ -1264,7 +970,7 @@ export function ListingDetailPanel(input: {
                       <th>Cena całkowita / m²</th>
                       <td className="fact-price">
                         {input.listing.totalAcquisitionPricePerSqm
-                          ? `${formatPln(input.listing.totalAcquisitionPricePerSqm)}/m²`
+                          ? `${formatPln(input.listing.totalAcquisitionPricePerSqm)} / m²`
                           : "—"}
                       </td>
                       <th>Cena mieszkania</th>
@@ -1273,12 +979,7 @@ export function ListingDetailPanel(input: {
                   ) : null}
                   <tr>
                     <th>zł/m²</th>
-                    <td>
-                      {input.listing.pricePerSqmLabel ?? "-"}{" "}
-                      <small>
-                        {input.listing.priceLabel} / {input.listing.areaLabel}
-                      </small>
-                    </td>
+                    <td>{input.listing.pricePerSqmLabel ?? "-"}</td>
                     <th>Pokoje</th>
                     <td>{input.listing.rooms ?? "-"}</td>
                   </tr>
@@ -1297,7 +998,7 @@ export function ListingDetailPanel(input: {
                     <th>
                       {input.listing.additionalPurchaseCosts?.garageAndStorage
                         ? "Garaż i komórka"
-                        : parkingLabel}
+                        : "Garaż / parking"}
                     </th>
                     <td>
                       {input.listing.garageTenure && (
@@ -1951,7 +1652,7 @@ export function ListingDetailPanel(input: {
             role="dialog"
             aria-modal="true"
             aria-label="Podgląd zdjęcia"
-            onClick={() => closeLightbox()}
+            onClick={() => setLightboxImageIndex(null)}
           >
             <FullscreenFrame label="Zdjęcia oferty" className="photo-fullscreen" modal>
               <button
@@ -1968,7 +1669,7 @@ export function ListingDetailPanel(input: {
               <button
                 className="image-lightbox-close"
                 type="button"
-                onClick={() => closeLightbox()}
+                onClick={() => setLightboxImageIndex(null)}
                 aria-label="Zamknij podgląd"
               >
                 X
@@ -1993,7 +1694,7 @@ export function ListingDetailPanel(input: {
                 rotation={photoRotation}
                 onPrevious={showPreviousLightboxImage}
                 onNext={showNextLightboxImage}
-                onClose={() => closeLightbox()}
+                onClose={() => setLightboxImageIndex(null)}
               />
               {input.listing.imageUrls.length > 1 ? (
                 <button
@@ -2019,10 +1720,24 @@ export function ListingDetailPanel(input: {
   );
 
   function showPreviousLightboxImage() {
-    changeDetailImage(-1);
+    setLightboxImageIndex((current) => {
+      if (current === null || input.listing.imageUrls.length === 0) {
+        return current;
+      }
+
+      const nextIndex = current - 1;
+      return nextIndex < 0 ? input.listing.imageUrls.length - 1 : nextIndex;
+    });
   }
+
   function showNextLightboxImage() {
-    changeDetailImage(1);
+    setLightboxImageIndex((current) => {
+      if (current === null || input.listing.imageUrls.length === 0) {
+        return current;
+      }
+
+      return (current + 1) % input.listing.imageUrls.length;
+    });
   }
 
   async function saveContactEvent() {

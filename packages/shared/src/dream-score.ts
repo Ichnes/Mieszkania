@@ -561,11 +561,7 @@ export function computeDreamEvaluation(
   record(
     "Sprzedający / prowizja",
     "Prowizja dla kupującego: −15 pkt. Oferta prywatna lub bezpośrednia bez oznaczenia prowizji: +10 pkt. Jeśli oferta ma oznaczenie prowizji, nie dostaje jednocześnie premii za sprzedaż bezpośrednią. Pozostałe oferty: 0 pkt.",
-    listing.badges
-      .filter((badge) =>
-        ["Z prowizją", "Bez prowizji", "Oferta prywatna", "Oferta bezpośrednia"].includes(badge),
-      )
-      .join(", "),
+    listing.badges.join(", "),
   );
   const landFlag = listing.badges.includes("Nieuregulowany grunt");
   const assignmentFlag = listing.badges.includes("Cesja mieszkania");

@@ -47,7 +47,7 @@ export function FullscreenFrame({
     const overflow = document.body.style.overflow;
     const previouslyFocused = document.activeElement as HTMLElement | null;
     document.body.style.overflow = "hidden";
-    buttonRef.current?.focus({ preventScroll: true });
+    buttonRef.current?.focus();
     const keydown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && expanded) {
         event.stopPropagation();
@@ -77,7 +77,7 @@ export function FullscreenFrame({
       document.body.style.overflow = overflow;
       window.removeEventListener("keydown", keydown, true);
       window.removeEventListener("mieszkania:open-listing", openListing);
-      previouslyFocused?.focus({ preventScroll: true });
+      previouslyFocused?.focus();
     };
   }, [expanded, modal]);
   async function close() {
