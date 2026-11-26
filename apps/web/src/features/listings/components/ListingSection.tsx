@@ -1,11 +1,6 @@
 import { requestFloorPlan } from "../lib/gallery-position";
 import { cashPurchaseEvidence } from "../lib/purchase-evidence";
-import { useState } from "react";
-import {
-  computeDreamEvaluation,
-  type FamilySettings,
-  type ListingSummary,
-} from "@mieszkania/shared";
+import type { ListingSummary } from "@mieszkania/shared";
 import { LoaderCircle, RefreshCw } from "lucide-react";
 import { formatOptionalPln, formatViewingDate } from "../../../shared/lib/format";
 import { cardImageBadges, filterNonCommercialBadges } from "../lib/badges";
@@ -19,7 +14,6 @@ export function ListingSection(input: {
   sortControl: React.ReactNode;
   resultRange: string;
   mobileCount: string;
-  settings: FamilySettings;
   compareIds: string[];
   onToggleCompare: (id: string) => void;
   downPayment: number;
@@ -28,7 +22,6 @@ export function ListingSection(input: {
   onOpen: (listingId: string) => void | Promise<void>;
   isLoading: boolean;
 }) {
-  const [scoreId, setScoreId] = useState<string>();
   return (
     <section className="panel offer-list-panel">
       <div className="panel-header listing-results-header">
@@ -66,21 +59,15 @@ export function ListingSection(input: {
             (badge) => !imageBadges.includes(badge),
           );
 
-          const scoreButton =
+          const scoreBadge =
             typeof listing.dreamScore === "number" ? (
-              <button
-                type="button"
-                aria-expanded={scoreId === listing.id}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setScoreId(scoreId === listing.id ? undefined : listing.id);
-                }}
+              <span
                 className="listing-dream-chip"
-                aria-label={`Dopasowanie: ${listing.dreamScore}%`}
+                title="Dopasowanie do Waszych preferencji"
+                onClick={(event) => event.stopPropagation()}
               >
                 <strong>{listing.dreamScore}%</strong>
-                <span className="score-caption">Dopasowanie do Waszych preferencji</span>
-              </button>
+              </span>
             ) : null;
           return (
             <article
@@ -88,31 +75,6 @@ export function ListingSection(input: {
               className={`listing-card clickable-card${listing.isShortlisted ? " is-shortlisted" : ""}`}
               onClick={() => void input.onOpen(listing.id)}
             >
-              {scoreId === listing.id &&
-                (() => {
-                  const { rows, coverage } = computeDreamEvaluation(
-                    listing,
-                    input.settings.dreamProfile,
-                    input.settings.workplaces,
-                    undefined,
-                    input.settings.financing,
-                  );
-                  const known = rows
-                    .filter((row) => row.dataStatus === "known")
-                    .sort((a, b) => b.points - a.points);
-                  const labels = (items: typeof rows) =>
-                    items
-                      .slice(0, 2)
-                      .map((row) => row.label)
-                      .join(", ") || "Brak potwierdzonych";
-                  return (
-                    <div role="status">
-                      <div>Plusy: {labels(known.filter((row) => row.points > 0))}</div>
-                      <div>Minusy: {labels(known.filter((row) => row.points < 0).reverse())}</div>
-                      Niewiadome: {coverage.total - coverage.known} z {coverage.total}
-                    </div>
-                  );
-                })()}
               {listing.thumbnailUrl ? (
                 <div className="listing-thumb-wrap">
                   <div className="listing-chip-stack">
@@ -148,7 +110,7 @@ export function ListingSection(input: {
                   </div>
                   {typeof listing.dreamScore === "number" || listing.aiAssessment ? (
                     <div className="listing-bottom-left-stack">
-                      {scoreButton}
+                      {scoreBadge}
                       {listing.aiAssessment && (
                         <span
                           className="listing-ai-chip"
@@ -194,7 +156,7 @@ export function ListingSection(input: {
                 </div>
               ) : (
                 <div className="listing-thumb-wrap listing-photo-empty">
-                  Brak zdjęć {scoreButton}
+                  Brak zdjęć {scoreBadge}
                 </div>
               )}
               <div className="listing-card-content">
@@ -304,7 +266,9 @@ export function ListingSection(input: {
                           : "Winda do potwierdzenia"}
                       </span>
                     )}
-                    {listing.sourceLabel && <span>{listing.sourceLabel}</span>}
+                    {!listing.thumbnailUrl && listing.sourceLabel && (
+                      <span>{listing.sourceLabel}</span>
+                    )}
                   </div>
                   {listing.floorPlanImageUrls?.length ? (
                     <a

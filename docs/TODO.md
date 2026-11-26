@@ -1,5 +1,7 @@
 # Bieżące zadania
 
+- [x] Ustawiono 8 px odstępu między rynkiem a filtrami, przywrócono źródło pod kropkami, przeniesiono licznik zdjęć na prawą krawędź i usunięto akcję z procentowego wskaźnika dopasowania.
+
 - [x] Mobilne oferty 1.37–1.44: pojedynczy wiersz regionu, dolny panel rynku, licznik przy sortowaniu, lista bez zewnętrznej ramki. W szczegółach przywrócono wcześniejszy nagłówek z UUID i „Kopiuj link” oraz pełne akcje przed galerią. Zachowano synchronizację aktualnego zdjęcia. Pod zdjęciem tytuł i dzielnica, następnie wcześniejsze tabelki cen i parametrów. Rynek otwiera pojedynczy panel; okres zmienia się bezpośrednio przyciskami. Połączono etykiety parkingu, skrócono etykietę do „Tylko gotówka” bez podkreślenia, ukryto ratę dla zakupu gotówkowego, na pozostałych zdjęciach skrócono podpis do „Rata:” i opisano rozbieżności metrażu w szczegółach. Makolągwy 393 px: zdjęcie od 225 px zamiast 465 px, odstęp do tytułu 11 px zamiast 305 px.
 
 - [x] Kadr wspólny dla karty, szczegółów i powiększenia (1.35) oraz kontrastowy przycisk zamknięcia po powrocie z galerii (1.36). Wdrożono lokalny Docker WWW/API. Playwright na adresie LAN, 390 × 844 px, bez atrap API: karta 4/13 → szczegóły 4/13 → powiększenie 5/13 → szczegóły i karta 5/13, zachowany scroll, bezpośredni link 1/13. Pasek zakładek 52 px, odwrócony zakres ceny zachował trzy wyniki.

@@ -78,7 +78,7 @@
 }
 .listing-thumb-wrap .sun-compass-compact {
   left: auto;
-  right: 9px;
+  right: 64px;
   top: 8px;
   bottom: auto;
   transform: none;
@@ -87,7 +87,7 @@
   border: 1px solid #51685c;
 }
 .listing-thumb-wrap .listing-image-counter {
-  right: 62px;
+  right: 9px;
   top: 9px;
 }
 .listing-thumb-wrap .listing-mortgage-chip {
@@ -95,26 +95,7 @@
   right: 9px;
 }
 .listing-dream-chip {
-  position: relative;
-}
-.score-caption {
-  display: none;
-  position: absolute;
-  left: 100%;
-  top: 0;
-  margin-left: 5px;
-  width: max-content;
-  max-width: 18ch;
-  padding: 5px 8px;
-  border-radius: 6px;
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 0.75rem;
-  line-height: 1.2;
-}
-.listing-dream-chip:hover .score-caption,
-.listing-dream-chip:focus-visible .score-caption {
-  display: block;
+  cursor: default;
 }
 .listing-card-heading,
 .listing-card-footer {
@@ -354,6 +335,7 @@
     display: none;
   }
   .top-dashboard-frame .mobile-market-header {
+    margin-bottom: 8px;
     min-width: 0;
     background: transparent;
     color: var(--ink);
@@ -441,8 +423,7 @@
     align-content: start;
   }
   .listing-card-heading .listing-topline,
-  .listing-card .desktop-location,
-  .listing-card .listing-source-chip-footer {
+  .listing-card .desktop-location {
     display: none;
   }
   .listing-card .mobile-location {

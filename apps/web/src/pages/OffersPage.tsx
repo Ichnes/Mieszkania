@@ -615,7 +615,6 @@ export function OffersPage({
                       }}
                     />
                   }
-                  settings={model.settings}
                   mobileCount={
                     favorites
                       ? `Ulubione · ${listingsTotal}`
