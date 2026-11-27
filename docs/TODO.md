@@ -1,5 +1,7 @@
 # Bieżące zadania
 
+- [x] Duplikaty → Ponowne wystawienia → Propozycje: wyższe podglądy z całym kadrem i aktualizacja par w tle. Na LAN przy 393 × 852 px po połączeniu i odrzuceniu testowej pary lista pozostała na 6296 px, a sąsiednie karty pozostały zamontowane. Typecheck i 174 testy WWW przeszły.
+
 - [x] Oferty: oddzielne czerwone etykiety dla braku KW i zakupu gotówkowego oraz podświetlenie słów sprzedającego w opisie. Test regresji obejmuje warianty z polskimi znakami i bez oraz płatność alternatywną. Przeszły 174 testy WWW i build. W aplikacji LAN na Makolągwy potwierdzono obie etykiety i oba wyróżnienia w opisie.
 
 - [x] Szczegóły: ulubione przy tytule, pozostałe akcje pod „Więcej”. Gest poziomy w galerii podąża za palcem. Karta, szczegóły i powiększenie współdzielą zdjęcie zapamiętane osobno dla oferty w bieżącej karcie przeglądarki. Sprawdzono na LAN przy 393 px: pięć akcji w menu, powrót i odświeżenie na 5/13, przesunięcie o 75 px bez skalowania. Przeszły typecheck i 173 testy WWW.

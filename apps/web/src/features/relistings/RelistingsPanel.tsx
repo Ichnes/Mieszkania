@@ -39,6 +39,8 @@ export function RelistingsPanel({
   const sort = sorts[view];
   const page = pages[view];
   const offset = offsets[view][page - 1] ?? 0;
+  const queryKey = `${view}:${page}:${offset}:${sort}`;
+  const [loadedQuery, setLoadedQuery] = useState("");
   const [revision, setRevision] = useState(0);
   const [result, setResult] = useState<RelistedListingsResponse>();
   const [loading, setLoading] = useState(true);
@@ -99,6 +101,7 @@ export function RelistingsPanel({
           return;
         }
         setResult(next);
+        setLoadedQuery(queryKey);
       })
       .catch((failure) => {
         if (!controller.signal.aborted) setError(failure.message);
@@ -107,7 +110,7 @@ export function RelistingsPanel({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [page, offset, view, sort, revision, scanResult]);
+  }, [page, offset, view, sort, queryKey, revision, scanResult]);
   const total = (potential ? result?.potentialCount : result?.groupCount) ?? 0;
   const items = (potential ? result?.potentialItems : result?.items) ?? [];
   const groups = result?.groups ?? [];
@@ -242,11 +245,11 @@ export function RelistingsPanel({
           </button>
         </form>
       </details>
-      {loading ? (
+      {loading && loadedQuery !== queryKey ? (
         <p role="status">Wczytywanie zapisanych powiązań…</p>
       ) : (
-        !error && (
-          <div className="relisting-results">
+        loadedQuery === queryKey && (
+          <div className={potential ? "relisting-results relisting-proposals" : "relisting-results"}>
             {!potential && groups.length ? (
               groups.map((group) => (
                 <RelistingTimeline
@@ -257,7 +260,7 @@ export function RelistingsPanel({
               ))
             ) : items.length ? (
               <RelistingMatches
-                key={`${view}:${page}:${revision}`}
+                key={queryKey}
                 items={items}
                 potential={potential}
                 onOpenListing={onOpenListing}

@@ -442,6 +442,15 @@ details.data-tools > summary:focus-visible {
 .relisting-photo .duplicate-preview-empty {
   min-height: 160px;
 }
+.relisting-proposals {
+  /* Let the next pair take the reviewed pair's place in the viewport. */
+  overflow-anchor: none;
+}
+.relisting-proposals .relisting-photo .duplicate-photo-button img,
+.relisting-proposals .relisting-photo .duplicate-preview-empty {
+  height: clamp(210px, 35vw, 340px);
+  object-fit: contain;
+}
 @media (min-width: 701px) and (max-width: 1200px) {
   .relisting-result-grid {
     grid-template-columns: minmax(0, 1fr);

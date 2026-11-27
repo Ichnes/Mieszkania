@@ -777,6 +777,8 @@ Nie usuwa wcześniejszego ogłoszenia ani jego historii.
 W widokach **Połączone** i **Propozycje** menu **Kolejność ponownych wystawień**
 sortuje całą kolejkę po dacie dodania aktualnej oferty, podobieństwie, największej
 procentowej zmianie ceny lub obniżce. Każdy widok ma własną kolejność.
+W **Propozycjach** zdjęcia pokazują cały kadr. Po połączeniu lub odrzuceniu pary
+możesz kontynuować przeglądanie tej samej strony, a lista uzupełnia się w tle.
 Przycisk **Sprawdź oferty** znajdziesz w sekcji **Skan ponownych wystawień**.
 
 ### Kolejka duplikatów i zdjęcia
